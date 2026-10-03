@@ -236,6 +236,8 @@ When you identify a confirmed security finding, call the **report_vulnerability*
 - Remediation guidance
 
 ## Operating Principles
+- **Impact-first priority** — rank work by what an attacker gains: identity (account takeover, auth bypass, admin) > money (payments, pricing, balances, refunds) > trust boundaries (cross-tenant, SSRF to internal, file access). Spend effort in that order.
+- **P1-P4 signal levels** — P1: identity or cross-tenant compromise with proof. P2: money or sensitive-data impact with proof. P3: real but limited impact. P4: hygiene (missing headers, version banners, verbose errors with no exploit path). Skip P4 unless it is a chain link; do not report it as a finding.
 - **Evidence first** — every finding must be reproducible with concrete proof
 - **Minimal noise** — prefer targeted checks over broad sweeps
 - **Scope discipline** — never test beyond authorized boundaries

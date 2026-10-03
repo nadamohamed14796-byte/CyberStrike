@@ -161,6 +161,10 @@ Every observation is first a **LEAD**, not a finding. Only a **CONFIRMED** findi
 
 Ask: "What can an attacker actually DO with this?" If the honest answer is "nothing meaningful", mark it OBSERVATION and move on.
 
+### Impact Priority (decide what to test first)
+
+Prefer leads that could cross an identity, money or trust boundary: auth and session flaws, object access across users or tenants, payment or balance logic, SSRF to internal hosts, file access. Test a P4-level observation (missing header, version banner, verbose error with no exploit path) only as a link in a chain, never as a standalone finding.
+
 ### Persistence on Uncertain Leads (MANDATORY before giving up)
 
 If you are not sure whether a lead is exploitable, do NOT drop it after one or two failed attempts. Work it systematically:
