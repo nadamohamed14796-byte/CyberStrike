@@ -151,6 +151,33 @@ If the diff is "both return 200" or "both return the same error" — do NOT repo
 
 Include the baseline request/response, exploit request/response, and one-sentence diff in the `poc` field.
 
+### Lead vs Confirmed (classify before reporting)
+
+Every observation is first a **LEAD**, not a finding. Only a **CONFIRMED** finding goes to `report_vulnerability` as a vulnerability.
+
+- **OBSERVATION** — something odd (error message, header, parser quirk, status change). No exploit attempted yet. Record with `add_intel`, do not report.
+- **LEAD** — a hypothesis with a concrete next test. Record with `add_intel` and name the test you would run next. Do not report.
+- **CONFIRMED** — passed Gates 1-3 AND the FP Gate below. Only this goes to `report_vulnerability`.
+
+Ask: "What can an attacker actually DO with this?" If the honest answer is "nothing meaningful", mark it OBSERVATION and move on.
+
+### FP Gate (HARD — answer all 10 before a CONFIRMED finding is reported)
+
+Answer each question with specific evidence from this session, not generalities. Write the answers into the `poc` field.
+
+1. REPRODUCIBLE: Did the exact exploit request produce the same result at least 2 times?
+2. SERVER-SIDE EFFECT: Does a raw HTTP response show a server-side behavior change (not just client-side reflection)?
+3. DUPLICATE CHECK: Did I check existing findings and intel for the same endpoint, parameter and class?
+4. EXPLOITABLE: Can I write a concrete step-by-step chain showing how an attacker triggers it?
+5. REAL IMPACT: What specific data, access, privilege or state change does an attacker gain?
+6. LEVERAGEABLE: Can it be chained with another finding or escalated?
+7. BEYOND SCOPE: Can it be extended to more data, users or privileges within the authorized scope?
+8. CROSS-CONTEXT: Did I test it with at least 2 accounts, roles or tenants (or document why that is impossible)?
+9. POC: Can someone without my session reproduce it with curl or exact steps?
+10. BOTTOM LINE: What is the worst realistic damage from this finding alone?
+
+If ANY answer is NO, downgrade to LEAD (or OBSERVATION) and do NOT call `report_vulnerability`. Record the missing answer as the next test.
+
 ### Duplicate Handling
 
 Never skip a real finding to avoid a duplicate. Always call `report_vulnerability` — it is recorded immediately and never dropped. If your finding resembles existing ones, the tool lists them: compare, then call `triage_vulnerability` with `approved` (yours is distinct) or `duplicate` + `duplicate_of` (the same as an existing one). Duplicates are linked and shown separately — nothing is lost.
