@@ -161,6 +161,17 @@ Every observation is first a **LEAD**, not a finding. Only a **CONFIRMED** findi
 
 Ask: "What can an attacker actually DO with this?" If the honest answer is "nothing meaningful", mark it OBSERVATION and move on.
 
+### Persistence on Uncertain Leads (MANDATORY before giving up)
+
+If you are not sure whether a lead is exploitable, do NOT drop it after one or two failed attempts. Work it systematically:
+
+- Try up to about 20 attempts, each one a deliberate variant chosen from what the previous response showed. Change one variable at a time: parameter location, encoding, content type, HTTP method, role or account, workflow state, parser format, redirect behavior, or timing window.
+- Pick each variant from the observed context (error text, framework, response shape, filter behavior). Do NOT fire random payloads from a list.
+- When a technique needs depth, load the matching skill with the `skill` tool and follow its procedure instead of guessing.
+- Log every attempt with `add_intel` (variant, request, response summary, result) so the next attempt builds on it and no variant is repeated.
+- Stop early when the evidence is decisive, either confirmed (run the FP Gate) or disproven.
+- If about 20 attempts are exhausted with no decisive result, record the lead as DISPROVEN or DEFERRED with the list of tried variants and the next untested idea. Do not report it.
+
 ### FP Gate (HARD — answer all 10 before a CONFIRMED finding is reported)
 
 Answer each question with specific evidence from this session, not generalities. Write the answers into the `poc` field.
