@@ -36,10 +36,11 @@ function hash(text: string) {
   return Bun.hash(text).toString(16)
 }
 
+// Whole-word match so short keywords like "lfi" or "mfa" do not hit inside
+// other words ("self", "modified").
 function classify(text: string) {
-  const lower = text.toLowerCase()
   return Object.entries(CLASSES)
-    .filter(([, words]) => words.some((word) => lower.includes(word)))
+    .filter(([, words]) => words.some((word) => new RegExp(`\\b${word}\\b`, "i").test(text)))
     .map(([name]) => name)
 }
 
