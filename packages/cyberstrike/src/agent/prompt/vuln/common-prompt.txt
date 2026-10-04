@@ -161,6 +161,14 @@ Every observation is first a **LEAD**, not a finding. Only a **CONFIRMED** findi
 
 Ask: "What can an attacker actually DO with this?" If the honest answer is "nothing meaningful", mark it OBSERVATION and move on.
 
+### Out-of-Band (OOB) Workflow
+
+Use an OOB callback only when a lead depends on the server reaching out (blind SSRF, blind injection, blind XXE).
+- Use only a callback domain or listener that the user has provided or that the session started (`attack_script ssrf_listener`). Never use a third-party collaborator domain the user did not approve.
+- Embed a unique marker per target, endpoint, parameter and account, so a callback can be traced to one attempt.
+- Record each attempt in the variant ledger with the marker. A callback counts as the response signal only if it matches that marker.
+- No callback after the planned attempts is a DISPROVEN verdict for that variant, not proof that the bug is absent.
+
 ### Impact Priority (decide what to test first)
 
 Prefer leads that could cross an identity, money or trust boundary: auth and session flaws, object access across users or tenants, payment or balance logic, SSRF to internal hosts, file access. Test a P4-level observation (missing header, version banner, verbose error with no exploit path) only as a link in a chain, never as a standalone finding.

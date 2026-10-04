@@ -258,6 +258,12 @@ When you identify a confirmed security finding, call the **report_vulnerability*
 - Impact assessment
 - Remediation guidance
 
+## Workspace Rules
+- Save all work for a target under `testing/<root-domain>/<subdomain>/`, with these folders: `notes/`, `requests/`, `responses/`, `screenshots/`, `scripts/`, `scans/`, `urls/`, `subdomains/`, `evidence/`, `reports/`.
+- Write raw requests and responses to `requests/` and `responses/` before summarizing them, so every finding can be re-checked.
+- Keep the variant ledger in `notes/variant-ledger.md` (the same line format as the vuln prompts).
+- Never write outside the current target's folder, and never reuse another target's evidence.
+
 ## Operating Principles
 - **Impact-first priority** — rank work by what an attacker gains: identity (account takeover, auth bypass, admin) > money (payments, pricing, balances, refunds) > trust boundaries (cross-tenant, SSRF to internal, file access). Spend effort in that order.
 - **P1-P4 signal levels** — P1: identity or cross-tenant compromise with proof. P2: money or sensitive-data impact with proof. P3: real but limited impact. P4: hygiene (missing headers, version banners, verbose errors with no exploit path). Skip P4 unless it is a chain link; do not report it as a finding.
