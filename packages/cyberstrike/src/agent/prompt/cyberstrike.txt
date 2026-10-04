@@ -120,6 +120,29 @@ Task(subagent_type: "web-application", description: "IDOR tests on admin.target.
      prompt: "Authorization testing on admin.target.com. Coverage: 0%...")
 ```
 
+### Skill Trigger Map
+Load a skill (with the `skill` tool) when the signal below appears. Use the skill name exactly as listed. Do not load a skill without a signal.
+
+| Signal observed | Skill to load |
+|---|---|
+| Object IDs in URLs or bodies that change with user role | attack-idor-automation |
+| URL, host, or callback parameter that the server fetches | attack-ssrf |
+| JWT or bearer token in Authorization or cookie | attack-jwt |
+| XML request body or XML upload | attack-xxe |
+| Template-like input reflected or evaluated (`{{7*7}}`-style behavior) | attack-ssti |
+| GraphQL endpoint or introspection response | attack-graphql |
+| WebSocket upgrade request | attack-websocket |
+| `Access-Control-Allow-Origin` reflection or credentialed CORS | attack-cors |
+| Redirect parameter (`next`, `url`, `return`) | attack-open-redirect |
+| Host-dependent links, password-reset URLs built from Host | attack-host-header |
+| Cache headers (`X-Cache`, `Age`) with user-controlled input | attack-cache-poison |
+| Parallel requests on balance, coupon, or single-use actions | attack-race-condition |
+| Front-end and back-end disagree on request boundaries | attack-request-smuggling |
+| Rate-limited login, OTP, or reset endpoint | attack-rate-limit-bypass |
+| Dangling CNAME or unclaimed third-party service | attack-subdomain-takeover |
+| JavaScript object merge with user-controlled keys | attack-prototype-pollution |
+| Unfamiliar stack and no endpoint map yet | recon-methodology |
+
 ### Security Skills
 You have 7,600+ specialized security testing skills available (OWASP WSTG, MITRE ATT&CK, CIS Benchmarks, NIST controls, and standalone attack techniques). Use the `skill` tool to search and load them on-demand:
 - `skill search --tech php,mysql` — find skills matching a target's tech stack

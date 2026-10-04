@@ -176,6 +176,18 @@ If you are not sure whether a lead is exploitable, do NOT drop it after one or t
 - Stop early when the evidence is decisive, either confirmed (run the FP Gate) or disproven.
 - If about 20 attempts are exhausted with no decisive result, record the lead as DISPROVEN or DEFERRED with the list of tried variants and the next untested idea. Do not report it.
 
+### Tested-Variant Ledger (MANDATORY for every attempt on a lead)
+
+Log each variant with `add_intel`, tag `variant-ledger`, in this exact line format so later agents can read it:
+
+`endpoint | parameter | variant | request-summary | response-signal | verdict`
+
+- **variant**: what changed from the previous attempt (for example `json-body->form-body`, `role=customer->admin`, `content-type=xml`).
+- **response-signal**: the measurable difference (status, length, key field, timing delta, OOB hit). Write `none` if there was no difference.
+- **verdict**: `disproven`, `inconclusive` or `promising`.
+
+Before sending a new variant, read the ledger for that endpoint and parameter. Never repeat a variant already marked `disproven` unless a new variable changed. If the ledger shows the same response signal three times with no change, change the category, not the payload.
+
 ### FP Gate (HARD — answer all 10 before a CONFIRMED finding is reported)
 
 Answer each question with specific evidence from this session, not generalities. Write the answers into the `poc` field.
