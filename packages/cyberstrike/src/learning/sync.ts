@@ -7,7 +7,11 @@ import { update } from "./index"
 // Internet sources for real write-ups. Each one is a public git repo, so
 // reads go through the normal git proxy, not through arbitrary web requests.
 // Add a source by adding one entry here.
-export const SOURCES = [{ name: "hackerone-reports", url: "https://github.com/reddelexc/hackerone-reports" }] as const
+export const SOURCES = [
+  { name: "hackerone-reports", url: "https://github.com/reddelexc/hackerone-reports" },
+  { name: "ngalongc-bug-bounty-reference", url: "https://github.com/ngalongc/bug-bounty-reference" },
+  { name: "devanshbatham-awesome-bugbounty-writeups", url: "https://github.com/devanshbatham/Awesome-Bugbounty-Writeups" },
+] as const
 
 export type Source = (typeof SOURCES)[number]
 
