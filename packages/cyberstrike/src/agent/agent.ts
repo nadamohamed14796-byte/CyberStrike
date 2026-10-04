@@ -11,6 +11,10 @@ import { ProviderTransform } from "../provider/transform"
 import PROMPT_GENERATE from "./generate.txt"
 import PROMPT_COMPACTION from "./prompt/compaction.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
+import PROMPT_RECON_SURFACE from "./prompt/recon/surface.txt"
+import PROMPT_RECON_DORKING from "./prompt/recon/dorking.txt"
+import PROMPT_RECON_JS from "./prompt/recon/js.txt"
+import PROMPT_RECON_FUZZING from "./prompt/recon/fuzzing.txt"
 import PROMPT_SUMMARY from "./prompt/summary.txt"
 import PROMPT_TITLE from "./prompt/title.txt"
 import PROMPT_WEB_APPLICATION from "./prompt/web-application.txt"
@@ -243,6 +247,91 @@ export namespace Agent {
         options: {},
         mode: "subagent",
         native: true,
+      },
+      // Recon split: four specialists with separate tool boundaries. Each one
+      // is deny-by-default and allows only the tools its phase needs. Intent
+      // limits (no fuzzing in recon, no direct API calls in JS, etc.) live in
+      // each prompt under prompt/recon/.
+      "recon-surface": {
+        name: "recon-surface",
+        description: "Maps the target's attack surface: subdomains, live hosts, tech stack, WAF/CDN status, scope classes. No fuzzing or exploitation.",
+        mode: "subagent",
+        native: true,
+        prompt: PROMPT_RECON_SURFACE,
+        options: {},
+        permission: PermissionNext.merge(
+          defaults,
+          PermissionNext.fromConfig({
+            "*": "deny",
+            bash: "allow",
+            webfetch: "allow",
+            web_get_session_context: "allow",
+            add_intel: "allow",
+            read: "allow",
+          }),
+          user,
+        ),
+      },
+      "recon-dorking": {
+        name: "recon-dorking",
+        description: "Passive OSINT: search-engine and code-host dorking, certificate transparency, Shodan/Censys, Wayback. Never sends requests to the target.",
+        mode: "subagent",
+        native: true,
+        prompt: PROMPT_RECON_DORKING,
+        options: {},
+        permission: PermissionNext.merge(
+          defaults,
+          PermissionNext.fromConfig({
+            "*": "deny",
+            websearch: "allow",
+            webfetch: "allow",
+            bash: "allow",
+            add_intel: "allow",
+          }),
+          user,
+        ),
+      },
+      "recon-js": {
+        name: "recon-js",
+        description: "JavaScript forensics: deobfuscation, source maps, endpoint and secret extraction, auth flow and role mapping. Does not call discovered APIs.",
+        mode: "subagent",
+        native: true,
+        prompt: PROMPT_RECON_JS,
+        options: {},
+        permission: PermissionNext.merge(
+          defaults,
+          PermissionNext.fromConfig({
+            "*": "deny",
+            read: "allow",
+            glob: "allow",
+            grep: "allow",
+            bash: "allow",
+            webfetch: "allow",
+            websearch: "allow",
+            add_intel: "allow",
+          }),
+          user,
+        ),
+      },
+      "recon-fuzzing": {
+        name: "recon-fuzzing",
+        description: "Endpoint and parameter discovery with noise baselines and tech-aware wordlists. No vulnerability payloads. Waits for WAF/CDN status.",
+        mode: "subagent",
+        native: true,
+        prompt: PROMPT_RECON_FUZZING,
+        options: {},
+        permission: PermissionNext.merge(
+          defaults,
+          PermissionNext.fromConfig({
+            "*": "deny",
+            bash: "allow",
+            webfetch: "allow",
+            read: "allow",
+            web_get_session_context: "allow",
+            add_intel: "allow",
+          }),
+          user,
+        ),
       },
       compaction: {
         name: "compaction",
