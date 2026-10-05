@@ -68,5 +68,5 @@ export async function finishAgentTask(
     throw new Error(`TASK_NOT_FINISHABLE: ${task.state}`)
   }
 
-  return setAgentTaskState(root, target, taskId, state, task.attempts)
+  return transitionTaskState(root,target,taskId,state,task.attempts,["running","claimed"])
 }
