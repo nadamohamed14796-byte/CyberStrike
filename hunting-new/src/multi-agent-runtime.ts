@@ -337,14 +337,13 @@ export async function executeAndRecordDispatchedTask(
     },
   )
 
-  const taskState=effectiveState==="confirmed"
-    ? "completed"
-    : effectiveState==="blocked"
-      ? "blocked"
-      : effectiveState==="rejected"
-        ? "completed"
-        : "failed"
-  await finishAgentTask(root,plan.target,taskId,taskState)
+  const terminal=effectiveState==="confirmed" || effectiveState==="blocked" || lifecycle.hypothesisStatus==="rejected"
+  const taskState=effectiveState==="blocked"
+    ? "blocked"
+    : terminal
+      ? "completed"
+      : "running"
+  if(terminal) await finishAgentTask(root,plan.target,taskId,taskState)
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
   return {context,result:{...result,state:effectiveState},lifecycle}
