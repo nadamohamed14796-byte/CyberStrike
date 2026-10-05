@@ -198,7 +198,6 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
 
     selected.push(task)
     activeBySkill.set(task.skill, activeForSkill + 1)
-    activeByRole.set(task.role, (activeByRole.get(task.role) ?? 0) + 1)
   }
 
   return { tasks: selected, blocked }
