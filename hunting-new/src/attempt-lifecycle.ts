@@ -5,6 +5,7 @@ import { checkpointPhase } from "./runtime-persistence"
 import { loadEvidence } from "./evidence-store"
 import { validateHypothesis, type ValidationResult } from "./validation-gate"
 import { recordAttemptLearningFeedback } from "./attempt-learning-feedback"
+import { setAgentTaskState } from "./agent-task-runtime"
 import type { AttemptState } from "./adaptive-attempts"
 
 export interface AttemptLifecycleResult {
@@ -29,6 +30,7 @@ export async function recordAttemptLifecycle(
     endpoint?:string
     accountMode?:string
     confidence?:number
+    taskId?:string
   },
 ):Promise<AttemptLifecycleResult>{
   const { loadAttempts } = await import("./attempt-store")
@@ -100,6 +102,17 @@ export async function recordAttemptLifecycle(
       confidence:update.confidence,
     },
   )
+
+  if(update.taskId){
+    const terminal=recorded.state==="confirmed" || recorded.state==="rejected" || recorded.state==="blocked"
+    await setAgentTaskState(
+      root,
+      target,
+      update.taskId,
+      terminal ? "completed" : "running",
+      stored.attempts.filter(x=>x.hypothesisId===hypothesis.id).length,
+    )
+  }
 
   await checkpointPhase(root,target,validation?.decision==="eligible" ? "validation:eligible" : "validation:state-transition")
   return {
