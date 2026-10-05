@@ -1,5 +1,6 @@
 import { loadAgentPlan } from "./agent-plan-store"
-import { dispatchPersistedTasks, executePersistedTaskWithNativeCyberStrike, type PreparedMultiAgentPlan } from "./multi-agent-runtime"
+import { dispatchPersistedTasks, executeAndRecordDispatchedTask, type PreparedMultiAgentPlan } from "./multi-agent-runtime"
+import { NativeCyberStrikeExecutor } from "./native-cyberstrike-executor"
 import { finishAgentTask } from "./agent-task-runtime"
 import { checkpointPhase } from "./runtime-persistence"
 
@@ -31,6 +32,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
         agentBySkill:options.agentBySkill,
         defaultAgent:options.defaultAgent,
         parentSessionID:options.parentSessionID,
+        model:options.model,
       }))
     }catch(error){
       await finishAgentTask(root,target,task.id,"failed")
