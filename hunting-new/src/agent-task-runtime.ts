@@ -39,3 +39,40 @@ export async function setAgentTaskState(
   await saveTaskState(root, target, record)
   return record
 }
+
+export async function claimAgentTask(
+  root: string,
+  target: string,
+  taskId: string,
+): Promise<TaskStateRecord> {
+  const current = await loadTaskStates(root, target)
+  const task = current.tasks.find(x => x.taskId === taskId)
+  if (!task) throw new Error("TASK_NOT_FOUND")
+  if (task.state !== "pending" && task.state !== "claimed") {
+    throw new Error(`TASK_NOT_CLAIMABLE: ${task.state}`)
+  }
+
+  return setAgentTaskState(
+    root,
+    target,
+    taskId,
+    "running",
+    task.attempts + 1,
+  )
+}
+
+export async function finishAgentTask(
+  root: string,
+  target: string,
+  taskId: string,
+  state: "completed" | "failed" | "blocked",
+): Promise<TaskStateRecord> {
+  const current = await loadTaskStates(root, target)
+  const task = current.tasks.find(x => x.taskId === taskId)
+  if (!task) throw new Error("TASK_NOT_FOUND")
+  if (task.state !== "running" && task.state !== "claimed") {
+    throw new Error(`TASK_NOT_FINISHABLE: ${task.state}`)
+  }
+
+  return setAgentTaskState(root, target, taskId, state, task.attempts)
+}
