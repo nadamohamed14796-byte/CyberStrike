@@ -151,3 +151,43 @@ export function nextAgentTasks(plan: MultiAgentPlan, limit = 4): AgentTask[] {
 
   return selected
 }
+
+export interface DispatchBatch {
+  tasks: AgentTask[]
+  blocked: AgentTask[]
+}
+
+export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pending" | "claimed" | "running" | "completed" | "failed" | "blocked">, limit = 4): DispatchBatch {
+  const activeByRole = new Map<HuntingAgentRole, number>()
+  for (const task of plan.tasks) {
+    const state = states.get(task.id)
+    if (state === "running" || state === "claimed") {
+      activeByRole.set(task.role, (activeByRole.get(task.role) ?? 0) + 1)
+    }
+  }
+
+  const selected: AgentTask[] = []
+  const blocked: AgentTask[] = []
+  const completed = new Set([...states.entries()].filter(([, state]) => state === "completed").map(([id]) => id))
+
+  for (const task of [...plan.tasks].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))) {
+    const state = states.get(task.id) ?? "pending"
+    if (state !== "pending") continue
+    const dependenciesSatisfied = task.dependencies.every(role =>
+      plan.lanes[role].some(dep => completed.has(dep.id)),
+    )
+    if (!dependenciesSatisfied) continue
+
+    const active = activeByRole.get(task.role) ?? 0
+    if (active >= task.maxParallelTasks) {
+      blocked.push(task)
+      continue
+    }
+    if (selected.length >= Math.max(1, limit)) break
+
+    selected.push(task)
+    activeByRole.set(task.role, active + 1)
+  }
+
+  return { tasks: selected, blocked }
+}
