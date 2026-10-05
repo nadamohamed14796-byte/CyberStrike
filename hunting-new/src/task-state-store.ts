@@ -36,6 +36,31 @@ async function withTaskStateLock<T>(root:string,target:string,work:()=>Promise<T
   throw new Error("TASK_STATE_LOCK_TIMEOUT")
 }
 
+export async function transitionTaskState(
+  root:string,
+  target:string,
+  taskId:string,
+  nextState:TaskStateRecord["state"],
+  attempts?:number,
+):Promise<TaskStateRecord>{
+  return withTaskStateLock(root,target,async()=>{
+    const current=await loadTaskStates(root,target)
+    const task=current.tasks.find(x=>x.taskId===taskId)
+    if(!task) throw new Error("TASK_NOT_FOUND")
+    const nextRecord:TaskStateRecord={
+      taskId,
+      state:nextState,
+      attempts:attempts===undefined?task.attempts:Math.max(0,attempts),
+      updatedAt:new Date().toISOString(),
+    }
+    const index=current.tasks.findIndex(x=>x.taskId===taskId)
+    current.tasks[index]=nextRecord
+    const next={...current,updatedAt:new Date().toISOString()}
+    await writeJson(file(root,target),next)
+    return nextRecord
+  })
+}
+
 export async function saveTaskState(root: string, target: string, task: TaskStateRecord): Promise<TaskStateStore> {
   return withTaskStateLock(root,target,async()=>{
     const current = await loadTaskStates(root, target)
