@@ -37,6 +37,27 @@ const DEFAULT_VARIANTS: Array<{ strategy: AttemptStrategy; variant: string }> = 
   { strategy: "workflow", variant: "replayed-step" },
 ]
 
+const SIGNAL_STRATEGY_ORDER:Record<string, AttemptStrategy[]>={
+  object_identifier_detected:["account-context","identifier","parameter","request-shape","method","encoding","header","path","workflow","parser","alternate-client","content-type"],
+  authenticated_endpoint:["account-context","parameter","request-shape","method","header","identifier","workflow","encoding","path","parser","alternate-client","content-type"],
+  javascript_function_request_correlation:["parameter","request-shape","encoding","parser","path","method","header","workflow","identifier","content-type","alternate-client","account-context"],
+  waf_signal_detected:["encoding","parameter","request-shape","content-type","parser","alternate-client","header","method","path","workflow","identifier","account-context"],
+  rate_limit_detected:["header","method","request-shape","alternate-client","workflow","parameter","path","encoding","content-type","parser","identifier","account-context"],
+  graphql_detected:["request-shape","parameter","method","content-type","parser","encoding","header","path","workflow","alternate-client","identifier","account-context"],
+  redirect_parameter_detected:["parameter","encoding","path","header","request-shape","method","parser","alternate-client","workflow","content-type","identifier","account-context"],
+  source_map_detected:["parameter","parser","request-shape","path","header","encoding","method","content-type","workflow","alternate-client","identifier","account-context"],
+}
+
+function rankStrategiesForHypothesis(hypothesis:HypothesisRecord, variants:Array<{strategy:AttemptStrategy;variant:string}>):Array<{strategy:AttemptStrategy;variant:string}>{
+  const preferred=SIGNAL_STRATEGY_ORDER[hypothesis.signal]
+  if(!preferred)return variants
+  const rank=new Map(preferred.map((strategy,index)=>[strategy,index]))
+  return [...variants].sort((a,b)=>
+    (rank.get(a.strategy)??preferred.length)-(rank.get(b.strategy)??preferred.length) ||
+    a.variant.localeCompare(b.variant)
+  )
+}
+
 export function rankValidationVariants(
   hypothesis: HypothesisRecord,
   variants: Array<{ strategy: AttemptStrategy; variant: string }>,
@@ -62,7 +83,8 @@ export function rankValidationVariants(
 
 export function createValidationPlan(hypothesis: HypothesisRecord, policy: Partial<AttemptPolicy> = {}, learning?: LearningEngine, falsePositives?: FalsePositiveIntelligence, target?: string): ValidationPlan {
   const maxAttempts = Math.min(policy.maxAttempts ?? 20, 20)
-  const variants = rankValidationVariants(hypothesis, DEFAULT_VARIANTS, learning, falsePositives, target).slice(0, maxAttempts)
+  const signalRanked = rankStrategiesForHypothesis(hypothesis, DEFAULT_VARIANTS)
+  const variants = rankValidationVariants(hypothesis, signalRanked, learning, falsePositives, target).slice(0, maxAttempts)
   return {
     hypothesisId: hypothesis.id,
     strategies: variants.map(x => x.strategy),
