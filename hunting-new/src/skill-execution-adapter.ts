@@ -24,7 +24,7 @@ export function buildSkillExecutionInvocation(
   const agent=options.agentBySkill?.[context.primarySkill] ??
     options.defaultAgent ??
     process.env.HUNT_DEFAULT_AGENT ??
-    "cyberstrike"
+    "web-application"
 
   const prompt=[
     "Execute one authorized bug-bounty validation task.",
