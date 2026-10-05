@@ -24,7 +24,7 @@ const DEFAULT_STRATEGIES: AttemptStrategy[] = [
 
 export function createValidationPlan(hypothesis: HypothesisRecord, policy: Partial<AttemptPolicy> = {}): ValidationPlan {
   const maxAttempts = Math.min(policy.maxAttempts ?? 20, 20)
-  return { hypothesisId: hypothesis.id, strategies: DEFAULT_STRATEGIES.slice(0, maxAttempts), maxAttempts }
+  return { hypothesisId: hypothesis.id, strategies: DEFAULT_VARIANTS.slice(0, maxAttempts).map(x => x.strategy), variants: DEFAULT_VARIANTS.slice(0, maxAttempts), maxAttempts }
 }
 
 export function createValidationRun(hypothesis: HypothesisRecord, policy: Partial<AttemptPolicy> = {}) {
