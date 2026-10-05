@@ -6,6 +6,10 @@ import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import type { SignalEngine, SkillRule } from "./signals"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
+import { upsertHypothesis } from "./hypothesis-store"
+import type { HypothesisRecord } from "./hypotheses"
+import { PersistentAttemptLedger } from "./persistent-attempt-ledger"
+import type { Attempt, StrategyClass } from "./adaptive-attempts"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -84,6 +88,59 @@ export async function resumePersistedDispatch(
     resolvedSkillCount:plan.tasks.reduce((sum,task)=>sum+(task.resolvedSkills?.length??0),0),
   }
   return dispatchPersistedTasks(root,prepared,limit)
+}
+
+export interface PreparedTaskValidation {
+  hypothesis: HypothesisRecord
+  attempt: Attempt
+}
+
+function strategyForTask(task: AgentTaskExecutionContext): StrategyClass {
+  const value=(task.signal+" "+task.primarySkill+" "+task.strategyHints.join(" ")).toLowerCase()
+  if(/waf|firewall|filter|blocked|403/.test(value)) return "encoding"
+  if(/idor|authorization|access|auth|tenant/.test(value)) return "account-context"
+  if(/api|graphql|rest|endpoint/.test(value)) return "request-shape"
+  if(/jwt|token/.test(value)) return "header"
+  if(/redirect|oauth/.test(value)) return "parameter"
+  if(/upload|file/.test(value)) return "content-type"
+  if(/js|javascript|source|bundle/.test(value)) return "parser"
+  return "parameter"
+}
+
+export async function prepareAgentTaskValidation(
+  root:string,
+  plan:MultiAgentPlan,
+  taskId:string,
+):Promise<PreparedTaskValidation>{
+  const context=buildAgentTaskExecutionContext(plan,taskId)
+  const hypothesis:HypothesisRecord={
+    id:"hyp_"+Bun.hash([
+      context.signal,
+      context.target,
+      context.endpoint??"",
+      context.functionId??"",
+    ].join("|")).toString(16),
+    title:`${context.signal} signal requires validation`,
+    signal:context.signal,
+    target:context.target,
+    endpoint:context.endpoint,
+    functionId:context.functionId,
+    confidence:context.signalConfidence,
+    status:"pending",
+    evidenceIds:[],
+    createdAt:new Date().toISOString(),
+  }
+  await upsertHypothesis(root,plan.target,hypothesis)
+  const ledger=await PersistentAttemptLedger.create(root,plan.target,{maxAttempts:20,minimumAttempts:20})
+  const strategy=strategyForTask(context)
+  const attempt=await ledger.plan(
+    hypothesis.id,
+    strategy,
+    "baseline",
+    `signal=${context.signal}; skill=${context.primarySkill}; strategy=${strategy}`,
+  )
+  if(!attempt) throw new Error("VALIDATION_ATTEMPT_UNAVAILABLE")
+  return {hypothesis,attempt}
 }
 
 export interface AgentTaskExecutionContext {
