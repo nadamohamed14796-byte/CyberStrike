@@ -24,7 +24,7 @@ export function deriveAttemptLearningOutcome(
   hypothesisStatus: HypothesisRecord["status"],
 ): AttemptLearningOutcome | undefined {
   if (attemptState === "confirmed" && hypothesisStatus === "confirmed") return "confirmed"
-  if (attemptState === "rejected") return "false_positive"
+  if (attemptState === "rejected" && hypothesisStatus === "rejected") return "false_positive"
   if (attemptState === "inconclusive") return "inconclusive"
   return undefined
 }
