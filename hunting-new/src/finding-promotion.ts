@@ -4,7 +4,9 @@ import { loadEvidence } from "./evidence-store"
 import { loadAttempts } from "./attempt-store"
 import { loadHypotheses } from "./hypothesis-store"
 import { loadFindings, upsertFinding } from "./finding-store"
-import { validateHypothesis, type ValidationResult } from "./validation-gate"
+import { FalsePositiveIntelligence } from "./false-positive-intelligence"
+import { dedupeDecision, shouldRecheckAfterNewEvidence } from "./dedupe-engine"
+import type { ValidationResult } from "./validation-gate"
 
 export interface FindingPromotionInput {
   hypothesisId:string
@@ -15,63 +17,75 @@ export interface FindingPromotionInput {
   remediation?:string
   chainId?:string
   validation:ValidationResult
+  signal?:string
+  skill?:string
+  strategy?:string
+  endpoint?:string
+  accountMode?:string
 }
 
 export interface FindingPromotionResult {
-  finding:FindingRecord
+  finding?:FindingRecord
   reportable:boolean
   missing:string[]
+  action:"skip"|"recheck"|"create"
+  reason:string
 }
 
 export async function promoteValidatedHypothesis(
   root:string,
   target:string,
   input:FindingPromotionInput,
+  falsePositives?:FalsePositiveIntelligence,
 ):Promise<FindingPromotionResult>{
   if(input.validation.decision!=="eligible"){
     throw new Error("FINDING_BLOCKED: hypothesis did not pass validation gate")
   }
 
-  const [hypotheses,evidenceState,attemptState]=await Promise.all([
-    loadHypotheses(root,target),
-    loadEvidence(root,target),
-    loadAttempts(root,target),
+  const [hypotheses,evidenceState,attemptState,storedFindings]=await Promise.all([
+    loadHypotheses(root,target), loadEvidence(root,target), loadAttempts(root,target), loadFindings(root,target),
   ])
   const hypothesis=hypotheses.hypotheses.find(x=>x.id===input.hypothesisId)
   if(!hypothesis) throw new Error("HYPOTHESIS_NOT_FOUND")
   if(hypothesis.status!=="confirmed") throw new Error("FINDING_BLOCKED: hypothesis is not confirmed")
 
   const linkedEvidence=evidenceState.evidence.filter(x =>
-    input.validation.evidenceIds.includes(x.id) ||
-    hypothesis.evidenceIds.includes(x.id)
+    input.validation.evidenceIds.includes(x.id) || hypothesis.evidenceIds.includes(x.id)
   )
   const linkedAttempts=attemptState.attempts.filter(x =>
     x.hypothesisId===hypothesis.id &&
     (x.state==="executed"||x.state==="confirmed"||x.state==="rejected"||x.state==="inconclusive")
   )
 
-  const finding=buildFinding({
-    target,
-    title:input.title,
-    severity:input.severity,
-    hypothesisId:hypothesis.id,
-    chainId:input.chainId,
-    attemptIds:linkedAttempts.map(x=>x.id),
-    evidence:linkedEvidence,
-    summary:input.summary,
-    impact:input.impact,
-    remediation:input.remediation,
-  })
+  const existing=storedFindings.find(x=>x.hypothesisId===hypothesis.id && x.chainId===input.chainId)
+  if(existing){
+    const newEvidence=linkedEvidence.some(x=>!existing.evidenceIds.includes(x.id))
+    if(!newEvidence) return {finding:existing,reportable:existing.status==="validated"||existing.status==="reported",missing:[],action:"skip",reason:"matching finding already exists with no new evidence"}
+  }
 
+  const fpContext={
+    target,signal:input.signal??hypothesis.signal,skill:input.skill??"unknown",
+    strategy:input.strategy??"validation",endpoint:input.endpoint,accountMode:input.accountMode,
+  }
+  const intelligence=falsePositives ?? new FalsePositiveIntelligence()
+  const dedupe=dedupeDecision(intelligence,fpContext)
+  if(dedupe.action==="skip" && !shouldRecheckAfterNewEvidence(intelligence,{...fpContext,evidenceIds:linkedEvidence.map(x=>x.id)})){
+    return {reportable:false,missing:[],action:"skip",reason:dedupe.reason}
+  }
+
+  const finding=buildFinding({
+    target,title:input.title,severity:input.severity,hypothesisId:hypothesis.id,chainId:input.chainId,
+    attemptIds:linkedAttempts.map(x=>x.id),evidence:linkedEvidence,summary:input.summary,impact:input.impact,remediation:input.remediation,
+  })
   const completeness=checkFindingEvidence(finding)
   if(!completeness.complete){
     await upsertFinding(root,target,finding)
-    return {finding,reportable:false,missing:completeness.missing}
+    return {finding,reportable:false,missing:completeness.missing,action:"recheck",reason:"finding evidence is incomplete"}
   }
 
   const validated=markReportable(finding)
   await upsertFinding(root,target,validated)
-  return {finding:validated,reportable:true,missing:[]}
+  return {finding:validated,reportable:true,missing:[],action:"create",reason:"validated finding passed report evidence gate"}
 }
 
 export async function findStoredFinding(root:string,target:string,fingerprint:string){
