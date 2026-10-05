@@ -130,7 +130,6 @@ export async function prepareAgentTaskValidation(
     return true
   }).sort((a,b)=>b.observedAt-a.observedAt)[0]
   const correlatedResponse=correlated ? intelligence.responses.find(response=>response.requestId===correlated.id) : undefined
-  const correlatedAssets=correlated ? intelligence.jsAssets.filter(asset=>intelligence.requests.some(request=>request.id===correlated.id && request.url===request.url && asset.url===request.url)) : []
   const existing=storedHypotheses.hypotheses.find(x=>x.id===hypothesisId)
   const hypothesis:HypothesisRecord=existing ?? {
     id:hypothesisId,
@@ -178,6 +177,28 @@ export interface AgentTaskExecutionContext {
   reason:string
 }
 
+export async function enrichAgentTaskExecutionContext(
+  root:string,
+  plan:MultiAgentPlan,
+  context:AgentTaskExecutionContext,
+):Promise<AgentTaskExecutionContext>{
+  const intelligence=await loadTargetIntelligence(root,plan.target)
+  const candidates=intelligence.requests.filter(request=>{
+    if(context.endpoint && request.path) return request.path===context.endpoint || request.url.includes(context.endpoint)
+    return true
+  }).sort((a,b)=>b.observedAt-a.observedAt)
+  const request=candidates[0]
+  const response=request ? intelligence.responses.find(item=>item.requestId===request.id) : undefined
+  return {
+    ...context,
+    requestId:request?.id,
+    responseId:response?.id,
+    accountLabel:request?.accountLabel,
+    functionIds:context.functionId?[context.functionId]:[],
+    jsAssetIds:[],
+  }
+}
+
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
@@ -210,7 +231,8 @@ export async function executeAndRecordDispatchedTask(
   executor:AgentTaskExecutor,
 ):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult}>{
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
-  const context={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
+  const baseContext={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
+  const context=await enrichAgentTaskExecutionContext(root,plan,baseContext)
   const result=await executor.execute(context)
   const attemptId=result.attemptId??prepared.attempt.id
 
