@@ -1,4 +1,5 @@
 import { buildMultiAgentPlan, type MultiAgentPlan } from "./multi-agent-planner"
+import { recordAttemptLifecycle, type AttemptLifecycleResult } from "./attempt-lifecycle"
 import { persistAgentPlan } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
@@ -118,4 +119,36 @@ export async function executeDispatchedTask(root:string,plan:MultiAgentPlan,task
   const result=await executor.execute(context)
   await checkpointPhase(root,plan.target,"tasks:executor:"+result.state)
   return {context,result}
+}
+
+export async function executeAndRecordDispatchedTask(
+  root:string,
+  plan:MultiAgentPlan,
+  taskId:string,
+  executor:AgentTaskExecutor,
+):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult}>{
+  const context=buildAgentTaskExecutionContext(plan,taskId)
+  const result=await executor.execute(context)
+
+  if(!result.attemptId){
+    await checkpointPhase(root,plan.target,"tasks:executor:"+result.state)
+    return {context,result}
+  }
+
+  const lifecycle=await recordAttemptLifecycle(
+    root,
+    plan.target,
+    result.attemptId,
+    {
+      state:result.state,
+      requestId:result.requestId,
+      resultSummary:result.resultSummary,
+      evidenceIds:result.evidenceIds,
+      skill:context.primarySkill,
+      confidence:context.signalConfidence,
+      taskId:context.taskId,
+    },
+  )
+
+  return {context,result,lifecycle}
 }
