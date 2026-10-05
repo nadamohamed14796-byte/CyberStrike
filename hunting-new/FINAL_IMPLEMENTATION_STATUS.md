@@ -10,12 +10,12 @@ This checkpoint is intentionally **PARTIAL**. The foundation is implemented; the
 | JavaScript Discovery | PARTIAL |
 | JavaScript Analysis | PARTIAL |
 | JS / Request Correlation | PARTIAL |
-| Request / Response Correlation | MISSING |
+| Request / Response Correlation | IMPLEMENTED (hunting graph; runtime ingestion adapter still pending) |
 | Function-Centric Model | PARTIAL |
 | Browser Session Correlation | PARTIAL |
 | Finding Lifecycle | PARTIAL |
 | Validation Gate | IMPLEMENTED |
-| Adaptive Attempt Ledger | PARTIAL |
+| Adaptive Attempt Ledger | IMPLEMENTED (bounded ledger + variant dedupe) |
 | Evidence Provenance | PARTIAL |
 | False-Positive Store | PARTIAL |
 | Deduplication | IMPLEMENTED |
@@ -27,7 +27,7 @@ This checkpoint is intentionally **PARTIAL**. The foundation is implemented; the
 | Skill Registry | PARTIAL |
 | Runtime Preflight | PARTIAL |
 | Runtime Registry | IMPLEMENTED |
-| Multi-Agent Orchestration | PARTIAL |
+| Multi-Agent Orchestration | PARTIAL (dispatch foundation implemented; runtime wiring pending) |
 | Proxy Intake / Correlator | MISSING |
 | Learning Engine | PARTIAL |
 | Writeup Ingestion | MISSING |
@@ -36,7 +36,7 @@ This checkpoint is intentionally **PARTIAL**. The foundation is implemented; the
 | Mission Resume Reconstruction | PARTIAL |
 | Context Budget | IMPLEMENTED |
 | JS-derived Wordlists | IMPLEMENTED |
-| Testing | PARTIAL |
+| Testing | PARTIAL (unit fixtures added; CI verification pending) |
 | Documentation | PARTIAL |
 
 ## Current checkpoint
@@ -71,3 +71,14 @@ Not yet complete:
 - full end-to-end test fixture and coverage dashboard
 
 No completion claim should be made until these are implemented and CI proves them.
+
+
+## Latest implementation checkpoint
+
+Added:
+- bidirectional-ready request/response correlation graph with provenance edges
+- bounded adaptive attempt ledger with a 20-attempt default ceiling and variant deduplication
+- mission dispatch foundation with explicit scope gating and strategy-class rotation
+- unit tests for correlation and adaptive-attempt invariants
+
+These components are intentionally runtime-neutral until they are wired into CyberStrike's existing request/session/browser paths.
