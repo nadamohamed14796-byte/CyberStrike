@@ -1,4 +1,4 @@
-import { addRequest, addResponse, link, type CorrelationGraph, type RequestNode, type ResponseNode } from "./correlation"
+import { addRequest, addResponse, link, type CorrelationGraph, type RequestNode, type ResponseNode, type JSAssetNode } from "./correlation"
 import { rememberTargetIntelligence } from "./target-intelligence"
 
 export interface NetworkObservation {
@@ -6,6 +6,7 @@ export interface NetworkObservation {
   request: { id: string; method: string; url: string; host?: string; path?: string; credentialId?: string; accountLabel?: string; observedAt?: number }
   response?: { id: string; status: number; headers?: Record<string,string>; contentType?: string; bodyHash?: string; observedAt?: number }
   jsAssetIds?: string[]
+  jsAssets?: JSAssetNode[]
   functionIds?: string[]
 }
 
@@ -15,7 +16,7 @@ export async function ingestAndPersistObservation(root: string, target: string, 
   await rememberTargetIntelligence(root, target, {
     requests: [graph.requests.get(observation.request.id)!],
     responses: response ? [graph.responses.get(response.id)!] : [],
-    jsAssets: [],
+    jsAssets: observation.jsAssets ?? [],
     hypotheses: [],
     tags: [],
   })
