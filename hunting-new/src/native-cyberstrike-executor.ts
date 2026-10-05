@@ -1,4 +1,5 @@
 import { runHuntingTask } from "../../packages/cyberstrike/src/tool/task"
+import { Instance } from "../../packages/cyberstrike/src/project/instance"
 import type { AgentTaskExecutionContext, AgentTaskExecutor } from "./multi-agent-runtime"
 import { buildSkillExecutionInvocation } from "./skill-execution-adapter"
 
@@ -16,12 +17,12 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
       agentBySkill:this.options.agentBySkill,
       defaultAgent:this.options.defaultAgent,
     })
-    const result=await runHuntingTask({
+    const result=await Instance.provide({ directory: context.target, fn: async () => runHuntingTask({
       description:`validate ${context.signal}`,
       prompt:invocation.prompt,
       subagentType:invocation.agent,
       parentSessionID:this.options.parentSessionID,
-    })
+    }) })
     const state:"executed"|"inconclusive"|"blocked"|"rejected"|"confirmed" =
       result.outcome==="clean" ? "executed" : "inconclusive"
     return {
