@@ -2765,6 +2765,105 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "advanced-xss",
+      "description": "Advanced XSS context analysis, browser parsing differences, DOM source-to-sink tracing, and validation methodology",
+      "category": "web-testing",
+      "verified": "community-derived",
+      "tags": [
+        "xss",
+        "dom-xss",
+        "stored-xss",
+        "reflected-xss",
+        "dom-clobbering"
+      ],
+      "tech_stack": [
+        "html",
+        "javascript",
+        "dom"
+      ],
+      "cwe_ids": [
+        "CWE-79"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "xss-modern-browser",
+      "description": "Modern browser XSS analysis covering CSP, Trusted Types, sanitizers, modules, workers, SVG and Web Components",
+      "category": "web-testing",
+      "verified": "community-derived",
+      "tags": [
+        "xss",
+        "csp",
+        "trusted-types",
+        "sanitizer",
+        "webassembly",
+        "service-worker"
+      ],
+      "tech_stack": [
+        "javascript",
+        "browser",
+        "csp"
+      ],
+      "cwe_ids": [
+        "CWE-79"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "xss-realtime-protocols",
+      "description": "XSS data-flow testing across postMessage, WebSockets, SSE, GraphQL and API rendering boundaries",
+      "category": "web-testing",
+      "verified": "community-derived",
+      "tags": [
+        "xss",
+        "postmessage",
+        "websocket",
+        "sse",
+        "graphql",
+        "api"
+      ],
+      "tech_stack": [
+        "javascript",
+        "graphql",
+        "websocket",
+        "sse"
+      ],
+      "cwe_ids": [
+        "CWE-79"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "xss-ai-application",
+      "description": "XSS testing for AI assistants, agent UIs, markdown and document renderers, and model-output browser data flows",
+      "category": "web-testing",
+      "verified": "community-derived",
+      "tags": [
+        "xss",
+        "ai",
+        "llm",
+        "markdown",
+        "agent"
+      ],
+      "tech_stack": [
+        "javascript",
+        "html",
+        "markdown"
+      ],
+      "cwe_ids": [
+        "CWE-79"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ]
 }
