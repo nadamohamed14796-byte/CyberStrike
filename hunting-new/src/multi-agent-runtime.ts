@@ -34,3 +34,35 @@ export async function prepareMultiAgentPlan(
     resolvedSkillCount:plan.tasks.reduce((sum,task)=>sum+(task.resolvedSkills?.length??0),0),
   }
 }
+
+import { dispatchAgentTasks } from "./multi-agent-planner"
+import { loadTaskStates } from "./task-state-store"
+import { claimAgentTask, finishAgentTask } from "./agent-task-runtime"
+import { checkpointPhase } from "./runtime-persistence"
+
+export async function dispatchPersistedTasks(
+  root:string,
+  prepared:PreparedMultiAgentPlan,
+  limit=4,
+){
+  const state=await loadTaskStates(root,prepared.plan.target)
+  const states=new Map(state.tasks.map(task=>[task.taskId,task.state] as const))
+  const batch=dispatchAgentTasks(prepared.plan,states,limit)
+  const claimed=[]
+  for(const task of batch.tasks){
+    claimed.push(await claimAgentTask(root,prepared.plan.target,task.id))
+  }
+  await checkpointPhase(root,prepared.plan.target,"tasks:dispatched")
+  return {batch,claimed}
+}
+
+export async function completeDispatchedTask(
+  root:string,
+  target:string,
+  taskId:string,
+  state:"completed"|"failed"|"blocked",
+){
+  const result=await finishAgentTask(root,target,taskId,state)
+  await checkpointPhase(root,target,`tasks:${state}`)
+  return result
+}
