@@ -8,7 +8,7 @@ import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
   persistedTaskIds:string[]
-  registrySize:number
+  resolvedSkillCount:number
 }
 
 export async function prepareMultiAgentPlan(
@@ -31,6 +31,6 @@ export async function prepareMultiAgentPlan(
   return {
     plan,
     persistedTaskIds:created.map(x=>x.taskId),
-    registrySize:plan.tasks.reduce((sum,task)=>sum+(task.resolvedSkills?.length??0),0),
+    resolvedSkillCount:plan.tasks.reduce((sum,task)=>sum+(task.resolvedSkills?.length??0),0),
   }
 }
