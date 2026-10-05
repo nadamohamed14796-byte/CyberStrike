@@ -12,6 +12,8 @@ export interface AgentTask {
   skill: string
   signal: string
   signalConfidence: number
+  endpoint?: string
+  functionId?: string
   target: string
   priority: number
   reason: string
