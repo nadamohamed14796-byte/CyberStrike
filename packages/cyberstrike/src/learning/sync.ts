@@ -47,11 +47,11 @@ export async function fetchSource(source: Source) {
 }
 
 // Sync every source, then run the same pipeline on the cached files.
-export async function sync() {
+export async function sync(notes?: string) {
   const results = []
   for (const source of SOURCES) {
     const { dir, head } = await fetchSource(source)
-    const { index, briefing } = await update(dir)
+    const { index, briefing } = await update(dir, notes)
     results.push({ source: source.name, head, writeups: index.count, briefing })
   }
   return results

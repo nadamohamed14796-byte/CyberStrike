@@ -38,3 +38,17 @@ describe("learning pipeline", () => {
     expect(briefing).toContain("No write-ups yet.")
   })
 })
+
+describe("own notes", () => {
+  test("accepted findings add weight and false positives are listed", async () => {
+    const dir = await fixture({ "a.md": "# IDOR on invoices\nBOLA on invoice id" })
+    const notes = await fs.mkdtemp(path.join(os.tmpdir(), "notes-"))
+    await fs.mkdir(path.join(notes, "findings"))
+    await fs.writeFile(path.join(notes, "findings", "f.md"), "# Own IDOR\nstatus: accepted\nclass: idor\n")
+    await fs.writeFile(path.join(notes, "fp.md"), "# fp\n- Missing HSTS on static pages\n")
+    const { briefing } = await update(dir, notes)
+    expect(briefing).toContain("- idor: 1")
+    expect(briefing).toContain("1. idor (2 real cases)")
+    expect(briefing).toContain("- Missing HSTS on static pages")
+  })
+})

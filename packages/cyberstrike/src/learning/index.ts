@@ -1,5 +1,6 @@
 import path from "path"
 import { Glob } from "bun"
+import { findings, falsePositives, acceptedClasses } from "./notes"
 
 // Offline learning pipeline: writeups -> process -> learn -> briefing.
 // Input is a local folder of markdown write-ups. Output is a JSON index
@@ -79,8 +80,10 @@ export function learn(writeups: Writeup[]): Index {
 }
 
 // Briefing: the file agents read first. Ranks classes by how often they appear.
-export function briefing(index: Index) {
-  const ranked = Object.entries(index.classes).sort((a, b) => b[1] - a[1])
+export function briefing(index: Index, own: { accepted: Record<string, number>; fp: string[] } = { accepted: {}, fp: [] }) {
+  const merged: Record<string, number> = { ...index.classes }
+  for (const [name, n] of Object.entries(own.accepted)) merged[name] = (merged[name] ?? 0) + n
+  const ranked = Object.entries(merged).sort((a, b) => b[1] - a[1])
   const priorities = ranked.map(([name, n], i) => `${i + 1}. ${name} (${n} real cases)`).join("\n")
   return [
     "# Agent Briefing",
@@ -89,6 +92,12 @@ export function briefing(index: Index) {
     "",
     "## Hunt Priorities (by real-case frequency)",
     priorities || "No write-ups yet.",
+    "",
+    "## Your Accepted Findings (weighted into priorities above)",
+    Object.keys(own.accepted).length ? Object.entries(own.accepted).map(([n, c]) => `- ${n}: ${c}`).join("\n") : "None recorded yet.",
+    "",
+    "## Known False Positives (do NOT report these)",
+    own.fp.length ? own.fp.map((item) => `- ${item}`).join("\n") : "None recorded yet.",
     "",
     "## Rules",
     "- Follow the FP Gate before reporting. A lead is not a finding.",
@@ -99,7 +108,10 @@ export function briefing(index: Index) {
 }
 
 // Run the whole pipeline: returns the index and the briefing text.
-export async function update(dir: string) {
+export async function update(dir: string, notes?: string) {
   const index = learn(await process(dir))
-  return { index, briefing: briefing(index) }
+  const own = notes
+    ? { accepted: acceptedClasses(await findings(notes)), fp: await falsePositives(notes) }
+    : { accepted: {}, fp: [] }
+  return { index, briefing: briefing(index, own) }
 }

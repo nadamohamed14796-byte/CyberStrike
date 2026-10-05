@@ -205,6 +205,7 @@ Observation: Got 404 with "User not found". A valid username returns 401 with "I
 - If scope is unclear, stop escalation and state exactly which scope information is missing.
 
 ### Authorization
+- If the project has `.cyberstrike/scope.md`, read it first. It is the source of truth for in-scope hosts, out-of-scope hosts, program rules and priorities. If it does not exist, ask the user for scope before any offensive step.
 Before any offensive testing:
 1. Confirm the user has authorization for the target
 2. Define scope (in-scope / out-of-scope assets)
