@@ -1,3 +1,4 @@
+import { buildExecutionContract } from "./execution-result"
 import type { AgentTaskExecutionContext } from "./multi-agent-runtime"
 
 export interface SkillExecutionInvocation {
@@ -49,6 +50,8 @@ export function buildSkillExecutionInvocation(
     "",
     "reason:",
     context.reason,
+    "",
+    buildExecutionContract(),
   ].join("\n")
 
   return {
