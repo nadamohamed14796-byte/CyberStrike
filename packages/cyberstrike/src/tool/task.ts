@@ -352,3 +352,67 @@ export const TaskTool = Tool.define("task", async (ctx) => {
     },
   }
 })
+
+
+export interface HuntingTaskInput {
+  description:string
+  prompt:string
+  subagentType:string
+  model?:{providerID:string;modelID:string}
+  parentSessionID?:string
+}
+
+export interface HuntingTaskResult {
+  sessionId:string
+  taskId:string
+  output:string
+  outcome:"clean"|"aborted"|"errored"|"capped"|"stuck"
+}
+
+export async function runHuntingTask(input:HuntingTaskInput):Promise<HuntingTaskResult>{
+  const config=await Config.get()
+  const agent=await Agent.get(input.subagentType)
+  if(!agent) throw new Error(`Unknown agent type: ${input.subagentType}`)
+  const session=await Session.create({
+    parentID:input.parentSessionID,
+    title:input.description+` (@${agent.name} hunting task)`,
+    permission:[
+      {permission:"todowrite",pattern:"*",action:"deny"},
+      {permission:"todoread",pattern:"*",action:"deny"},
+      {permission:"task",pattern:"*",action:"deny"},
+      ...(config.experimental?.primary_tools?.map((tool)=>({
+        permission:tool,
+        pattern:"*",
+        action:"allow" as const,
+      })) ?? []),
+    ],
+  })
+  const model=input.model ?? agent.model ?? (input.parentSessionID
+    ? await SessionPrompt.lastModel(input.parentSessionID)
+    : undefined)
+  if(!model) throw new Error("No model available for hunting task")
+  const messageID=Identifier.ascending("message")
+  const parts=await SessionPrompt.resolvePromptParts(input.prompt)
+  const result=await SessionPrompt.prompt({
+    messageID,
+    sessionID:session.id,
+    model,
+    agent:agent.name,
+    tools:{
+      todowrite:false,
+      todoread:false,
+      task:false,
+      ...Object.fromEntries((config.experimental?.primary_tools ?? []).map((tool)=>[tool,false])),
+    },
+    parts,
+  })
+  const childInfo=result.info
+  const childError=childInfo.role==="assistant" ? childInfo.error : undefined
+  const outcome: HuntingTaskResult["outcome"]=childError
+    ? MessageV2.AbortedError.isInstance(childError) ? "aborted" : "errored"
+    : childInfo.role==="assistant" && childInfo.stuckAborted ? "stuck"
+    : childInfo.role==="assistant" && childInfo.stepCapped ? "capped"
+    : "clean"
+  const text=result.parts.findLast((part)=>part.type==="text")?.text ?? ""
+  return {sessionId:session.id,taskId:session.id,output:text,outcome}
+}
