@@ -40,7 +40,9 @@ export async function prepareMultiAgentPlanFromTargetIntelligence(
     edges:intelligence.edges,
   })
   const registry=await loadSkillRegistry(root)
-  const plan=buildMultiAgentPlanFromRegistry(engine,registry,target,learning,falsePositives)
+  const persistedLearning=learning ?? LearningEngine.fromObservations((await loadLearning(root,target)).observations)
+  const persistedFalsePositives=falsePositives ?? hydrateFalsePositiveIntelligence(await loadFalsePositives(root,target))
+  const plan=buildMultiAgentPlanFromRegistry(engine,registry,target,persistedLearning,persistedFalsePositives)
   const created=await persistAgentPlan(root,plan)
 
   for(const task of plan.tasks){
