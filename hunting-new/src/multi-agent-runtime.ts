@@ -42,7 +42,6 @@ export async function prepareMultiAgentPlan(
 import { dispatchAgentTasks } from "./multi-agent-planner"
 import { loadTaskStates } from "./task-state-store"
 import { claimAgentTask, finishAgentTask } from "./agent-task-runtime"
-import { checkpointPhase } from "./runtime-persistence"
 
 export async function dispatchPersistedTasks(
   root:string,
