@@ -9,6 +9,8 @@ export interface RuntimeCheckpoint {
   activeHypothesisIds: string[]
   activeChainIds: string[]
   completedAttemptIds: string[]
+  activeTaskIds: string[]
+  completedTaskIds: string[]
   updatedAt: string
 }
 
@@ -34,6 +36,8 @@ export async function saveCheckpoint(
     activeHypothesisIds: checkpoint.activeHypothesisIds,
     activeChainIds: checkpoint.activeChainIds,
     completedAttemptIds: checkpoint.completedAttemptIds,
+    activeTaskIds: checkpoint.activeTaskIds,
+    completedTaskIds: checkpoint.completedTaskIds,
     timestamp: next.updatedAt,
   })
   return next
