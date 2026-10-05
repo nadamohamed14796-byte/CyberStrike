@@ -1,6 +1,8 @@
 import { AttemptLedger, type AttemptPolicy, type Attempt, type AttemptStrategy } from "./adaptive-attempts"
 import { validateHypothesis, type ValidationEvidence } from "./validation-gate"
 import type { HypothesisRecord } from "./hypotheses"
+import type { LearningEngine } from "./learning-engine"
+import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 
 export interface ValidationPlan {
   hypothesisId: string
@@ -35,9 +37,32 @@ const DEFAULT_VARIANTS: Array<{ strategy: AttemptStrategy; variant: string }> = 
   { strategy: "workflow", variant: "replayed-step" },
 ]
 
-export function createValidationPlan(hypothesis: HypothesisRecord, policy: Partial<AttemptPolicy> = {}): ValidationPlan {
+export function rankValidationVariants(
+  hypothesis: HypothesisRecord,
+  variants: Array<{ strategy: AttemptStrategy; variant: string }>,
+  learning?: LearningEngine,
+  falsePositives?: FalsePositiveIntelligence,
+  target?: string,
+): Array<{ strategy: AttemptStrategy; variant: string }> {
+  if (!learning || !target) return variants
+  const scores = learning.score(target)
+  return [...variants].sort((a,b) => {
+    const score = (item: typeof a) => {
+      const learned = scores
+        .filter(x => x.key.startsWith(hypothesis.signal + "|") && x.key.split("|")[2] === item.strategy)
+        .reduce((best,x) => Math.max(best,x.utility), 0)
+      const fp = falsePositives?.list(target)
+        .filter(x => x.signal === hypothesis.signal && x.strategy === item.strategy)
+        .reduce((sum,x) => sum + Math.min(.75, .05*x.count), 0) ?? 0
+      return learned - fp
+    }
+    return score(b) - score(a)
+  })
+}
+
+export function createValidationPlan(hypothesis: HypothesisRecord, policy: Partial<AttemptPolicy> = {}, learning?: LearningEngine, falsePositives?: FalsePositiveIntelligence, target?: string): ValidationPlan {
   const maxAttempts = Math.min(policy.maxAttempts ?? 20, 20)
-  const variants = DEFAULT_VARIANTS.slice(0, maxAttempts)
+  const variants = rankValidationVariants(hypothesis, DEFAULT_VARIANTS, learning, falsePositives, target).slice(0, maxAttempts)
   return {
     hypothesisId: hypothesis.id,
     strategies: variants.map(x => x.strategy),
@@ -46,11 +71,11 @@ export function createValidationPlan(hypothesis: HypothesisRecord, policy: Parti
   }
 }
 
-export function createValidationRun(hypothesis: HypothesisRecord, policy: Partial<AttemptPolicy> = {}) {
+export function createValidationRun(hypothesis: HypothesisRecord, policy: Partial<AttemptPolicy> = {}, learning?: LearningEngine, falsePositives?: FalsePositiveIntelligence, target?: string) {
   const maxAttempts = Math.min(policy.maxAttempts ?? 20, 20)
   return {
     ledger: new AttemptLedger({ ...policy, maxAttempts }),
-    plan: createValidationPlan(hypothesis, { ...policy, maxAttempts }),
+    plan: createValidationPlan(hypothesis, { ...policy, maxAttempts }, learning, falsePositives, target),
   }
 }
 
