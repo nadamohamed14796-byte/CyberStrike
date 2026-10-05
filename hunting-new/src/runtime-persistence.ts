@@ -1,8 +1,10 @@
 import { loadHuntingState, type HuntingState } from "./hunting-state"
 import { loadCheckpoint, saveCheckpoint, type RuntimeCheckpoint } from "./runtime-checkpoint"
+import { loadTaskStates } from "./task-state-store"
 import { updateMission, type MissionState } from "./mission"
 import type { HypothesisRecord } from "./hypotheses"
 import type { Chain } from "./chain-board"
+import type { TaskStateRecord } from "./task-state"
 
 export async function resumeHunting(root:string,target:string):Promise<HuntingState>{
   return loadHuntingState(root,target)
@@ -13,14 +15,16 @@ export interface ResumeContext {
   checkpoint:RuntimeCheckpoint|null
   activeHypotheses:HypothesisRecord[]
   activeChains:Chain[]
+  activeTasks:TaskStateRecord[]
   nextAttemptNumber:Record<string,number>
   resumePhase:string
 }
 
 export async function resumeHuntingContext(root:string,target:string):Promise<ResumeContext>{
-  const [state,checkpoint]=await Promise.all([
+  const [state,checkpoint,tasks]=await Promise.all([
     loadHuntingState(root,target),
     loadCheckpoint(root,target),
+    loadTaskStates(root,target),
   ])
 
   const activeHypotheses=state.hypotheses.hypotheses.filter(x =>
@@ -30,6 +34,9 @@ export async function resumeHuntingContext(root:string,target:string):Promise<Re
   const activeChains=state.chains.chains.filter(x =>
     (x.status==="open" || x.status==="testing") &&
     (!checkpoint?.activeChainIds.length || checkpoint.activeChainIds.includes(x.id))
+  )
+  const activeTasks=tasks.tasks.filter(x =>
+    x.state==="pending" || x.state==="claimed" || x.state==="running"
   )
 
   const nextAttemptNumber:Record<string,number>={}
@@ -43,6 +50,7 @@ export async function resumeHuntingContext(root:string,target:string):Promise<Re
     checkpoint,
     activeHypotheses,
     activeChains,
+    activeTasks,
     nextAttemptNumber,
     resumePhase:checkpoint?.phase ?? state.mission?.checkpoint ?? "initial",
   }
@@ -58,6 +66,10 @@ export function selectNextHypothesis(context:ResumeContext):HypothesisRecord|und
   })[0]
 }
 
+export function selectNextTask(context:ResumeContext):TaskStateRecord|undefined{
+  return [...context.activeTasks].sort((a,b)=>a.updatedAt.localeCompare(b.updatedAt))[0]
+}
+
 export async function checkpointHunting(
   root:string,
   state:HuntingState,
@@ -65,6 +77,7 @@ export async function checkpointHunting(
 ):Promise<RuntimeCheckpoint>{
   const target=state.mission?.target ?? ""
   if(!target) throw new Error("CHECKPOINT_BLOCKED: mission target is missing")
+  const tasks=await loadTaskStates(root,target)
   return saveCheckpoint(root,{
     target,
     missionState:state.mission?.state ?? "PAUSED",
@@ -78,6 +91,12 @@ export async function checkpointHunting(
     completedAttemptIds:state.attempts.attempts
       .filter(x=>x.state==="executed"||x.state==="confirmed")
       .map(x=>x.id),
+    activeTaskIds:tasks.tasks
+      .filter(x=>x.state==="pending"||x.state==="claimed"||x.state==="running")
+      .map(x=>x.taskId),
+    completedTaskIds:tasks.tasks
+      .filter(x=>x.state==="completed")
+      .map(x=>x.taskId),
   })
 }
 
