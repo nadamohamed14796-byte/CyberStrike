@@ -63,7 +63,7 @@ function dependencyRoles(role: HuntingAgentRole): HuntingAgentRole[] {
 }
 
 export function skillRulesFromRegistry(registry: SkillRegistry): SkillRule[] {
-  const skills = (registry as unknown as { skills?: SkillMetadata[] }).skills ?? []
+  const skills = registry.list()
   return skills.map(skill => ({
     name: skill.name,
     confidence_threshold: skill.confidence_threshold,
