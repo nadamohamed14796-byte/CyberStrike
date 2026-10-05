@@ -1,5 +1,6 @@
 import type { SignalEngine, SkillRule, SkillSelection } from "./signals"
 import { routeSkills, type RoutingDecision } from "./skill-router"
+import { prioritizeSkills } from "./learned-prioritization"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import type { SkillRegistry, SkillMetadata } from "./skill-registry"
@@ -70,7 +71,6 @@ export function buildMultiAgentPlanFromRegistry(
   falsePositives?: FalsePositiveIntelligence,
 ): MultiAgentPlan {
   const signals = engine.forTarget(target)
-  const signalNames = new Set(signals.map(signal => signal.signal.toLowerCase().replace(/[_\s]+/g, "-")))
   const selections: SkillSelection[] = []
 
   for (const metadata of registry.list()) {
