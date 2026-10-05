@@ -81,8 +81,13 @@ export async function recordAttemptLifecycle(
   const attemptCount = hypothesisAttempts.length
   const minimumAttempts = 20
   let hypothesisStatus:"pending"|"testing"|"confirmed"|"rejected"|"blocked" = "testing"
-  if(recorded.state==="confirmed") hypothesisStatus=validation?.decision==="eligible" ? "confirmed" : "blocked"
-  else if(recorded.state==="rejected") hypothesisStatus=attemptCount >= minimumAttempts ? "rejected" : "testing"
+  if(recorded.state==="confirmed"){
+    hypothesisStatus=validation?.decision==="eligible"
+      ? "confirmed"
+      : attemptCount>=minimumAttempts
+        ? "blocked"
+        : "testing"
+  }else if(recorded.state==="rejected") hypothesisStatus=attemptCount >= minimumAttempts ? "rejected" : "testing"
   else if(recorded.state==="blocked") hypothesisStatus="blocked"
 
   await transitionHypothesis(root,target,hypothesis.id,hypothesisStatus,
