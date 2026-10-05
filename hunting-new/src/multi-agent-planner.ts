@@ -11,6 +11,7 @@ export interface AgentTask {
   role: HuntingAgentRole
   skill: string
   signal: string
+  signalConfidence: number
   target: string
   priority: number
   reason: string
@@ -97,6 +98,7 @@ export function buildMultiAgentPlan(
         role,
         skill: skill.name,
         signal: signal.signal,
+        signalConfidence: signal.confidence,
         target,
         priority: Math.round((skill.score * 100) + signal.confidence * 100 + (skill.priority ?? 0)),
         reason: `signal=${signal.signal}; confidence=${signal.confidence.toFixed(2)}; skill score=${skill.score.toFixed(2)}`,
@@ -119,7 +121,7 @@ export function buildMultiAgentPlan(
 
 export function resolveAgentTaskSkills(task: AgentTask, registry: SkillRegistry): AgentExecutionSelection {
   const triggerNames = new Set<string>([task.signal, ...task.strategyHints])
-  const selected = registry.select([...triggerNames], 0)
+  const selected = registry.select([...triggerNames], task.signalConfidence)
   const primary = registry.get(task.skill)
   const resolved = registry.resolve([task.skill, ...selected.map(skill => skill.name)])
   return {
