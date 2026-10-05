@@ -151,13 +151,16 @@ export interface AgentTaskExecutionContext {
   strategyHints:string[]
   signal:string
   signalConfidence:number
+  endpoint?:string
+  functionId?:string
+  attemptId?:string
   reason:string
 }
 
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
-  return { taskId:task.id, target:task.target, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, reason:task.reason }
+  return { taskId:task.id, target:task.target, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
 }
 
 export interface AgentTaskExecutor {
@@ -183,18 +186,15 @@ export async function executeAndRecordDispatchedTask(
   taskId:string,
   executor:AgentTaskExecutor,
 ):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult}>{
-  const context=buildAgentTaskExecutionContext(plan,taskId)
+  const prepared=await prepareAgentTaskValidation(root,plan,taskId)
+  const context={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
   const result=await executor.execute(context)
-
-  if(!result.attemptId){
-    await checkpointPhase(root,plan.target,"tasks:executor:"+result.state)
-    return {context,result}
-  }
+  const attemptId=result.attemptId??prepared.attempt.id
 
   const lifecycle=await recordAttemptLifecycle(
     root,
     plan.target,
-    result.attemptId,
+    attemptId,
     {
       state:result.state,
       requestId:result.requestId,
