@@ -58,6 +58,44 @@ export function createGraph(): CorrelationGraph {
   return { requests: new Map(), responses: new Map(), assets: new Map(), functions: new Map(), edges: [] }
 }
 
+export interface SerializedCorrelationGraph {
+  requests: RequestNode[]
+  responses: ResponseNode[]
+  assets: JSAssetNode[]
+  functions: FunctionNode[]
+  edges: Edge[]
+}
+
+export function serializeGraph(graph: CorrelationGraph): SerializedCorrelationGraph {
+  return {
+    requests: [...graph.requests.values()],
+    responses: [...graph.responses.values()],
+    assets: [...graph.assets.values()],
+    functions: [...graph.functions.values()],
+    edges: [...graph.edges],
+  }
+}
+
+export function hydrateGraph(data: Partial<SerializedCorrelationGraph>): CorrelationGraph {
+  const graph = createGraph()
+  for (const request of data.requests ?? []) graph.requests.set(request.id, request)
+  for (const response of data.responses ?? []) graph.responses.set(response.id, response)
+  for (const asset of data.assets ?? []) graph.assets.set(asset.id, asset)
+  for (const fn of data.functions ?? []) graph.functions.set(fn.id, fn)
+  graph.edges.push(...(data.edges ?? []))
+  return graph
+}
+
+export function dedupeEdges(edges: Edge[]): Edge[] {
+  const seen = new Set<string>()
+  return edges.filter(edge => {
+    const key = [edge.from, edge.to, edge.kind].join("|")
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+}
+
 export function addRequest(graph: CorrelationGraph, node: RequestNode): void {
   graph.requests.set(node.id, node)
 }
