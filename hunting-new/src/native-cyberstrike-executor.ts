@@ -7,6 +7,7 @@ export interface NativeCyberStrikeExecutorOptions {
   agentBySkill?:Record<string,string>
   defaultAgent?:string
   parentSessionID?:string
+  model?:{providerID:string;modelID:string}
   worktree?:string
 }
 
@@ -23,6 +24,7 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
       prompt:invocation.prompt,
       subagentType:invocation.agent,
       parentSessionID:this.options.parentSessionID,
+      model:this.options.model,
     }) })
     const state:"executed"|"inconclusive"|"blocked"|"rejected"|"confirmed" =
       result.outcome==="clean" ? "executed" : "inconclusive"
