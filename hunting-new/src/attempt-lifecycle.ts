@@ -106,7 +106,7 @@ export async function recordAttemptLifecycle(
   )
 
   if(update.taskId){
-    const terminal=recorded.state==="confirmed" || recorded.state==="rejected" || recorded.state==="blocked"
+    const terminal=hypothesisStatus==="confirmed" || hypothesisStatus==="rejected" || hypothesisStatus==="blocked"
     await setAgentTaskState(
       root,
       target,
