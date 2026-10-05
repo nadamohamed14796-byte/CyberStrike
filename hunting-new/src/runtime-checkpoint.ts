@@ -15,10 +15,23 @@ export interface RuntimeCheckpoint {
 }
 
 export async function loadCheckpoint(root: string, target: string): Promise<RuntimeCheckpoint | null> {
-  return readJson<RuntimeCheckpoint | null>(
+  const checkpoint = await readJson<Partial<RuntimeCheckpoint> | null>(
     path.join(targetDir(root, target), "intelligence", "checkpoint.json"),
     null,
   )
+  if (!checkpoint) return null
+
+  return {
+    target: checkpoint.target ?? target,
+    missionState: checkpoint.missionState ?? "PAUSED",
+    phase: checkpoint.phase ?? "initial",
+    activeHypothesisIds: checkpoint.activeHypothesisIds ?? [],
+    activeChainIds: checkpoint.activeChainIds ?? [],
+    completedAttemptIds: checkpoint.completedAttemptIds ?? [],
+    activeTaskIds: checkpoint.activeTaskIds ?? [],
+    completedTaskIds: checkpoint.completedTaskIds ?? [],
+    updatedAt: checkpoint.updatedAt ?? new Date(0).toISOString(),
+  }
 }
 
 export async function saveCheckpoint(
