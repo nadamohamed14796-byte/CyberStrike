@@ -101,7 +101,15 @@ export function buildMultiAgentPlanFromRegistry(
   }
 
   const selected = target && learning && selections.length
-    ? prioritizeSkills(selections, learning, target, undefined, falsePositives)
+    ? (() => {
+        const learned = prioritizeSkills(selections, learning, target, undefined, falsePositives)
+        const rank = new Map(learned.map((item, index) => [`${item.skill}|${item.signal}`, index]))
+        return [...selections].sort((a, b) => {
+          const aRank = Math.min(...a.matchedSignals.map(signal => rank.get(`${a.name}|${signal}`) ?? Number.MAX_SAFE_INTEGER))
+          const bRank = Math.min(...b.matchedSignals.map(signal => rank.get(`${b.name}|${signal}`) ?? Number.MAX_SAFE_INTEGER))
+          return aRank - bRank || b.score - a.score
+        })
+      })()
     : selections
 
   const decision: RoutingDecision = {
