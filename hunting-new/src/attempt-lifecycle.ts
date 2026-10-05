@@ -1,14 +1,16 @@
 import { PersistentAttemptLedger } from "./persistent-attempt-ledger"
-import { transitionHypothesis } from "./hypothesis-store"
+import { transitionHypothesis, loadHypotheses } from "./hypothesis-store"
 import { transitionChain, loadChains } from "./chain-store"
-import { loadHypotheses } from "./hypothesis-store"
 import { checkpointPhase } from "./runtime-persistence"
+import { loadEvidence } from "./evidence-store"
+import { validateHypothesis, type ValidationResult } from "./validation-gate"
 import type { AttemptState } from "./adaptive-attempts"
 
 export interface AttemptLifecycleResult {
   attemptState: AttemptState
   hypothesisStatus: "pending"|"testing"|"confirmed"|"rejected"|"blocked"
   chainStatuses: Record<string, "open"|"testing"|"confirmed"|"rejected"|"blocked">
+  validation?: ValidationResult
 }
 
 export async function recordAttemptLifecycle(
@@ -17,26 +19,49 @@ export async function recordAttemptLifecycle(
   attemptId:string,
   update:{state:AttemptState;requestId?:string;resultSummary?:string;evidenceIds?:string[]},
 ):Promise<AttemptLifecycleResult>{
-  const stored=await import("./attempt-store").then(x=>x.loadAttempts(root,target))
+  const { loadAttempts } = await import("./attempt-store")
+  const stored=await loadAttempts(root,target)
   const attempt=stored.attempts.find(x=>x.id===attemptId)
   if(!attempt) throw new Error("ATTEMPT_NOT_FOUND")
 
   const ledger=await PersistentAttemptLedger.create(root,target,{maxAttempts:20})
   const recorded=await ledger.record(attemptId,update)
-
   const hypotheses=await loadHypotheses(root,target)
   const hypothesis=hypotheses.hypotheses.find(x=>x.id===recorded.hypothesisId)
   if(!hypothesis) throw new Error("HYPOTHESIS_NOT_FOUND")
 
+  const evidenceState=await loadEvidence(root,target)
+  const linked=evidenceState.evidence.filter(x =>
+    recorded.evidenceIds.includes(x.id) || hypothesis.evidenceIds.includes(x.id)
+  )
+  const executed=stored.attempts.filter(x=>x.hypothesisId===hypothesis.id &&
+    (x.state==="executed"||x.state==="confirmed"||x.state==="rejected"||x.state==="inconclusive")).length
+  const variants=new Set(stored.attempts.filter(x=>x.hypothesisId===hypothesis.id)
+    .map(x=>x.strategy+":"+x.variant)).size
+
+  const validation=recorded.state==="confirmed"
+    ? validateHypothesis({
+        hypothesisId:hypothesis.id,
+        inScope:true,
+        attemptsExecuted:Math.max(executed,1),
+        evidence:linked.map(x=>({
+          id:x.id,
+          kind:x.kind==="account"||x.kind==="attempt"||x.kind==="observation"||x.kind==="function" ? "browser" : x.kind,
+          summary:x.details,
+          independent:x.confidence>=0.8,
+        })),
+        distinctVariants:variants,
+        expectedImpact:"medium",
+      })
+    : undefined
+
   let hypothesisStatus:"pending"|"testing"|"confirmed"|"rejected"|"blocked" = "testing"
-  if(recorded.state==="confirmed") hypothesisStatus="confirmed"
+  if(recorded.state==="confirmed") hypothesisStatus=validation?.decision==="eligible" ? "confirmed" : "blocked"
   else if(recorded.state==="rejected") hypothesisStatus="rejected"
   else if(recorded.state==="blocked") hypothesisStatus="blocked"
 
-  await transitionHypothesis(
-    root,target,hypothesis.id,hypothesisStatus,
-    recorded.evidenceIds.length ? [...new Set([...hypothesis.evidenceIds,...recorded.evidenceIds])] : undefined,
-  )
+  await transitionHypothesis(root,target,hypothesis.id,hypothesisStatus,
+    recorded.evidenceIds.length ? [...new Set([...hypothesis.evidenceIds,...recorded.evidenceIds])] : undefined)
 
   const chains=await loadChains(root,target)
   const chainStatuses:AttemptLifecycleResult["chainStatuses"]={}
@@ -44,11 +69,12 @@ export async function recordAttemptLifecycle(
     let status=chain.status
     if(hypothesisStatus==="confirmed") status="confirmed"
     else if(hypothesisStatus==="rejected" && chain.hypothesisIds.length===1) status="rejected"
+    else if(hypothesisStatus==="blocked") status="blocked"
     else if(hypothesisStatus==="testing" && status==="open") status="testing"
     if(status!==chain.status) await transitionChain(root,target,chain.id,status)
     chainStatuses[chain.id]=status
   }
 
-  await checkpointPhase(root,target,"validation:state-transition")
-  return {attemptState:recorded.state,hypothesisStatus,chainStatuses}
+  await checkpointPhase(root,target,validation?.decision==="eligible" ? "validation:eligible" : "validation:state-transition")
+  return {attemptState:recorded.state,hypothesisStatus,chainStatuses,validation}
 }
