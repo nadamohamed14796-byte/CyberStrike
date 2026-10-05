@@ -1,6 +1,6 @@
 import { AttemptLedger, type StrategyClass } from "./adaptive-attempts"
 import { type CorrelationGraph } from "./correlation"
-import { isInScope } from "./scope"
+import { checkScope } from "./scope"
 
 export type MissionState = "blocked" | "active" | "paused" | "completed"
 
@@ -41,7 +41,7 @@ const STRATEGIES: StrategyClass[] = [
 export function dispatch(ctx: OrchestratorContext, hypothesis: Hypothesis): DispatchDecision {
   if (ctx.mission.state !== "active") return { hypothesisId: hypothesis.id, action: "skip", reason: `mission is ${ctx.mission.state}` }
   if (hypothesis.status !== "pending" && hypothesis.status !== "testing") return { hypothesisId: hypothesis.id, action: "skip", reason: `hypothesis is ${hypothesis.status}` }
-  if (!isInScope(hypothesis.host, ctx.mission.scope)) return { hypothesisId: hypothesis.id, action: "skip", reason: "scope gate rejected target" }
+  const scope = checkScope(hypothesis.host, ctx.mission.scope.map(value => ({ value })))\n  if (!scope.allowed) return { hypothesisId: hypothesis.id, action: "skip", reason: `scope gate rejected target: ${scope.reason}` }
 
   const used = new Set(ctx.attempts.list(hypothesis.id).map(a => a.strategy))
   const strategy = STRATEGIES.find(s => !used.has(s))
