@@ -17,6 +17,7 @@ import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type 
 import { loadLearning } from "./learning-store"
 import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
+import { parseExecutionResult } from "./execution-result"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -276,6 +277,7 @@ export interface AgentTaskExecutor {
     attemptId?:string
     requestId?:string
     resultSummary?:string
+    resultText?:string
     evidenceIds?:string[]
   }>
 }
@@ -311,6 +313,10 @@ export async function executeAndRecordDispatchedTask(
   const baseContext={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
   const context=await enrichAgentTaskExecutionContext(root,plan,baseContext)
   const result=await executor.execute(context)
+  const parsed=result.resultText
+    ? parseExecutionResult(result.resultText,{state:result.state,outcome:"clean"})
+    : undefined
+  const effectiveState=parsed?.state ?? result.state
   const attemptId=result.attemptId??prepared.attempt.id
 
   const lifecycle=await recordAttemptLifecycle(
@@ -318,7 +324,7 @@ export async function executeAndRecordDispatchedTask(
     plan.target,
     attemptId,
     {
-      state:result.state,
+      state:effectiveState,
       requestId:result.requestId,
       resultSummary:result.resultSummary,
       evidenceIds:result.evidenceIds,
@@ -329,15 +335,15 @@ export async function executeAndRecordDispatchedTask(
     },
   )
 
-  const taskState=result.state==="confirmed"
+  const taskState=effectiveState==="confirmed"
     ? "completed"
-    : result.state==="blocked"
+    : effectiveState==="blocked"
       ? "blocked"
-      : result.state==="rejected"
+      : effectiveState==="rejected"
         ? "completed"
         : "failed"
   await finishAgentTask(root,plan.target,taskId,taskState)
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
-  return {context,result,lifecycle}
+  return {context,result:{...result,state:effectiveState},lifecycle}
 }
