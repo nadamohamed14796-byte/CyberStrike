@@ -7,6 +7,8 @@ interface SkillIndexEntry {
   description?:string
   category?:string
   tags?:string[]
+  tech_stack?:string[]
+  cwe_ids?:string[]
   files?:string[]
 }
 
@@ -60,7 +62,13 @@ const WEB_SKILLS:SkillMetadata[]=[
 ]
 
 function indexMetadata(entry:SkillIndexEntry):SkillMetadata{
-  const triggers=[entry.name,...(entry.tags??[])]
+  const triggers=[
+    entry.name,
+    entry.category??"",
+    ...(entry.tags??[]),
+    ...(entry.tech_stack??[]),
+    ...(entry.cwe_ids??[]),
+  ].filter(Boolean)
   return {
     name:entry.name,
     category:entry.category??"general",
