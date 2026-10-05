@@ -1,6 +1,6 @@
 import type { CorrelationGraph } from "./correlation"
 import type { JSAsset, JSRequest } from "./js"
-import { rememberTargetIntelligence } from "./target-intelligence"
+import { rememberTargetIntelligence, stableRequestId } from "./target-intelligence"
 
 export interface PersistDiscoveryInput {
   target: string
@@ -28,8 +28,8 @@ export async function persistDiscovery(root: string, input: PersistDiscoveryInpu
     ],
     requests: [
       ...graphRequests,
-      ...input.requests.map((request, index) => ({
-        id: "js-discovery-" + assetKey(request.endpoint, request.method, index),
+      ...input.requests.map(request => ({
+        id: stableRequestId(request.method, request.endpoint),
         sessionId: "js-analysis",
         method: request.method,
         url: request.endpoint,
@@ -41,6 +41,3 @@ export async function persistDiscovery(root: string, input: PersistDiscoveryInpu
   })
 }
 
-function assetKey(endpoint: string, method: string, index: number): string {
-  return Bun.hash(method + "|" + endpoint + "|" + index).toString(16)
-}
