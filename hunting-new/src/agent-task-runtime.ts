@@ -52,7 +52,7 @@ export async function claimAgentTask(
     throw new Error(`TASK_NOT_CLAIMABLE: ${task.state}`)
   }
 
-  return transitionTaskState(root,target,taskId,"running",task.attempts+1)
+  return transitionTaskState(root,target,taskId,"running",task.attempts+1,["pending","claimed"])
 }
 
 export async function finishAgentTask(
