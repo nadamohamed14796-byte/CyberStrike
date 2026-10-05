@@ -161,26 +161,31 @@ export interface DispatchBatch {
 
 export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pending" | "claimed" | "running" | "completed" | "failed" | "blocked">, limit = 4): DispatchBatch {
   const activeBySkill = new Map<string, number>()
-  const activeByRole = new Map<HuntingAgentRole, number>()
   for (const task of plan.tasks) {
     const state = states.get(task.id)
     if (state === "running" || state === "claimed") {
       activeBySkill.set(task.skill, (activeBySkill.get(task.skill) ?? 0) + 1)
-      activeByRole.set(task.role, (activeByRole.get(task.role) ?? 0) + 1)
     }
   }
 
   const selected: AgentTask[] = []
   const blocked: AgentTask[] = []
   const completed = new Set([...states.entries()].filter(([, state]) => state === "completed").map(([id]) => id))
+  const dependenciesSatisfied = (task: AgentTask): boolean =>
+    task.dependencies.every(role =>
+      plan.lanes[role].some(dep =>
+        completed.has(dep.id) &&
+        dep.target === task.target &&
+        dep.signal === task.signal &&
+        (task.endpoint ? dep.endpoint === task.endpoint : true) &&
+        (task.functionId ? dep.functionId === task.functionId : true),
+      ),
+    )
 
   for (const task of [...plan.tasks].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))) {
     const state = states.get(task.id) ?? "pending"
     if (state !== "pending") continue
-    const dependenciesSatisfied = task.dependencies.every(role =>
-      plan.lanes[role].some(dep => completed.has(dep.id)),
-    )
-    if (!dependenciesSatisfied) continue
+    if (!dependenciesSatisfied(task)) continue
 
     const activeForSkill = activeBySkill.get(task.skill) ?? 0
     if (activeForSkill >= task.maxParallelTasks) {
