@@ -2,6 +2,7 @@ import type { SignalEngine, SkillRule, SkillSelection } from "./signals"
 import { routeSkills, type RoutingDecision } from "./skill-router"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
+import type { SkillRegistry, SkillMetadata } from "./skill-registry"
 
 export type HuntingAgentRole = "primary-hunter" | "validator" | "correlator" | "reviewer"
 
@@ -15,6 +16,14 @@ export interface AgentTask {
   reason: string
   dependencies: string[]
   maxParallelTasks: number
+  strategyHints: string[]
+  resolvedSkills?: string[]
+}
+
+export interface AgentExecutionSelection {
+  taskId: string
+  primarySkill: string
+  skills: SkillMetadata[]
   strategyHints: string[]
 }
 
@@ -106,6 +115,19 @@ export function buildMultiAgentPlan(
   }
 
   return { target, mode: decision.mode, reason: decision.reason, tasks, lanes }
+}
+
+export function resolveAgentTaskSkills(task: AgentTask, registry: SkillRegistry): AgentExecutionSelection {
+  const triggerNames = new Set<string>([task.signal, ...task.strategyHints])
+  const selected = registry.select([...triggerNames], 0)
+  const primary = registry.get(task.skill)
+  const resolved = registry.resolve([task.skill, ...selected.map(skill => skill.name)])
+  return {
+    taskId: task.id,
+    primarySkill: task.skill,
+    skills: resolved,
+    strategyHints: [...task.strategyHints],
+  }
 }
 
 export function nextAgentTasks(plan: MultiAgentPlan, limit = 4): AgentTask[] {
