@@ -13,6 +13,7 @@ import { PersistentAttemptLedger } from "./persistent-attempt-ledger"
 import type { Attempt, StrategyClass } from "./adaptive-attempts"
 import { createValidationPlan } from "./validation-runner"
 import { checkpointPhase } from "./runtime-persistence"
+import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type SkillExecutionInvocation } from "./skill-execution-adapter"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -251,6 +252,18 @@ export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
   return { taskId:task.id, target:task.target, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
+}
+
+export async function prepareSkillExecutionInvocation(
+  root:string,
+  plan:MultiAgentPlan,
+  taskId:string,
+  options:SkillExecutionAdapterOptions={},
+):Promise<SkillExecutionInvocation>{
+  const prepared=await prepareAgentTaskValidation(root,plan,taskId)
+  const base={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
+  const context=await enrichAgentTaskExecutionContext(root,plan,base)
+  return buildSkillExecutionInvocation(context,options)
 }
 
 export interface AgentTaskExecutor {
