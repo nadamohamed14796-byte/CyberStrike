@@ -158,10 +158,12 @@ export interface DispatchBatch {
 }
 
 export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pending" | "claimed" | "running" | "completed" | "failed" | "blocked">, limit = 4): DispatchBatch {
+  const activeBySkill = new Map<string, number>()
   const activeByRole = new Map<HuntingAgentRole, number>()
   for (const task of plan.tasks) {
     const state = states.get(task.id)
     if (state === "running" || state === "claimed") {
+      activeBySkill.set(task.skill, (activeBySkill.get(task.skill) ?? 0) + 1)
       activeByRole.set(task.role, (activeByRole.get(task.role) ?? 0) + 1)
     }
   }
@@ -178,15 +180,16 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
     )
     if (!dependenciesSatisfied) continue
 
-    const active = activeByRole.get(task.role) ?? 0
-    if (active >= task.maxParallelTasks) {
+    const activeForSkill = activeBySkill.get(task.skill) ?? 0
+    if (activeForSkill >= task.maxParallelTasks) {
       blocked.push(task)
       continue
     }
     if (selected.length >= Math.max(1, limit)) break
 
     selected.push(task)
-    activeByRole.set(task.role, active + 1)
+    activeBySkill.set(task.skill, activeForSkill + 1)
+    activeByRole.set(task.role, (activeByRole.get(task.role) ?? 0) + 1)
   }
 
   return { tasks: selected, blocked }
