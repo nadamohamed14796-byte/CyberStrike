@@ -121,9 +121,7 @@ export function buildMultiAgentPlan(
 
 export function resolveAgentTaskSkills(task: AgentTask, registry: SkillRegistry): AgentExecutionSelection {
   const triggerNames = new Set<string>([task.signal, ...task.strategyHints])
-  const selected = registry.select([...triggerNames], task.signalConfidence)
-  const primary = registry.get(task.skill)
-  const resolved = registry.resolve([task.skill, ...selected.map(skill => skill.name)])
+  const resolved = registry.selectForTask(task.skill, [...triggerNames], task.signalConfidence)
   return {
     taskId: task.id,
     primarySkill: task.skill,
