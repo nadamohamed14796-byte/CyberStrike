@@ -7,6 +7,7 @@ export interface NativeCyberStrikeExecutorOptions {
   agentBySkill?:Record<string,string>
   defaultAgent?:string
   parentSessionID?:string
+  worktree?:string
 }
 
 export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
@@ -17,7 +18,7 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
       agentBySkill:this.options.agentBySkill,
       defaultAgent:this.options.defaultAgent,
     })
-    const result=await Instance.provide({ directory: context.target, fn: async () => runHuntingTask({
+    const result=await Instance.provide({ directory: this.options.worktree ?? process.cwd(), fn: async () => runHuntingTask({
       description:`validate ${context.signal}`,
       prompt:invocation.prompt,
       subagentType:invocation.agent,
