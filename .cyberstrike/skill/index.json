@@ -5670,7 +5670,1741 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "401-403-bypass-techniques",
+      "description": "HackSkills security skill for 401 403 bypass techniques.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "active-directory-acl-abuse",
+      "description": "HackSkills security skill for active directory acl abuse.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "active-directory-certificate-services",
+      "description": "HackSkills security skill for active directory certificate services.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "active-directory-kerberos-attacks",
+      "description": "HackSkills security skill for active directory kerberos attacks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ai-ml-security",
+      "description": "HackSkills security skill for ai ml security.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "android-pentesting-tricks",
+      "description": "HackSkills security skill for android pentesting tricks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "anti-debugging-techniques",
+      "description": "HackSkills security skill for anti debugging techniques.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "api-auth-and-jwt-abuse",
+      "description": "HackSkills security skill for api auth and jwt abuse.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "api-authorization-and-bola",
+      "description": "HackSkills security skill for api authorization and bola.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "api-recon-and-docs",
+      "description": "HackSkills security skill for api recon and docs.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "api-sec",
+      "description": "HackSkills security skill for api sec.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "arbitrary-write-to-rce",
+      "description": "HackSkills security skill for arbitrary write to rce.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "attack-surface-mapping",
+      "description": "HackSkills security skill for attack surface mapping.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "auth-sec",
+      "description": "HackSkills security skill for auth sec.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "authbypass-authentication-flaws",
+      "description": "HackSkills security skill for authbypass authentication flaws.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "binary-protection-bypass",
+      "description": "HackSkills security skill for binary protection bypass.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "browser-exploitation-v8",
+      "description": "HackSkills security skill for browser exploitation v8.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "business-logic-vuln",
+      "description": "HackSkills security skill for business logic vuln.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "business-logic-vulnerabilities",
+      "description": "HackSkills security skill for business logic vulnerabilities.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "classical-cipher-analysis",
+      "description": "HackSkills security skill for classical cipher analysis.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "clickjacking",
+      "description": "HackSkills security skill for clickjacking.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "cmdi-command-injection",
+      "description": "HackSkills security skill for cmdi command injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "code-obfuscation-deobfuscation",
+      "description": "HackSkills security skill for code obfuscation deobfuscation.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "container-escape-techniques",
+      "description": "HackSkills security skill for container escape techniques.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "cors-cross-origin-misconfiguration",
+      "description": "HackSkills security skill for cors cross origin misconfiguration.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "crlf-injection",
+      "description": "HackSkills security skill for crlf injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "csp-bypass-advanced",
+      "description": "HackSkills security skill for csp bypass advanced.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "csrf-cross-site-request-forgery",
+      "description": "HackSkills security skill for csrf cross site request forgery.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "csv-formula-injection",
+      "description": "HackSkills security skill for csv formula injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "dangling-markup-injection",
+      "description": "HackSkills security skill for dangling markup injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "defi-attack-patterns",
+      "description": "HackSkills security skill for defi attack patterns.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "dependency-confusion",
+      "description": "HackSkills security skill for dependency confusion.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "deserialization-insecure",
+      "description": "HackSkills security skill for deserialization insecure.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "dns-rebinding-attacks",
+      "description": "HackSkills security skill for dns rebinding attacks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "email-header-injection",
+      "description": "HackSkills security skill for email header injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "expression-language-injection",
+      "description": "HackSkills security skill for expression language injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "file-access-vuln",
+      "description": "HackSkills security skill for file access vuln.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "format-string-exploitation",
+      "description": "HackSkills security skill for format string exploitation.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ghost-bits-cast-attack",
+      "description": "HackSkills security skill for ghost bits cast attack.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "graphql-and-hidden-parameters",
+      "description": "HackSkills security skill for graphql and hidden parameters.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hack",
+      "description": "HackSkills security skill for hack.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hash-attack-techniques",
+      "description": "HackSkills security skill for hash attack techniques.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "heap-exploitation",
+      "description": "HackSkills security skill for heap exploitation.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "http-host-header-attacks",
+      "description": "HackSkills security skill for http host header attacks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "http-parameter-pollution",
+      "description": "HackSkills security skill for http parameter pollution.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "http2-specific-attacks",
+      "description": "HackSkills security skill for http2 specific attacks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "idor-broken-object-authorization",
+      "description": "HackSkills security skill for idor broken object authorization.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "injection-checking",
+      "description": "HackSkills security skill for injection checking.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "insecure-source-code-management",
+      "description": "HackSkills security skill for insecure source code management.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ios-pentesting-tricks",
+      "description": "HackSkills security skill for ios pentesting tricks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "jndi-injection",
+      "description": "HackSkills security skill for jndi injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "jwt-oauth-token-attacks",
+      "description": "HackSkills security skill for jwt oauth token attacks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "kernel-exploitation",
+      "description": "HackSkills security skill for kernel exploitation.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "kubernetes-pentesting",
+      "description": "HackSkills security skill for kubernetes pentesting.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "lattice-crypto-attacks",
+      "description": "HackSkills security skill for lattice crypto attacks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "linux-lateral-movement",
+      "description": "HackSkills security skill for linux lateral movement.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "linux-privilege-escalation",
+      "description": "HackSkills security skill for linux privilege escalation.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "linux-security-bypass",
+      "description": "HackSkills security skill for linux security bypass.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "macos-process-injection",
+      "description": "HackSkills security skill for macos process injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "macos-security-bypass",
+      "description": "HackSkills security skill for macos security bypass.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "memory-forensics-volatility",
+      "description": "HackSkills security skill for memory forensics volatility.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "mobile-ssl-pinning-bypass",
+      "description": "HackSkills security skill for mobile ssl pinning bypass.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "network-protocol-attacks",
+      "description": "HackSkills security skill for network protocol attacks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "nosql-injection",
+      "description": "HackSkills security skill for nosql injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ntlm-relay-coercion",
+      "description": "HackSkills security skill for ntlm relay coercion.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "oauth-oidc-misconfiguration",
+      "description": "HackSkills security skill for oauth oidc misconfiguration.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "open-redirect",
+      "description": "HackSkills security skill for open redirect.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "path-traversal-lfi",
+      "description": "HackSkills security skill for path traversal lfi.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "prototype-pollution-advanced",
+      "description": "HackSkills security skill for prototype pollution advanced.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "prototype-pollution",
+      "description": "HackSkills security skill for prototype pollution.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "race-condition",
+      "description": "HackSkills security skill for race condition.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "recon-and-methodology",
+      "description": "HackSkills security skill for recon and methodology.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "recon-for-sec",
+      "description": "HackSkills security skill for recon for sec.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "request-smuggling",
+      "description": "HackSkills security skill for request smuggling.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "reverse-shell-techniques",
+      "description": "HackSkills security skill for reverse shell techniques.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "rsa-attack-techniques",
+      "description": "HackSkills security skill for rsa attack techniques.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "saml-sso-assertion-attacks",
+      "description": "HackSkills security skill for saml sso assertion attacks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "sandbox-escape-techniques",
+      "description": "HackSkills security skill for sandbox escape techniques.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "smart-contract-vulnerabilities",
+      "description": "HackSkills security skill for smart contract vulnerabilities.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "sqli-sql-injection",
+      "description": "HackSkills security skill for sqli sql injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ssrf-server-side-request-forgery",
+      "description": "HackSkills security skill for ssrf server side request forgery.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ssti-server-side-template-injection",
+      "description": "HackSkills security skill for ssti server side template injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "stack-overflow-and-rop",
+      "description": "HackSkills security skill for stack overflow and rop.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "steganography-techniques",
+      "description": "HackSkills security skill for steganography techniques.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "subdomain-takeover",
+      "description": "HackSkills security skill for subdomain takeover.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "symbolic-execution-tools",
+      "description": "HackSkills security skill for symbolic execution tools.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "symmetric-cipher-attacks",
+      "description": "HackSkills security skill for symmetric cipher attacks.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "traffic-analysis-pcap",
+      "description": "HackSkills security skill for traffic analysis pcap.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "tunneling-and-pivoting",
+      "description": "HackSkills security skill for tunneling and pivoting.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "type-juggling",
+      "description": "HackSkills security skill for type juggling.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "unauthorized-access-common-services",
+      "description": "HackSkills security skill for unauthorized access common services.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "upload-insecure-files",
+      "description": "HackSkills security skill for upload insecure files.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "vm-and-bytecode-reverse",
+      "description": "HackSkills security skill for vm and bytecode reverse.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "waf-bypass-techniques",
+      "description": "HackSkills security skill for waf bypass techniques.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "web-cache-deception",
+      "description": "HackSkills security skill for web cache deception.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "websocket-security",
+      "description": "HackSkills security skill for websocket security.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "windows-av-evasion",
+      "description": "HackSkills security skill for windows av evasion.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "windows-lateral-movement",
+      "description": "HackSkills security skill for windows lateral movement.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "windows-privilege-escalation",
+      "description": "HackSkills security skill for windows privilege escalation.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "xslt-injection",
+      "description": "HackSkills security skill for xslt injection.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "xss-cross-site-scripting",
+      "description": "HackSkills security skill for xss cross site scripting.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "xxe-xml-external-entity",
+      "description": "HackSkills security skill for xxe xml external entity.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "hack-skills"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 291
+  "skill_count": 393
 }
