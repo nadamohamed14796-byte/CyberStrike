@@ -36,7 +36,8 @@ export async function recordLearning(
     x.skill === observation.skill &&
     x.strategy === observation.strategy &&
     x.outcome === observation.outcome &&
-    x.target === observation.target
+    x.target === observation.target &&
+    x.timestamp === observation.timestamp
   )
   if (!duplicate) current.observations.push(observation)
   return saveLearning(root, current)
