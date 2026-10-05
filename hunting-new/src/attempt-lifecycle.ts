@@ -48,10 +48,12 @@ export async function recordAttemptLifecycle(
   const linked=evidenceState.evidence.filter(x =>
     recorded.evidenceIds.includes(x.id) || hypothesis.evidenceIds.includes(x.id)
   )
-  const executed=stored.attempts.filter(x=>x.hypothesisId===hypothesis.id &&
-    (x.state==="executed"||x.state==="confirmed"||x.state==="rejected"||x.state==="inconclusive")).length
-  const variants=new Set(stored.attempts.filter(x=>x.hypothesisId===hypothesis.id)
-    .map(x=>x.strategy+":"+x.variant)).size
+  const current=await loadAttempts(root,target)
+  const hypothesisAttempts=current.attempts.filter(x=>x.hypothesisId===hypothesis.id)
+  const executed=hypothesisAttempts.filter(x =>
+    x.state==="executed"||x.state==="confirmed"||x.state==="rejected"||x.state==="inconclusive"
+  ).length
+  const variants=new Set(hypothesisAttempts.map(x=>x.strategy+":"+x.variant)).size
 
   const validation=recorded.state==="confirmed"
     ? validateHypothesis({
@@ -69,7 +71,7 @@ export async function recordAttemptLifecycle(
       })
     : undefined
 
-  const attemptCount = stored.attempts.filter(x => x.hypothesisId === hypothesis.id).length
+  const attemptCount = hypothesisAttempts.length
   const minimumAttempts = 20
   let hypothesisStatus:"pending"|"testing"|"confirmed"|"rejected"|"blocked" = "testing"
   if(recorded.state==="confirmed") hypothesisStatus=validation?.decision==="eligible" ? "confirmed" : "blocked"
