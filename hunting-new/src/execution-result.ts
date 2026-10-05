@@ -31,6 +31,15 @@ export function buildExecutionContract():string{
   ].join("\n")
 }
 
+export function verifiedEvidenceIds(
+  parsed:StructuredExecutionResult,
+  availableEvidenceIds:ReadonlySet<string>,
+):string[]{
+  return parsed.evidence
+    .filter(item=>availableEvidenceIds.has(item.id))
+    .map(item=>item.id)
+}
+
 export function parseExecutionResult(
   text:string,
   fallback:Pick<StructuredExecutionResult,"state"|"outcome">,
