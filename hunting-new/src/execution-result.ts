@@ -35,13 +35,13 @@ export function parseExecutionResult(
   text:string,
   fallback:Pick<StructuredExecutionResult,"state"|"outcome">,
 ):StructuredExecutionResult{
-  const evidence=[...text.matchAll(/evidence[_ -]?id\\s*[:=]\\s*([A-Za-z0-9._:-]+)/gi)].map(match=>({
+  const evidence=[...text.matchAll(/evidence[_ -]?id\s*[:=]\s*([A-Za-z0-9._:-]+)/gi)].map(match=>({
     id:match[1],
     kind:"inference" as const,
     summary:"Referenced by subagent output",
     observed:false,
   }))
-  const stateMatch=text.match(/(?:state|status)\\s*[:=]\\s*(executed|inconclusive|blocked|rejected|confirmed)/i)
+  const stateMatch=text.match(/(?:state|status)\s*[:=]\s*(executed|inconclusive|blocked|rejected|confirmed)/i)
   const state=(stateMatch?.[1]?.toLowerCase() as StructuredExecutionResult["state"]) ?? fallback.state
   return {
     state,
