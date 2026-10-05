@@ -1,5 +1,5 @@
 import type { MultiAgentPlan } from "./multi-agent-planner"
-import { loadTaskStates, saveTaskState } from "./task-state-store"
+import { loadTaskStates, saveTaskState, transitionTaskState } from "./task-state-store"
 import type { TaskStateRecord } from "./task-state"
 
 export async function persistAgentPlan(root: string, plan: MultiAgentPlan): Promise<TaskStateRecord[]> {
@@ -52,13 +52,7 @@ export async function claimAgentTask(
     throw new Error(`TASK_NOT_CLAIMABLE: ${task.state}`)
   }
 
-  return setAgentTaskState(
-    root,
-    target,
-    taskId,
-    "running",
-    task.attempts + 1,
-  )
+  return transitionTaskState(root,target,taskId,"running",task.attempts+1)
 }
 
 export async function finishAgentTask(
