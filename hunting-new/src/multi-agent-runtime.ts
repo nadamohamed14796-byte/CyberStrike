@@ -7,6 +7,7 @@ import type { SignalEngine, SkillRule } from "./signals"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
+import { loadTargetIntelligence } from "./target-intelligence"
 import type { HypothesisRecord } from "./hypotheses"
 import { PersistentAttemptLedger } from "./persistent-attempt-ledger"
 import type { Attempt, StrategyClass } from "./adaptive-attempts"
@@ -123,6 +124,13 @@ export async function prepareAgentTaskValidation(
     context.functionId??"",
   ].join("|")).toString(16)
   const storedHypotheses=await loadHypotheses(root,plan.target)
+  const intelligence=await loadTargetIntelligence(root,plan.target)
+  const correlated=intelligence.requests.filter(request => {
+    if(context.endpoint && request.path) return request.path===context.endpoint || request.url.includes(context.endpoint)
+    return true
+  }).sort((a,b)=>b.observedAt-a.observedAt)[0]
+  const correlatedResponse=correlated ? intelligence.responses.find(response=>response.requestId===correlated.id) : undefined
+  const correlatedAssets=correlated ? intelligence.jsAssets.filter(asset=>intelligence.requests.some(request=>request.id===correlated.id && request.url===request.url && asset.url===request.url)) : []
   const existing=storedHypotheses.hypotheses.find(x=>x.id===hypothesisId)
   const hypothesis:HypothesisRecord=existing ?? {
     id:hypothesisId,
@@ -161,6 +169,11 @@ export interface AgentTaskExecutionContext {
   signalConfidence:number
   endpoint?:string
   functionId?:string
+  requestId?:string
+  responseId?:string
+  jsAssetIds?:string[]
+  functionIds?:string[]
+  accountLabel?:string
   attemptId?:string
   reason:string
 }
