@@ -17,6 +17,7 @@ export interface Attempt {
 
 export interface AttemptPolicy {
   maxAttempts: number
+  minimumAttempts: number
   stopOnConfirmation: boolean
   stopOnRejection: boolean
   requireDistinctVariants: boolean
@@ -24,6 +25,7 @@ export interface AttemptPolicy {
 
 const DEFAULT_POLICY: AttemptPolicy = {
   maxAttempts: 20,
+  minimumAttempts: 20,
   stopOnConfirmation: true,
   stopOnRejection: true,
   requireDistinctVariants: true,
@@ -42,7 +44,7 @@ export class AttemptLedger {
     if (current.length >= this.policy.maxAttempts) return undefined
     if (this.policy.requireDistinctVariants && current.some(a => a.strategy === strategy && a.variant === variant)) return undefined
     if (current.some(a => a.state === "confirmed" && this.policy.stopOnConfirmation)) return undefined
-    if (current.some(a => a.state === "rejected" && this.policy.stopOnRejection)) return undefined
+    if (current.length >= this.policy.minimumAttempts && current.some(a => a.state === "rejected" && this.policy.stopOnRejection)) return undefined
 
     const attempt: Attempt = {
       id: `attempt-${hypothesisId}-${current.length + 1}`,
