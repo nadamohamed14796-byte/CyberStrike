@@ -46,8 +46,8 @@ export async function recordAttemptLifecycle(
         attemptsExecuted:Math.max(executed,1),
         evidence:linked.map(x=>({
           id:x.id,
-          kind:x.kind==="account"||x.kind==="attempt"||x.kind==="observation"||x.kind==="function" ? "browser" : x.kind,
-          summary:x.details,
+          kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",
+          summary:x.details || x.sourceId,
           independent:x.confidence>=0.8,
         })),
         distinctVariants:variants,
