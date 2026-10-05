@@ -116,13 +116,16 @@ export async function prepareAgentTaskValidation(
   taskId:string,
 ):Promise<PreparedTaskValidation>{
   const context=buildAgentTaskExecutionContext(plan,taskId)
-  const hypothesis:HypothesisRecord={
-    id:"hyp_"+Bun.hash([
-      context.signal,
-      context.target,
-      context.endpoint??"",
-      context.functionId??"",
-    ].join("|")).toString(16),
+  const hypothesisId="hyp_"+Bun.hash([
+    context.signal,
+    context.target,
+    context.endpoint??"",
+    context.functionId??"",
+  ].join("|")).toString(16)
+  const storedHypotheses=await loadHypotheses(root,plan.target)
+  const existing=storedHypotheses.hypotheses.find(x=>x.id===hypothesisId)
+  const hypothesis:HypothesisRecord=existing ?? {
+    id:hypothesisId,
     title:`${context.signal} signal requires validation`,
     signal:context.signal,
     target:context.target,
@@ -133,14 +136,16 @@ export async function prepareAgentTaskValidation(
     evidenceIds:[],
     createdAt:new Date().toISOString(),
   }
-  await upsertHypothesis(root,plan.target,hypothesis)
+  if(!existing) await upsertHypothesis(root,plan.target,hypothesis)
   const ledger=await PersistentAttemptLedger.create(root,plan.target,{maxAttempts:20,minimumAttempts:20})
-  const strategy=strategyForTask(context)
+  const used=new Set(ledger.list(hypothesis.id).map(x=>x.strategy+":"+x.variant))
+  const next=createValidationPlan(hypothesis,{maxAttempts:20,minimumAttempts:20}).variants.find(x=>!used.has(x.strategy+":"+x.variant))
+  if(!next) throw new Error("VALIDATION_ATTEMPT_BUDGET_EXHAUSTED")
   const attempt=await ledger.plan(
     hypothesis.id,
-    strategy,
-    "baseline",
-    `signal=${context.signal}; skill=${context.primarySkill}; strategy=${strategy}`,
+    next.strategy,
+    next.variant,
+    `signal=${context.signal}; skill=${context.primarySkill}; strategy=${next.strategy}; variant=${next.variant}`,
   )
   if(!attempt) throw new Error("VALIDATION_ATTEMPT_UNAVAILABLE")
   return {hypothesis,attempt}
