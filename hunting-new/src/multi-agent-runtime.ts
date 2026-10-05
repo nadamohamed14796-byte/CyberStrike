@@ -14,6 +14,9 @@ import type { Attempt, StrategyClass } from "./adaptive-attempts"
 import { createValidationPlan } from "./validation-runner"
 import { checkpointPhase } from "./runtime-persistence"
 import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type SkillExecutionInvocation } from "./skill-execution-adapter"
+import { loadLearning } from "./learning-store"
+import { LearningEngine } from "./learning-engine"
+import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -185,7 +188,18 @@ export async function prepareAgentTaskValidation(
   if(!existing) await upsertHypothesis(root,plan.target,hypothesis)
   const ledger=await PersistentAttemptLedger.create(root,plan.target,{maxAttempts:20,minimumAttempts:20})
   const used=new Set(ledger.list(hypothesis.id).map(x=>x.strategy+":"+x.variant))
-  const next=createValidationPlan(hypothesis,{maxAttempts:20,minimumAttempts:20}).variants.find(x=>!used.has(x.strategy+":"+x.variant))
+  const learningState=await loadLearning(root,plan.target)
+  const learningEngine=LearningEngine.fromObservations(learningState.observations)
+  const falsePositiveState=await loadFalsePositives(root,plan.target)
+  const falsePositiveIntelligence=hydrateFalsePositiveIntelligence(falsePositiveState)
+  const validationPlan=createValidationPlan(
+    hypothesis,
+    {maxAttempts:20,minimumAttempts:20},
+    learningEngine,
+    falsePositiveIntelligence,
+    plan.target,
+  )
+  const next=validationPlan.variants.find(x=>!used.has(x.strategy+":"+x.variant))
   if(!next) throw new Error("VALIDATION_ATTEMPT_BUDGET_EXHAUSTED")
   const attempt=await ledger.plan(
     hypothesis.id,
