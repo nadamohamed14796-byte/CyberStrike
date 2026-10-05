@@ -14,11 +14,12 @@ describe("resume hunting context", () => {
     await initMission(root,target,[{type:"host",value:target}])
 
     await upsertHypothesis(root,target,{
-      id:"hyp-1",target,signal:"idor",endpoint:"/api/item",status:"testing",
-      evidenceIds:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),
+      id:"hyp-1",target,signal:"idor",title:"IDOR requires validation",
+      confidence:.8,status:"testing",evidenceIds:[],createdAt:new Date().toISOString(),
     })
     await upsertChain(root,target,{
-      id:"chain-1",target,status:"testing",nodes:[],createdAt:new Date().toISOString(),updatedAt:new Date().toISOString(),
+      id:"chain-1",title:"IDOR chain",status:"testing",hypothesisIds:["hyp-1"],
+      nodes:[],score:.8,
     })
 
     await checkpointPhase(root,target,"validation")
