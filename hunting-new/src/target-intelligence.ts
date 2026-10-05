@@ -17,6 +17,10 @@ export function emptyTargetIntelligence(target: string): TargetIntelligence {
   return { target, updatedAt: new Date().toISOString(), jsAssets: [], requests: [], responses: [], hypotheses: [], tags: [] }
 }
 
+export function stableRequestId(method: string, url: string): string {
+  return "req_" + Bun.hash(method.trim().toUpperCase() + "|" + url.trim()).toString(16)
+}
+
 function mergeById<T extends { id: string }>(current: T[], incoming: T[]): T[] {
   const map = new Map(current.map(x => [x.id, x]))
   for (const item of incoming) map.set(item.id, item)
