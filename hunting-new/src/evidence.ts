@@ -1,0 +1,3 @@
+export type Evidence={evidence_id:string;source_type:"OBSERVED_TRAFFIC"|"EXECUTED_VALIDATION"|"BROWSER"|"RESPONSE_COMPARISON"|"APPLICATION_STATE"|"SOURCE_CODE";source_reference:string;execution_id?:string;request_id?:string;response_id?:string;timestamp:string;account_context?:string;redacted:boolean}
+export function evidence(id:string,input:Omit<Evidence,"evidence_id"|"timestamp">):Evidence{return{...input,evidence_id:id,timestamp:new Date().toISOString()}}
+export function executableResult(status:Evidence["source_type"]|"EXECUTED"|"NOT_EXECUTED"|"FAILED_TO_EXECUTE"|"INCONCLUSIVE"|"VERIFIED"){return status}
