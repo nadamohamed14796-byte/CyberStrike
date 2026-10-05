@@ -4395,6 +4395,1282 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "saml-sso-attack",
+      "description": "Recon/pentesting skill for saml sso attack.",
+      "category": "authentication",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "authentication"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "cross-attack-chains",
+      "description": "Recon/pentesting skill for cross attack chains.",
+      "category": "attack-chaining",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "attack-chaining"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "wordpress-full-compromise",
+      "description": "Recon/pentesting skill for wordpress full compromise.",
+      "category": "attack-chaining",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "attack-chaining"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "docker-privesc",
+      "description": "Recon/pentesting skill for docker privesc.",
+      "category": "infrastructure",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "infrastructure"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "attack-patterns-reference",
+      "description": "Recon/pentesting skill for attack patterns reference.",
+      "category": "methodology",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "methodology"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "cross-wave-delta-analysis",
+      "description": "Recon/pentesting skill for cross wave delta analysis.",
+      "category": "methodology",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "methodology"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "google-dorks-catalog",
+      "description": "Recon/pentesting skill for google dorks catalog.",
+      "category": "methodology",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "methodology"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "pentest-playbook",
+      "description": "Recon/pentesting skill for pentest playbook.",
+      "category": "methodology",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "methodology"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "recon-playbook",
+      "description": "Recon/pentesting skill for recon playbook.",
+      "category": "methodology",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "methodology"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "sector-recon-methodology",
+      "description": "Recon/pentesting skill for sector recon methodology.",
+      "category": "methodology",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "methodology"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "401-403-bypass",
+      "description": "Recon/pentesting skill for 401 403 bypass.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "api-noauth-hunt",
+      "description": "Recon/pentesting skill for api noauth hunt.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "asn-infrastructure-mapping",
+      "description": "Recon/pentesting skill for asn infrastructure mapping.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "cache-attack",
+      "description": "Recon/pentesting skill for cache attack.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "cms-detection",
+      "description": "Recon/pentesting skill for cms detection.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "cors-credential-wordpress",
+      "description": "Recon/pentesting skill for cors credential wordpress.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "deep-invade",
+      "description": "Recon/pentesting skill for deep invade.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "email-security",
+      "description": "Recon/pentesting skill for email security.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "error-log-mining",
+      "description": "Recon/pentesting skill for error log mining.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "exchange-owa-attack",
+      "description": "Recon/pentesting skill for exchange owa attack.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "firebase-supabase-attack",
+      "description": "Recon/pentesting skill for firebase supabase attack.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "flask-werkzeug-attack",
+      "description": "Recon/pentesting skill for flask werkzeug attack.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "github-secret-hunting",
+      "description": "Recon/pentesting skill for github secret hunting.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "gitlab-public-recon",
+      "description": "Recon/pentesting skill for gitlab public recon.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hardcoded-credential-hunt",
+      "description": "Recon/pentesting skill for hardcoded credential hunt.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "http2-header-impersonation",
+      "description": "Recon/pentesting skill for http2 header impersonation.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "humanize-automation",
+      "description": "Recon/pentesting skill for humanize automation.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "iot-camera-recon",
+      "description": "Recon/pentesting skill for iot camera recon.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "js-secrets-extraction",
+      "description": "Recon/pentesting skill for js secrets extraction.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "jwt-attack",
+      "description": "Recon/pentesting skill for jwt attack.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "origin-ip-discovery",
+      "description": "Recon/pentesting skill for origin ip discovery.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "phpinfo-to-rce",
+      "description": "Recon/pentesting skill for phpinfo to rce.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "port-mass-scan",
+      "description": "Recon/pentesting skill for port mass scan.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "port-service-discovery",
+      "description": "Recon/pentesting skill for port service discovery.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "s3-minio-content-type-xss",
+      "description": "Recon/pentesting skill for s3 minio content type xss.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "scada-hikvision-isapi",
+      "description": "Recon/pentesting skill for scada hikvision isapi.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "source-leak-hunt",
+      "description": "Recon/pentesting skill for source leak hunt.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "staging-subdomain-hunt",
+      "description": "Recon/pentesting skill for staging subdomain hunt.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "stealth-browser-launch",
+      "description": "Recon/pentesting skill for stealth browser launch.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "subdomain-enumeration",
+      "description": "Recon/pentesting skill for subdomain enumeration.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "subdomain-takeover-hunt",
+      "description": "Recon/pentesting skill for subdomain takeover hunt.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "tls-fingerprint-impersonation",
+      "description": "Recon/pentesting skill for tls fingerprint impersonation.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "unauth-api-flow-hijack",
+      "description": "Recon/pentesting skill for unauth api flow hijack.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "vhost-enumeration",
+      "description": "Recon/pentesting skill for vhost enumeration.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "visual-recon",
+      "description": "Recon/pentesting skill for visual recon.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "web-enumeration",
+      "description": "Recon/pentesting skill for web enumeration.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "wordpress-plugin-hunt",
+      "description": "Recon/pentesting skill for wordpress plugin hunt.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "wp-mass-recon",
+      "description": "Recon/pentesting skill for wp mass recon.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "wp-plugin-rest-auth-bypass",
+      "description": "Recon/pentesting skill for wp plugin rest auth bypass.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "xmlrpc-exploitation",
+      "description": "Recon/pentesting skill for xmlrpc exploitation.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "zimbra-attack",
+      "description": "Recon/pentesting skill for zimbra attack.",
+      "category": "reconnaissance",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "reconnaissance"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "cors-chain-automation",
+      "description": "Recon/pentesting skill for cors chain automation.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-broken-function-level-auth",
+      "description": "Recon/pentesting skill for hunt broken function level auth.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-django",
+      "description": "Recon/pentesting skill for hunt django.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-fastapi",
+      "description": "Recon/pentesting skill for hunt fastapi.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-firebase",
+      "description": "Recon/pentesting skill for hunt firebase.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-information-disclosure",
+      "description": "Recon/pentesting skill for hunt information disclosure.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-mass-assignment",
+      "description": "Recon/pentesting skill for hunt mass assignment.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-mcp-security",
+      "description": "Recon/pentesting skill for hunt mcp security.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-metrics-exposure",
+      "description": "Recon/pentesting skill for hunt metrics exposure.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-nestjs",
+      "description": "Recon/pentesting skill for hunt nestjs.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-prototype-pollution",
+      "description": "Recon/pentesting skill for hunt prototype pollution.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-schema-enumeration",
+      "description": "Recon/pentesting skill for hunt schema enumeration.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-supabase",
+      "description": "Recon/pentesting skill for hunt supabase.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-wordpress",
+      "description": "Recon/pentesting skill for hunt wordpress.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "hunt-write-gap",
+      "description": "Recon/pentesting skill for hunt write gap.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "llm-prompt-injection",
+      "description": "Recon/pentesting skill for llm prompt injection.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ops-proxyns",
+      "description": "Recon/pentesting skill for ops proxyns.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "password-spray-methodology",
+      "description": "Recon/pentesting skill for password spray methodology.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "recon-sector-expansion",
+      "description": "Recon/pentesting skill for recon sector expansion.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "recon-sector",
+      "description": "Recon/pentesting skill for recon sector.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "wordpress-cors-xmlrpc-rce-chain",
+      "description": "Recon/pentesting skill for wordpress cors xmlrpc rce chain.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "wp-plugin-automation",
+      "description": "Recon/pentesting skill for wp plugin automation.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "wp-plugin-cve-hunt",
+      "description": "Recon/pentesting skill for wp plugin cve hunt.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "wstg-web-pentest",
+      "description": "Recon/pentesting skill for wstg web pentest.",
+      "category": "red-team",
+      "verified": "community-derived",
+      "source": "uphiago/recon-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "red-team"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
     }
-  ]
+  ],
+  "skill_count": 291
 }
