@@ -6,12 +6,11 @@ import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import type { SignalEngine, SkillRule } from "./signals"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
-import { upsertHypothesis } from "./hypothesis-store"
+import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
 import type { HypothesisRecord } from "./hypotheses"
 import { PersistentAttemptLedger } from "./persistent-attempt-ledger"
 import type { Attempt, StrategyClass } from "./adaptive-attempts"
 import { createValidationPlan } from "./validation-runner"
-import { loadHypotheses } from "./hypothesis-store"
 import { checkpointPhase } from "./runtime-persistence"
 
 export interface PreparedMultiAgentPlan {
