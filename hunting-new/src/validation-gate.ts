@@ -38,8 +38,8 @@ export function validateHypothesis(input: ValidationInput): ValidationResult {
   const checks: Array<[string, boolean, string]> = [
     ["scope", input.inScope, "target is out of scope"],
     ["target identity", input.targetConfirmed !== false, "target identity/scope was not confirmed"],
-    ["execution", input.attemptsExecuted >= 1, "no validation attempt executed"],
-    ["variant diversity", input.distinctVariants >= 1, "no distinct validation variant"],
+    ["execution", input.attemptsExecuted >= 20, "minimum 20 bounded validation attempts have not been completed"],
+    ["variant diversity", input.distinctVariants >= 2, "at least two distinct validation variants are required"],
     ["observed evidence", observed.length > 0, "no observed non-inference evidence"],
     ["baseline comparison", input.baselineObserved !== false, "no baseline behavior was established"],
     ["behavior change", input.behaviorChanged !== false, "no meaningful behavior change was established"],
