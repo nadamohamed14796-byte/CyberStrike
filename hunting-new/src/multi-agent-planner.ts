@@ -15,6 +15,7 @@ export interface AgentTask {
   reason: string
   dependencies: string[]
   maxParallelTasks: number
+  strategyHints: string[]
 }
 
 export interface MultiAgentPlan {
@@ -31,6 +32,22 @@ function roleForSkill(skill: SkillSelection): HuntingAgentRole {
   if (name.includes("correlat") || name.includes("js") || name.includes("proxy")) return "correlator"
   if (name.includes("review") || name.includes("report")) return "reviewer"
   return "primary-hunter"
+}
+
+function strategyHints(signal: string, skill: string): string[] {
+  const value = (signal + " " + skill).toLowerCase()
+  const hints = new Set<string>()
+  if (/(waf|firewall|filter|blocked|403|429)/.test(value)) hints.add("waf-aware")
+  if (/(idor|authorization|access|auth)/.test(value)) hints.add("account-context")
+  if (/(js|javascript|source|bundle)/.test(value)) hints.add("js-correlation")
+  if (/(api|graphql|rest|endpoint)/.test(value)) hints.add("api-surface")
+  return [...hints]
+}
+
+function dependencyRoles(role: HuntingAgentRole): HuntingAgentRole[] {
+  if (role === "validator") return ["primary-hunter"]
+  if (role === "reviewer") return ["validator"]
+  return []
 }
 
 export function buildMultiAgentPlan(
@@ -65,6 +82,7 @@ export function buildMultiAgentPlan(
       seen.add(key)
 
       const role = roleForSkill(skill)
+      const hints = strategyHints(signal.signal, skill.name)
       const task: AgentTask = {
         id: `task-${tasks.length + 1}`,
         role,
@@ -73,8 +91,9 @@ export function buildMultiAgentPlan(
         target,
         priority: Math.round((skill.score * 100) + signal.confidence * 100 + (skill.priority ?? 0)),
         reason: `signal=${signal.signal}; confidence=${signal.confidence.toFixed(2)}; skill score=${skill.score.toFixed(2)}`,
-        dependencies: role === "validator" ? ["primary-hunter"] : [],
+        dependencies: dependencyRoles(role),
         maxParallelTasks: Math.max(1, skill.maximum_parallel_tasks ?? 1),
+        strategyHints: hints,
       }
       tasks.push(task)
       lanes[role].push(task)
@@ -91,13 +110,20 @@ export function buildMultiAgentPlan(
 
 export function nextAgentTasks(plan: MultiAgentPlan, limit = 4): AgentTask[] {
   const selected: AgentTask[] = []
+  const selectedSkills = new Set<string>()
   const selectedRoles = new Set<HuntingAgentRole>()
+  const remaining = [...plan.tasks]
 
-  for (const task of plan.tasks) {
-    if (selected.length >= Math.max(1, limit)) break
-    if (task.dependencies.some(dep => !selectedRoles.has(dep))) continue
-    if (selected.some(item => item.skill === task.skill)) continue
+  while (selected.length < Math.max(1, limit) && remaining.length) {
+    const index = remaining.findIndex(task =>
+      !selectedSkills.has(task.skill) &&
+      task.dependencies.every(dep => selectedRoles.has(dep)),
+    )
+
+    if (index === -1) break
+    const [task] = remaining.splice(index, 1)
     selected.push(task)
+    selectedSkills.add(task.skill)
     selectedRoles.add(task.role)
   }
 
