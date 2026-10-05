@@ -29,6 +29,8 @@ export async function prepareMultiAgentPlan(
     task.resolvedSkills=resolved.map(skill=>skill.name)
   }
 
+  await saveAgentPlan(root,plan)
+
   return {
     plan,
     persistedTaskIds:created.map(x=>x.taskId),
@@ -54,8 +56,6 @@ export async function dispatchPersistedTasks(
     claimed.push(await claimAgentTask(root,prepared.plan.target,task.id))
   }
   await checkpointPhase(root,prepared.plan.target,"tasks:dispatched")
-  await saveAgentPlan(root,plan)
-
   return {batch,claimed}
 }
 
