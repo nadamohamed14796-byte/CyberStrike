@@ -1,0 +1,3 @@
+export type CyberStrikeRun={command:string[];exitCode:number;stdout:string;stderr:string}
+export async function runCyberStrike(args:string[],cwd=process.cwd()):Promise<CyberStrikeRun>{const proc=Bun.spawn(["cyberstrike",...args],{cwd,stdout:"pipe",stderr:"pipe"});const [stdout,stderr,exitCode]=await Promise.all([new Response(proc.stdout).text(),new Response(proc.stderr).text(),proc.exited]);return{command:["cyberstrike",...args],exitCode,stdout,stderr}}
+export async function runtimeAvailable(){try{const result=await runCyberStrike(["--help"]);return result.exitCode===0||result.stdout.length>0}catch{return false}}
