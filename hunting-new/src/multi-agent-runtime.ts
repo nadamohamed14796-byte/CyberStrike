@@ -329,5 +329,15 @@ export async function executeAndRecordDispatchedTask(
     },
   )
 
+  const taskState=result.state==="confirmed"
+    ? "completed"
+    : result.state==="blocked"
+      ? "blocked"
+      : result.state==="rejected"
+        ? "completed"
+        : "failed"
+  await finishAgentTask(root,plan.target,taskId,taskState)
+  await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
+
   return {context,result,lifecycle}
 }
