@@ -349,3 +349,18 @@ export async function executeAndRecordDispatchedTask(
 
   return {context,result:{...result,state:effectiveState},lifecycle}
 }
+
+export async function executePersistedTaskWithNativeCyberStrike(
+  root:string,
+  plan:MultiAgentPlan,
+  taskId:string,
+  options:{
+    agentBySkill?:Record<string,string>
+    defaultAgent?:string
+    parentSessionID?:string
+  }={},
+){
+  const { NativeCyberStrikeExecutor }=await import("./native-cyberstrike-executor")
+  const executor=new NativeCyberStrikeExecutor(options)
+  return executeAndRecordDispatchedTask(root,plan,taskId,executor)
+}
