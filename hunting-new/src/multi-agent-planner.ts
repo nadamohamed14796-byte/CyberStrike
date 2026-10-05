@@ -62,6 +62,34 @@ function dependencyRoles(role: HuntingAgentRole): HuntingAgentRole[] {
   return []
 }
 
+export function skillRulesFromRegistry(registry: SkillRegistry): SkillRule[] {
+  const skills = (registry as unknown as { skills?: SkillMetadata[] }).skills ?? []
+  return skills.map(skill => ({
+    name: skill.name,
+    confidence_threshold: skill.confidence_threshold,
+    required_signals: skill.triggers.length ? skill.triggers : [skill.name],
+    optional_signals: [],
+    dependencies: skill.dependencies,
+    maximum_parallel_tasks: skill.maximum_parallel_tasks,
+  }))
+}
+
+export function buildMultiAgentPlanFromRegistry(
+  engine: SignalEngine,
+  registry: SkillRegistry,
+  target: string,
+  learning?: LearningEngine,
+  falsePositives?: FalsePositiveIntelligence,
+): MultiAgentPlan {
+  return buildMultiAgentPlan(
+    engine,
+    skillRulesFromRegistry(registry),
+    target,
+    learning,
+    falsePositives,
+  )
+}
+
 export function buildMultiAgentPlan(
   engine: SignalEngine,
   rules: SkillRule[],
