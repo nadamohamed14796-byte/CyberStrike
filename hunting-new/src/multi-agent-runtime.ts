@@ -1,9 +1,9 @@
-import { buildMultiAgentPlan, type MultiAgentPlan } from "./multi-agent-planner"
+import { buildMultiAgentPlan, buildMultiAgentPlanFromRegistry, type MultiAgentPlan } from "./multi-agent-planner"
 import { recordAttemptLifecycle, type AttemptLifecycleResult } from "./attempt-lifecycle"
 import { persistAgentPlan, recoverStaleAgentTasks } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
-import type { SignalEngine, SkillRule } from "./signals"
+import { signalEngineFromCorrelation, type SignalEngine, type SkillRule } from "./signals"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
@@ -18,6 +18,44 @@ export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
   persistedTaskIds:string[]
   resolvedSkillCount:number
+}
+
+export async function prepareMultiAgentPlanFromTargetIntelligence(
+  root:string,
+  target:string,
+  learning?:LearningEngine,
+  falsePositives?:FalsePositiveIntelligence,
+):Promise<PreparedMultiAgentPlan>{
+  const intelligence=await loadTargetIntelligence(root,target)
+  const engine=signalEngineFromCorrelation({
+    target,
+    requests:intelligence.requests,
+    responses:intelligence.responses,
+    jsAssets:intelligence.jsAssets,
+    functions:intelligence.functions,
+    edges:intelligence.edges,
+  })
+  const registry=await loadSkillRegistry(root)
+  const plan=buildMultiAgentPlanFromRegistry(engine,registry,target,learning,falsePositives)
+  const created=await persistAgentPlan(root,plan)
+
+  for(const task of plan.tasks){
+    const resolved=registry.selectForTask(
+      task.skill,
+      [task.signal,...task.strategyHints],
+      task.signalConfidence,
+    )
+    task.resolvedSkills=resolved.map(skill=>skill.name)
+  }
+
+  await saveAgentPlan(root,plan)
+  await checkpointPhase(root,target,"agent-plan:prepared")
+
+  return {
+    plan,
+    persistedTaskIds:created.map(x=>x.taskId),
+    resolvedSkillCount:plan.tasks.reduce((sum,task)=>sum+(task.resolvedSkills?.length??0),0),
+  }
 }
 
 export async function prepareMultiAgentPlan(
