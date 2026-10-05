@@ -4374,6 +4374,27 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "openhunter",
+      "description": "Evidence-led authorized web, API, and AI/LLM application security assessment workflow using OpenHunterAI.",
+      "category": "web-testing",
+      "verified": "community-derived",
+      "source": "OpenHunterAI",
+      "tags": [
+        "web-security",
+        "api-security",
+        "llm-security",
+        "authorized-testing",
+        "evidence"
+      ],
+      "tech_stack": [
+        "OpenHunterAI"
+      ],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ]
 }
