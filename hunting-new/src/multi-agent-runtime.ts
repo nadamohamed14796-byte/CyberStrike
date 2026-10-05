@@ -10,7 +10,7 @@ import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
 import { loadTargetIntelligence } from "./target-intelligence"
 import type { HypothesisRecord } from "./hypotheses"
 import { PersistentAttemptLedger } from "./persistent-attempt-ledger"
-import type { Attempt, StrategyClass } from "./adaptive-attempts"
+import type { Attempt } from "./adaptive-attempts"
 import { createValidationPlan } from "./validation-runner"
 import { checkpointPhase } from "./runtime-persistence"
 import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type SkillExecutionInvocation } from "./skill-execution-adapter"
@@ -141,18 +141,6 @@ export async function resumePersistedDispatch(
 export interface PreparedTaskValidation {
   hypothesis: HypothesisRecord
   attempt: Attempt
-}
-
-function strategyForTask(task: AgentTaskExecutionContext): StrategyClass {
-  const value=(task.signal+" "+task.primarySkill+" "+task.strategyHints.join(" ")).toLowerCase()
-  if(/waf|firewall|filter|blocked|403/.test(value)) return "encoding"
-  if(/idor|authorization|access|auth|tenant/.test(value)) return "account-context"
-  if(/api|graphql|rest|endpoint/.test(value)) return "request-shape"
-  if(/jwt|token/.test(value)) return "header"
-  if(/redirect|oauth/.test(value)) return "parameter"
-  if(/upload|file/.test(value)) return "content-type"
-  if(/js|javascript|source|bundle/.test(value)) return "parser"
-  return "parameter"
 }
 
 export async function prepareAgentTaskValidation(
@@ -290,6 +278,18 @@ export interface AgentTaskExecutor {
     resultSummary?:string
     evidenceIds?:string[]
   }>
+}
+
+export async function prepareDispatchedTaskInvocation(
+  root:string,
+  plan:MultiAgentPlan,
+  taskId:string,
+  options:SkillExecutionAdapterOptions={},
+):Promise<SkillExecutionInvocation>{
+  const prepared=await prepareAgentTaskValidation(root,plan,taskId)
+  const baseContext={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
+  const context=await enrichAgentTaskExecutionContext(root,plan,baseContext)
+  return buildSkillExecutionInvocation(context,options)
 }
 
 export async function executeDispatchedTask(
