@@ -27,17 +27,27 @@ export async function executePersistedDispatchWithNativeCyberStrike(
   const dispatched=await dispatchPersistedTasks(root,prepared,Math.max(1,options.limit??4))
   const results=[]
   for(const task of dispatched.batch.tasks){
-    try{
-      results.push(await executeAndRecordDispatchedTask(root,plan,task.id,new NativeCyberStrikeExecutor({
-        agentBySkill:options.agentBySkill,
-        defaultAgent:options.defaultAgent,
-        parentSessionID:options.parentSessionID,
-        model:options.model,
-      }))
-    }catch(error){
-      await finishAgentTask(root,target,task.id,"failed")
-      results.push({taskId:task.id,error:error instanceof Error?error.message:String(error)})
+    const taskResults=[]
+    let terminal=false
+    for(let attempt=0;attempt<20 && !terminal;attempt++){
+      try{
+        const result=await executeAndRecordDispatchedTask(root,plan,task.id,new NativeCyberStrikeExecutor({
+          agentBySkill:options.agentBySkill,
+          defaultAgent:options.defaultAgent,
+          parentSessionID:options.parentSessionID,
+          model:options.model,
+        }))
+        taskResults.push(result)
+        terminal=result.lifecycle?.hypothesisStatus==="confirmed" ||
+          result.lifecycle?.hypothesisStatus==="rejected" ||
+          result.lifecycle?.hypothesisStatus==="blocked"
+      }catch(error){
+        if(attempt===0) await finishAgentTask(root,target,task.id,"failed")
+        taskResults.push({taskId:task.id,error:error instanceof Error?error.message:String(error)})
+        terminal=true
+      }
     }
+    results.push({taskId:task.id,attempts:taskResults.length,results:taskResults})
   }
   await checkpointPhase(root,target,"tasks:executed")
   return {dispatched,results}
