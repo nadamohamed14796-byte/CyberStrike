@@ -3,11 +3,7 @@ import { routeSkills, type RoutingDecision } from "./skill-router"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 
-export type HuntingAgentRole =
-  | "primary-hunter"
-  | "validator"
-  | "correlator"
-  | "reviewer"
+export type HuntingAgentRole = "primary-hunter" | "validator" | "correlator" | "reviewer"
 
 export interface AgentTask {
   id: string
@@ -90,25 +86,19 @@ export function buildMultiAgentPlan(
     lanes[role].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))
   }
 
-  return {
-    target,
-    mode: decision.mode,
-    reason: decision.reason,
-    tasks,
-    lanes,
-  }
+  return { target, mode: decision.mode, reason: decision.reason, tasks, lanes }
 }
 
 export function nextAgentTasks(plan: MultiAgentPlan, limit = 4): AgentTask[] {
-  const active = new Set<string>()
   const selected: AgentTask[] = []
+  const selectedRoles = new Set<HuntingAgentRole>()
 
   for (const task of plan.tasks) {
     if (selected.length >= Math.max(1, limit)) break
-    if (task.dependencies.some(dep => !active.has(dep) && dep !== "primary-hunter")) continue
-    if (active.has(task.skill)) continue
-    active.add(task.skill)
+    if (task.dependencies.some(dep => !selectedRoles.has(dep))) continue
+    if (selected.some(item => item.skill === task.skill)) continue
     selected.push(task)
+    selectedRoles.add(task.role)
   }
 
   return selected
