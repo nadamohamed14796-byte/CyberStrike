@@ -10,6 +10,9 @@ import { upsertHypothesis } from "./hypothesis-store"
 import type { HypothesisRecord } from "./hypotheses"
 import { PersistentAttemptLedger } from "./persistent-attempt-ledger"
 import type { Attempt, StrategyClass } from "./adaptive-attempts"
+import { createValidationPlan } from "./validation-runner"
+import { loadHypotheses } from "./hypothesis-store"
+import { checkpointPhase } from "./runtime-persistence"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
