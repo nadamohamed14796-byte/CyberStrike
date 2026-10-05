@@ -10,7 +10,7 @@ export function routeSkills(engine: SignalEngine, rules: SkillRule[], target?: s
   const signals = target ? engine.forTarget(target) : engine.list()
   if (!signals.length) return { skills: [], mode: "idle", reason: "no signals available" }
 
-  const selected = engine.selectSkills(rules).filter(skill =>
+  const selected = engine.selectSkills(rules, target).filter(skill =>
     skill.matchedSignals.some(name => signals.some(signal => signal.signal === name))
   )
 
