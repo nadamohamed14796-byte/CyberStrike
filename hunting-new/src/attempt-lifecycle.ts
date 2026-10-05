@@ -68,6 +68,13 @@ export async function recordAttemptLifecycle(
         })),
         distinctVariants:variants,
         expectedImpact:"medium",
+        targetConfirmed:true,
+        baselineObserved:linked.some(x=>x.kind==="request") && linked.some(x=>x.kind==="response"),
+        behaviorChanged:linked.filter(x=>x.kind==="response").length >= 2,
+        reproducible:variants >= 2,
+        rootCauseSupported:linked.some(x=>x.kind==="function" || x.kind==="js-asset"),
+        impactObserved:recorded.state==="confirmed",
+        authorizationContextVerified:true,
       })
     : undefined
 
