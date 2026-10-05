@@ -6,7 +6,6 @@ node_modules
 .idea
 .vscode
 .codex
-.claude/
 .cyberstrike/*
 !.cyberstrike/skill/
 __MACOSX/

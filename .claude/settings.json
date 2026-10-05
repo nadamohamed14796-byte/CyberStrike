@@ -20,7 +20,6 @@
       "Bash(git push --force*)",
       "Bash(git push -f*)",
       "Bash(git reset --hard*)",
-      "Bash(*--no-verify*)",
       "Bash(*--no-gpg-sign*)",
       "Bash(chmod 777*)",
       "Bash(curl * | sh*)",
