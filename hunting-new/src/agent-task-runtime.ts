@@ -70,3 +70,24 @@ export async function finishAgentTask(
 
   return transitionTaskState(root,target,taskId,state,task.attempts,["running","claimed"])
 }
+
+export async function recoverStaleAgentTasks(
+  root:string,
+  target:string,
+  maxAgeMs=30*60*1000,
+):Promise<TaskStateRecord[]>{
+  const current=await loadTaskStates(root,target)
+  const cutoff=Date.now()-Math.max(1000,maxAgeMs)
+  const recovered:TaskStateRecord[]=[]
+  for(const task of current.tasks){
+    if(task.state!=="running" && task.state!=="claimed") continue
+    if(Date.parse(task.updatedAt)>cutoff) continue
+    recovered.push(
+      await transitionTaskState(
+        root,target,task.taskId,"pending",task.attempts,["running","claimed"],
+      ),
+    )
+  }
+  return recovered
+}
+
