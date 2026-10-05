@@ -1,10 +1,61 @@
 import { loadHuntingState, type HuntingState } from "./hunting-state"
 import { loadCheckpoint, saveCheckpoint, type RuntimeCheckpoint } from "./runtime-checkpoint"
 import { updateMission, type MissionState } from "./mission"
+import type { HypothesisRecord } from "./hypotheses"
+import type { Chain } from "./chain-board"
 
 export async function resumeHunting(root:string,target:string):Promise<HuntingState>{
-  const state = await loadHuntingState(root,target)
-  return state
+  return loadHuntingState(root,target)
+}
+
+export interface ResumeContext {
+  state:HuntingState
+  checkpoint:RuntimeCheckpoint|null
+  activeHypotheses:HypothesisRecord[]
+  activeChains:Chain[]
+  nextAttemptNumber:Record<string,number>
+  resumePhase:string
+}
+
+export async function resumeHuntingContext(root:string,target:string):Promise<ResumeContext>{
+  const [state,checkpoint]=await Promise.all([
+    loadHuntingState(root,target),
+    loadCheckpoint(root,target),
+  ])
+
+  const activeHypotheses=state.hypotheses.hypotheses.filter(x =>
+    (x.status==="pending" || x.status==="testing") &&
+    (!checkpoint?.activeHypothesisIds.length || checkpoint.activeHypothesisIds.includes(x.id))
+  )
+  const activeChains=state.chains.chains.filter(x =>
+    (x.status==="open" || x.status==="testing") &&
+    (!checkpoint?.activeChainIds.length || checkpoint.activeChainIds.includes(x.id))
+  )
+
+  const nextAttemptNumber:Record<string,number>={}
+  for(const hypothesis of activeHypotheses){
+    nextAttemptNumber[hypothesis.id]=
+      state.attempts.attempts.filter(x=>x.hypothesisId===hypothesis.id).length+1
+  }
+
+  return {
+    state,
+    checkpoint,
+    activeHypotheses,
+    activeChains,
+    nextAttemptNumber,
+    resumePhase:checkpoint?.phase ?? state.mission?.checkpoint ?? "initial",
+  }
+}
+
+export function selectNextHypothesis(context:ResumeContext):HypothesisRecord|undefined{
+  return [...context.activeHypotheses].sort((a,b)=>{
+    const ar=a.status==="testing"?0:1
+    const br=b.status==="testing"?0:1
+    const aa=context.nextAttemptNumber[a.id]??1
+    const ba=context.nextAttemptNumber[b.id]??1
+    return ar-br || aa-ba || a.id.localeCompare(b.id)
+  })[0]
 }
 
 export async function checkpointHunting(
@@ -12,9 +63,8 @@ export async function checkpointHunting(
   state:HuntingState,
   phase:string,
 ):Promise<RuntimeCheckpoint>{
-  const target = state.mission?.target ?? ""
-  if (!target) throw new Error("CHECKPOINT_BLOCKED: mission target is missing")
-
+  const target=state.mission?.target ?? ""
+  if(!target) throw new Error("CHECKPOINT_BLOCKED: mission target is missing")
   return saveCheckpoint(root,{
     target,
     missionState:state.mission?.state ?? "PAUSED",
@@ -31,24 +81,16 @@ export async function checkpointHunting(
   })
 }
 
-export async function checkpointPhase(
-  root:string,
-  target:string,
-  phase:string,
-):Promise<RuntimeCheckpoint>{
-  const state = await resumeHunting(root,target)
-  return checkpointHunting(root,state,phase)
+export async function checkpointPhase(root:string,target:string,phase:string):Promise<RuntimeCheckpoint>{
+  return checkpointHunting(root,await resumeHunting(root,target),phase)
 }
 
 export async function transitionMissionAndCheckpoint(
-  root:string,
-  target:string,
-  state:MissionState,
-  phase:string,
-):Promise<{ mission: Awaited<ReturnType<typeof updateMission>>; checkpoint: RuntimeCheckpoint }>{
-  const mission = await updateMission(root,target,state,phase)
-  const checkpoint = await checkpointPhase(root,target,phase)
-  return { mission, checkpoint }
+  root:string,target:string,state:MissionState,phase:string,
+):Promise<{mission:Awaited<ReturnType<typeof updateMission>>;checkpoint:RuntimeCheckpoint}>{
+  const mission=await updateMission(root,target,state,phase)
+  const checkpoint=await checkpointPhase(root,target,phase)
+  return {mission,checkpoint}
 }
 
 export async function resumeCheckpoint(root:string,target:string):Promise<RuntimeCheckpoint|null>{
