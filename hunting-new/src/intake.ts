@@ -1,4 +1,4 @@
-import { addRequest, addResponse, link, type CorrelationGraph, type RequestNode, type ResponseNode, type JSAssetNode } from "./correlation"
+import { addRequest, addResponse, link, serializeGraph, type CorrelationGraph, type RequestNode, type ResponseNode, type JSAssetNode } from "./correlation"
 import { rememberTargetIntelligence } from "./target-intelligence"
 
 export interface NetworkObservation {
@@ -17,6 +17,8 @@ export async function ingestAndPersistObservation(root: string, target: string, 
     requests: [graph.requests.get(observation.request.id)!],
     responses: response ? [graph.responses.get(response.id)!] : [],
     jsAssets: observation.jsAssets ?? [],
+    functions: [...graph.functions.values()],
+    edges: serializeGraph(graph).edges,
     hypotheses: [],
     tags: [],
   })
