@@ -9,7 +9,19 @@ export interface NetworkObservation {
   functionIds?: string[]
 }
 
-export async function ingestAndPersistObservation(root: string, target: string, graph: CorrelationGraph, observation: NetworkObservation): Promise<void> {\n  ingestObservation(graph, observation)\n  const response = observation.response\n  await rememberTargetIntelligence(root, target, {\n    requests: [graph.requests.get(observation.request.id)!],\n    responses: response ? [graph.responses.get(response.id)!] : [],\n    jsAssets: [],\n    hypotheses: [],\n    tags: [],\n  })\n}\n\nexport function ingestObservation(graph: CorrelationGraph, observation: NetworkObservation): void {
+export async function ingestAndPersistObservation(root: string, target: string, graph: CorrelationGraph, observation: NetworkObservation): Promise<void> {
+  ingestObservation(graph, observation)
+  const response = observation.response
+  await rememberTargetIntelligence(root, target, {
+    requests: [graph.requests.get(observation.request.id)!],
+    responses: response ? [graph.responses.get(response.id)!] : [],
+    jsAssets: [],
+    hypotheses: [],
+    tags: [],
+  })
+}
+
+export function ingestObservation(graph: CorrelationGraph, observation: NetworkObservation): void {
   const r = observation.request
   const request: RequestNode = {
     ...r,
