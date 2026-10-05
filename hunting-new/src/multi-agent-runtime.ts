@@ -173,11 +173,13 @@ export interface AgentTaskExecutor {
   }>
 }
 
-export async function executeDispatchedTask(root:string,plan:MultiAgentPlan,taskId:string,executor:AgentTaskExecutor){
-  const context=buildAgentTaskExecutionContext(plan,taskId)
-  const result=await executor.execute(context)
-  await checkpointPhase(root,plan.target,"tasks:executor:"+result.state)
-  return {context,result}
+export async function executeDispatchedTask(
+  root:string,
+  plan:MultiAgentPlan,
+  taskId:string,
+  executor:AgentTaskExecutor,
+){
+  return executeAndRecordDispatchedTask(root,plan,taskId,executor)
 }
 
 export async function executeAndRecordDispatchedTask(
