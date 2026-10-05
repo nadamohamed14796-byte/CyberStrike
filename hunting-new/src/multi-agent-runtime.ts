@@ -67,3 +67,19 @@ export async function completeDispatchedTask(
   await checkpointPhase(root,target,`tasks:${state}`)
   return result
 }
+
+
+export async function resumePersistedDispatch(
+  root:string,
+  target:string,
+  limit=4,
+){
+  const plan=await loadAgentPlan(root,target)
+  if(!plan) throw new Error("AGENT_PLAN_NOT_FOUND")
+  const prepared:PreparedMultiAgentPlan={
+    plan,
+    persistedTaskIds:plan.tasks.map(task=>task.id),
+    resolvedSkillCount:plan.tasks.reduce((sum,task)=>sum+(task.resolvedSkills?.length??0),0),
+  }
+  return dispatchPersistedTasks(root,prepared,limit)
+}
