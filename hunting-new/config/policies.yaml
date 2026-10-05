@@ -1,0 +1,24 @@
+mission:
+  unknown_scope: BLOCK
+  require_provenance: true
+  anti_early_exit: true
+
+validation:
+  default_attempt_budget: 20
+  allow_early_stop: true
+  require_reason_for_attempt: true
+
+safety:
+  require_scope_gate: true
+  require_authorization_gate: true
+  require_rate_limit_gate: true
+  require_risk_gate: true
+  never_store_secrets: true
+
+learning:
+  rewrite_skills: false
+  bounded_scores: true
+
+context:
+  persistent_state_is_authoritative: true
+  max_task_records: 40
