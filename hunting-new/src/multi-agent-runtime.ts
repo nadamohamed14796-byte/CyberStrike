@@ -189,13 +189,23 @@ export async function enrichAgentTaskExecutionContext(
   }).sort((a,b)=>b.observedAt-a.observedAt)
   const request=candidates[0]
   const response=request ? intelligence.responses.find(item=>item.requestId===request.id) : undefined
+  const relatedEdges=request
+    ? intelligence.edges.filter(edge=>edge.from===request.id || edge.to===request.id)
+    : []
+  const functionIds=new Set<string>()
+  const jsAssetIds=new Set<string>()
+  for(const edge of relatedEdges){
+    if(edge.kind==="triggered-by") functionIds.add(edge.from)
+    if(edge.kind==="observed-on") jsAssetIds.add(edge.from)
+  }
+  if(context.functionId) functionIds.add(context.functionId)
   return {
     ...context,
     requestId:request?.id,
     responseId:response?.id,
     accountLabel:request?.accountLabel,
-    functionIds:context.functionId?[context.functionId]:[],
-    jsAssetIds:[],
+    functionIds:[...functionIds],
+    jsAssetIds:[...jsAssetIds],
   }
 }
 
