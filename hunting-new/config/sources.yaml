@@ -1,0 +1,36 @@
+sources:
+  - name: PortSwigger Research
+    type: RSS
+    enabled: true
+    frequency: weekly
+    trust_level: high
+  - name: ProjectDiscovery Research
+    type: RSS
+    enabled: true
+    frequency: weekly
+    trust_level: high
+  - name: GitHub Security Advisories
+    type: API
+    enabled: true
+    frequency: weekly
+    trust_level: high
+  - name: HackerOne Public Disclosures
+    type: HTML
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Bugcrowd Disclosures
+    type: HTML
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Researcher Blogs
+    type: RSS
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Medium Security Research
+    type: HTML
+    enabled: true
+    frequency: weekly
+    trust_level: medium
