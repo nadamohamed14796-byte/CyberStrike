@@ -62,18 +62,6 @@ function dependencyRoles(role: HuntingAgentRole): HuntingAgentRole[] {
   return []
 }
 
-export function skillRulesFromRegistry(registry: SkillRegistry): SkillRule[] {
-  const skills = registry.list()
-  return skills.map(skill => ({
-    name: skill.name,
-    confidence_threshold: skill.confidence_threshold,
-    required_signals: skill.triggers.length ? skill.triggers : [skill.name],
-    optional_signals: [],
-    dependencies: skill.dependencies,
-    maximum_parallel_tasks: skill.maximum_parallel_tasks,
-  }))
-}
-
 export function buildMultiAgentPlanFromRegistry(
   engine: SignalEngine,
   registry: SkillRegistry,
@@ -81,13 +69,94 @@ export function buildMultiAgentPlanFromRegistry(
   learning?: LearningEngine,
   falsePositives?: FalsePositiveIntelligence,
 ): MultiAgentPlan {
-  return buildMultiAgentPlan(
-    engine,
-    skillRulesFromRegistry(registry),
-    target,
-    learning,
-    falsePositives,
-  )
+  const signals = engine.forTarget(target)
+  const signalNames = new Set(signals.map(signal => signal.signal.toLowerCase().replace(/[_\s]+/g, "-")))
+  const selections: SkillSelection[] = []
+
+  for (const metadata of registry.list()) {
+    const matchedSignals = [...new Set(
+      signals
+        .filter(signal =>
+          signal.confidence >= metadata.confidence_threshold &&
+          metadata.triggers.some(trigger =>
+            signal.signal.toLowerCase().replace(/[_\s]+/g, "-") ===
+            trigger.toLowerCase().replace(/[_\s]+/g, "-"),
+          ),
+        )
+        .map(signal => signal.signal),
+    )]
+    if (!matchedSignals.length) continue
+    const score = matchedSignals.length / Math.max(1, metadata.triggers.length)
+    selections.push({
+      name: metadata.name,
+      confidence_threshold: metadata.confidence_threshold,
+      required_signals: matchedSignals,
+      optional_signals: metadata.triggers,
+      dependencies: metadata.dependencies,
+      priority: 0,
+      maximum_parallel_tasks: metadata.maximum_parallel_tasks,
+      matchedSignals,
+      score,
+    })
+  }
+
+  const selected = target && learning && selections.length
+    ? prioritizeSkills(selections, learning, target, undefined, falsePositives)
+    : selections
+
+  const decision: RoutingDecision = {
+    skills: selected,
+    mode: selected.length ? "focused" : "idle",
+    reason: selected.length
+      ? "skills selected directly from the CyberStrike registry and observed signals"
+      : "no registered skill matched observed signals",
+  }
+
+  const signalByName = new Map(signals.map(signal => [signal.signal, signal]))
+  const lanes: MultiAgentPlan["lanes"] = {
+    "primary-hunter": [],
+    validator: [],
+    correlator: [],
+    reviewer: [],
+  }
+  const tasks: AgentTask[] = []
+  const seen = new Set<string>()
+
+  for (const skill of decision.skills) {
+    for (const signalName of skill.matchedSignals) {
+      const signal = signalByName.get(signalName)
+      if (!signal) continue
+      const key = `${skill.name}|${signal.signal}|${signal.endpoint ?? ""}|${signal.function_id ?? ""}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      const role = roleForSkill(skill)
+      const hints = strategyHints(signal.signal, skill.name)
+      const task: AgentTask = {
+        id: `task-${tasks.length + 1}`,
+        role,
+        skill: skill.name,
+        signal: signal.signal,
+        signalConfidence: signal.confidence,
+        endpoint: signal.endpoint,
+        functionId: signal.function_id,
+        target,
+        priority: Math.round((skill.score * 100) + signal.confidence * 100 + (skill.priority ?? 0)),
+        reason: `signal=${signal.signal}; confidence=${signal.confidence.toFixed(2)}; registry skill=${skill.name}`,
+        dependencies: dependencyRoles(role),
+        maxParallelTasks: Math.max(1, skill.maximum_parallel_tasks ?? 1),
+        strategyHints: hints,
+      }
+      tasks.push(task)
+      lanes[role].push(task)
+    }
+  }
+
+  tasks.sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))
+  for (const role of Object.keys(lanes) as HuntingAgentRole[]) {
+    lanes[role].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))
+  }
+
+  return { target, mode: decision.mode, reason: decision.reason, tasks, lanes }
 }
 
 export function buildMultiAgentPlan(
