@@ -17,7 +17,7 @@ import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type 
 import { loadLearning } from "./learning-store"
 import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
-import { parseExecutionResult } from "./execution-result"
+import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -318,6 +318,8 @@ export async function executeAndRecordDispatchedTask(
     : undefined
   const effectiveState=parsed?.state ?? result.state
   const attemptId=result.attemptId??prepared.attempt.id
+  const evidenceState=await (await import("./evidence-store")).loadEvidence(root,plan.target)
+  const evidenceIds=[...new Set([...(result.evidenceIds ?? []),...(parsed ? verifiedEvidenceIds(parsed,new Set(evidenceState.evidence.map(item=>item.id))) : [])])]
 
   const lifecycle=await recordAttemptLifecycle(
     root,
@@ -327,7 +329,7 @@ export async function executeAndRecordDispatchedTask(
       state:effectiveState,
       requestId:result.requestId,
       resultSummary:result.resultSummary,
-      evidenceIds:result.evidenceIds,
+      evidenceIds,
       skill:context.primarySkill,
       endpoint:context.endpoint,
       confidence:context.signalConfidence,
