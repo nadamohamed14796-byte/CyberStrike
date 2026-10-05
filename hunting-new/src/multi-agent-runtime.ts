@@ -1,6 +1,7 @@
 import { buildMultiAgentPlan, type MultiAgentPlan } from "./multi-agent-planner"
 import { persistAgentPlan } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
+import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import type { SignalEngine, SkillRule } from "./signals"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
