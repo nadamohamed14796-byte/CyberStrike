@@ -4,6 +4,7 @@ import { transitionChain, loadChains } from "./chain-store"
 import { checkpointPhase } from "./runtime-persistence"
 import { loadEvidence } from "./evidence-store"
 import { validateHypothesis, type ValidationResult } from "./validation-gate"
+import { recordAttemptLearningFeedback } from "./attempt-learning-feedback"
 import type { AttemptState } from "./adaptive-attempts"
 
 export interface AttemptLifecycleResult {
@@ -11,13 +12,24 @@ export interface AttemptLifecycleResult {
   hypothesisStatus: "pending"|"testing"|"confirmed"|"rejected"|"blocked"
   chainStatuses: Record<string, "open"|"testing"|"confirmed"|"rejected"|"blocked">
   validation?: ValidationResult
+  learningRecorded: boolean
+  falsePositiveRecorded: boolean
 }
 
 export async function recordAttemptLifecycle(
   root:string,
   target:string,
   attemptId:string,
-  update:{state:AttemptState;requestId?:string;resultSummary?:string;evidenceIds?:string[]},
+  update:{
+    state:AttemptState
+    requestId?:string
+    resultSummary?:string
+    evidenceIds?:string[]
+    skill?:string
+    endpoint?:string
+    accountMode?:string
+    confidence?:number
+  },
 ):Promise<AttemptLifecycleResult>{
   const { loadAttempts } = await import("./attempt-store")
   const stored=await loadAttempts(root,target)
@@ -75,6 +87,27 @@ export async function recordAttemptLifecycle(
     chainStatuses[chain.id]=status
   }
 
+  const learning=await recordAttemptLearningFeedback(
+    root,
+    target,
+    recorded,
+    hypothesis,
+    hypothesisStatus,
+    {
+      skill:update.skill,
+      endpoint:update.endpoint,
+      accountMode:update.accountMode,
+      confidence:update.confidence,
+    },
+  )
+
   await checkpointPhase(root,target,validation?.decision==="eligible" ? "validation:eligible" : "validation:state-transition")
-  return {attemptState:recorded.state,hypothesisStatus,chainStatuses,validation}
+  return {
+    attemptState:recorded.state,
+    hypothesisStatus,
+    chainStatuses,
+    validation,
+    learningRecorded:learning.learningRecorded,
+    falsePositiveRecorded:learning.falsePositiveRecorded,
+  }
 }
