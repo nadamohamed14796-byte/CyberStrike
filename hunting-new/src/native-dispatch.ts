@@ -28,7 +28,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
   const results=[]
   for(const task of dispatched.batch.tasks){
     try{
-      results.push(await executePersistedTaskWithNativeCyberStrike(root,plan,task.id,{
+      results.push(await executeAndRecordDispatchedTask(root,plan,task.id,new NativeCyberStrikeExecutor({
         agentBySkill:options.agentBySkill,
         defaultAgent:options.defaultAgent,
         parentSessionID:options.parentSessionID,
