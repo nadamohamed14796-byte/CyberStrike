@@ -42,11 +42,13 @@ export async function transitionTaskState(
   taskId:string,
   nextState:TaskStateRecord["state"],
   attempts?:number,
+  expectedStates?:TaskStateRecord["state"][],
 ):Promise<TaskStateRecord>{
   return withTaskStateLock(root,target,async()=>{
     const current=await loadTaskStates(root,target)
     const task=current.tasks.find(x=>x.taskId===taskId)
     if(!task) throw new Error("TASK_NOT_FOUND")
+    if(expectedStates && !expectedStates.includes(task.state)) throw new Error(`TASK_STATE_CONFLICT: ${task.state}`)
     const nextRecord:TaskStateRecord={
       taskId,
       state:nextState,
