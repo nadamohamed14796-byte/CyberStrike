@@ -70,6 +70,15 @@ export class AttemptLedger {
     throw new Error(`Unknown attempt: ${id}`)
   }
 
+  hydrate(attempt: Attempt): void {
+    const current = this.attempts.get(attempt.hypothesisId) ?? []
+    const index = current.findIndex(x => x.id === attempt.id)
+    if (index === -1) current.push({ ...attempt, evidenceIds: [...attempt.evidenceIds] })
+    else current[index] = { ...attempt, evidenceIds: [...attempt.evidenceIds] }
+    current.sort((a,b) => a.createdAt - b.createdAt)
+    this.attempts.set(attempt.hypothesisId, current)
+  }
+
   list(hypothesisId: string): Attempt[] {
     return [...(this.attempts.get(hypothesisId) ?? [])]
   }
