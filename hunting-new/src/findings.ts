@@ -1,5 +1,64 @@
-export type FindingState="DISCOVERED"|"CANDIDATE"|"TRIAGED"|"VALIDATING"|"VERIFIED"|"DEDUPED"|"SEVERITY_ASSESSED"|"REPORT_READY"|"SUBMITTED"|"FALSE_POSITIVE"|"DUPLICATE"|"OUT_OF_SCOPE"|"NOT_REPRODUCIBLE"|"INCONCLUSIVE"
-export type Finding={finding_id:string;target:string;category:string;root_cause:string;endpoint?:string;method?:string;parameter?:string;state:FindingState;confidence:number;exploitability:number;impact:number;severity?:"info"|"low"|"medium"|"high"|"critical";evidence_refs:string[]}
-export function fingerprint(f:Pick<Finding,"target"|"category"|"root_cause"|"endpoint"|"method"|"parameter">){return Bun.hash([f.target,f.category,f.root_cause,f.endpoint??"",f.method??"",f.parameter??""].join("|")).toString(16)}
-export function dedupe(findings:Finding[]){const map=new Map<string,Finding>();for(const f of findings){const k=fingerprint(f);const p=map.get(k);if(!p||f.confidence>p.confidence)map.set(k,f)}return[...map.values()]}
-export function evidenceBackedSeverity(confidence:number,exploitability:number,impact:number){if(confidence<.75)return undefined;const score=exploitability*impact;if(score>=.8)return"critical";if(score>=.6)return"high";if(score>=.35)return"medium";if(score>=.15)return"low";return"info"}
+import crypto from "node:crypto"
+import type { EvidenceRecord } from "./evidence"
+
+export type FindingStatus = "draft" | "validated" | "rejected" | "reported"
+export type FindingSeverity = "info" | "low" | "medium" | "high" | "critical"
+
+export interface FindingRecord {
+  id: string
+  fingerprint: string
+  target: string
+  title: string
+  severity: FindingSeverity
+  status: FindingStatus
+  hypothesisId: string
+  chainId?: string
+  attemptIds: string[]
+  evidenceIds: string[]
+  requestIds: string[]
+  responseIds: string[]
+  jsAssetIds: string[]
+  functionIds: string[]
+  accountLabels: string[]
+  summary: string
+  impact: string
+  remediation?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FindingInput {
+  target: string
+  title: string
+  severity: FindingSeverity
+  hypothesisId: string
+  chainId?: string
+  attemptIds?: string[]
+  evidence: EvidenceRecord[]
+  summary: string
+  impact: string
+  remediation?: string
+}
+
+const unique=(v:string[])=>[...new Set(v.filter(Boolean))]
+
+export function findingFingerprint(input:Pick<FindingInput,"target"|"title"|"hypothesisId"|"chainId"|"evidence">):string {
+  const evidenceKeys=input.evidence.map(x=>[x.kind,x.sourceId,x.requestId??"",x.responseId??"",x.jsAssetId??"",x.functionId??""].join(":")).sort()
+  return crypto.createHash("sha256").update([input.target.trim().toLowerCase(),input.title.trim().toLowerCase(),input.hypothesisId,input.chainId??"",...evidenceKeys].join("|")).digest("hex")
+}
+
+export function buildFinding(input:FindingInput):FindingRecord {
+  const now=new Date().toISOString(), fp=findingFingerprint(input), e=input.evidence
+  return {
+    id:"finding_"+fp.slice(0,20),fingerprint:fp,target:input.target,title:input.title,severity:input.severity,status:"draft",
+    hypothesisId:input.hypothesisId,chainId:input.chainId,attemptIds:unique(input.attemptIds??[]),
+    evidenceIds:unique(e.map(x=>x.id)),requestIds:unique(e.flatMap(x=>x.requestId?[x.requestId]:[])),
+    responseIds:unique(e.flatMap(x=>x.responseId?[x.responseId]:[])),jsAssetIds:unique(e.flatMap(x=>x.jsAssetId?[x.jsAssetId]:[])),
+    functionIds:unique(e.flatMap(x=>x.functionId?[x.functionId]:[])),accountLabels:unique(e.flatMap(x=>x.accountLabel?[x.accountLabel]:[])),
+    summary:input.summary,impact:input.impact,remediation:input.remediation,createdAt:now,updatedAt:now
+  }
+}
+
+export function updateFinding(f:FindingRecord,p:Partial<Pick<FindingRecord,"status"|"summary"|"impact"|"remediation">>):FindingRecord {
+  return {...f,...p,updatedAt:new Date().toISOString()}
+}
