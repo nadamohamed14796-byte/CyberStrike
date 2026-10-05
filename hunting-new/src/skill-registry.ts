@@ -1,21 +1,47 @@
-export type SkillMetadata={name:string;category:string;description:string;triggers:string[];required_context:string[];dependencies:string[];risk_level:"low"|"medium"|"high";scope_requirements:string[];validation_requirements:string[];confidence_threshold:number;maximum_parallel_tasks:number}
+export type SkillMetadata={
+  name:string;
+  category:string;
+  description:string;
+  triggers:string[];
+  required_context:string[];
+  dependencies:string[];
+  risk_level:"low"|"medium"|"high";
+  scope_requirements:string[];
+  validation_requirements:string[];
+  confidence_threshold:number;
+  maximum_parallel_tasks:number;
+  source_path?:string
+}
 
 const canonicalTrigger=(value:string):string =>
   value.trim().toLowerCase().replace(/[_\s]+/g,"-")
 
+const SKILL_ALIASES:Record<string,string>={
+  "waf-awareness":"waf-xss-bypass",
+  "waf-aware":"waf-xss-bypass",
+  "javascript_intelligence":"analyze-js",
+  "javascript-intelligence":"analyze-js",
+  "idor":"attack-idor-automation",
+  "rate-limit":"attack-rate-limit-bypass",
+}
+
 export class SkillRegistry{
   constructor(private skills:SkillMetadata[]){}
 
-  get(name:string){return this.skills.find(x=>x.name===name)}
+  get(name:string){
+    const canonical=SKILL_ALIASES[name]??name
+    return this.skills.find(x=>x.name===canonical)
+  }
 
   resolve(names:string[]){
     const out=new Map<string,SkillMetadata>()
     const visit=(name:string)=>{
-      if(out.has(name))return
-      const skill=this.get(name)
+      const canonical=SKILL_ALIASES[name]??name
+      if(out.has(canonical))return
+      const skill=this.get(canonical)
       if(!skill)return
       for(const dep of skill.dependencies)visit(dep)
-      out.set(name,skill)
+      out.set(canonical,skill)
     }
     for(const name of names)visit(name)
     return [...out.values()]
@@ -35,9 +61,8 @@ export class SkillRegistry{
   }
 
   selectForTask(primarySkill:string,signalNames:string[],confidence:number){
-    const primary=this.get(primarySkill)
     const related=this.select(signalNames,confidence)
-    const names=[primary?.name??primarySkill,...related.map(x=>x.name)]
+    const names=[primarySkill,...related.map(x=>x.name)]
     return this.resolve(names)
   }
 }
