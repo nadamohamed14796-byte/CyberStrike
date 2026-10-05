@@ -101,6 +101,8 @@ export function buildMultiAgentPlan(
         skill: skill.name,
         signal: signal.signal,
         signalConfidence: signal.confidence,
+        endpoint: signal.endpoint,
+        functionId: signal.function_id,
         target,
         priority: Math.round((skill.score * 100) + signal.confidence * 100 + (skill.priority ?? 0)),
         reason: `signal=${signal.signal}; confidence=${signal.confidence.toFixed(2)}; skill score=${skill.score.toFixed(2)}`,
