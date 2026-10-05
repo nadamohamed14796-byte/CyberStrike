@@ -328,6 +328,11 @@ export const TaskTool = Tool.define("task", async (ctx) => {
 
       const output = [
         ...(statusBanner ? [`<task_status>${statusBanner}</task_status>`, ""] : []),
+        "<execution_result>",
+        `outcome: ${outcome}`,
+        `task_id: ${session.id}`,
+        "</execution_result>",
+        "",
         `task_id: ${session.id} (for resuming to continue this task if needed)`,
         "",
         "<task_result>",
