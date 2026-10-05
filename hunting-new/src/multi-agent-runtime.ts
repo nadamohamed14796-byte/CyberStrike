@@ -1,6 +1,6 @@
 import { buildMultiAgentPlan, type MultiAgentPlan } from "./multi-agent-planner"
 import { recordAttemptLifecycle, type AttemptLifecycleResult } from "./attempt-lifecycle"
-import { persistAgentPlan } from "./agent-task-runtime"
+import { persistAgentPlan, recoverStaleAgentTasks } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import type { SignalEngine, SkillRule } from "./signals"
@@ -55,6 +55,7 @@ export async function dispatchPersistedTasks(
   prepared:PreparedMultiAgentPlan,
   limit=4,
 ){
+  await recoverStaleAgentTasks(root,prepared.plan.target)
   const state=await loadTaskStates(root,prepared.plan.target)
   const states=new Map(state.tasks.map(task=>[task.taskId,task.state] as const))
   const batch=dispatchAgentTasks(prepared.plan,states,limit)
