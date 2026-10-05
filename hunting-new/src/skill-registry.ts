@@ -28,6 +28,8 @@ const SKILL_ALIASES:Record<string,string>={
 export class SkillRegistry{
   constructor(private skills:SkillMetadata[]){}
 
+  list(){return [...this.skills]}
+
   get(name:string){
     const canonical=SKILL_ALIASES[name]??name
     return this.skills.find(x=>x.name===canonical)
