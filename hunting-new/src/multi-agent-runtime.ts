@@ -54,6 +54,8 @@ export async function dispatchPersistedTasks(
     claimed.push(await claimAgentTask(root,prepared.plan.target,task.id))
   }
   await checkpointPhase(root,prepared.plan.target,"tasks:dispatched")
+  await saveAgentPlan(root,plan)
+
   return {batch,claimed}
 }
 
