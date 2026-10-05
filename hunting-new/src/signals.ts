@@ -172,3 +172,10 @@ export function emitCorrelationSignals(
   }
   return generated
 }
+
+
+export function signalEngineFromCorrelation(input: CorrelationSignalInput): SignalEngine {
+  const engine = new SignalEngine()
+  emitCorrelationSignals(engine, input)
+  return engine
+}
