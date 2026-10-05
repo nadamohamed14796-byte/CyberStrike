@@ -211,6 +211,7 @@ export async function executeAndRecordDispatchedTask(
       resultSummary:result.resultSummary,
       evidenceIds:result.evidenceIds,
       skill:context.primarySkill,
+      endpoint:context.endpoint,
       confidence:context.signalConfidence,
       taskId:context.taskId,
     },
