@@ -39,6 +39,3 @@ CREATE INDEX IF NOT EXISTS `tool_run_status_idx` ON `tool_run_record` (`session_
 CREATE INDEX IF NOT EXISTS `tool_run_tool_idx` ON `tool_run_record` (`tool_id`, `status`);
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `tool_run_target_idx` ON `tool_run_record` (`target`);
-
---> statement-breakpoint
-CREATE UNIQUE INDEX IF NOT EXISTS `tool_run_active_unique_idx` ON `tool_run_record` (`session_id`, `run_key`) WHERE status IN ('pending','running');
