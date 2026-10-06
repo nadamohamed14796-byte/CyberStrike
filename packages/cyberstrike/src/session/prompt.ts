@@ -1269,7 +1269,12 @@ export namespace SessionPrompt {
           }
 
           if (runningQueueID) {
-            try { SignalQueue.complete(runningQueueID) } catch {}
+            try {
+              if (ctx.signal.aborted) SignalQueue.fail(runningQueueID)
+              else SignalQueue.complete(runningQueueID)
+            } catch (error) {
+              log.warn("failed to finalize recon queue item", { queueID: runningQueueID, error: String(error) })
+            }
           }
 
           const reconSignal = reconSignalFromResult(item.id, result)
