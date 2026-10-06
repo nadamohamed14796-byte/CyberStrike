@@ -1,7 +1,7 @@
 import z from "zod"
 import { Tool } from "./tool"
 
-const TOOL_INSTALL_MAP: Record<string, { check: string; install: string; description: string }> = {
+const TOOL_INSTALL_MAP: Record<string, { check: string; install: string; description: string; version?: string[] }> = {
   assetfinder: { check: "assetfinder", install: "go install github.com/tomnomnom/assetfinder@latest", description: "Subdomain discovery" },
   github-subdomains: { check: "github-subdomains", install: "go install github.com/gwen001/github-subdomains@latest", description: "GitHub subdomain discovery" },
   findomain: { check: "findomain", install: "go install github.com/Findomain/Findomain@latest", description: "Subdomain discovery" },
@@ -91,7 +91,14 @@ export const EnsureToolsTool = Tool.define("ensure_tools", {
       // Check if installed
       const check = Bun.spawnSync(["which", spec.check])
       if (check.exitCode === 0) {
-        results.push({ tool: name, installed: true, action: `Already installed: ${check.stdout.toString().trim()}` })
+        const versionCommand = spec.version ?? [spec.check, "--version"]
+        const version = Bun.spawnSync(versionCommand, { timeout: 10_000 })
+        const versionText = (version.stdout.toString() || version.stderr.toString()).trim().split("\\n")[0].slice(0, 160)
+        results.push({
+          tool: name,
+          installed: true,
+          action: `Already installed: ${check.stdout.toString().trim()}${versionText ? ` | version: ${versionText}` : ""}`,
+        })
         continue
       }
 
