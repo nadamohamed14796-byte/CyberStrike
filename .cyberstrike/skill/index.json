@@ -7879,7 +7879,41 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "csrf-sec",
+      "description": "Signal-driven CSRF security orchestration for state-changing browser flows, anti-CSRF controls, SameSite behavior, JSON/multipart CSRF, login CSRF, OAuth state binding, and CSRF chains.",
+      "category": "web-application",
+      "verified": "official",
+      "tags": [
+        "csrf",
+        "cross-site-request-forgery",
+        "browser-security",
+        "samesite",
+        "anti-csrf",
+        "signal-driven"
+      ],
+      "tech_stack": [
+        "web",
+        "http",
+        "javascript"
+      ],
+      "cwe_ids": [
+        "CWE-352"
+      ],
+      "chains_with": [
+        "csrf-cross-site-request-forgery",
+        "hunt-csrf",
+        "cors-sec",
+        "auth-sec",
+        "api-sec",
+        "clickjacking",
+        "xss-cross-site-scripting"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 408
+  "skill_count": 409
 }
