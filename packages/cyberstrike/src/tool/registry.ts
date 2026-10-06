@@ -73,6 +73,7 @@ import { CloudAuditTool } from "./cloud-audit"
 import { K8sAuditTool } from "./k8s-audit"
 import { CiAuditTool } from "./ci-audit"
 import { CipipeTool } from "./cipipe"
+import { EXTERNAL_TOOLS } from "./external-tool-registry"
 
 export namespace ToolRegistry {
   const log = Log.create({ service: "tool.registry" })
@@ -242,6 +243,19 @@ export namespace ToolRegistry {
       tools[t.id] = t.tool
     }
     return tools
+  }
+
+  export function externalMetadata() {
+    return EXTERNAL_TOOLS.map((tool) => ({
+      id: tool.id,
+      phase: tool.phase,
+      risk: tool.risk,
+      triggers: [...tool.when],
+      command: tool.command,
+      check: tool.check,
+      install: tool.install,
+      version: tool.version,
+    }))
   }
 
   export async function metadata() {
