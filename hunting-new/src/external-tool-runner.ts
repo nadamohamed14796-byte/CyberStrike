@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process"
 import { checkScope, type ScopeRule } from "./scope"
-import type { ParameterCandidate } from "./target-intelligence"
-
+import { rememberTargetIntelligence } from "./target-intelligence"
+import { loadMission } from "./mission"
 export type DiscoveryTool = "arjun" | "x8"
 
 export interface ToolRunRequest {
@@ -10,6 +10,8 @@ export interface ToolRunRequest {
   scope: ScopeRule[]
   timeoutMs?: number
   maxOutputBytes?: number
+  root?: string
+  requestId?: string
 }
 
 export interface ToolRunResult {
@@ -80,7 +82,7 @@ export async function runDiscoveryTool(input: ToolRunRequest): Promise<ToolRunRe
         name,
         location: "query" as const,
         endpoint: input.target,
-        requestIds: [],
+        requestIds: input.requestId ? [input.requestId] : [],
         sources: ["tool" as const],
         confidence: 0.70,
         firstSeen: Date.now(),
@@ -89,4 +91,18 @@ export async function runDiscoveryTool(input: ToolRunRequest): Promise<ToolRunRe
       resolve({ tool: input.tool, target: input.target, allowed: true, exitCode: code, timedOut, output, parameters })
     })
   })
+}
+
+export async function runScopedParameterDiscovery(
+  root: string,
+  target: string,
+  requestId?: string,
+  tool: DiscoveryTool = "arjun",
+): Promise<ToolRunResult> {
+  const mission = await loadMission(root, target)
+  if (!mission) throw new Error("MISSION_NOT_FOUND")
+  const result = await runDiscoveryTool({ tool, target, scope: mission.scope, root, requestId })
+  if (!result.allowed || !result.parameters.length) return result
+  await rememberTargetIntelligence(root, target, { parameters: result.parameters, tags: [`parameter-tool:${tool}`] })
+  return result
 }
