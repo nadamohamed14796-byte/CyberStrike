@@ -1,3 +1,4 @@
+import { canonicalSignal } from "./canonical-signals"
 import type { SignalEngine, SkillRule, SkillSelection } from "./signals"
 import { routeSkills, type RoutingDecision } from "./skill-router"
 import { prioritizeSkills } from "./learned-prioritization"
@@ -80,8 +81,7 @@ export function buildMultiAgentPlanFromRegistry(
         .filter(signal =>
           signal.confidence >= metadata.confidence_threshold &&
           metadata.triggers.some(trigger =>
-            signal.signal.toLowerCase().replace(/[_\s]+/g, "-") ===
-            trigger.toLowerCase().replace(/[_\s]+/g, "-"),
+            canonicalSignal(signal.signal) === canonicalSignal(trigger),
           ),
         )
         .map(signal => signal.signal),
