@@ -441,3 +441,7 @@ print(plaintext)
 Source: https://github.com/yaklang/hack-skills
 License: MIT (Copyright (c) 2026 VillanCh)
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only; supplementary upstream files are not included.
+
+---
+## Signal and Evidence Gate
+Activate only when concrete RSA parameters or verification/padding behavior are available. Select attacks from actual n/e/c, key relationships, padding/oracle behavior, or signature evidence. Do not attempt factorization or lattice attacks without target-specific preconditions. Preserve parameters and reproducible proof.
