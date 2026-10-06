@@ -160,12 +160,27 @@ export interface PreparedTaskValidation {
   attempt: Attempt
 }
 
+const validationReservationQueues=new Map<string,Promise<void>>()
+async function withValidationReservation<T>(key:string,work:()=>Promise<T>):Promise<T>{
+  const previous=validationReservationQueues.get(key) ?? Promise.resolve()
+  let release!:()=>void
+  const current=new Promise<void>(resolve=>{release=resolve})
+  validationReservationQueues.set(key,current)
+  await previous
+  try{return await work()}finally{
+    release()
+    if(validationReservationQueues.get(key)===current)validationReservationQueues.delete(key)
+  }
+}
+
 export async function prepareAgentTaskValidation(
   root:string,
   plan:MultiAgentPlan,
   taskId:string,
 ):Promise<PreparedTaskValidation>{
   const context=buildAgentTaskExecutionContext(plan,taskId)
+  const reservationKey=plan.target+"|"+context.signal+"|"+context.primarySkill+"|"+(context.endpoint??"")+"|"+(context.functionId??"");
+  return withValidationReservation(reservationKey,async()=>{
   const accountSensitive=["multiple_accounts","object_identifier_detected","tenant_identifier_detected","authenticated_endpoint"].includes(context.signal)
   const hypothesisId="hyp_"+Bun.hash([
     context.signal,
@@ -226,6 +241,7 @@ export async function prepareAgentTaskValidation(
   )
   if(!attempt) throw new Error("VALIDATION_ATTEMPT_UNAVAILABLE")
   return {hypothesis,attempt}
+  })
 }
 
 export interface AgentTaskExecutionContext {
