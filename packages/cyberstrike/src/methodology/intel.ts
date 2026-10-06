@@ -178,6 +178,33 @@ export namespace Intel {
     return { ...entry, duplicate: false, vrtChecksCreated: vrtChecks.length }
   }
 
+
+  /** Canonical parameter ingestion point for Arjun/ParamSpider/x8/JS/proxy sources. */
+  export function addParameter(input: {
+    sessionID: string
+    endpoint: string
+    name: string
+    source: string
+    confidence?: Confidence
+    detail?: string
+  }): Entry & { duplicate: boolean; vrtChecksCreated: number } {
+    const name = input.name.trim()
+    const endpoint = input.endpoint.trim()
+    return add({
+      sessionID: input.sessionID,
+      data: {
+        type: "parameter",
+        title: name,
+        detail: input.detail,
+        source: input.source,
+        asset: endpoint,
+        confidenceLevel: input.confidence ?? "medium",
+        tags: ["parameter-source:" + input.source],
+        status: "new",
+      },
+    })
+  }
+
   export function update(
     sessionID: string,
     entryID: string,
