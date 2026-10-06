@@ -13,12 +13,18 @@ export interface ValidationEvidence {
 }
 
 export function hasCrossAccountEvidence(evidence: ValidationEvidence[]): boolean {
-  const labels=new Set(
-    evidence
-      .filter(x=>x.observed !== false && x.accountLabel)
-      .map(x=>x.accountLabel!)
-  )
-  return labels.size >= 2
+  const observed=evidence.filter(x=>x.observed !== false && x.accountLabel && x.requestId)
+  const byRequest=new Map<string,Set<string>>()
+  for(const item of observed){
+    const labels=byRequest.get(item.requestId!) ?? new Set<string>()
+    labels.add(item.accountLabel!)
+    byRequest.set(item.requestId!,labels)
+  }
+  const requestAccounts=new Map<string,string>()
+  for(const item of observed) requestAccounts.set(item.requestId!,item.accountLabel!)
+  const distinctRequests=[...requestAccounts.entries()]
+  const distinctLabels=new Set(distinctRequests.map(([,label])=>label))
+  return distinctRequests.length >= 2 && distinctLabels.size >= 2
 }
 
 export interface ValidationInput {
