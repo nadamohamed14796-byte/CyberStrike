@@ -185,7 +185,7 @@ export async function prepareAgentTaskValidation(
     createdAt:new Date().toISOString(),
   }
   if(!existing) await upsertHypothesis(root,plan.target,hypothesis)
-  const ledger=await PersistentAttemptLedger.create(root,plan.target,{maxAttempts:20,minimumAttempts:20})
+  const ledger=await PersistentAttemptLedger.create(root,plan.target,{maxAttempts:20,minimumAttempts:20,stopOnConfirmation:false,stopOnRejection:false})
   const existingPlanned=ledger.list(hypothesis.id).find(x=>x.state==="planned")
   if(existingPlanned) return {hypothesis,attempt:existingPlanned}
   const used=new Set(ledger.list(hypothesis.id).map(x=>x.strategy+":"+x.variant))
