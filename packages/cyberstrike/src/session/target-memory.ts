@@ -183,7 +183,7 @@ export namespace TargetMemory {
 
     const urls = new Set<string>()
     for (const token of raw.split(/\s+/)) {
-      const value = token.replace(/^[("'[]+|[),.;']"]+$/g, "")
+      const value = token.replace(/^[("'\\[]+|[),.;'\\]"]+$/g, "")
       if (!/^https?:\/\//i.test(value)) continue
       try {
         const url = new URL(value)
