@@ -894,14 +894,18 @@ export namespace SessionPrompt {
 
       // Surface queued web re-tests to the live agent. The queue is advisory and
       // remains pending until an explicit replay/validation action consumes it.
-      const pendingRetests = WebRetest.getPending(sessionID).slice(0, 20)
-      if (pendingRetests.length > 0) {
+      const nextRetest = WebRetest.next(sessionID)
+      const pendingRetests = WebRetest.getPending(sessionID)
+        .filter((item) => item.id !== nextRetest?.id)
+        .slice(0, nextRetest ? 19 : 20)
+      const retestQueue = nextRetest ? [nextRetest, ...pendingRetests] : pendingRetests
+      if (retestQueue.length > 0) {
         system.push(
           [
             "# Pending Web Re-tests",
             "Previously captured requests were queued for re-testing because the session discovered a new role, object value, or credential.",
             "Use http_replay with the listed request_id when relevant; preserve the trigger context and validate the response before treating anything as a finding.",
-            ...pendingRetests.map((item) =>
+            ...retestQueue.map((item) =>
               `- request_id=${item.request_id} | trigger=${item.trigger_type} | priority=${item.priority} | source=${item.trigger_source}`,
             ),
           ].join("\n"),
