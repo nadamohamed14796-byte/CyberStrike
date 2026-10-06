@@ -86,7 +86,7 @@ export function discoverRequestParameters(request: RequestNode): ParameterCandid
   const found = new Map<string, ParameterCandidate>()
   const add = (name: string, location: ParameterCandidate["location"], confidence: number) => {
     const clean = name.trim()
-    if (!clean || clean.length > 128 || /[\\s<>"'{}]/.test(clean)) return
+    if (!clean || clean.length > 128 || /[\s<>"'{}]/.test(clean)) return
     const id = "param_" + Bun.hash(endpoint + "|" + location + "|" + clean).toString(16)
     const previous = found.get(id)
     found.set(id, {
@@ -105,9 +105,9 @@ export function discoverRequestParameters(request: RequestNode): ParameterCandid
   for (const match of endpoint.matchAll(/(?:^|[/:])\\{([^}]+)\\}/g)) add(match[1], "path", 0.82)
   const raw = (request as RequestNode & { rawRequest?: string }).rawRequest
   if (raw) {
-    const body = raw.split(/\\r?\\n\\r?\\n/, 2)[1] ?? ""
+    const body = raw.split(/\r?\n\r?\n/, 2)[1] ?? ""
     if (body) {
-      for (const key of body.matchAll(/["']([A-Za-z_][A-Za-z0-9_.-]{0,127})["']\\s*:/g)) add(key[1], "body", 0.72)
+      for (const key of body.matchAll(/["']([A-Za-z_][A-Za-z0-9_.-]{0,127})["']\s*:/g)) add(key[1], "body", 0.72)
     }
   }
   return [...found.values()]
