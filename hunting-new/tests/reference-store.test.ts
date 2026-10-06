@@ -26,3 +26,24 @@ describe("skill reference index", () => {
     }
   })
 })
+
+
+describe("global reference catalog", () => {
+  test("indexes configured global sources and returns them for any skill", async () => {
+    const root=await mkdtemp("/tmp/cyberstrike-reference-catalog-")
+    try{
+      await mkdir(path.join(root,"config"),{recursive:true})
+      await writeFile(path.join(root,"config","reference-sources.yaml"),[
+        "sources:",
+        "  - name: test-source",
+        "    url: https://example.test/reference",
+      ].join("\n"))
+      const { indexSkillReferences, referencesForSkills }=await import("../src/reference-store")
+      await indexSkillReferences(root,[])
+      const refs=await referencesForSkills(root,["any-skill"],8)
+      expect(refs.some(x=>x.url==="https://example.test/reference" && x.skillName==="__global__")).toBe(true)
+    }finally{
+      await rm(root,{recursive:true,force:true})
+    }
+  })
+})
