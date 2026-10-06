@@ -5,7 +5,7 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 | Component | Status |
 |---|---|
 | Scope Engine | IMPLEMENTED (host/path/protocol/port/exclusion checks + validation-time re-check) |
-| Target Intelligence | PARTIAL (persistent core implemented; broader multi-source enrichment remains) |
+| Target Intelligence | IMPLEMENTED (persistent graph/accounts/parameters + serialized references/writeups) |
 | Coverage Ledgers | PARTIAL |
 | JavaScript Discovery | PARTIAL |
 | JavaScript Analysis | PARTIAL |
@@ -14,30 +14,30 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 | Function-Centric Model | PARTIAL (persisted function linkage; broader UI/function discovery remains) |
 | Account Context | IMPLEMENTED (persisted observed labels + deduplicated per-account observations) |
 | Browser Session Correlation | PARTIAL |
-| Finding Lifecycle | PARTIAL |
+| Finding Lifecycle | IMPLEMENTED (validation → promotion → report record → review feedback) |
 | Validation Gate | IMPLEMENTED (10 gates + bounded minimum validation budget) |
 | Adaptive Attempt Ledger | IMPLEMENTED (20-attempt ceiling + variant dedupe) |
-| Evidence Provenance | PARTIAL |
-| False-Positive Store | PARTIAL |
+| Evidence Provenance | IMPLEMENTED (attempt/request/response/account/JS/function correlation) |
+| False-Positive Store | IMPLEMENTED (persistent + bounded penalties/recheck) |
 | Deduplication | IMPLEMENTED |
 | Severity Gate | PARTIAL |
 | Variant Ledger | PARTIAL |
 | Chain Board | IMPLEMENTED |
 | OOB Tracking | IMPLEMENTED |
 | Signal Engine | IMPLEMENTED |
-| Skill Registry | PARTIAL |
+| Skill Registry | IMPLEMENTED (canonical dedupe, dependency validation, config-driven metadata) |
 | Runtime Preflight | PARTIAL |
 | Runtime Registry | IMPLEMENTED |
 | Multi-Agent Orchestration | PARTIAL (continuous persisted dispatch + role-based routing + native execution; richer aggregation remains) |
 | Proxy Intake / Correlator | IMPLEMENTED (CyberStrike /session/ingest feeds persistent hunting intake) |
-| Learning Engine | PARTIAL |
-| Writeup Ingestion | MISSING |
-| Report Pipeline | PARTIAL (defensive promotion gate + report writer connected; richer automated reporting remains) |
+| Learning Engine | IMPLEMENTED (persistent observations + FP feedback + bounded strategy ranking) |
+| Writeup Ingestion | IMPLEMENTED (local bounded ingestion + signal/strategy hints) |
+| Report Pipeline | IMPLEMENTED (validated promotion + idempotent report lifecycle + review learning) |
 | Persistent Target Memory | IMPLEMENTED for target graph/accounts/attempts/evidence/findings; broader research/context enrichment remains |
-| Mission Resume Reconstruction | PARTIAL |
+| Mission Resume Reconstruction | PARTIAL (dispatch recovery wired; generic resume recovery still limited) |
 | Context Budget | IMPLEMENTED |
 | JS-derived Wordlists | IMPLEMENTED |
-| Testing | PARTIAL (foundation tests exist; runtime integration/CI execution not verified here) |
+| Testing | PARTIAL (runtime fixtures added; GitHub Actions currently queued, local execution unavailable in this environment) |
 | Documentation | PARTIAL |
 
 ## Current implementation checkpoint
@@ -75,15 +75,15 @@ Implemented and integrated:
 ## Verified gaps still remaining
 
 1. Full bidirectional JS/function/request/response correlation from live runtime observations, including automatic JS/function enrichment for every browser capture.
-2. Complete signal-to-skill configuration unification for every imported skill and trigger.
+2. Complete signal-to-skill configuration unification for every imported skill and trigger beyond the core configured mappings.
 3. Full imported-skill audit/integration for OpenHunterAI, recon-skills and yaklang/hack-skills.
-4. Full config-driven role/skill-to-specialized-agent resolution beyond the current role defaults and explicit overrides.
-5. Richer automatic finding/report generation from the native lifecycle, including validator-supplied root-cause and reproduction sections.
-6. Continuous research/writeup ingestion and bounded learning extraction.
-7. Broader cross-host graph enrichment from redirects, JS assets and API hosts beyond the current observed-request relation.
-8. API documentation/source differential integrated into signals and planning.
-9. Elimination/unification of the legacy parallel validation models.
+4. Expand config-driven role/skill-to-specialized-agent resolution to all imported skills beyond the core configured assignments.
+5. Improve automatic finding/report generation with richer validator-supplied root-cause and reproduction sections.
+6. Continuous external research ingestion is still not automated; local bounded writeup ingestion is implemented.
+7. Broader cross-host graph enrichment from additional browser/network sources beyond the current observed request/redirect/JS/API-host relations.
+8. Persisted API documentation/source differential is partially implemented; full runtime ingestion into planning still needs to be wired.
+9. Elimination/unification of the legacy parallel validation models; compatibility paths still remain.
 10. End-to-end runtime fixtures and actual CI verification.
-11. Stronger evidence reconciliation so request/response/JS/function/account references are consistently carried from live runtime observations into promoted findings.
+11. Stronger evidence reconciliation for edge cases where the subagent reports only partial correlation metadata.
 
 No completion claim should be made until the remaining runtime integrations are implemented and the test suite/CI is actually executed.
