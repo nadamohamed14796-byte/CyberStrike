@@ -51,9 +51,17 @@ export function hasBaselineComparison(evidence: ValidationEvidence[]): boolean {
 
 export function hasBehaviorChange(evidence: ValidationEvidence[]): boolean {
   const observed=evidence.filter(x=>x.observed !== false && x.kind==="response")
+  if(observed.length<2)return false
+  const responseSignatures=new Set(observed.map(x=>[
+    x.requestId??"",
+    x.responseId??"",
+    x.summary.trim(),
+  ].join("|")))
+  if(responseSignatures.size<2)return false
   const attempts=new Set(observed.map(x=>x.attemptId).filter(Boolean))
-  const signatures=new Set(observed.map(x=>x.summary.trim()).filter(Boolean))
-  return signatures.size >= 2
+  if(attempts.size>=2)return true
+  const summaries=new Set(observed.map(x=>x.summary.trim()).filter(Boolean))
+  return summaries.size>=2
 }
 
 export interface ValidationResult {
