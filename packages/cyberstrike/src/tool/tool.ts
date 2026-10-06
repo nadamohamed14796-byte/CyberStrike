@@ -114,6 +114,9 @@ export namespace Tool {
           }
 
           const identity = executionIdentity(args)
+          const runToolID = id === "external_tool_runner" && typeof args === "object" && args && typeof (args as Record<string, unknown>).tool_id === "string"
+            ? String((args as Record<string, unknown>).tool_id)
+            : id
           let scopeVerified: boolean | undefined
           let run: ReturnType<typeof ToolRunRecord.begin> | undefined
 
@@ -121,8 +124,8 @@ export namespace Tool {
             scopeVerified = await verifyExecutionScope(args)
             run = ToolRunRecord.begin({
               sessionID: ctx.sessionID,
-              toolID: id,
-              toolName: id,
+              toolID: runToolID,
+              toolName: runToolID,
               target: identity.target,
               endpoint: identity.endpoint,
               parameters: args as Record<string, unknown>,
@@ -178,7 +181,7 @@ export namespace Tool {
                 callID: ctx.callID,
                 requestID: typeof args === "object" && args && "request_id" in args ? String((args as any).request_id) : undefined,
                 credentialID: typeof args === "object" && args && "credential_id" in args ? String((args as any).credential_id) : undefined,
-                tool: id,
+                tool: runToolID,
                 target: identity.target,
                 input: args,
                 output: result.output,
@@ -193,7 +196,7 @@ export namespace Tool {
                 agent: ctx.agent,
                 outcome: aborted ? "cancelled" : timedOut ? "timed_out" : "completed",
                 metadata: {
-                  source_tool: id,
+                  source_tool: runToolID,
                   tool_run_id: run.id,
                   tool_run_key: run.runKey,
                   authorized_active_testing: (args as Record<string, unknown>).authorized_active_testing === true,
