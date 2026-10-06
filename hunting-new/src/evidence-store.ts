@@ -46,14 +46,17 @@ export async function ensureAttemptEvidence(
     const state = await loadEvidence(root, target)
     const existing = new Map(state.evidence.map(item => [item.id, item]))
     const additions = []
-    const request = input.requestId
-      ? intelligence.requests.find(item => item.id === input.requestId)
-      : undefined
     const response = input.responseId
       ? intelligence.responses.find(item => item.id === input.responseId)
-      : request
-        ? intelligence.responses.find(item => item.requestId === request.id)
+      : undefined
+    const request = input.requestId
+      ? intelligence.requests.find(item => item.id === input.requestId)
+      : response
+        ? intelligence.requests.find(item => item.id === response.requestId)
         : undefined
+    const correlatedResponse = response ?? (request
+      ? intelligence.responses.find(item => item.requestId === request.id)
+      : undefined)
   
     if (request) {
       additions.push(createEvidence({
@@ -67,16 +70,16 @@ export async function ensureAttemptEvidence(
       }))
     }
   
-    if (response) {
+    if (correlatedResponse) {
       additions.push(createEvidence({
         kind: "response",
-        sourceId: response.id,
-        requestId: response.requestId,
-        responseId: response.id,
+        sourceId: correlatedResponse.id,
+        requestId: correlatedResponse.requestId,
+        responseId: correlatedResponse.id,
         attemptId: input.attemptId,
         accountLabel: input.accountLabel ?? request?.accountLabel,
         confidence: 1,
-        details: "HTTP " + response.status + (response.contentType ? " " + response.contentType : "") + (response.bodyHash ? " body_hash=" + response.bodyHash : ""),
+        details: "HTTP " + correlatedResponse.status + (correlatedResponse.contentType ? " " + correlatedResponse.contentType : "") + (correlatedResponse.bodyHash ? " body_hash=" + correlatedResponse.bodyHash : ""),
       }))
     }
   
