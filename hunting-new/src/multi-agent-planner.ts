@@ -24,6 +24,7 @@ export interface AgentTask {
   strategyHints: string[]
   resolvedSkills?: string[]
   resolvedSkillPaths?: string[]
+  recommendedAgent?: string
 }
 
 export interface AgentExecutionSelection {
@@ -141,6 +142,7 @@ export function buildMultiAgentPlanFromRegistry(
         dependencies: dependencyRoles(role),
         maxParallelTasks: Math.max(1, skill.maximum_parallel_tasks ?? 1),
         strategyHints: hints,
+        recommendedAgent: registry?.get(skill.name)?.agent,
       }
       tasks.push(task)
       lanes[role].push(task)
