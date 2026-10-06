@@ -7913,7 +7913,44 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "deserialization-sec",
+      "description": "Signal-driven insecure deserialization orchestration for Java, PHP, Python, .NET, Ruby, Node.js, serialization formats, gadget-chain discovery, and deserialization-to-RCE or impact chains.",
+      "category": "injection",
+      "verified": "official",
+      "tags": [
+        "deserialization",
+        "serialization",
+        "gadget-chain",
+        "rce",
+        "signal-driven"
+      ],
+      "tech_stack": [
+        "java",
+        "php",
+        "python",
+        "dotnet",
+        "ruby",
+        "nodejs",
+        "web"
+      ],
+      "cwe_ids": [
+        "CWE-502"
+      ],
+      "chains_with": [
+        "deserialization-insecure",
+        "hunt-deserialization",
+        "offensive-deserialization",
+        "command-injection-sec",
+        "jndi-injection",
+        "api-sec",
+        "cloud-sec"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 409
+  "skill_count": 410
 }
