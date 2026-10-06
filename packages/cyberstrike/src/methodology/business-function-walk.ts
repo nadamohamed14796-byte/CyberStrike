@@ -139,10 +139,36 @@ export async function persistBusinessFunctionWalk(input: {
 }): Promise<string> {
   const surface = await buildBusinessFunctionWalk(input)
   const paths = await TargetWorkspace.ensure(input.target, input.sessionID)
-  const file = path.join(paths.artifacts, "business-function-walk.json")
-  const attackSurface = path.join(paths.artifacts, "business-attack-surface.json")
-  const serialized = JSON.stringify(surface, null, 2) + "\n"
-  await fs.writeFile(file, serialized, "utf8")
-  await fs.writeFile(attackSurface, serialized, "utf8")
-  return file
+  const walkFile = path.join(paths.artifacts, "business-function-walk.json")
+  const attackFile = path.join(paths.artifacts, "business-attack-surface.json")
+
+  const attackSurface = {
+    schema_version: 1,
+    generated_at: surface.generated_at,
+    target: surface.target,
+    session_id: surface.session_id,
+    coverage: surface.coverage,
+    entries: surface.functions.map((fn) => ({
+      function_id: fn.function_id,
+      location: fn.location,
+      normal: {
+        action: fn.normal_action,
+        expected: fn.expected_result,
+        invariant: fn.business_invariant,
+      },
+      inverse_hypotheses: fn.inverse_hypotheses,
+      classifications: fn.classifications,
+      relevant_skills: [
+        "business-logic-vuln",
+        ...(fn.classifications.includes("authorization/ownership") ? ["auth-sec"] : []),
+        ...(fn.evidence.path.startsWith("/") || fn.evidence.method ? ["api-sec"] : []),
+      ],
+      evidence_state: "observed",
+      evidence: fn.evidence,
+    })),
+  }
+
+  await fs.writeFile(walkFile, JSON.stringify(surface, null, 2) + "\n", "utf8")
+  await fs.writeFile(attackFile, JSON.stringify(attackSurface, null, 2) + "\n", "utf8")
+  return walkFile
 }
