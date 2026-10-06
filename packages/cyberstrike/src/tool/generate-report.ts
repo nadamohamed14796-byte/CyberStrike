@@ -56,6 +56,7 @@ export const GenerateReportTool = Tool.define("generate_report", {
   description: DESCRIPTION,
   parameters: z.object({
     include_sections: z.array(z.enum(ALL_SECTIONS)).optional().describe("Sections to include (default: all)"),
+    format: z.enum(["markdown", "json"]).default("markdown").describe("Structured output format"),
   }),
   async execute(params, ctx) {
     const rootSession = Session.root(ctx.sessionID)
@@ -90,6 +91,25 @@ export const GenerateReportTool = Tool.define("generate_report", {
     const uniqueAssets = [...new Set(intel.map((e) => e.asset))]
     const duration = session.time.updated - session.time.created
     const sections = params.include_sections ?? [...ALL_SECTIONS]
+
+    if (params.format === "json") {
+      const payload = {
+        session: { id: rootSession, title: session.title, created: session.time.created, updated: session.time.updated },
+        findings: vulns,
+        coverage,
+        assetCoverage,
+        coverageNotes,
+        methodology: state,
+        chains,
+        requests,
+        validation: gates,
+      }
+      return {
+        title: `Report JSON: ${vulns.length} findings`,
+        output: JSON.stringify(payload, null, 2),
+        metadata: { format: "json", findingCount: vulns.length, coveragePercent: coverage.coveragePercent },
+      }
+    }
 
     const parts: string[] = []
 
