@@ -7731,7 +7731,45 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "cloud-sec",
+      "description": "Signal-driven cloud security orchestration for AWS, Azure, GCP, Kubernetes, container, IAM, and cloud misconfiguration workflows.",
+      "category": "platform-security",
+      "verified": "official",
+      "tags": [
+        "cloud",
+        "aws",
+        "azure",
+        "gcp",
+        "kubernetes",
+        "iam",
+        "misconfig",
+        "orchestration"
+      ],
+      "tech_stack": [
+        "aws",
+        "azure",
+        "gcp",
+        "kubernetes"
+      ],
+      "cwe_ids": [
+        "CWE-269",
+        "CWE-284",
+        "CWE-311",
+        "CWE-522"
+      ],
+      "chains_with": [
+        "cloud-assessment",
+        "hunt-cloud-misconfig",
+        "cloud-iam-deep",
+        "hunt-k8s",
+        "vmware-vcenter-attack"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 404
+  "skill_count": 405
 }
