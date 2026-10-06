@@ -591,6 +591,15 @@ export const HttpReplayRawTool = Tool.define("http_replay_raw", {
     const useTls = url.protocol === "https:"
     const port = url.port ? Number.parseInt(url.port, 10) : useTls ? 443 : 80
 
+    const finishRetest = params.request_id
+      ? (() => {
+          const item = WebRetest.claimForRequest(sessionID, params.request_id!)
+          return () => {
+            if (item) WebRetest.updateStatus(item.id, "completed")
+          }
+        })()
+      : () => {}
+
     const result = await BackendSocket.send(new TextEncoder().encode(raw), {
       host: url.hostname,
       port,
@@ -601,6 +610,7 @@ export const HttpReplayRawTool = Tool.define("http_replay_raw", {
     })
 
     const output = { target: { host: url.hostname, port, tls: useTls }, ...summarize(result) }
+    finishRetest()
     return {
       title: `http_replay_raw ${url.hostname}:${port}`,
       output: JSON.stringify(output, null, 2),
