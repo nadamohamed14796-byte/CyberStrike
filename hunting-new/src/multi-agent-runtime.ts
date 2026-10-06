@@ -429,8 +429,10 @@ export async function executePersistedTaskWithNativeCyberStrike(
   taskId:string,
   options:{
     agentBySkill?:Record<string,string>
+    agentByRole?:Record<string,string>
     defaultAgent?:string
     parentSessionID?:string
+    model?:{providerID:string;modelID:string}
   }={},
 ){
   const { NativeCyberStrikeExecutor }=await import("./native-cyberstrike-executor")
