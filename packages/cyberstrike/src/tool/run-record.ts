@@ -83,6 +83,8 @@ function terminal(status: ToolRunStatus) {
   return status === "completed" || status === "failed" || status === "timed_out" || status === "cancelled"
 }
 
+const MAX_PERSISTED_OUTPUT = 200_000
+
 export namespace ToolRunRecord {
   export function begin(input: ToolRunInput) {
     const now = Date.now()
@@ -94,22 +96,20 @@ export namespace ToolRunRecord {
       context: { agent: input.agent, scopeVerified: input.scopeVerified === true },
     })
 
-    const existing = Database.use((db) =>
-      db.select()
+    return Database.transaction((db) => {
+      const existing = db.select()
         .from(ToolRunRecordTable)
         .where(and(eq(ToolRunRecordTable.session_id, input.sessionID), eq(ToolRunRecordTable.run_key, runKey)))
         .orderBy(desc(ToolRunRecordTable.time_created))
         .limit(1)
-        .get(),
-    )
+        .get()
 
-    if (existing && !terminal(existing.status as ToolRunStatus)) {
-      return { id: existing.id, runKey, attempt: existing.attempt, deduplicated: true }
-    }
+      if (existing && !terminal(existing.status as ToolRunStatus)) {
+        return { id: existing.id, runKey, attempt: existing.attempt, deduplicated: true }
+      }
 
-    const attempt = (existing?.attempt ?? 0) + 1
-    const id = Identifier.ascending("tool_run")
-    Database.use((db) =>
+      const attempt = (existing?.attempt ?? 0) + 1
+      const id = Identifier.ascending("tool_run")
       db.insert(ToolRunRecordTable).values({
         id,
         run_key: runKey,
@@ -133,9 +133,9 @@ export namespace ToolRunRecord {
         metadata: input.metadata,
         time_created: now,
         time_updated: now,
-      }).run(),
-    )
-    return { id, runKey, attempt, deduplicated: false }
+      }).run()
+      return { id, runKey, attempt, deduplicated: false }
+    })
   }
 
   export function finish(input: {
@@ -150,20 +150,24 @@ export namespace ToolRunRecord {
   }) {
     const ended = Date.now()
     Database.use((db) => {
-      const row = db.select({ started: ToolRunRecordTable.time_started })
+      const row = db.select({
+        started: ToolRunRecordTable.time_started,
+        metadata: ToolRunRecordTable.metadata,
+      })
         .from(ToolRunRecordTable)
         .where(eq(ToolRunRecordTable.id, input.id))
         .limit(1)
         .get()
+      const previousMetadata = (row?.metadata as Record<string, unknown> | null) ?? {}
       db.update(ToolRunRecordTable)
         .set({
           status: input.status,
           exit_code: input.exitCode,
-          stdout: input.stdout,
-          stderr: input.stderr,
-          result_summary: input.resultSummary,
+          stdout: input.stdout?.slice(0, MAX_PERSISTED_OUTPUT),
+          stderr: input.stderr?.slice(0, MAX_PERSISTED_OUTPUT),
+          result_summary: input.resultSummary?.slice(0, MAX_PERSISTED_OUTPUT),
           error: input.error,
-          metadata: input.metadata,
+          metadata: { ...previousMetadata, ...(input.metadata ?? {}) },
           time_ended: ended,
           duration_ms: row?.started ? Math.max(0, ended - row.started) : undefined,
           time_updated: ended,
@@ -173,8 +177,9 @@ export namespace ToolRunRecord {
     })
   }
 
-  export function recover(sessionID: string, reason = "session recovery") {
-    const unfinishedRuns = unfinished(sessionID)
+  export function recover(sessionID: string, reason = "session recovery", staleMs = 60_000) {
+    const cutoff = Date.now() - Math.max(0, staleMs)
+    const unfinishedRuns = unfinished(sessionID).filter((run) => (run.time_started ?? run.time_created) <= cutoff)
     for (const run of unfinishedRuns) {
       finish({
         id: run.id,
