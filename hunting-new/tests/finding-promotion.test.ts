@@ -47,5 +47,15 @@ describe("finding promotion", () => {
 
     expect(result.reportable).toBe(true)
     expect(result.finding.status).toBe("validated")
+
+    const second=await promoteValidatedHypothesis(root,target,{
+      hypothesisId:"hyp-1",title:"Validated issue",severity:"high",
+      summary:"A reproducible security behavior was observed with additional evidence.",
+      impact:"A separate account can access protected data.",
+      remediation:"Enforce server-side authorization.",
+      validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attemptIds]},
+    })
+    expect(second.action).toBe("skip")
+    expect((await import("../src/finding-store")).loadFindings(root,target).then(x=>x.findings.length)).resolves.toBe(1)
   })
 })
