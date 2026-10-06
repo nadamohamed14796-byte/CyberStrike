@@ -208,6 +208,26 @@ async function loadConfiguredSignalMappings(root:string):Promise<Map<string,stri
   return mappings
 }
 
+async function loadConfiguredRequiredSignals(root:string):Promise<Map<string,string[]>>{
+  const file=path.join(root,"config","skills.yaml")
+  if(!await Bun.file(file).exists())return new Map()
+  const text=await Bun.file(file).text()
+  const result=new Map<string,string[]>()
+  let section=""
+  let skill=""
+  for(const line of text.split(/\r?\n/)){
+    if(/^skills:\s*$/.test(line)){section="skills";skill="";continue}
+    if(section!=="skills")continue
+    const header=line.match(/^  ([A-Za-z0-9_-]+):\s*$/)
+    if(header){skill=header[1];continue}
+    const match=line.match(/^\s{4}required_signals:\s*\[([^\]]*)\]/)
+    if(match && skill){
+      result.set(skill,match[1].split(",").map(value=>value.trim().replace(/^["']|["']$/g,"")).filter(Boolean))
+    }
+  }
+  return result
+}
+
 export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
   const file=path.join(root,".cyberstrike","skill","index.json")
   const index=await readJson<SkillIndex|null>(file,null)
@@ -230,10 +250,18 @@ export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
   }
 
   const configured=await loadConfiguredSignalMappings(root)
+  const configuredRequired=await loadConfiguredRequiredSignals(root)
   for(const [skillName,signals] of configured){
     const skill=merged.get(skillName)
     if(!skill)continue
     skill.triggers=[...new Set([...skill.triggers,...signals])]
+    merged.set(skillName,skill)
+  }
+
+  for(const [skillName,signals] of configuredRequired){
+    const skill=merged.get(skillName)
+    if(!skill)continue
+    skill.required_signals=[...new Set(signals)]
     merged.set(skillName,skill)
   }
 
