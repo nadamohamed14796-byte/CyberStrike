@@ -274,3 +274,12 @@ Even without `Access-Control-Allow-Origin: *`, the attacker can infer internal s
 Source: https://github.com/yaklang/hack-skills
 License: MIT (Copyright (c) 2026 VillanCh)
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only; supplementary upstream files are not included.
+
+---
+## Signal and Evidence Gate
+
+Use this playbook when concrete CORS headers, origin validation behavior, preflight policy, or authenticated cross-origin reads are observed. Do not activate solely from generic API/JavaScript context.
+
+Evidence lifecycle: signal → policy-observed → browser-validated → sensitive-data-read → reproduced → impact-proven → finding.
+
+Treat reflected Origin, null acceptance, missing Vary: Origin, or permissive preflight as candidates until the browser and endpoint sensitivity demonstrate an exploitable trust-boundary failure.
