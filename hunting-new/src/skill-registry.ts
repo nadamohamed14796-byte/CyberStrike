@@ -54,7 +54,7 @@ export class SkillRegistry{
       if(visiting.has(canonical))throw new Error(`cyclic skill dependency: ${[...visiting,canonical].join(" -> ")}`)
       if(out.has(canonical))return
       const skill=this.get(canonical)
-      if(!skill)return
+      if(!skill)throw new Error(`unknown skill: ${canonical}`)
       visiting.add(canonical)
       for(const dep of skill.dependencies)visit(dep)
       visiting.delete(canonical)
