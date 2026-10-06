@@ -17,3 +17,26 @@ describe("correlation signals", () => {
     expect(engine.forTarget("example.test").some(x => x.signal === "api_method_mismatch")).toBe(true)
   })
 })
+
+describe("skill selection confidence", () => {
+  test("requires every required signal to meet the rule threshold", () => {
+    const engine = signalEngineFromCorrelation({
+      target: "example.test",
+      requests: [],
+      responses: [],
+      jsAssets: [],
+      functions: [],
+      edges: [],
+    })
+    engine.emit({ signal: "object_identifier_detected", source: "test", confidence: 0.95, target: "example.test" })
+    engine.emit({ signal: "authenticated_endpoint", source: "test", confidence: 0.40, target: "example.test" })
+    const selected = engine.selectSkills([
+      {
+        name: "id-test",
+        confidence_threshold: 0.80,
+        required_signals: ["object_identifier_detected", "authenticated_endpoint"],
+      },
+    ], "example.test")
+    expect(selected).toHaveLength(0)
+  })
+})
