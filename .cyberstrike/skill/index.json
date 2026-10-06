@@ -7583,7 +7583,101 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "waf-bypass",
+      "description": "WAF bypass routing and adaptive selection layer for authorized web security testing.",
+      "category": "input-validation",
+      "verified": "official",
+      "tags": [
+        "waf",
+        "bypass",
+        "filtering",
+        "intermediary",
+        "adaptive-testing"
+      ],
+      "tech_stack": [
+        "http",
+        "web"
+      ],
+      "cwe_ids": [],
+      "chains_with": [
+        "waf-evasion",
+        "adaptive-failure-analysis",
+        "adaptive-technique-matcher"
+      ],
+      "prerequisites": [],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "401-403-bypass",
+      "description": "Access-control and routing differential testing for authorized targets returning 401 or 403.",
+      "category": "authorization",
+      "verified": "official",
+      "tags": [
+        "401",
+        "403",
+        "access-control",
+        "authorization",
+        "path-normalization",
+        "waf"
+      ],
+      "tech_stack": [
+        "http",
+        "web"
+      ],
+      "cwe_ids": [
+        "CWE-285",
+        "CWE-862",
+        "CWE-863"
+      ],
+      "chains_with": [
+        "waf-bypass",
+        "waf-evasion",
+        "adaptive-response-differential"
+      ],
+      "prerequisites": [],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "waf-bypass-techniques",
+      "description": "Generic WAF and intermediary bypass techniques for authorized security testing.",
+      "category": "input-validation",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "waf",
+        "bypass",
+        "encoding",
+        "normalization",
+        "parser-differential",
+        "intermediary"
+      ],
+      "tech_stack": [
+        "http",
+        "web"
+      ],
+      "cwe_ids": [],
+      "chains_with": [
+        "waf-evasion",
+        "adaptive-technique-matcher",
+        "adaptive-mutation-policy"
+      ],
+      "prerequisites": [
+        "waf-evasion"
+      ],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 394
+  "skill_count": 402,
+  "skills_count": 402
 }
