@@ -150,7 +150,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   const apiMethods=new Map<string,Map<"js"|"observed",Set<string>>>()
   for(const request of input.requests){
     const key=request.path ?? request.url
-    const source=requestSource(request)
+    const source=requestSourceValue(request)
     if(source!=="js" && source!=="observed")continue
     const methods=apiMethods.get(key) ?? new Map<"js"|"observed",Set<string>>()
     const values=methods.get(source) ?? new Set<string>()
