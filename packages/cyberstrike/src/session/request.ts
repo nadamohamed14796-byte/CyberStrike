@@ -158,7 +158,17 @@ export namespace Request {
     Bus.publish(Event.Updated, { sessionID: input.sessionID, requests: list })
 
     const remembered = list.find((request) => request.id === id)
-    if (remembered) TargetMemory.rememberRequest(input.sessionID, remembered)
+    if (remembered) {
+      TargetMemory.rememberRequest(input.sessionID, remembered)
+      // JS responses are immediately promoted into durable endpoint/parameter
+      // intelligence. Discovery-only JS entries are correlated here as soon as
+      // their canonical response arrives, so the JS -> request -> credential
+      // provenance graph does not depend on a later background pass.
+      if (remembered.response_content_type && /(javascript|ecmascript)/i.test(remembered.response_content_type)) {
+        TargetMemory.correlateJavascript(input.sessionID)
+        TargetMemory.extractJavascriptIntel(input.sessionID)
+      }
+    }
 
     return {
       id,
