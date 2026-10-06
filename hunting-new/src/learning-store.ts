@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir, readJson, writeJson, targetDir } from "./store"
+import { ensureDir, readJson, writeJson, targetDir, withTargetMutationLock } from "./store"
 import type { LearningObservation, LearningScore } from "./learning-engine"
 
 export interface LearningState {
@@ -30,17 +30,19 @@ export async function recordLearning(
   target: string,
   observation: LearningObservation,
 ): Promise<LearningState> {
-  const current = await loadLearning(root, target)
-  const duplicate = current.observations.some(x =>
-    x.signal === observation.signal &&
-    x.skill === observation.skill &&
-    x.strategy === observation.strategy &&
-    x.outcome === observation.outcome &&
-    x.target === observation.target &&
-    x.timestamp === observation.timestamp
-  )
-  if (!duplicate) current.observations.push(observation)
-  return saveLearning(root, current)
+  return withTargetMutationLock(root, target, async () => {
+    const current = await loadLearning(root, target)
+    const duplicate = current.observations.some(x =>
+      x.signal === observation.signal &&
+      x.skill === observation.skill &&
+      x.strategy === observation.strategy &&
+      x.outcome === observation.outcome &&
+      x.target === observation.target &&
+      x.timestamp === observation.timestamp
+    )
+    if (!duplicate) current.observations.push(observation)
+    return saveLearning(root, current)
+  })
 }
 
 export function topScores(state: LearningState): LearningScore[] {
