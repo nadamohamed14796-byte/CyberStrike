@@ -255,6 +255,36 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   }
 
   for (const asset of input.jsAssets) {
+    if (/\\.map(?:$|[?#])/i.test(asset.url)) {
+      emit({
+        signal: "source_map_detected",
+        source: "correlation:js",
+        confidence: 0.90,
+        target: input.target,
+        metadata: { jsAssetId: asset.id, url: asset.url },
+      })
+    }
+
+    if (/\\.(?:js|mjs)(?:$|[?#])/i.test(asset.url)) {
+      emit({
+        signal: "javascript_asset",
+        source: "correlation:js",
+        confidence: 0.86,
+        target: input.target,
+        metadata: { jsAssetId: asset.id, url: asset.url },
+      })
+    } else {
+      emit({
+        signal: "javascript_asset",
+        source: "correlation:js",
+        confidence: 0.76,
+        target: input.target,
+        metadata: { jsAssetId: asset.id, url: asset.url },
+      })
+    }
+  }
+
+  for (const asset of input.jsAssets) {
     emit({
       signal: "javascript_asset",
       source: "correlation:js",
