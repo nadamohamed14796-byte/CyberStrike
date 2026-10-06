@@ -2,6 +2,7 @@ import { Log } from "../util/log"
 import { Skill } from "./skill"
 import { SkillIndex } from "./index-engine"
 import { ReferenceLearning } from "../learning/reference"
+import { LearningRouter } from "../learning/router"
 
 export namespace SkillContext {
   const log = Log.create({ service: "skill-context" })
@@ -64,41 +65,59 @@ export namespace SkillContext {
   export function suggest(
     findings: Array<{ skill_id: string; severity?: string; cwe_id?: string; tech_stack?: string[] }>,
   ): Suggestion[] {
-    const result: Suggestion[] = []
-    const suggested = new Set<string>()
+    const result = new Map<string, Suggestion>()
     const active = new Set(loaded.keys())
 
+    const add = (name: string, priority: Suggestion["priority"], reason: string) => {
+      if (active.has(name)) return
+      const current = result.get(name)
+      if (current) {
+        current.reason = `${current.reason} | ${reason}`
+        if (priority === "high" || (priority === "medium" && current.priority === "low")) current.priority = priority
+        return
+      }
+      result.set(name, { name, reason, priority })
+    }
+
     for (const finding of findings) {
+      const learnedRoutes = LearningRouter.route({
+        hook: "after_finding",
+        signal: "finding_followup",
+        skill_name: finding.skill_id,
+        cwe_id: finding.cwe_id,
+        tech_stack: finding.tech_stack,
+      })
+
+      for (const route of learnedRoutes) {
+        const priority: Suggestion["priority"] = route.score >= 80 ? "high" : route.score >= 40 ? "medium" : "low"
+        add(route.name, priority, route.reasons.join("; "))
+      }
+
       const chains = SkillIndex.chainsFrom(finding.skill_id)
       for (const chain of chains) {
-        if (active.has(chain.target) || suggested.has(chain.target)) continue
-        suggested.add(chain.target)
         const learned = ReferenceLearning.score(chain.target)
-        result.push({
-          name: chain.target,
-          reason: `${chain.boost ?? `chains with ${finding.skill_id}`} | learned usefulness=${learned}%`,
-          priority: chain.boost || learned >= 70 ? "high" : learned < 30 ? "low" : "medium",
-        })
+        add(
+          chain.target,
+          chain.boost || learned >= 70 ? "high" : learned < 30 ? "low" : "medium",
+          `${chain.boost ?? `chains with ${finding.skill_id}`} | learned usefulness=${learned}%`,
+        )
       }
 
       if (finding.tech_stack?.length) {
-        const techSkills = SkillIndex.byTechStack(finding.tech_stack)
-        for (const skill of techSkills) {
-          if (active.has(skill.name) || suggested.has(skill.name)) continue
-          suggested.add(skill.name)
+        for (const skill of SkillIndex.byTechStack(finding.tech_stack)) {
           const learned = ReferenceLearning.score(skill.name)
-          result.push({
-            name: skill.name,
-            reason: `matches tech stack: ${finding.tech_stack.join(", ")} | learned usefulness=${learned}%`,
-            priority: learned >= 70 ? "medium" : "low",
-          })
+          add(
+            skill.name,
+            learned >= 70 ? "medium" : "low",
+            `matches tech stack: ${finding.tech_stack.join(", ")} | learned usefulness=${learned}%`,
+          )
         }
       }
     }
 
-    return result.sort((a, b) => {
-      const order = { high: 0, medium: 1, low: 2 }
-      return order[a.priority] - order[b.priority]
-    })
+    const order = { high: 0, medium: 1, low: 2 }
+    return Array.from(result.values()).sort(
+      (a, b) => order[a.priority] - order[b.priority] || a.name.localeCompare(b.name),
+    )
   }
 }

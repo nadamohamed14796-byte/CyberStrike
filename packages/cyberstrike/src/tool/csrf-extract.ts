@@ -6,6 +6,7 @@ import { WebCredential, COMMON_AUTH_HEADERS } from "../session/web/web-credentia
 import { HttpMessage } from "../replay/message"
 import { Mutate } from "../replay/mutate"
 import { BackendFetch } from "../replay/backend-fetch"
+import { ScopeGuard } from "./scope-check"
 
 function originFromRequest(req: Request.Info): string | undefined {
   if (req.origin) return req.origin.replace(/\/+$/, "")
@@ -59,6 +60,16 @@ Use this to:
       return {
         title: "csrf_extract: no origin",
         output: `Cannot determine origin from request "${params.request_id}".`,
+        metadata: { extracted: false },
+      }
+    }
+
+    const originURL = new URL(origin)
+    const capturedHosts = [...new Set(Request.get(sessionID).map((r) => r.host).filter((h): h is string => Boolean(h)))]
+    if (!ScopeGuard.check(originURL.hostname, capturedHosts).inScope) {
+      return {
+        title: "csrf_extract: refused (out of scope)",
+        output: `Refusing host "${originURL.hostname}": not among this session's captured scope.`,
         metadata: { extracted: false },
       }
     }

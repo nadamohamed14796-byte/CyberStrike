@@ -198,7 +198,10 @@ export namespace AgentPerformance {
       `Archetype: ${bones.archetype} | Strengths: ${bones.strengths.join(", ")}`,
     ]
 
-    const learned = ReferenceLearning.top(5)\n    if (learned.length > 0) lines.push(`Learned references: ${learned.map((x) => `${x.skill}=${Math.round(x.usefulness)}%`).join(", ")}`)\n\n    if (stats.missionsCompleted > 0) {
+    const learned = ReferenceLearning.top(5)
+    if (learned.length > 0) lines.push(`Learned references: ${learned.map((x) => `${x.skill}=${Math.round(x.usefulness)}%`).join(", ")}`)
+
+    if (stats.missionsCompleted > 0) {
       lines.push(
         `Performance: score=${stats.performanceScore} | missions=${stats.missionsCompleted} | findings=${stats.findingsReported} | morale=${stats.morale}%`,
       )

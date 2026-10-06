@@ -3,4 +3,5 @@ export * from "./signing"
 export * from "./index-engine"
 export * from "./context"
 export * from "./killchain"
-\nexport * from "../learning/reference"\n
+
+export * from "../learning/reference"

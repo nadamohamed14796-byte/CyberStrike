@@ -82,6 +82,11 @@ const baseState = (input: Partial<State> = {}) =>
     limit: 10,
     message: {},
     part: {},
+    request: {},
+    web_credential: {},
+    web_role: {},
+    web_object: {},
+    web_function: {},
     ...input,
   }) as State
 

@@ -10,6 +10,7 @@ import { Chain } from "../methodology/chain"
 import { Validation } from "../methodology/validation"
 import { Request } from "../session/request"
 import { AgentPerformance } from "../methodology/performance"
+import { Learning } from "../learning"
 
 const SEVERITY_ORDER: Record<string, number> = {
   critical: 0,
@@ -58,6 +59,16 @@ export const GenerateReportTool = Tool.define("generate_report", {
   }),
   async execute(params, ctx) {
     const rootSession = Session.root(ctx.sessionID)
+
+    await Learning.emit({
+      hook: "before_summary",
+      signal: "report_generation_started",
+      sessionID: rootSession,
+      agent: ctx.agent,
+      metadata: {
+        include_sections: params.include_sections ?? [...ALL_SECTIONS],
+      },
+    })
     const session = await Session.get(rootSession)
 
     const vulns = Vulnerability.confirmed(rootSession)

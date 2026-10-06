@@ -9,6 +9,8 @@ node_modules
 .claude/
 .cyberstrike/*
 !.cyberstrike/skill/
+!.cyberstrike/commands/
+!.cyberstrike/commands/**
 __MACOSX/
 *~
 playground
