@@ -1,6 +1,10 @@
 import path from "node:path"
 import { ensureDir,targetDir } from "./store"
 import type { FindingRecord } from "./findings"
+import { loadFindings } from "./finding-store"
+import { loadHypotheses } from "./hypothesis-store"
+import { loadAttempts } from "./attempt-store"
+import { recordLearning } from "./learning-store"
 import { checkFindingEvidence } from "./report-intelligence"
 
 export async function writeReport(
@@ -127,6 +131,29 @@ export async function transitionReport(
   if(meta.reviewerNote!==undefined)report.reviewerNote=meta.reviewerNote
   report.updatedAt=new Date().toISOString()
   await saveReportState(root,state)
+
+  if(status==="accepted" || status==="rejected"){
+    const findings=await loadFindings(root,target)
+    const finding=findings.find(x=>x.id===report.findingId)
+    if(finding){
+      const hypotheses=await loadHypotheses(root,target)
+      const hypothesis=hypotheses.hypotheses.find(x=>x.id===finding.hypothesisId)
+      const attempts=await loadAttempts(root,target)
+      const attempt=finding.attemptIds.length
+        ? attempts.attempts.find(x=>x.id===finding.attemptIds[finding.attemptIds.length-1])
+        : undefined
+      await recordLearning(root,target,{
+        target,
+        signal:hypothesis?.signal ?? "report_review",
+        skill:"report-review",
+        strategy:attempt?.strategy ?? "report-review",
+        outcome:status==="accepted" ? "confirmed" : "false_positive",
+        confidence:status==="accepted" ? 1 : 0.9,
+        timestamp:new Date().toISOString(),
+      })
+    }
+  }
+
   return report
 }
 
