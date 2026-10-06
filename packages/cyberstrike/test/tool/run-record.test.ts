@@ -20,6 +20,12 @@ describe("ToolRunRecord identity", () => {
     expect(a).not.toBe(b)
   })
 
+  test("relevant execution context is part of the identity", () => {
+    const a = toolRunKey({ toolID: "nuclei", target: "https://example.com", endpoint: "/api", context: { agent: "recon" } })
+    const b = toolRunKey({ toolID: "nuclei", target: "https://example.com", endpoint: "/api", context: { agent: "validator" } })
+    expect(a).not.toBe(b)
+  })
+
   test("normalizes HTTP default ports", () => {
     expect(normalizeTarget("HTTPS://EXAMPLE.COM:443")).toBe(normalizeTarget("https://example.com"))
     expect(normalizeEndpoint("HTTPS://EXAMPLE.COM:443/api")).toBe("https://example.com/api")
