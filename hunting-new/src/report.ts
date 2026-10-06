@@ -125,6 +125,7 @@ export async function transitionReport(
   root:string,target:string,reportId:string,status:ReportStatus,
   meta:{submissionRef?:string;reviewerNote?:string}={},
 ):Promise<ReportRecord>{
+  let unchanged=false
   const report=await withTargetMutationLock(root,target,async()=>{
     const state=await loadReportState(root,target)
     const current=state.reports.find(x=>x.id===reportId)
@@ -132,7 +133,7 @@ export async function transitionReport(
     if((current.status==="accepted"||current.status==="rejected") && current.status!==status){
       throw new Error("REPORT_STATE_CONFLICT: terminal report cannot transition")
     }
-    if(current.status===status) return current
+    if(current.status===status){ unchanged=true; return current }
     current.status=status
     if(meta.submissionRef!==undefined)current.submissionRef=meta.submissionRef
     if(meta.reviewerNote!==undefined)current.reviewerNote=meta.reviewerNote
@@ -141,7 +142,7 @@ export async function transitionReport(
     return current
   })
 
-  if(status==="accepted" || status==="rejected"){
+  if(!unchanged && (status==="accepted" || status==="rejected")){
     const findings=await loadFindings(root,target)
     const finding=findings.find(x=>x.id===report.findingId)
     if(finding){
