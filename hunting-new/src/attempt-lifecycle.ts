@@ -3,7 +3,7 @@ import { transitionHypothesis, loadHypotheses } from "./hypothesis-store"
 import { transitionChain, loadChains } from "./chain-store"
 import { checkpointPhase } from "./runtime-persistence"
 import { loadEvidence } from "./evidence-store"
-import { validateHypothesis, type ValidationResult } from "./validation-gate"
+import { validateHypothesis, hasBaselineComparison, hasBehaviorChange, type ValidationResult } from "./validation-gate"
 import { recordAttemptLearningFeedback } from "./attempt-learning-feedback"
 import { setAgentTaskState } from "./agent-task-runtime"
 import type { AttemptState } from "./adaptive-attempts"
@@ -66,12 +66,15 @@ export async function recordAttemptLifecycle(
           kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",
           summary:x.details || x.sourceId,
           independent:x.confidence>=0.8,
+          attemptId:x.attemptId,
+          requestId:x.requestId,
+          responseId:x.responseId,
         })),
         distinctVariants:variants,
         expectedImpact:"medium",
         targetConfirmed:true,
-        baselineObserved:linked.some(x=>x.kind==="request") && linked.some(x=>x.kind==="response"),
-        behaviorChanged:linked.filter(x=>x.kind==="response").length >= 2,
+        baselineObserved:hasBaselineComparison(linked.map(x=>({id:x.id,kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",summary:x.details||x.sourceId,independent:x.confidence>=0.8,observed:x.kind!=="inference",attemptId:x.attemptId,requestId:x.requestId,responseId:x.responseId}))),
+        behaviorChanged:hasBehaviorChange(linked.map(x=>({id:x.id,kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",summary:x.details||x.sourceId,independent:x.confidence>=0.8,observed:x.kind!=="inference",attemptId:x.attemptId,requestId:x.requestId,responseId:x.responseId}))),
         reproducible:variants >= 2,
         rootCauseSupported:linked.some(x=>x.kind==="function" || x.kind==="js-asset"),
         impactObserved:recorded.state==="confirmed",
