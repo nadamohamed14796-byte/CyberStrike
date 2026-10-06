@@ -1,3 +1,19 @@
+---
+name: waf-xss-bypass
+description: >-
+  XSS-specific WAF bypass analysis for authorized testing when an XSS candidate
+  is blocked or transformed by a WAF.
+category: client-side
+version: "1.0.0"
+author: CyberStrike
+tags: [xss, waf, bypass, encoding, filtering, adaptive-testing]
+tech_stack: [http, web, javascript]
+cwe_ids: [CWE-79]
+chains_with: [waf-evasion, adaptive-technique-matcher]
+prerequisites: [waf-evasion]
+severity_boost: {}
+---
+
 # WAF XSS Bypass Testing
 
 Use this skill when an XSS candidate is blocked or transformed by a WAF and the target is explicitly authorized for security testing.
