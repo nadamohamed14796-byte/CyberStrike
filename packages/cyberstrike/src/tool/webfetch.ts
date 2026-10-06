@@ -4,6 +4,9 @@ import TurndownService from "turndown"
 import DESCRIPTION from "./webfetch.txt"
 import { abortAfterAny } from "../util/abort"
 import { Identifier } from "../id/id"
+import { Session } from "../session"
+import { Request } from "../session/request"
+import { ScopeGuard } from "./scope-check"
 
 const MAX_RESPONSE_SIZE = 5 * 1024 * 1024 // 5MB
 const DEFAULT_TIMEOUT = 30 * 1000 // 30 seconds
@@ -23,6 +26,19 @@ export const WebFetchTool = Tool.define("webfetch", {
     // Validate URL
     if (!params.url.startsWith("http://") && !params.url.startsWith("https://")) {
       throw new Error("URL must start with http:// or https://")
+    }
+
+    const targetHost = (() => {
+      try {
+        return new URL(params.url).hostname.toLowerCase()
+      } catch {
+        return ""
+      }
+    })()
+    const rootSession = Session.root(ctx.sessionID)
+    const capturedHosts = [...new Set(Request.get(rootSession).map((r) => r.host).filter((h): h is string => Boolean(h)))]
+    if (!targetHost || !ScopeGuard.check(targetHost, capturedHosts).inScope) {
+      throw new Error(`Refusing webfetch to "${targetHost || params.url}": host is not in the session's captured scope.`)
     }
 
     await ctx.ask({
