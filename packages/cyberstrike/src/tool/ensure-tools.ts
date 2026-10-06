@@ -2,6 +2,10 @@ import z from "zod"
 import { Tool } from "./tool"
 
 const TOOL_INSTALL_MAP: Record<string, { check: string; install: string; description: string }> = {
+  assetfinder: { check: "assetfinder", install: "go install github.com/tomnomnom/assetfinder@latest", description: "Subdomain discovery" },
+  github-subdomains: { check: "github-subdomains", install: "go install github.com/gwen001/github-subdomains@latest", description: "GitHub subdomain discovery" },
+  findomain: { check: "findomain", install: "go install github.com/Findomain/Findomain@latest", description: "Subdomain discovery" },
+  shosubgo: { check: "shosubgo", install: "go install github.com/incogbyte/shosubgo@latest", description: "Passive subdomain discovery" },
   nmap: { check: "nmap", install: "brew install nmap || apt-get install -y nmap", description: "Network scanner" },
   nuclei: {
     check: "nuclei",
