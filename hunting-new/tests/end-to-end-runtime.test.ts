@@ -25,8 +25,8 @@ describe("hunting runtime end-to-end", () => {
         url:"https://example.com/api/users/123",
         host:target,
         path:"/api/users/123",
-        credentialId:"cred-attacker",
-        accountLabel:"attacker",
+        credentialId:"cred-user",
+        accountLabel:"user",
         observedAt:1,
         source:"observed" as const,
       }
@@ -64,12 +64,13 @@ describe("hunting runtime end-to-end", () => {
         ],
       })
       expect(engine.forTarget(target).some(x=>x.signal==="object_identifier_detected")).toBe(true)
+      expect(engine.forTarget(target).some(x=>x.signal==="authenticated_endpoint")).toBe(true)
 
       const prepared=await prepareMultiAgentPlan(root,engine,[{
-        name:"attack-idor-automation",
+        name:"authorization-check",
         confidence_threshold:.7,
-        required_signals:["object_identifier_detected"],
-        optional_signals:["authenticated_endpoint"],
+        required_signals:["object_identifier_detected","authenticated_endpoint"],
+        optional_signals:[],
         dependencies:[],
         maximum_parallel_tasks:1,
       }],target)
@@ -91,9 +92,9 @@ describe("hunting runtime end-to-end", () => {
             state:"confirmed",
             outcome:"clean",
             severity:"high",
-            title:"Broken object authorization",
-            impact:"A different account can access a protected object.",
-            remediation:"Enforce server-side authorization on object access.",
+            title:"Authorization behavior changed across validation variants",
+            impact:"A protected authorization-sensitive response changes under a validation variant.",
+            remediation:"Enforce server-side authorization and reject unauthorized request variants.",
             request_id:"req-1",
             response_id:responseId,
             result_summary:"Observed changed protected object response.",
