@@ -39,3 +39,17 @@ describe("configured skill agents", () => {
     expect(result.agent).toBe("configured-agent")
   })
 })
+
+
+describe("reference context", () => {
+  test("passes indexed reference ids and URLs to the execution prompt", () => {
+    const result=buildSkillExecutionInvocation({
+      taskId:"task-ref",target:"example.test",role:"primary-hunter",primarySkill:"idor",
+      resolvedSkills:["idor"],strategyHints:[],signal:"object_identifier_detected",
+      signalConfidence:.9,reason:"reference-aware validation",
+      referenceIds:["ref-1"],referenceUrls:["https://portswigger.net/web-security/access-control"],
+    })
+    expect(result.prompt).toContain("reference_ids: ref-1")
+    expect(result.prompt).toContain("reference_urls: https://portswigger.net/web-security/access-control")
+  })
+})
