@@ -138,3 +138,10 @@ record_coverage_note
 | gcp_logging_audit | Logging | GCP |
 | dns_audit | DNS | Cross-cloud |
 | tls_audit | TLS | Cross-cloud |
+
+---
+## Signal-Driven Gate
+
+Activate only when a concrete cloud assessment signal exists: an identified AWS/Azure/GCP account context, authorized cloud credentials, a cloud asset inventory, or an explicit read-only assessment request with a declared account/project/subscription scope.
+Do not launch account-wide auditing because a web target merely mentions AWS, Azure, GCP, S3, Azure Blob, or GCP storage.
+Before every audit program, retain the provider, account/project/subscription, credential identity, scope decision, and verification result.
