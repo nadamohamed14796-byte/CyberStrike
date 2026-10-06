@@ -24,7 +24,6 @@ const TOOLS: ToolSpec[] = [
   { id: "gospider", phase: "url-discovery", risk: "active-read", when: ["crawl", "endpoint"], command: "gospider -s <target> -c 5 -d 2" },
   { id: "hakrawler", phase: "url-discovery", risk: "active-read", when: ["crawl", "endpoint"], command: "hakrawler -url <target>" },
   { id: "waymore", phase: "historical-url", risk: "passive", when: ["historical URL", "archive"], command: "waymore -i <target>" },
-  { id: "github-subdomains", phase: "asset-discovery", risk: "passive", when: ["github", "subdomain"], command: "github-subdomains -d <target>" },
   { id: "subjs", phase: "javascript-discovery", risk: "active-read", when: ["JavaScript", "JS bundle"], command: "subjs <input>" },
   { id: "secretfinder", phase: "secret-discovery", risk: "passive", when: ["JavaScript", "secret", "credential"], command: "python3 SecretFinder.py -i <js> -o cli" },
   { id: "trufflehog", phase: "secret-discovery", risk: "passive", when: ["repository", "secret", "credential"], command: "trufflehog filesystem <path>" },
