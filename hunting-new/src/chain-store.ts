@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir, readJson, targetDir, writeJson } from "./store"
+import { ensureDir, readJson, targetDir, writeJson, withTargetMutationLock } from "./store"
 import type { Chain, ChainStatus } from "./chain-board"
 
 export interface ChainState {
@@ -26,18 +26,22 @@ export async function saveChains(root: string, state: ChainState): Promise<Chain
 }
 
 export async function upsertChain(root: string, target: string, chain: Chain): Promise<ChainState> {
-  const state = await loadChains(root, target)
-  const index = state.chains.findIndex(x => x.id === chain.id)
-  if (index === -1) state.chains.push(chain)
-  else state.chains[index] = { ...state.chains[index], ...chain }
-  return saveChains(root, state)
+  return withTargetMutationLock(root, target, async () => {
+    const state = await loadChains(root, target)
+    const index = state.chains.findIndex(x => x.id === chain.id)
+    if (index === -1) state.chains.push(chain)
+    else state.chains[index] = { ...state.chains[index], ...chain }
+    return saveChains(root, state)
+  })
 }
 
 export async function transitionChain(root: string, target: string, id: string, status: ChainStatus): Promise<Chain> {
-  const state = await loadChains(root, target)
-  const chain = state.chains.find(x => x.id === id)
-  if (!chain) throw new Error("CHAIN_NOT_FOUND")
-  chain.status = status
-  await saveChains(root, state)
-  return chain
+  return withTargetMutationLock(root, target, async () => {
+    const state = await loadChains(root, target)
+    const chain = state.chains.find(x => x.id === id)
+    if (!chain) throw new Error("CHAIN_NOT_FOUND")
+    chain.status = status
+    await saveChains(root, state)
+    return chain
+  })
 }
