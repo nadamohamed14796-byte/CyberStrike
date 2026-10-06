@@ -1,5 +1,5 @@
 import { AttemptLedger, type AttemptPolicy, type Attempt, type StrategyClass } from "./adaptive-attempts"
-import { validateHypothesis, type ValidationEvidence } from "./validation-gate"
+import { validateHypothesis, hasCrossAccountEvidence, type ValidationEvidence } from "./validation-gate"
 import type { HypothesisRecord } from "./hypotheses"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
@@ -117,6 +117,10 @@ export function evaluateValidationRun(
     evidence,
     distinctVariants: variants,
     expectedImpact: "medium",
+    targetConfirmed: true,
+    authorizationContextVerified: hypothesis.signal.includes("object_identifier") || hypothesis.signal.includes("authorization") || hypothesis.signal.includes("tenant_identifier")
+      ? hasCrossAccountEvidence(evidence)
+      : true,
   })
   if (result.decision === "eligible") {
     return { hypothesisId: hypothesis.id, attempts, evidence, decision: "eligible", reasons: result.reasons }
