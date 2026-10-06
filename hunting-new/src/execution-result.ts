@@ -51,7 +51,7 @@ const OUTCOMES=new Set<SubagentOutcome>(["clean","aborted","errored","capped","s
 const EVIDENCE_KINDS=new Set<ExecutionEvidenceRef["kind"]>(["request","response","browser","js","replay","inference"])
 
 function firstJsonObject(text:string):unknown{
-  const fenced=text.match(/\`\`\`(?:json)?\s*([\\s\\S]*?)\s*\`\`\`/i)
+  const fenced=text.match(/\`\`\`(?:json)?\s*([\s\S]*?)\s*\`\`\`/i)
   const candidate=fenced?.[1]?.trim() ?? text.trim()
   const start=candidate.indexOf("{")
   const end=candidate.lastIndexOf("}")
