@@ -35,3 +35,10 @@ Use only on authorized targets. Prefer test accounts and synthetic data; avoid d
 ## Provenance
 Adapted from **elementalsouls/Claude-BugHunter** under **CC BY 4.0**. This is an adapted CyberStrike skill, not a verbatim copy.
 Source: https://github.com/elementalsouls/Claude-BugHunter
+
+---
+## Signal-Driven Gate
+
+Activate only on concrete cloud exposure evidence: a public bucket/blob/object, cloud service endpoint, metadata path, cloud credential artifact, exposed snapshot/function/service, cloud-backed DNS relationship, or provider-specific configuration signal.
+Do not activate from generic cloud keywords, technology banners, or DNS names alone.
+Use the least-invasive validation that proves the boundary. Separate discovery from impact and preserve negative evidence.
