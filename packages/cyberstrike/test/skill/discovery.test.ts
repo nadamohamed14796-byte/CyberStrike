@@ -3,9 +3,11 @@ import { Discovery } from "../../src/skill/discovery"
 import path from "path"
 
 const CLOUDFLARE_SKILLS_URL = "https://developers.cloudflare.com/.well-known/skills/"
+const networkTest = process.env.CYBERSTRIKE_NETWORK_TESTS === "1" ? test : test.skip
+// Opt in to live Cloudflare integration checks with CYBERSTRIKE_NETWORK_TESTS=1.
 
 describe("Discovery.pull", () => {
-  test("downloads skills from cloudflare url", async () => {
+  networkTest("downloads skills from cloudflare url", async () => {
     const dirs = await Discovery.pull(CLOUDFLARE_SKILLS_URL)
     expect(dirs.length).toBeGreaterThan(0)
     for (const dir of dirs) {
@@ -15,7 +17,7 @@ describe("Discovery.pull", () => {
     }
   }, 30_000)
 
-  test("url without trailing slash works", async () => {
+  networkTest("url without trailing slash works", async () => {
     const dirs = await Discovery.pull(CLOUDFLARE_SKILLS_URL.replace(/\/$/, ""))
     expect(dirs.length).toBeGreaterThan(0)
     for (const dir of dirs) {
@@ -34,7 +36,7 @@ describe("Discovery.pull", () => {
     expect(dirs).toEqual([])
   })
 
-  test("downloads reference files alongside SKILL.md", async () => {
+  networkTest("downloads reference files alongside SKILL.md", async () => {
     const dirs = await Discovery.pull(CLOUDFLARE_SKILLS_URL)
     // find a skill dir that should have reference files (e.g. agents-sdk)
     const agentsSdk = dirs.find((d) => d.endsWith("/agents-sdk"))
@@ -47,7 +49,7 @@ describe("Discovery.pull", () => {
     }
   }, 30_000)
 
-  test("caches downloaded files on second pull", async () => {
+  networkTest("caches downloaded files on second pull", async () => {
     // first pull to populate cache
     const first = await Discovery.pull(CLOUDFLARE_SKILLS_URL)
     expect(first.length).toBeGreaterThan(0)
