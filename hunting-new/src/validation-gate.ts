@@ -9,6 +9,16 @@ export interface ValidationEvidence {
   attemptId?: string
   requestId?: string
   responseId?: string
+  accountLabel?: string
+}
+
+export function hasCrossAccountEvidence(evidence: ValidationEvidence[]): boolean {
+  const labels=new Set(
+    evidence
+      .filter(x=>x.observed !== false && x.accountLabel)
+      .map(x=>x.accountLabel!)
+  )
+  return labels.size >= 2
 }
 
 export interface ValidationInput {
