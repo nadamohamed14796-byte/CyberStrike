@@ -1,10 +1,10 @@
 ---
 
 name: waf-evasion
-description: >-
+description:[
 Evidence-driven analysis of web filtering, intermediary processing,
 normalization, encoding, and parser differentials during authorized
-security testing.
+security testing.]
 category: input-validation
 version: "2.0.0"
 author: CyberStrike
