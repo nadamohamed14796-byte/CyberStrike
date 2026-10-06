@@ -91,6 +91,8 @@ export async function promoteValidatedHypothesis(
     ...(input.endpoint ? [{type:"endpoint",id:stableLedgerId("endpoint",input.skill ? input.skill+"|"+input.endpoint : input.endpoint),evidence_refs:validated.evidenceIds}] : []),
   ])
   const reportFile=await writeReport(root,validated,{
+    asset:target,
+    endpoint:input.endpoint ?? undefined,
     root_cause:input.rootCause,
     steps:input.reproduction,
   })
