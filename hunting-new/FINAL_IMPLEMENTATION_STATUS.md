@@ -38,7 +38,7 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 | Context Budget | IMPLEMENTED |
 | JS-derived Wordlists | IMPLEMENTED |
 | Testing | PARTIAL (runtime fixtures added; GitHub Actions currently queued, local execution unavailable in this environment) |
-| Documentation | PARTIAL |
+| Documentation | PARTIAL (implementation checkpoint maintained) |
 
 ## Current implementation checkpoint
 
@@ -113,3 +113,29 @@ No completion claim should be made until the remaining runtime integrations are 
 - The persisted false-positive intelligence auto-load inside finding promotion remains pending because the attempted write was blocked by tooling safety.
 - The legacy `target-intelligence.ts` path-template regex still contains one escaping defect; the new fallback parser avoids it where it is used.
 - Full native end-to-end execution against a real CyberStrike session has not been executed in this environment.
+
+
+## Latest hardening checkpoint
+
+Implemented since the previous checkpoint:
+- correlated validation evidence now preserves attempt/request/response/account metadata into promotion
+- target-scoped mutation serialization for mission, plan, intelligence, attempts, evidence, findings, chains, false-positive, learning and report state
+- stable task identity across replanning
+- guarded session-intake to native hunting auto-dispatch with per-target queueing
+- structured native execution result parsing, including root-cause and reproduction fields
+- finding fingerprint stability across evidence growth and repeated promotion idempotency
+- skill required-context enforcement for registered routing
+- fail-closed skill dependency resolution
+- nested indexed-skill source-path resolution
+- bounded writeup strategy hints in validation ordering
+- OpenAPI source extraction and persistent API-source storage
+- CLI OpenAPI ingestion command
+- corrected parameter/path regex and correlation source escaping
+- API differential routing signal support
+- explicit session-intake duplicate-field cleanup
+
+Not yet green-verified:
+- GitHub Actions checks for the latest branch state are queued; no successful CI result is claimed.
+- Generic resumeHuntingContext stale-task recovery remains separate from the already-protected dispatch recovery path.
+- OpenAPI sources are persisted and supported by the signal engine, but the previously blocked runtime-constructor patch was not reattempted.
+- A full real-target native E2E still requires an execution environment with the CyberStrike runtime and an authorized target fixture.
