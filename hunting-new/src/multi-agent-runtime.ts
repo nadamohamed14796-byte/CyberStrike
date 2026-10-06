@@ -24,6 +24,7 @@ import { promoteValidatedHypothesis, type FindingPromotionResult } from "./findi
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
+import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -209,7 +210,13 @@ export async function prepareAgentTaskValidation(
     falsePositiveIntelligence,
     plan.target,
   )
-  const next=validationPlan.variants.find(x=>!used.has(x.strategy+":"+x.variant))
+  const referenceStrategies=strategyHintsFromWriteups(await loadWriteups(root),context.signal)
+  const referenceRank=new Map(referenceStrategies.map((strategy,index)=>[strategy,index]))
+  const rankedVariants=[...validationPlan.variants].sort((a,b)=>
+    (referenceRank.get(a.strategy)??referenceStrategies.length) -
+    (referenceRank.get(b.strategy)??referenceStrategies.length)
+  )
+  const next=rankedVariants.find(x=>!used.has(x.strategy+":"+x.variant))
   if(!next) throw new Error("VALIDATION_ATTEMPT_BUDGET_EXHAUSTED")
   const attempt=await ledger.plan(
     hypothesis.id,
