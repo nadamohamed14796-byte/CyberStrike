@@ -50,6 +50,7 @@ import { Truncate } from "@/tool/truncation"
 import { Token } from "@/util/token"
 import { MethodologyContext } from "@/methodology/context"
 import { Learning } from "../learning"
+import { ToolArtifact } from "../tool/artifact"
 import { WebRetest } from "./web/web-retest"
 import { AgentPerformance } from "@/methodology/performance"
 import { testerClass } from "@/tool/vuln-scope"
@@ -1246,6 +1247,28 @@ export namespace SessionPrompt {
           const result = await item.execute(args, ctx)
 
           const reconSignal = reconSignalFromResult(item.id, result)
+
+          // Persist a provenance record before routing the derived signal. The
+          // artifact is the durable bridge between tool output, evidence, and
+          // learning; the learning layer itself remains side-effect-light.
+          try {
+            ToolArtifact.record({
+              sessionID: ctx.sessionID,
+              callID: ctx.callID,
+              tool: item.id,
+              target: learningTarget(args),
+              input: args,
+              output: result,
+              signal: reconSignal,
+              metadata: {
+                agent: ctx.agent,
+                derived_from_result: Boolean(reconSignal),
+              },
+            })
+          } catch (error) {
+            log.warn("failed to persist tool artifact", { error, tool: item.id, callID: ctx.callID })
+          }
+
           if (reconSignal) {
             await Learning.emit({
               hook: "during_testing",
