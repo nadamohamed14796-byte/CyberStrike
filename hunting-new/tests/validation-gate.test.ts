@@ -81,3 +81,24 @@ describe("correlated behavior change", () => {
     ])).toBe(false)
   })
 })
+
+
+describe("behavior change correlation", () => {
+  test("does not treat different response ids as a behavior change when content is identical", async () => {
+    const { hasBehaviorChange } = await import("../src/validation-gate")
+    const evidence=[
+      {id:"r1",kind:"response" as const,summary:"HTTP 200 body_hash=same",observed:true,requestId:"req-1",responseId:"res-1",attemptId:"a1"},
+      {id:"r2",kind:"response" as const,summary:"HTTP 200 body_hash=same",observed:true,requestId:"req-1",responseId:"res-2",attemptId:"a2"},
+    ]
+    expect(hasBehaviorChange(evidence)).toBe(false)
+  })
+
+  test("accepts distinct observed response signatures across attempts", async () => {
+    const { hasBehaviorChange } = await import("../src/validation-gate")
+    const evidence=[
+      {id:"r1",kind:"response" as const,summary:"HTTP 200 body_hash=one",observed:true,requestId:"req-1",responseId:"res-1",attemptId:"a1"},
+      {id:"r2",kind:"response" as const,summary:"HTTP 200 body_hash=two",observed:true,requestId:"req-1",responseId:"res-2",attemptId:"a2"},
+    ]
+    expect(hasBehaviorChange(evidence)).toBe(true)
+  })
+})
