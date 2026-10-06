@@ -201,11 +201,7 @@ export async function prepareAgentTaskValidation(
     accountSensitive ? "" : (context.requestId??""),
   ].join("|")).toString(16)
   const storedHypotheses=await loadHypotheses(root,plan.target)
-  const intelligence=await loadTargetIntelligence(root,plan.target)
-  const correlated=intelligence.requests.filter(request => {
-    if(context.endpoint && request.path) return request.path===context.endpoint || request.url.includes(context.endpoint)
-    return true
-  }).sort((a,b)=>b.observedAt-a.observedAt)[0]
+  await loadTargetIntelligence(root,plan.target)
   const existing=storedHypotheses.hypotheses.find(x=>x.id===hypothesisId)
   const hypothesis:HypothesisRecord=existing ?? {
     id:hypothesisId,
@@ -238,7 +234,6 @@ export async function prepareAgentTaskValidation(
     plan.target,
     referenceStrategies,
   )
-  const referenceStrategies=strategyHintsFromWriteups(await loadWriteups(root),context.signal)
   const referenceRank=new Map(referenceStrategies.map((strategy,index)=>[strategy,index]))
   const rankedVariants=[...validationPlan.variants].sort((a,b)=>
     (referenceRank.get(a.strategy)??referenceStrategies.length) -
