@@ -56,6 +56,7 @@ export async function prepareMultiAgentPlanFromTargetIntelligence(
       task.signalConfidence,
     )
     task.resolvedSkills=resolved.map(skill=>skill.name)
+    task.resolvedSkillPaths=resolved.map(skill=>skill.source_path).filter((value):value is string=>Boolean(value))
   }
 
   await saveAgentPlan(root,plan)
@@ -211,6 +212,7 @@ export interface AgentTaskExecutionContext {
   role?:import("./multi-agent-planner").HuntingAgentRole
   primarySkill:string
   resolvedSkills:string[]
+  resolvedSkillPaths?:string[]
   strategyHints:string[]
   signal:string
   signalConfidence:number
@@ -263,7 +265,7 @@ export async function enrichAgentTaskExecutionContext(
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
-  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
+  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
 }
 
 export async function prepareSkillExecutionInvocation(
