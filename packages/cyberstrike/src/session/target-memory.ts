@@ -264,23 +264,50 @@ export namespace TargetMemory {
         let url: URL
         try { url = new URL(ref, js.url) } catch { continue }
         if (url.protocol !== "http:" && url.protocol !== "https:") continue
-        try { Database.use((db) => db.insert(TargetMemoryTable).values({
-          id: Identifier.ascending("target_memory"), project_id: projectID, kind: "endpoint",
-          asset: url.host, method: "GET", url: url.toString(), request_id: js.request_id ?? null,
-          page_url: js.page_url ?? null, metadata: { source: "javascript", source_memory_id: js.id,
-            source_request_id: js.request_id ?? null, credential_id: js.metadata?.credential_id ?? null, extracted_url: ref },
-          time_created: Date.now(), time_updated: Date.now(),
-        }).onConflictDoNothing().run()); stored++ } catch {}
+        try {
+          upsertDiscovery({
+            projectID,
+            kind: "endpoint",
+            asset: url.host,
+            method: "GET",
+            url: url.toString(),
+            metadata: {
+              source: "javascript",
+              source_memory_id: js.id,
+              source_memory_ids: [js.id],
+              source_request_id: js.request_id ?? null,
+              source_request_ids: js.request_id ? [js.request_id] : [],
+              credential_id: js.metadata?.credential_id ?? null,
+              credential_ids: typeof js.metadata?.credential_id === "string" ? [js.metadata.credential_id] : [],
+              extracted_url: ref,
+              extracted_urls: [ref],
+            },
+          })
+          stored++
+        } catch {}
       }
       for (const m of content.matchAll(params)) {
         const name = m[1]
-        try { Database.use((db) => db.insert(TargetMemoryTable).values({
-          id: Identifier.ascending("target_memory"), project_id: projectID, kind: "parameter",
-          asset: js.url, url: "memory://parameter/" + encodeURIComponent(js.url) + "/" + encodeURIComponent(name),
-          metadata: { source: "javascript", source_memory_id: js.id, source_request_id: js.request_id ?? null,
-            credential_id: js.metadata?.credential_id ?? null, parameter: name },
-          time_created: Date.now(), time_updated: Date.now(),
-        }).onConflictDoNothing().run()); stored++ } catch {}
+        try {
+          upsertDiscovery({
+            projectID,
+            kind: "parameter",
+            asset: js.url,
+            method: null,
+            url: "memory://parameter/" + encodeURIComponent(js.url) + "/" + encodeURIComponent(name),
+            metadata: {
+              source: "javascript",
+              source_memory_id: js.id,
+              source_memory_ids: [js.id],
+              source_request_id: js.request_id ?? null,
+              source_request_ids: js.request_id ? [js.request_id] : [],
+              credential_id: js.metadata?.credential_id ?? null,
+              credential_ids: typeof js.metadata?.credential_id === "string" ? [js.metadata.credential_id] : [],
+              parameter: name,
+            },
+          })
+          stored++
+        } catch {}
       }
     }
     return stored
