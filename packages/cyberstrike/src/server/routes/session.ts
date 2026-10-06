@@ -343,6 +343,15 @@ async function feedHuntingLayerFromRequest(input:{
     const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
     const { ingestCyberStrikeRequest }=await import("../../../../hunting-new/src/cyberstrike-intake")
     await ingestCyberStrikeRequest(root,input)
+    if(process.env.HUNTING_AUTO_EXECUTE==="true"){
+      const { autoDispatchForTarget }=await import("../../../../hunting-new/src/auto-dispatch")
+      void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
+        .catch(error=>log.warn("hunting auto-dispatch failed",{
+          sessionID:input.sessionID,
+          target:input.target,
+          error:error instanceof Error?error.message:String(error),
+        }))
+    }
   }catch(error){
     log.warn("hunting layer intake failed",{
       sessionID:input.sessionID,
