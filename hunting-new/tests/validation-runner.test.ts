@@ -17,3 +17,13 @@ describe("validation runner", () => {
     expect(run.ledger.remaining(h.id)).toBe(20)
   })
 })
+
+
+describe("reference strategy ranking", () => {
+  test("uses writeup strategies only as a bounded ordering hint", () => {
+    const hypothesis={id:"h-ref",target:"example.test",signal:"object_identifier_detected",title:"x",confidence:.9,status:"pending" as const,evidenceIds:[],createdAt:new Date().toISOString()}
+    const result=createValidationPlan(hypothesis,{maxAttempts:20},undefined,undefined,"example.test",["workflow"])
+    expect(result.variants[0].strategy).not.toBe("workflow")
+    expect(result.variants.some(x=>x.strategy==="workflow")).toBe(true)
+  })
+})
