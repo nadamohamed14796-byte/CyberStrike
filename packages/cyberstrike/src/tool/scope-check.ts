@@ -109,7 +109,7 @@ function checkMatch(target: string, scope: string): ScopeMatch {
   const parsedScope = parseTarget(wildcard ? scopeValue.slice(2) : scopeValue)
   if (!parsedScope) return { matches: false, reason: "scope item could not be normalized" }
 
-  if (parsedScope.protocol && parsedTarget.protocol !== parsedScope.protocol) {
+  if (parsedScope.protocol && parsedTarget.protocol && parsedTarget.protocol !== parsedScope.protocol) {
     return { matches: false, reason: "scheme mismatch" }
   }
 
