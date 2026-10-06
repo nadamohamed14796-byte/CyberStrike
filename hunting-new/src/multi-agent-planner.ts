@@ -1,5 +1,7 @@
 import type { SignalEngine, SkillRule, SkillSelection } from "./signals"
-import { routeSkills, type RoutingDecision } from "./skill-router"
+import { routeSkills, routeRegisteredSkills, type RoutingDecision } from "./skill-router"
+import { prioritizeSkills } from "./learned-prioritization"
+import { canonicalSignal } from "./canonical-signals"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import type { SkillRegistry, SkillMetadata } from "./skill-registry"
@@ -56,7 +58,9 @@ function registryFromRules(rules: SkillRule[]): SkillRegistry {
   })))
 }
 
-function roleForSkill(skill: SkillSelection): HuntingAgentRole {
+function roleForSkill(skill: SkillSelection, registry?: SkillRegistry): HuntingAgentRole {
+  const explicit = registry?.get(skill.name)?.agent_roles?.[0]
+  if (explicit) return explicit
   const name = skill.name.toLowerCase()
   if (name.includes("validate") || name.includes("verify")) return "validator"
   if (name.includes("correlat") || name.includes("js") || name.includes("proxy")) return "correlator"
@@ -128,13 +132,7 @@ export function buildMultiAgentPlanFromRegistry(
       })()
     : selections
 
-  const decision: RoutingDecision = {
-    skills: selected,
-    mode: selected.length ? "focused" : "idle",
-    reason: selected.length
-      ? "skills selected directly from the CyberStrike registry and observed signals"
-      : "no registered skill matched observed signals",
-  }
+  const decision: RoutingDecision = routeRegisteredSkills(engine, registry, target, learning, falsePositives)
 
   const signalByName = new Map(signals.map(signal => [signal.signal, signal]))
   const lanes: MultiAgentPlan["lanes"] = {
@@ -153,7 +151,7 @@ export function buildMultiAgentPlanFromRegistry(
       const key = `${skill.name}|${signal.signal}|${signal.endpoint ?? ""}|${signal.function_id ?? ""}`
       if (seen.has(key)) continue
       seen.add(key)
-      const role = roleForSkill(skill)
+      const role = roleForSkill(skill, registry)
       const hints = strategyHints(signal.signal, skill.name)
       const task: AgentTask = {
         id: `task-${tasks.length + 1}`,
