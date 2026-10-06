@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { validateHypothesis } from "../src/validation-gate"
+import { validateHypothesis, hasCrossAccountEvidence } from "../src/validation-gate"
 
 describe("validation gate", () => {
   test("blocks inference-only claims", () => {
@@ -36,5 +36,34 @@ describe("validation gate", () => {
       ],
     })
     expect(result.decision).toBe("eligible")
+  })
+})
+
+
+describe("authorization evidence gate", () => {
+  test("blocks account-sensitive validation without two account labels", () => {
+    const result=validateHypothesis({
+      hypothesisId:"h",
+      inScope:true,
+      attemptsExecuted:20,
+      evidence:[
+        {id:"r",kind:"request",summary:"GET /object/1",observed:true,independent:true,attemptId:"a1",requestId:"r1",accountLabel:"attacker"},
+        {id:"s1",kind:"response",summary:"HTTP 200 body=A",observed:true,independent:true,attemptId:"a1",requestId:"r1",responseId:"s1",accountLabel:"attacker"},
+        {id:"s2",kind:"response",summary:"HTTP 200 body=B",observed:true,independent:true,attemptId:"a2",requestId:"r2",responseId:"s2",accountLabel:"victim"},
+      ],
+      distinctVariants:2,
+      expectedImpact:"high",
+      targetConfirmed:true,
+      baselineObserved:true,
+      behaviorChanged:true,
+      reproducible:true,
+      rootCauseSupported:true,
+      impactObserved:true,
+      authorizationContextVerified:hasCrossAccountEvidence([
+        {id:"r",kind:"request",summary:"GET /object/1",observed:true,independent:true,accountLabel:"attacker"},
+        {id:"s",kind:"response",summary:"HTTP 200",observed:true,independent:true,accountLabel:"attacker"},
+      ]),
+    })
+    expect(result.decision).toBe("blocked")
   })
 })
