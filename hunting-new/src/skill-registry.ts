@@ -13,6 +13,7 @@ export type SkillMetadata={
   maximum_parallel_tasks:number;
   source_path?:string
   agent_roles?:("primary-hunter"|"validator"|"correlator"|"reviewer")[]
+  agent?:string
 }
 
 const canonicalTrigger=(value:string):string =>
