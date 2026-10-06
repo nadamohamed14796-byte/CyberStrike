@@ -23,6 +23,7 @@ import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
+import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -47,6 +48,7 @@ export async function prepareMultiAgentPlanFromTargetIntelligence(
     edges:intelligence.edges,
   })
   const registry=await loadSkillRegistry(root)
+  await indexSkillReferences(root,registry.list())
   const persistedLearning=learning ?? LearningEngine.fromObservations((await loadLearning(root,target)).observations)
   const persistedFalsePositives=falsePositives ?? hydrateFalsePositiveIntelligence(await loadFalsePositives(root,target))
   const plan=buildMultiAgentPlanFromRegistry(engine,registry,target,persistedLearning,persistedFalsePositives)
@@ -233,6 +235,8 @@ export interface AgentTaskExecutionContext {
   jsAssetIds?:string[]
   functionIds?:string[]
   accountLabel?:string
+  referenceIds?:string[]
+  referenceUrls?:string[]
   attemptId?:string
   reason:string
 }
@@ -266,6 +270,8 @@ export async function enrichAgentTaskExecutionContext(
     if(edge.kind==="observed-on") jsAssetIds.add(edge.from)
   }
   if(context.functionId) functionIds.add(context.functionId)
+  const refs=await referencesForSkills(root,context.resolvedSkills,8)
+  if(refs.length) await markReferencesUsed(root,refs.map(item=>item.id))
   return {
     ...context,
     requestId:request?.id,
@@ -273,6 +279,8 @@ export async function enrichAgentTaskExecutionContext(
     accountLabel:context.accountLabel ?? request?.accountLabel,
     functionIds:[...functionIds],
     jsAssetIds:[...jsAssetIds],
+    referenceIds:refs.map(item=>item.id),
+    referenceUrls:refs.map(item=>item.url),
   }
 }
 
