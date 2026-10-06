@@ -25,3 +25,23 @@ describe("skill registry graph",()=>{
     expect(cyclic.validateDependencies().some(x=>x.includes("cyclic skill dependency"))).toBe(true)
   })
 })
+
+
+describe("skill resolution failures", () => {
+  test("fails closed when a requested primary skill is missing", () => {
+    const registry=new SkillRegistry([{
+      name:"known",
+      category:"web",
+      description:"known",
+      triggers:["known"],
+      required_context:["authorized-scope"],
+      dependencies:[],
+      risk_level:"medium",
+      scope_requirements:["authorized-scope"],
+      validation_requirements:["evidence"],
+      confidence_threshold:.5,
+      maximum_parallel_tasks:1,
+    }])
+    expect(() => registry.resolve(["missing"])).toThrow("unknown skill: missing")
+  })
+})
