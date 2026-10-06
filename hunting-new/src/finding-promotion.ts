@@ -6,7 +6,10 @@ import { loadHypotheses } from "./hypothesis-store"
 import { loadFindings, upsertFinding } from "./finding-store"
 import { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { dedupeDecision, shouldRecheckAfterNewEvidence } from "./dedupe-engine"
-import type { ValidationResult } from "./validation-gate"
+import type { ValidationResult, ValidationEvidence } from "./validation-gate"
+import { validateHypothesis } from "./validation-gate"
+import { loadMission } from "./mission"
+import { checkScope } from "./scope"
 
 export interface FindingPromotionInput {
   hypothesisId:string
@@ -38,9 +41,10 @@ export async function promoteValidatedHypothesis(
   input:FindingPromotionInput,
   falsePositives?:FalsePositiveIntelligence,
 ):Promise<FindingPromotionResult>{
-  if(input.validation.decision!=="eligible"){
-    throw new Error("FINDING_BLOCKED: hypothesis did not pass validation gate")
-  }
+  const mission=await loadMission(root,target)
+  if(!mission) throw new Error("MISSION_NOT_FOUND")
+  const scope=checkScope(target,mission.scope)
+  if(!scope.allowed) throw new Error("FINDING_BLOCKED: "+scope.reason)
 
   const [hypotheses,evidenceState,attemptState,storedFindings]=await Promise.all([
     loadHypotheses(root,target), loadEvidence(root,target), loadAttempts(root,target), loadFindings(root,target),
@@ -56,6 +60,32 @@ export async function promoteValidatedHypothesis(
     x.hypothesisId===hypothesis.id &&
     (x.state==="executed"||x.state==="confirmed"||x.state==="rejected"||x.state==="inconclusive")
   )
+
+  const validationEvidence:ValidationEvidence[]=linkedEvidence.map(x=>({
+    id:x.id,
+    kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",
+    summary:x.details || x.sourceId,
+    independent:x.confidence>=0.8,
+    observed:x.kind!=="inference",
+  }))
+  const storedValidation=validateHypothesis({
+    hypothesisId:hypothesis.id,
+    inScope:true,
+    attemptsExecuted:linkedAttempts.length,
+    evidence:validationEvidence,
+    distinctVariants:new Set(linkedAttempts.map(x=>x.strategy+":"+x.variant)).size,
+    expectedImpact:input.severity==="critical"?"critical":input.severity==="high"?"high":"medium",
+    targetConfirmed:true,
+    baselineObserved:linkedEvidence.some(x=>x.kind==="request") && linkedEvidence.some(x=>x.kind==="response"),
+    behaviorChanged:linkedEvidence.filter(x=>x.kind==="response").length>=2,
+    reproducible:new Set(linkedAttempts.map(x=>x.strategy+":"+x.variant)).size>=2,
+    rootCauseSupported:linkedEvidence.some(x=>x.kind==="function"||x.kind==="js-asset"),
+    impactObserved:true,
+    authorizationContextVerified:true,
+  })
+  if(input.validation.decision!=="eligible" || storedValidation.decision!=="eligible"){
+    throw new Error("FINDING_BLOCKED: stored validation evidence did not pass the promotion gate")
+  }
 
   const existing=storedFindings.find(x=>x.hypothesisId===hypothesis.id && x.chainId===input.chainId)
   if(existing){
