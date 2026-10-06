@@ -3,6 +3,7 @@ export type SkillMetadata={
   category:string;
   description:string;
   triggers:string[];
+  required_signals?:string[];
   required_context:string[];
   dependencies:string[];
   risk_level:"low"|"medium"|"high";
@@ -54,7 +55,10 @@ export class SkillRegistry{
     return this.skills
       .filter(x =>
         confidence>=x.confidence_threshold &&
-        x.triggers.some(t=>signals.has(canonicalTrigger(t)))
+        x.triggers.some(t=>signals.has(canonicalTrigger(t))) &&
+        (x.required_signals?.length
+          ? x.required_signals.every(signal => signals.has(canonicalTrigger(signal)))
+          : true)
       )
       .sort((a,b)=>
         (b.maximum_parallel_tasks-a.maximum_parallel_tasks) ||
