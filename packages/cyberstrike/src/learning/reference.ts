@@ -43,7 +43,7 @@ export namespace ReferenceLearning {
     })
   }
 
-  export function recent(limit = 20) {
+  export function top(limit = 10) {\n    return Database.use((db) => db.select({ skill: SkillLearningTable.skill_name, usefulness: SkillLearningTable.usefulness, observations: SkillLearningTable.observations }).from(SkillLearningTable).orderBy(desc(SkillLearningTable.usefulness), desc(SkillLearningTable.observations)).limit(limit).all())\n  }\n\n  export function recent(limit = 20) {
     return Database.use((db) => db.select({ skill: SkillLearningEventTable.skill_name, outcome: SkillLearningEventTable.event, evidence: SkillLearningEventTable.evidence }).from(SkillLearningEventTable).orderBy(desc(SkillLearningEventTable.time_created)).limit(limit).all())
   }
 }
