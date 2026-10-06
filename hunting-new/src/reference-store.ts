@@ -53,7 +53,19 @@ export async function indexSkillReferences(
     for(const skill of skills){
     if(!skill.source_path)continue
     let content:string
-    try{content=await Bun.file(skill.source_path).text()}catch{continue}
+    try{
+      const candidates=[
+        skill.source_path,
+        path.resolve(process.cwd(),skill.source_path),
+        path.resolve(root,"..",skill.source_path),
+      ]
+      let loaded:string|undefined
+      for(const candidate of [...new Set(candidates)]){
+        try{ loaded=await Bun.file(candidate).text(); if(loaded!==undefined)break }catch{}
+      }
+      if(loaded===undefined)continue
+      content=loaded
+    }catch{continue}
     for(const raw of content.match(URL_RE) ?? []){
       const url=cleanUrl(raw)
       if(!/^https?:\/\//i.test(url))continue
