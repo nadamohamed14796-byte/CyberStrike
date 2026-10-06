@@ -70,6 +70,30 @@ export namespace SignalQueue {
       .limit(1).get())
   }
 
+  export function claimForTool(input: {
+    sessionID: string
+    toolID: string
+    target?: string
+    scope_items?: string[]
+    scope_verified?: boolean
+    authorized_active_testing?: boolean
+  }) {
+    const item = next(input.sessionID)
+    if (!item) return undefined
+    if (item.target && input.target && item.target !== input.target) return undefined
+
+    const plan = ReconDispatch.next({
+      sessionID: input.sessionID,
+      signal: item.signal,
+      target: item.target ?? input.target,
+      scope_items: input.scope_items,
+      scope_verified: input.scope_verified,
+      authorized_active_testing: input.authorized_active_testing,
+    })
+    if (!plan.some((tool) => tool.id === input.toolID)) return undefined
+    return markRunning(item.id) ? item.id : undefined
+  }
+
   export function markRunning(id: string) {
     return Database.use((db) => db.update(SignalQueueTable)
       .set({ status: "running", attempts: sql`attempts + 1`, time_updated: Date.now() })
