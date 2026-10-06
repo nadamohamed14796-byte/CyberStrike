@@ -341,7 +341,19 @@ export namespace TargetMemory {
           metadata: {
             ...(js.metadata ?? {}),
             request_id: match.id,
+            request_ids: Array.from(new Set([
+              ...(Array.isArray(js.metadata?.request_ids) ? js.metadata.request_ids.filter((value) => typeof value === "string") : []),
+              match.id,
+            ])),
+            source_request_ids: Array.from(new Set([
+              ...(Array.isArray(js.metadata?.source_request_ids) ? js.metadata.source_request_ids.filter((value) => typeof value === "string") : []),
+              match.id,
+            ])),
             credential_id: match.credential_id ?? null,
+            credential_ids: Array.from(new Set([
+              ...(Array.isArray(js.metadata?.credential_ids) ? js.metadata.credential_ids.filter((value) => typeof value === "string") : []),
+              ...(match.credential_id ? [match.credential_id] : []),
+            ])),
             correlated: true,
           },
           time_updated: Date.now(),
