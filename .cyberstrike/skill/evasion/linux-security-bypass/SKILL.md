@@ -349,3 +349,31 @@ Security mechanism identified?
 Source: https://github.com/yaklang/hack-skills
 License: MIT (Copyright (c) 2026 VillanCh)
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only; supplementary upstream files are not included.
+
+
+## CyberStrike signal and evidence gate
+
+Activate this specialist only when its specific control or technique is evidenced
+in the target context. Do not load it from the generic word "evasion", a platform
+name, or a scanner label alone.
+
+Required evidence should identify the concrete detection/protection mechanism,
+affected artifact or behavior, baseline behavior, and the authorized test context.
+
+Use the lifecycle:
+signal -> control-observed -> controlled-analysis -> behavior-reproduced ->
+impact/coverage-proven -> finding or defensive observation
+
+A successful bypass by itself is not automatically a vulnerability. Preserve
+baseline and changed observations, environment/runtime details, tool provenance,
+scope, and negative results.
+
+Prefer one primary technique and bounded evidence-driven variants. Deduplicate by
+target + control + technique-family + runtime. Stop when the hypothesis is
+reproduced, disproven, or further mutation adds no material evidence.
+
+Route orchestration through evasion-sec when multiple evasion families appear.
+Keep handoffs minimal and preserve the original evidence correlation.
+
+Authorized systems, labs, or explicitly scoped engagements only. Prefer reversible
+tests, isolated artifacts, synthetic data, and defender-visible validation.
