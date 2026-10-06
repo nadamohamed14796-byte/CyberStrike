@@ -1,3 +1,4 @@
+import { canonicalSignal, canonicalSignals } from "./canonical-signals"
 export type Signal={signal:string;source:string;confidence:number;target:string;timestamp:string;endpoint?:string;function_id?:string;metadata?:Record<string,unknown>}
 export type SkillRule={name:string;confidence_threshold:number;required_signals:string[];optional_signals?:string[];dependencies?:string[];priority?:number;maximum_parallel_tasks?:number}
 export type SkillSelection=SkillRule & { matchedSignals:string[]; score:number }
@@ -5,7 +6,7 @@ export type SkillSelection=SkillRule & { matchedSignals:string[]; score:number }
 export class SignalEngine{
   private signals:Signal[]=[]
   emit(signal:Omit<Signal,"timestamp">){
-    const item={...signal,confidence:Math.max(0,Math.min(1,signal.confidence)),timestamp:new Date().toISOString()}
+    const item={...signal,signal:canonicalSignal(signal.signal),confidence:Math.max(0,Math.min(1,signal.confidence)),timestamp:new Date().toISOString()}
     this.signals.push(item)
     return item
   }
@@ -15,8 +16,8 @@ export class SignalEngine{
     const signals=target?this.forTarget(target):this.signals
     return rules
       .map(r=>{
-        const matchedSignals=[...new Set(signals.filter(s=>r.required_signals.includes(s.signal)&&s.confidence>=r.confidence_threshold).map(s=>s.signal))]
-        const requiredSatisfied=r.required_signals.every(x=>signals.some(s=>s.signal===x))
+        const matchedSignals=[...new Set(signals.filter(s=>canonicalSignals(r.required_signals).includes(canonicalSignal(s.signal))&&s.confidence>=r.confidence_threshold).map(s=>canonicalSignal(s.signal)))]
+        const requiredSatisfied=canonicalSignals(r.required_signals).every(x=>signals.some(s=>canonicalSignal(s.signal)===x))
         const score=matchedSignals.length/Math.max(1,r.required_signals.length)
         return { ...r, matchedSignals, score, requiredSatisfied }
       })
