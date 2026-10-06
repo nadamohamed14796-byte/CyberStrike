@@ -49,6 +49,7 @@ export interface CorrelationSignalInput {
   }>
   jsAssets: Array<{ id: string; url: string; observedAt: number }>
   functions: Array<{ id: string; name: string; assetId?: string }>
+  parameters?: Array<{ id:string; name:string; location:"path"|"query"|"body"; endpoint:string; requestIds:string[]; sources:string[]; confidence:number }>
   edges: Array<{
     from: string
     to: string
@@ -67,7 +68,24 @@ function requestSourceValue(request:CorrelationSignalInput["requests"][number]):
 
 export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] {
   const out: Signal[] = []
-  const responseByRequest = new Map(input.responses.map(response => [response.requestId, response]))
+  const responseByRequest = new Map(input.responses.map(response => [response.requestId, response]))\n  for (const parameter of input.parameters ?? []) {
+    emit({
+      signal: "parameter_discovered",
+      source: "correlation:parameter",
+      confidence: parameter.confidence,
+      target: input.target,
+      endpoint: parameter.endpoint,
+      metadata: {
+        parameterId: parameter.id,
+        name: parameter.name,
+        location: parameter.location,
+        requestIds: parameter.requestIds,
+        sources: parameter.sources,
+      },
+    })
+  }
+
+
   const emitted = new Set<string>()
 
   const emit = (signal: Omit<Signal, "timestamp">) => {
