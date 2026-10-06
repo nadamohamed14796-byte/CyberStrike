@@ -47,8 +47,31 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
     if (currentReq) {
       const allValues = WebObject.getAllValues(sessionID)
       const recentObjects = WebObject.touchedByRequest(sessionID, currentReq.id)
-      context.recent = {
+      const pageURL = currentReq.page_url
+    const linkedScripts = pageURL
+      ? allRequests
+          .filter(
+            (r) =>
+              r.id !== currentReq.id &&
+              r.page_url === pageURL &&
+              !!r.response_content_type &&
+              /(javascript|ecmascript)/i.test(r.response_content_type),
+          )
+          .slice(-8)
+          .map((r) => ({
+            request_id: r.id,
+            method: r.method,
+            path: r.normalized_path,
+            url: requestURL(r),
+            content_type: r.response_content_type,
+            response_size: r.response_size,
+            response: r.processed_response?.slice(0, 20000),
+          }))
+      : []
+
+    context.recent = {
         request: { id: currentReq.id, method: currentReq.method, path: currentReq.normalized_path },
+        linked_scripts: linkedScripts,
         objects: recentObjects.map((o) => ({
           name: o.name,
           fields: o.fields,
@@ -143,6 +166,14 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
     }
   },
 })
+
+function requestURL(r: Request.Info): string | undefined {
+  if (!r.host) return undefined
+  const scheme = r.scheme ?? "https"
+  const port = r.port ? `:${r.port}` : ""
+  const path = r.canonical_path || r.normalized_path || "/"
+  return `${scheme}://${r.host}${port}${path.startsWith("/") ? path : `/${path}`}`
+}
 
 // 3rd-party analytics/tracking cookies carry zero security signal but bloat every credential
 // in every context injection. Drop them; keep auth/session/csrf cookies.
