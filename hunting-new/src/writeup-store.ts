@@ -1,6 +1,6 @@
 import path from "node:path"
 import crypto from "node:crypto"
-import { ensureDir, readJson, writeJson } from "./store"
+import { ensureDir, readJson, writeJson, withTargetMutationLock } from "./store"
 
 export interface WriteupInsight {
   signal: string
@@ -74,14 +74,16 @@ export async function ingestWriteup(
     insights:extractWriteupInsights(content),
     excerpt:content.slice(0,4000),
   }
-  const state=await loadWriteups(root)
-  const index=state.writeups.findIndex(x=>x.id===id)
-  if(index<0)state.writeups.push(record)
-  else state.writeups[index]={...state.writeups[index],...record,firstSeen:state.writeups[index].firstSeen}
-  const next={writeups:state.writeups,updatedAt:now}
-  await ensureDir(path.dirname(file(root)))
-  await writeJson(file(root),next)
-  return record
+  return withTargetMutationLock(root,"__writeups__",async()=>{
+    const state=await loadWriteups(root)
+    const index=state.writeups.findIndex(x=>x.id===id)
+    if(index<0)state.writeups.push(record)
+    else state.writeups[index]={...state.writeups[index],...record,firstSeen:state.writeups[index].firstSeen}
+    const next={writeups:state.writeups,updatedAt:now}
+    await ensureDir(path.dirname(file(root)))
+    await writeJson(file(root),next)
+    return record
+  })
 }
 
 export async function ingestWriteupFile(root:string,sourcePath:string,title?:string){
