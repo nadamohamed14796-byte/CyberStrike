@@ -1,6 +1,7 @@
 import { Log } from "../util/log"
 import { Skill } from "./skill"
 import { SkillIndex } from "./index-engine"
+import { ReferenceLearning } from "../learning/reference"
 
 export namespace SkillContext {
   const log = Log.create({ service: "skill-context" })
@@ -72,10 +73,11 @@ export namespace SkillContext {
       for (const chain of chains) {
         if (active.has(chain.target) || suggested.has(chain.target)) continue
         suggested.add(chain.target)
+        const learned = ReferenceLearning.score(chain.target)
         result.push({
           name: chain.target,
-          reason: chain.boost ?? `chains with ${finding.skill_id}`,
-          priority: chain.boost ? "high" : "medium",
+          reason: `${chain.boost ?? `chains with ${finding.skill_id}`} | learned usefulness=${learned}%`,
+          priority: chain.boost || learned >= 70 ? "high" : learned < 30 ? "low" : "medium",
         })
       }
 
@@ -84,10 +86,11 @@ export namespace SkillContext {
         for (const skill of techSkills) {
           if (active.has(skill.name) || suggested.has(skill.name)) continue
           suggested.add(skill.name)
+          const learned = ReferenceLearning.score(skill.name)
           result.push({
             name: skill.name,
-            reason: `matches tech stack: ${finding.tech_stack.join(", ")}`,
-            priority: "low",
+            reason: `matches tech stack: ${finding.tech_stack.join(", ")} | learned usefulness=${learned}%`,
+            priority: learned >= 70 ? "medium" : "low",
           })
         }
       }
