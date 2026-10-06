@@ -50,6 +50,7 @@ export function buildSkillExecutionInvocation(
     `role: ${role}`,
     `skill: ${context.primarySkill}`,
     `resolved_skills: ${context.resolvedSkills.join(", ")}`,
+    `resolved_skill_paths: ${(context.resolvedSkillPaths ?? []).join(", ") || "(none)"},
     `signal: ${context.signal}`,
     `confidence: ${context.signalConfidence}`,
     `endpoint: ${context.endpoint ?? "(none)"}`,
