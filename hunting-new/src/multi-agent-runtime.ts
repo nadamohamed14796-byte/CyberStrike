@@ -23,6 +23,7 @@ import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
+import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
 import { indexSkillReferences, referencesForSkills } from "./reference-store"
 import { ledgers } from "./ledger"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
@@ -230,12 +231,15 @@ export async function prepareAgentTaskValidation(
   const learningEngine=LearningEngine.fromObservations(learningState.observations)
   const falsePositiveState=await loadFalsePositives(root,plan.target)
   const falsePositiveIntelligence=hydrateFalsePositiveIntelligence(falsePositiveState)
+  const writeups=await loadWriteups(root)
+  const referenceStrategies=strategyHintsFromWriteups(writeups,hypothesis.signal)
   const validationPlan=createValidationPlan(
     hypothesis,
     {maxAttempts:20,minimumAttempts:20},
     learningEngine,
     falsePositiveIntelligence,
     plan.target,
+    referenceStrategies,
   )
   const referenceStrategies=strategyHintsFromWriteups(await loadWriteups(root),context.signal)
   const referenceRank=new Map(referenceStrategies.map((strategy,index)=>[strategy,index]))
