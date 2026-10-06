@@ -76,7 +76,7 @@ export async function ensureAttemptEvidence(
         attemptId: input.attemptId,
         accountLabel: input.accountLabel ?? request?.accountLabel,
         confidence: 1,
-        details: "HTTP " + response.status + (response.contentType ? " " + response.contentType : ""),
+        details: "HTTP " + response.status + (response.contentType ? " " + response.contentType : "") + (response.bodyHash ? " body_hash=" + response.bodyHash : ""),
       }))
     }
   
