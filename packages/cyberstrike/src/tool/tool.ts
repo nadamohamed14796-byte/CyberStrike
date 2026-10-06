@@ -8,6 +8,9 @@ import { ToolArtifact } from "./artifact"
 import { Learning } from "../learning/learning"
 import { TargetMemory } from "../session/target-memory"
 import { ingestParameterDiscovery } from "../methodology/parameter-ingest"
+import { Log } from "../util/log"
+
+const log = Log.create({ service: "tool" })
 
 export namespace Tool {
   interface Metadata {
@@ -75,8 +78,12 @@ export namespace Tool {
     const value = args as Record<string, unknown>
     const items = Array.isArray(value.scope_items) ? value.scope_items.filter((x): x is string => typeof x === "string") : []
     const identity = executionIdentity(args)
-    if (!items.length || !identity.target) {
-      return typeof value.scope_verified === "boolean" ? value.scope_verified : undefined
+    if (!identity.target) return typeof value.scope_verified === "boolean" ? value.scope_verified : undefined
+    if (!items.length) {
+      if (value.authorized_active_testing === true) {
+        throw new Error("Active testing requires explicit scope_items; scope_verified cannot substitute for the programmatic scope check.")
+      }
+      return undefined
     }
     const { ScopeGuard } = await import("./scope-check")
     const decision = ScopeGuard.check(identity.target, items)
@@ -192,7 +199,19 @@ export namespace Tool {
                   authorized_active_testing: (args as Record<string, unknown>).authorized_active_testing === true,
                 },
               })
-            } catch {}
+            } catch (error) {
+              log.warn("post-tool persistence failed", { tool: id, sessionID: ctx.sessionID, error: String(error) })
+            }
+            try {
+              ingestParameterDiscovery({
+                sessionID: ctx.sessionID,
+                tool: id,
+                args: args as Record<string, unknown>,
+                output: result.output,
+              })
+            } catch (error) {
+              log.warn("parameter ingestion failed", { tool: id, error: String(error) })
+            }
             if (result.metadata.truncated !== undefined) {
               return {
                 ...result,
@@ -204,17 +223,6 @@ export namespace Tool {
                 },
               }
             }
-            try {
-              ingestParameterDiscovery({
-                sessionID: ctx.sessionID,
-                tool: id,
-                args: args as Record<string, unknown>,
-                output: result.output,
-              })
-            } catch (error) {
-              Log.create({ service: "tool.parameter-ingest" }).warn("parameter ingestion failed", { tool: id, error })
-            }
-
             const truncated = await Truncate.output(result.output, {}, initCtx?.agent)
             return {
               ...result,
@@ -237,7 +245,9 @@ export namespace Tool {
                   error: error instanceof Error ? error.message : String(error),
                   metadata: { scopeVerified },
                 })
-              } catch {}
+              } catch (finishError) {
+                log.error("failed to persist terminal tool-run state", { tool: id, runID: run.id, error: String(finishError) })
+              }
             }
             throw error
           }
