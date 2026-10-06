@@ -1,7 +1,7 @@
 export type Attempt={attempt_id:string;hypothesis_id:string;strategy:string;variant:string;reason:string;result:"EXECUTED"|"NOT_EXECUTED"|"FAILED_TO_EXECUTE"|"INCONCLUSIVE"|"VERIFIED"|"FALSE_POSITIVE"|"BLOCKED";evidence_refs:string[];timestamp:string;account_context?:string}
 export const STRATEGIES=["parameter-variation","encoding-variation","http-method","content-type","request-shape","authorization-context","identifier-variation","path-variation","header-behavior","application-workflow","framework-parser","alternate-legitimate-flow"] as const
 export type ValidationGateInput={in_scope:boolean;real:boolean;reproducible:boolean;crosses_security_boundary:boolean;attacker_controlled:boolean;measurable_impact:boolean;security_relevant:boolean;authorization_boundary:boolean;demonstrated:boolean;duplicate_or_expected:boolean}
-export function tenQuestionGate(input:ValidationGateInput){if(!input.in_scope)return{status:"OUT_OF_SCOPE",passed:false};if(input.duplicate_or_expected)return{status:"FALSE_POSITIVE",passed:false};if(Object.values(input).every(Boolean))return{status:"VERIFIED",passed:true};return{status:"INCONCLUSIVE",passed:false}}
+export function tenQuestionGate(input:ValidationGateInput){if(!input.in_scope)return{status:"OUT_OF_SCOPE",passed:false};if(input.duplicate_or_expected)return{status:"FALSE_POSITIVE",passed:false};if(Object.entries(input).filter(([key])=>key!=="duplicate_or_expected").every(([,value])=>value===true))return{status:"VERIFIED",passed:true};return{status:"INCONCLUSIVE",passed:false}}
 export class AttemptEngine{
   private attempts:Attempt[]=[]
   constructor(private budget=20){}
