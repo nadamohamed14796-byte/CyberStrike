@@ -231,11 +231,14 @@ export async function enrichAgentTaskExecutionContext(
   context:AgentTaskExecutionContext,
 ):Promise<AgentTaskExecutionContext>{
   const intelligence=await loadTargetIntelligence(root,plan.target)
+  const exact=context.requestId
+    ? intelligence.requests.find(request=>request.id===context.requestId)
+    : undefined
   const candidates=intelligence.requests.filter(request=>{
     if(context.endpoint && request.path) return request.path===context.endpoint || request.url.includes(context.endpoint)
     return true
   }).sort((a,b)=>b.observedAt-a.observedAt)
-  const request=candidates[0]
+  const request=exact ?? candidates[0]
   const response=request ? intelligence.responses.find(item=>item.requestId===request.id) : undefined
   const relatedEdges=request
     ? intelligence.edges.filter(edge=>edge.from===request.id || edge.to===request.id)
@@ -260,7 +263,7 @@ export async function enrichAgentTaskExecutionContext(
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
-  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
+  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
 }
 
 export async function prepareSkillExecutionInvocation(
