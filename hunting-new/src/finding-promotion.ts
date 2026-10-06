@@ -11,6 +11,7 @@ import { validateHypothesis, hasBaselineComparison, hasBehaviorChange, hasCrossA
 import { loadMission } from "./mission"
 import { checkScope } from "./scope"
 import { writeReport, createReportRecord } from "./report"
+import { markValidated, stableLedgerId } from "./ledger"
 
 export interface FindingPromotionInput {
   hypothesisId:string
@@ -84,6 +85,11 @@ export async function promoteValidatedHypothesis(
   if(!completeness.complete){await upsertFinding(root,target,finding);return {finding,reportable:false,missing:completeness.missing,action:"recheck",reason:"finding evidence is incomplete"}}
   const validated=markReportable(finding)
   await upsertFinding(root,target,validated)
+  await markValidated(root,target,[
+    {type:"finding",id:validated.id,evidence_refs:validated.evidenceIds,reason:"finding passed stored validation gate"},
+    {type:"hypothesis",id:validated.hypothesisId,evidence_refs:validated.evidenceIds,reason:"hypothesis promoted to validated finding"},
+    ...(input.endpoint ? [{type:"endpoint",id:stableLedgerId("endpoint",input.skill ? input.skill+"|"+input.endpoint : input.endpoint),evidence_refs:validated.evidenceIds}] : []),
+  ])
   const reportFile=await writeReport(root,validated,{
     root_cause:input.rootCause,
     steps:input.reproduction,
