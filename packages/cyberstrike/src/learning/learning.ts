@@ -9,6 +9,7 @@ import { LearningRouter, type LearningHook, type LearningSignal, type RoutedSkil
 import { SkillIndex } from "../skill/index-engine"
 import { planReconTools } from "../tool/recon-toolchain"
 import { ReconDispatch } from "../tool/recon-dispatch"
+import { SignalQueue } from "../tool/signal-queue"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
 const sessionNextTools = new Map<string, ReturnType<typeof planReconTools>>()
@@ -67,7 +68,27 @@ export namespace Learning {
       })
     } catch {}
 
+    if (signal.skill_name && signal.outcome) {
+      const outcome =
+        /finding|useful|confirmed|validated/i.test(signal.outcome) ? "useful" :
+        /rejected|disproven|false|duplicate/i.test(signal.outcome) ? "rejected" :
+        undefined
+      if (outcome) ReferenceLearning.recordOutcome(signal.skill_name, outcome, signal.sessionID, signal.evidence)
+    }
+
     if (signal.sessionID) {
+      // Coverage is used as a second deterministic learning signal: tools that
+      // already covered this exact target/signal are removed from the next plan.
+      try {
+        const normalized = signal.signal.trim().toLowerCase()
+        nextTools = nextTools.filter((tool) => !SignalQueue.alreadyCovered({
+          sessionID: signal.sessionID!,
+          target: signal.target,
+          signal: normalized,
+          toolID: tool.id,
+        }))
+      } catch {}
+
       sessionRoutes.delete(signal.sessionID)
       sessionRoutes.set(signal.sessionID, routes)
       sessionNextTools.delete(signal.sessionID)
