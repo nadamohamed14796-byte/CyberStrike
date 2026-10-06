@@ -27,8 +27,6 @@ export interface AgentTask {
   recommendedAgent?: string
   referenceIds?: string[]
   referenceUrls?: string[]
-  referenceIds?: string[]
-  referenceUrls?: string[]
 }
 
 export interface AgentExecutionSelection {
