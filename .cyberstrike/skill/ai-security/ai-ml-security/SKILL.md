@@ -3,9 +3,9 @@ name: ai-ml-security
 description: >-
   Signal-driven AI/ML security assessment covering model supply chain, adversarial robustness, poisoning, extraction, privacy, LLM, and agent-security risks. Activate only when target evidence indicates an AI/ML surface.
 category: ai-security
-version: "2.0.0"
+version: "2.1.0"
 author: CyberStrike
-tags: [ai-security, ai-ml, machine-learning, model-security, llm, agents, supply-chain, privacy]
+tags: [ai-security, ai-ml, machine-learning, model-security, llm, agents, supply-chain, privacy, resources]
 tech_stack: [ai, ml, llm, python, http, api]
 cwe_ids: [CWE-502, CWE-494, CWE-1104]
 
@@ -53,6 +53,98 @@ validation:
   require_provenance: true
   require_reproducibility_for_security_relevance: true
   exploitability_requires_separate_validation: true
+
+resources:
+  policy:
+    mode: signal-driven
+    external_resources_are_reference_only: true
+    require_scope_before_active_testing: true
+    prefer_official_sources: true
+    prefer_specialized_resource: true
+    max_resources_per_handoff: 4
+    max_tool_runs_per_handoff: 2
+    require_evidence_for_tool_selection: true
+    never_treat_resource_output_as_finding: true
+  collections:
+    - id: ai-frameworks
+      when_signals: [ai-model-surface, ml-model-surface, ml-pipeline]
+      resources:
+        - name: OWASP GenAI Security Project
+          type: framework
+          url: https://genai.owasp.org/
+          use_for: threat-modeling, AI/ML security taxonomy, red-team guidance
+        - name: OWASP GenAI LLM Top 10 2026
+          type: guide
+          url: https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/
+          use_for: LLM and GenAI risk triage
+        - name: MITRE ATLAS
+          type: framework
+          url: https://atlas.mitre.org/
+          use_for: adversarial AI technique mapping
+    - id: ai-red-team
+      when_signals: [llm-surface, ai-agent-surface, ai-tool-use-surface]
+      resources:
+        - name: garak
+          type: tool
+          url: https://github.com/NVIDIA/garak
+          use_for: bounded LLM vulnerability probing
+          command_hint: python -m garak --help
+        - name: PyRIT
+          type: tool
+          url: https://github.com/microsoft/PyRIT
+          use_for: controlled generative-AI red teaming and multi-turn assessment
+        - name: OWASP GenAI Red Teaming
+          type: methodology
+          url: https://genai.owasp.org/initiatives/
+          use_for: AI red-team methodology and evaluation guidance
+    - id: model-supply-chain
+      when_signals: [model-file-discovered, pytorch-model, huggingface-model, trust-remote-code]
+      resources:
+        - name: Fickling
+          type: tool
+          url: https://github.com/trailofbits/fickling
+          use_for: static analysis of pickle and pickle-based model files
+          command_hint: python -m fickling --help
+        - name: ModelScan
+          type: tool
+          url: https://github.com/protectai/modelscan
+          use_for: model serialization safety scanning
+          command_hint: modelscan --help
+        - name: OWASP AI security resources
+          type: framework
+          url: https://genai.owasp.org/initiatives/
+          use_for: supply-chain and AI security context
+    - id: adversarial-ml
+      when_signals: [ml-model-surface, model-extraction-signal, model-poisoning-signal, model-privacy-signal]
+      resources:
+        - name: Adversarial Robustness Toolbox
+          type: tool
+          url: https://github.com/Trusted-AI/adversarial-robustness-toolbox
+          use_for: bounded evaluation of evasion, poisoning, extraction, and inference threats
+          command_hint: python -m pip install adversarial-robustness-toolbox
+  external-skill-repositories:
+    - name: HACK.SKILLS
+      type: skill-library
+      url: https://github.com/yaklang/hack-skills
+      use_for: cross-checking routing ideas and specialized security skill coverage
+      policy: reference_and_adapt_not_copy
+    - name: ProjectDiscovery Nuclei Templates
+      type: detection-library
+      url: https://github.com/projectdiscovery/nuclei-templates
+      use_for: corroborating web exposure and vulnerability-detection coverage
+      policy: execute_only_when_target_and_template_scope_match
+    - name: Assetnote Wordlists
+      type: wordlists
+      url: https://github.com/assetnote/wordlists
+      use_for: bounded content and subdomain discovery when relevant
+      policy: use_only_for_authorized_scope
+  selection:
+    - If an exact specialized skill exists locally, use it before external skill text.
+    - Use external resources to fill a knowledge/tooling gap, not to bypass local routing.
+    - Prefer official project documentation or repositories over third-party writeups.
+    - Record resource_id, reason, version/date if available, and resulting evidence refs.
+    - Never import external payloads or instructions wholesale into runtime.
+    - External resource failure must not create a finding or trigger an unbounded retry.
 ---
 
 # AI/ML Security
@@ -65,7 +157,54 @@ This skill is a **domain router and assessment framework**, not a reason to load
 
 Required flow:
 
-`surface signal → scope/auth gate → identify AI/ML component → select specialized skill → bounded test → evidence validation → handoff or stop`
+`surface signal → scope/auth gate → identify AI/ML component → select specialized skill → select bounded resource/tool → test → evidence validation → handoff or stop`
+
+## Resource-Assisted Assessment
+
+External resources are **on-demand references**, not automatic skill activation.
+
+Before using one:
+
+1. Confirm the AI/ML signal.
+2. Confirm authorization and scope.
+3. Select the smallest relevant resource collection.
+4. Prefer a local specialized skill when one already covers the task.
+5. Run at most the bounded tool budget.
+6. Store provenance and output references.
+7. Feed only validated observations into the normal evidence pipeline.
+
+Resource output is never a vulnerability finding by itself.
+
+## Resource Selection Examples
+
+```
+model-file-discovered
+  → model-supply-chain
+  → Fickling / ModelScan
+  → validate unsafe-load hypothesis
+```
+
+```
+llm-surface
+  → llm-prompt-injection
+  → garak or PyRIT when justified
+  → response/evidence validation
+```
+
+```
+ml-model-surface + model-privacy-signal
+  → model-privacy
+  → ART or a specialized local skill
+  → bounded privacy hypothesis test
+```
+
+```
+unknown web target
+  → do not load AI resources
+  → continue normal target-surface discovery
+```
+
+Do not execute all resources in a collection automatically.
 
 ## Activation Gate
 
@@ -138,33 +277,6 @@ The router must prefer a registered specialized skill over this broad skill when
 ## Specialized Routing Rules
 
 The runtime should emit a new routing signal rather than loading all branches simultaneously.
-
-Examples:
-
-```
-model-file-discovered
-  → ai-ml-security
-  → model-supply-chain
-  → bounded artifact inspection
-```
-
-```
-llm-surface
-  → llm-prompt-injection
-  → bounded prompt/tool validation
-```
-
-```
-ai-agent-surface + ai-tool-use-surface
-  → agent-security
-  → tool authorization / confirmation validation
-```
-
-```
-federated-learning
-  → federated-learning security
-  → bounded aggregation/privacy checks
-```
 
 A broad AI/ML signal must **not** activate every AI/ML technique.
 
@@ -293,6 +405,11 @@ ai_ml_assessment:
   supporting_routes:
     - skill: <registered-skill>
       reason: <reason>
+  resource_refs:
+    - resource_id: <id>
+      reason: <why>
+      output_refs:
+        - <ref>
   observations:
     - <fact>
   hypotheses:
@@ -300,8 +417,9 @@ ai_ml_assessment:
   test_budget:
     initial_checks: <integer>
     followups: <integer>
+    tool_runs: <integer>
   next_action:
-    type: route | bounded-discovery | validate | stop
+    type: route | resource | bounded-discovery | validate | stop
     reason: <reason>
 ```
 
@@ -309,7 +427,7 @@ Confidence represents evidence for the AI/ML surface or routing decision. It is 
 
 ## Handoff Contract
 
-When routing to a specialized skill, preserve:
+When routing to a specialized skill or resource-assisted workflow, preserve:
 
 - `ai_ml_assessment`;
 - original signal;
@@ -319,35 +437,36 @@ When routing to a specialized skill, preserve:
 - account/session context;
 - prior observations;
 - hypotheses;
-- test budget;
-- provenance.
+- resource references and provenance;
+- test budget.
 
 The downstream skill must not silently reset the budget or discard the parent evidence.
 
-If a specialized skill is unavailable, do not invent one. Return `stop` or perform one bounded discovery action to identify an existing registered skill.
+If a specialized skill or resource is unavailable, do not invent one. Return `stop` or perform one bounded discovery action.
 
 ## Deduplication and Loop Prevention
 
-- Identify skills by canonical registered identity.
-- Do not load the same skill twice because multiple AI signals match.
+- Identify skills and resources by canonical registered identity/resource ID.
+- Do not load the same skill or run the same resource twice for the same hypothesis without new evidence.
 - Prefer a specialized child skill over this broad router for execution.
 - Maximum one primary route and two supporting routes unless an explicit chain requires more.
-- A child failure should emit a new evidence-based signal; it must not automatically trigger every sibling technique.
+- Maximum four resource references and two active tool runs per handoff.
+- A child/resource failure should emit a new evidence-based signal; it must not automatically trigger every sibling technique/resource.
 - Avoid loops such as:
   `AI signal → broad AI skill → LLM skill → broad AI skill`.
-- Preserve parent/child lineage for every handoff.
+- Preserve parent/child/resource lineage for every handoff.
 
 ## Decision Gate
 
-Before activating a specialized branch, answer:
+Before activating a specialized branch or external resource, answer:
 
 1. Is the target authorized and in scope?
 2. Is there concrete AI/ML evidence?
 3. Which exact surface is present?
 4. What signal triggered routing?
-5. Which registered skill is the canonical specialist?
+5. Which registered skill/resource is canonical for the task?
 6. What evidence supports that choice?
-7. What is the smallest useful test?
+7. What is the smallest useful test/tool run?
 8. What is the expected distinguishing observation?
 9. What is the remaining budget?
 10. What result would cause a stop?
@@ -358,11 +477,12 @@ If these cannot be answered, stop rather than guessing.
 
 - Preserve authorization and scope as hard gates.
 - Never treat marketing language as technical evidence.
-- Never fabricate model files, endpoints, outputs, or provenance.
+- Never fabricate model files, endpoints, outputs, provenance, or resource results.
 - Do not claim RCE from a model format without an unsafe load/execution path.
 - Do not claim model extraction from query volume alone.
 - Do not claim privacy impact without sensitive-data evidence.
 - Do not claim adversarial robustness failure is automatically a security vulnerability.
 - Keep broad AI/ML routing separate from specialized execution skills.
 - Prefer registered canonical skills and explicit signals over keyword matching.
+- External resources may inform a hypothesis but cannot create a finding without validation.
 - Stop when evidence or information gain is insufficient.
