@@ -85,6 +85,39 @@ function indexMetadata(entry:SkillIndexEntry):SkillMetadata{
   }
 }
 
+const CONFIG_SKILL_ALIASES:Record<string,string>={
+  "waf-awareness":"waf-xss-bypass",
+  "javascript-intelligence":"analyze-js",
+  "javascript_intelligence":"analyze-js",
+}
+  
+async function loadConfiguredSignalMappings(root:string):Promise<Map<string,string[]>>{
+  const file=path.join(root,"config","skills.yaml")
+  if(!await Bun.file(file).exists())return new Map()
+  const text=await Bun.file(file).text()
+  const mappings=new Map<string,string[]>()
+  let section=""
+  let signal=""
+  for(const line of text.split(/\r?\n/)){
+    if(/^signals:\s*$/.test(line)){section="signals";signal="";continue}
+    if(/^skills:\s*$/.test(line)){section="skills";signal="";continue}
+    if(section!=="signals")continue
+    const header=line.match(/^  ([A-Za-z0-9_-]+):\s*$/)
+    if(header){signal=header[1];continue}
+    if(!signal)continue
+    const match=line.match(/^\s{4}skills:\s*\[([^\]]*)\]/)
+    if(!match)continue
+    const names=match[1].split(",").map(value=>value.trim().replace(/^["']|["']$/g,"")).filter(Boolean)
+    for(const name of names){
+      const canonical=CONFIG_SKILL_ALIASES[name]??name
+      const existing=mappings.get(canonical)??[]
+      if(!existing.includes(signal))existing.push(signal)
+      mappings.set(canonical,existing)
+    }
+  }
+  return mappings
+}
+
 export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
   const file=path.join(root,".cyberstrike","skill","index.json")
   const index=await readJson<SkillIndex|null>(file,null)
@@ -94,6 +127,14 @@ export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
     if(entry.name)merged.set(entry.name,indexMetadata(entry))
   }
   for(const skill of WEB_SKILLS)merged.set(skill.name,skill)
+
+  const configured=await loadConfiguredSignalMappings(root)
+  for(const [skillName,signals] of configured){
+    const skill=merged.get(skillName)
+    if(!skill)continue
+    skill.triggers=[...new Set([...skill.triggers,...signals])]
+    merged.set(skillName,skill)
+  }
 
   return new SkillRegistry([...merged.values()])
 }
