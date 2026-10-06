@@ -1,0 +1,29 @@
+{
+  "schema_version": "1.0.0",
+  "source_of_truth": "skill-frontmatter",
+  "runtime": "packages/cyberstrike/src/skill/killchain.ts",
+  "limits": {
+    "max_hops": 8,
+    "max_unique_skills": 12,
+    "max_revisits_per_skill": 1
+  },
+  "gates": {
+    "require_known_target": true,
+    "require_prerequisites": true,
+    "dedupe_handoffs": true,
+    "block_cycles": true,
+    "require_new_evidence_for_revisit": true
+  },
+  "states": [
+    "signal",
+    "candidate",
+    "observed",
+    "validated",
+    "handoff",
+    "finding"
+  ],
+  "notes": [
+    "Existing chains_with/prerequisites/severity_boost metadata remains authoritative.",
+    "This registry defines execution safety and boundedness only; it does not duplicate skill relationships."
+  ]
+}
