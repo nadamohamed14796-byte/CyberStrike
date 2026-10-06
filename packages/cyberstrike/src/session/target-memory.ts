@@ -5,7 +5,7 @@ import { Identifier } from "../id/id"
 import type { Request } from "./request"
 
 export namespace TargetMemory {
-  export type Kind = "endpoint" | "javascript"
+  export type Kind = "endpoint" | "javascript" | "asset" | "technology" | "parameter" | "finding" | "rejected-finding" | "technique"
 
   export interface Info {
     id: string
@@ -19,6 +19,7 @@ export namespace TargetMemory {
     content_type?: string
     content?: string
     metadata?: Record<string, unknown>
+    confidence?: number
     time: { created: number; updated: number }
   }
 
@@ -119,6 +120,30 @@ export namespace TargetMemory {
     return stored
   }
 
+
+  export function rememberKnowledge(sessionID: string, input: {
+    kind: Exclude<Kind, "endpoint" | "javascript">
+    asset: string
+    url?: string
+    metadata?: Record<string, unknown>
+    confidence?: number
+  }): void {
+    const projectID = projectIDForSession(sessionID)
+    if (!projectID || !input.asset.trim()) return
+    const now = Date.now()
+    const url = input.url ?? (input.kind === "asset" ? input.asset : "memory://" + input.kind + "/" + input.asset)
+    Database.use((db) => db.insert(TargetMemoryTable).values({
+      id: Identifier.ascending("target_memory"),
+      project_id: projectID,
+      kind: input.kind,
+      asset: input.asset.trim().toLowerCase(),
+      url,
+      metadata: { ...(input.metadata ?? {}), confidence: input.confidence ?? 50 },
+      time_created: now,
+      time_updated: now,
+    }).onConflictDoNothing().run())
+  }
+
   export function list(projectID: string, kind?: Kind, limit = 200): Info[] {
     const rows = Database.use((db) => {
       const query = db.select().from(TargetMemoryTable).where(
@@ -140,6 +165,7 @@ export namespace TargetMemory {
       content_type: r.content_type ?? undefined,
       content: r.content ?? undefined,
       metadata: (r.metadata as Record<string, unknown>) ?? undefined,
+      confidence: typeof (r.metadata as Record<string, unknown> | null)?.confidence === "number" ? (r.metadata as Record<string, unknown>).confidence as number : undefined,
       time: { created: r.time_created, updated: r.time_updated },
     }))
   }
