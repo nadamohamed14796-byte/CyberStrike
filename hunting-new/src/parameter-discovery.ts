@@ -60,3 +60,32 @@ export function parameterSignals(candidates:ParameterCandidate[], target:string)
     },
   }))
 }
+
+
+export function discoverRequestParametersFallback(input:{
+  endpoint:string
+  requestId:string
+  observedAt:number
+  rawRequest?:string
+}):ParameterCandidate[]{
+  const slots:ParamSlot[]=[]
+  try{
+    const parsed=new URL(input.endpoint)
+    for(const name of parsed.searchParams.keys()) slots.push({loc:"query",name,value:"<observed>",retained:false})
+  }catch{}
+  const pathPart=input.endpoint.replace(/^https?:\/\/[^/]+/i,"")
+  for(const match of pathPart.matchAll(/(?:^|[/:])\{([^}]+)\}/g)){
+    slots.push({loc:"path",name:match[1],value:"<dynamic>",retained:false})
+  }
+  const body=(input.rawRequest ?? "").split(/\r?\n\r?\n/,2)[1] ?? ""
+  for(const match of body.matchAll(/["']([A-Za-z_][A-Za-z0-9_.-]{0,127})["']\s*:/g)){
+    slots.push({loc:"body",name:match[1],value:"<observed>",retained:false})
+  }
+  return discoverParameters({
+    endpoint:input.endpoint,
+    requestId:input.requestId,
+    observedAt:input.observedAt,
+    slots,
+    source:"observed",
+  })
+}
