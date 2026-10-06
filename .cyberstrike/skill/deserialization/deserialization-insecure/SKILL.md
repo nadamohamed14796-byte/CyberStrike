@@ -4,6 +4,34 @@ description: >-
   Insecure deserialization playbook. Use when Java, PHP, or Python applications deserialize untrusted data via ObjectInputStream, unserialize, pickle, or similar mechanisms that may lead to RCE, file access, or privilege escalation.
 ---
 
+## CyberStrike load gate
+
+Activate only when concrete deserialization evidence exists: serialized-object
+signatures, a known deserializer sink, attacker-controlled type metadata, unsafe
+object reconstruction, a framework-specific serialization boundary, or
+reproducible deserialization behavior.
+
+Do not activate from generic JSON/Base64/cookie/Java/PHP/Python keywords or a
+scanner RCE label alone.
+
+Evidence lifecycle:
+signal -> format-confirmed -> sink-observed -> controlled-deserialization ->
+execution-or-impact-proven -> finding
+
+A serialized-looking blob, parser error, compatible gadget, or missing filter is
+a candidate only. Prefer inert parsing, unique DNS/OOB confirmation, or bounded
+delay before any higher-impact validation. Preserve exact request/response,
+runtime/version, serializer, sink, identity, scope, and provenance.
+
+Canonical deduplication key:
+target + channel + endpoint + format + runtime + deserializer + sink
+
+Use one primary validation path and only evidence-driven variants. Stop when
+impact is reproduced, the hypothesis is disproven, or further testing has low
+evidence value. Route orchestration through deserialization-sec and avoid
+repeating evidence already established by another specialist.
+
+
 # SKILL: Insecure Deserialization — Expert Attack Playbook
 
 > **AI LOAD INSTRUCTION**: Expert deserialization techniques across Java, PHP, and Python. Covers gadget chain selection, traffic fingerprinting, tool usage (ysoserial, PHPGGC), Shiro/WebLogic/Commons Collections specifics, Phar deserialization, and Python pickle abuse. Base models often miss the distinction between finding the sink and finding a usable gadget chain.
