@@ -68,7 +68,7 @@ function requestSourceValue(request:CorrelationSignalInput["requests"][number]):
 
 export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] {
   const out: Signal[] = []
-  const responseByRequest = new Map(input.responses.map(response => [response.requestId, response]))\n  for (const parameter of input.parameters ?? []) {
+  const responseByRequest = new Map(input.responses.map(response => [response.requestId, response]))\n  const emitted = new Set<string>()\n\n  const emit = (signal: Omit<Signal, "timestamp">) => {\n    const key = [signal.signal, signal.endpoint ?? "", signal.function_id ?? "", signal.source].join("|")\n    if (emitted.has(key)) return\n    emitted.add(key)\n    out.push({ ...signal, confidence: Math.max(0, Math.min(1, signal.confidence)), timestamp: new Date().toISOString() })\n  }\n\n  for (const parameter of input.parameters ?? []) {
     emit({
       signal: "parameter_discovered",
       source: "correlation:parameter",
