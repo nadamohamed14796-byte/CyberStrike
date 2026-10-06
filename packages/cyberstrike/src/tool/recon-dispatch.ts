@@ -43,6 +43,7 @@ export namespace ReconDispatch {
       : undefined
 
     const scopeAllowed = input.scope_verified === true || scope?.inScope === true
+    if (target && input.scope_items?.length && scope?.inScope === false) return []
     const fresh = planned.filter((tool) => {
       const k = key(tool.id, target, input.signal)
       if (seen.has(k) && !input.retry) return false
