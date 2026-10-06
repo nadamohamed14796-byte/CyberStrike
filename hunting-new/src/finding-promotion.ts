@@ -54,7 +54,7 @@ export async function promoteValidatedHypothesis(
   const validationEvidence:ValidationEvidence[]=linkedEvidence.map(x=>({
     id:x.id,kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",
     summary:x.details||x.sourceId,independent:x.confidence>=0.8,observed:x.kind!=="inference",
-    attemptId:x.attemptId,requestId:x.requestId,responseId:x.responseId,
+    attemptId:x.attemptId,requestId:x.requestId,responseId:x.responseId,accountLabel:x.accountLabel,
   }))
   const storedValidation=validateHypothesis({
     hypothesisId:hypothesis.id,inScope:true,attemptsExecuted:linkedAttempts.length,evidence:validationEvidence,
@@ -62,7 +62,10 @@ export async function promoteValidatedHypothesis(
     expectedImpact:input.severity==="critical"?"critical":input.severity==="high"?"high":"medium",
     targetConfirmed:true,baselineObserved:hasBaselineComparison(validationEvidence),
     behaviorChanged:hasBehaviorChange(validationEvidence),reproducible:new Set(linkedAttempts.map(x=>x.strategy+":"+x.variant)).size>=2,
-    rootCauseSupported:linkedEvidence.some(x=>x.kind==="function"||x.kind==="js-asset"),impactObserved:true,authorizationContextVerified:true,
+    rootCauseSupported:linkedEvidence.some(x=>x.kind==="function"||x.kind==="js-asset"),impactObserved:true,
+    authorizationContextVerified: ["object_identifier_detected","authorization","tenant_identifier_detected"].some(signal =>
+      (input.signal??hypothesis.signal).includes(signal)
+    ) ? hasCrossAccountEvidence(validationEvidence) : true,
   })
   if(input.validation.decision!=="eligible"||storedValidation.decision!=="eligible") throw new Error("FINDING_BLOCKED: stored validation evidence did not pass the promotion gate")
   const existing=findingState.findings.find(x=>x.hypothesisId===hypothesis.id&&x.chainId===input.chainId)
