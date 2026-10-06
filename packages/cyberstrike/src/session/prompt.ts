@@ -1309,12 +1309,13 @@ export namespace SessionPrompt {
 
           if (reconSignal) {
             const target = learningTarget(args)
+            const parentQueue = SignalQueue.list(ctx.sessionID, 100).find((item) => item.id === ctx.callID)
             const queueID = SignalQueue.enqueue({
               sessionID: ctx.sessionID,
-              parentID: ctx.callID,
+              parentID: runningQueueID ?? ctx.callID,
               signal: reconSignal,
               target,
-              depth: 0,
+              depth: Math.min(32, (parentQueue?.depth ?? 0) + 1),
               maxAttempts: 1,
               metadata: {
                 source_tool: item.id,
