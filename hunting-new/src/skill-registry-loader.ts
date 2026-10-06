@@ -123,6 +123,13 @@ function parseFrontmatter(text:string):Record<string,string>{
   return values
 }
 
+function parseListValue(value:string|undefined):string[]{
+  if(!value)return []
+  const raw=value.trim()
+  const inner=raw.startsWith("[")&&raw.endsWith("]") ? raw.slice(1,-1) : raw
+  return inner.split(",").map(item=>item.trim().replace(/^["']|["']$/g,"")).filter(Boolean)
+}
+
 function inferAgentRoles(name:string,category:string):("primary-hunter"|"validator"|"correlator"|"reviewer")[]{
   const value=(name+" "+category).toLowerCase()
   if(/report|review/.test(value)) return ["reviewer"]
@@ -175,20 +182,30 @@ async function loadExternalSkills(root:string):Promise<SkillMetadata[]>{
     const frontmatter=parseFrontmatter(textValue)
     const category=rel.includes("redteam") ? "redteam" : rel.includes("recon") ? "recon" : rel.includes("auth") ? "authentication" : rel.includes("infra") ? "infrastructure" : rel.includes("skills") ? "web-application" : "external"
     const name=frontmatter.name || skillName
+    const parsedRoles=parseListValue(frontmatter.agent_roles).filter((value):value is "primary-hunter"|"validator"|"correlator"|"reviewer" =>
+      ["primary-hunter","validator","correlator","reviewer"].includes(value),
+    )
+    const configuredAgent=frontmatter.agent?.trim() || undefined
+    const parsedRisk=frontmatter.risk_level?.trim()
+    const risk_level:SkillMetadata["risk_level"]=parsedRisk==="low"||parsedRisk==="high" ? parsedRisk : "medium"
+    const confidence_threshold=frontmatter.confidence_threshold ? Number(frontmatter.confidence_threshold) : 0.5
+    const maximum_parallel_tasks=frontmatter.maximum_parallel_tasks ? Math.max(1,Number(frontmatter.maximum_parallel_tasks)) : 1
     skills.push({
       name,
       category,
       description:frontmatter.description || name,
       triggers:inferExternalTriggers(name,category,textValue),
-      required_context:["authorized-scope"],
-      dependencies:[],
-      risk_level:"medium",
-      scope_requirements:["authorized-scope"],
-      validation_requirements:["evidence"],
-      confidence_threshold:0.5,
-      maximum_parallel_tasks:1,
+      required_signals:parseListValue(frontmatter.required_signals),
+      required_context:parseListValue(frontmatter.required_context).length ? parseListValue(frontmatter.required_context) : ["authorized-scope"],
+      dependencies:parseListValue(frontmatter.dependencies),
+      risk_level,
+      scope_requirements:parseListValue(frontmatter.scope_requirements).length ? parseListValue(frontmatter.scope_requirements) : ["authorized-scope"],
+      validation_requirements:parseListValue(frontmatter.validation_requirements).length ? parseListValue(frontmatter.validation_requirements) : ["evidence"],
+      confidence_threshold:Number.isFinite(confidence_threshold) ? Math.max(0,Math.min(1,confidence_threshold)) : 0.5,
+      maximum_parallel_tasks:Number.isFinite(maximum_parallel_tasks) ? maximum_parallel_tasks : 1,
       source_path:file,
-      agent_roles: inferAgentRoles(name, category),
+      agent_roles:parsedRoles.length ? parsedRoles : inferAgentRoles(name, category),
+      agent:configuredAgent,
     })
   }
   return skills
