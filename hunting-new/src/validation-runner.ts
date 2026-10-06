@@ -108,7 +108,7 @@ export function evaluateValidationRun(
   evidence: ValidationEvidence[],
 ): ValidationRunState {
   const attempts = ledger.list(hypothesis.id)
-  const executed = attempts.filter(x => x.state === "executed" || x.state === "confirmed").length
+  const executed = attempts.filter(x => x.state !== "planned").length
   const variants = new Set(attempts.map(x => x.strategy + ":" + x.variant)).size
   const result = validateHypothesis({
     hypothesisId: hypothesis.id,
