@@ -26,6 +26,7 @@ import { PermissionNext } from "@/permission/next"
 import { Global } from "@/global"
 import type { LanguageModelV2Usage } from "@ai-sdk/provider"
 import { iife } from "@/util/iife"
+import { ToolRunRecord } from "../tool/run-record"
 
 export namespace Session {
   const log = Log.create({ service: "session" })
@@ -311,6 +312,11 @@ export namespace Session {
       : path.join(Global.Path.data, "plans")
     return path.join(base, [input.time.created, input.slug].join("-") + ".md")
   }
+
+  export const recoverRuntime = fn(Identifier.schema("session"), async (sessionID) => {
+    const runs = ToolRunRecord.recover(sessionID, "session resume/recovery")
+    return { sessionID, recoveredRuns: runs }
+  })
 
   export const get = fn(Identifier.schema("session"), async (id) => {
     const row = Database.use((db) => db.select().from(SessionTable).where(eq(SessionTable.id, id)).get())
