@@ -18,10 +18,11 @@ export namespace ToolLearning {
     try {
       const now = Date.now()
       const key = input.tool.trim().toLowerCase()
+      const normalizedSignal = normalizeSignal(input.signal).signal
       Database.use((db) => {
         const where = input.sessionID
-          ? and(eq(ToolLearningTable.session_id, input.sessionID), eq(ToolLearningTable.tool, key), eq(ToolLearningTable.signal, input.signal))
-          : and(eq(ToolLearningTable.tool, key), eq(ToolLearningTable.signal, input.signal))
+          ? and(eq(ToolLearningTable.session_id, input.sessionID), eq(ToolLearningTable.tool, key), eq(ToolLearningTable.signal, normalizedSignal))
+          : and(eq(ToolLearningTable.tool, key), eq(ToolLearningTable.signal, normalizedSignal))
         const row = db.select().from(ToolLearningTable).where(where).get()
         const success = input.outcome === "useful" || input.outcome === "finding"
         const reject = input.outcome === "rejected" || input.outcome === "disproven" || input.outcome === "empty"
@@ -44,7 +45,7 @@ export namespace ToolLearning {
             id: Identifier.ascending("tool_learning"),
             session_id: input.sessionID,
             tool: key,
-            signal: normalizeSignal(input.signal).signal,
+            signal: normalizedSignal,
             observations: 1,
             successes: success ? 1 : 0,
             rejections: reject ? 1 : 0,
@@ -60,7 +61,7 @@ export namespace ToolLearning {
           id: Identifier.ascending("tool_learning_event"),
           session_id: input.sessionID,
           tool: key,
-          signal: input.signal,
+          signal: normalizedSignal,
           target: input.target,
           outcome: input.outcome,
           evidence: input.evidence,
