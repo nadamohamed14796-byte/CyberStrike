@@ -691,3 +691,14 @@ NODE_OPTIONS="--require=/tmp/reverse_shell.js" node /app/server.js
 Source: https://github.com/yaklang/hack-skills
 License: MIT (Copyright (c) 2026 VillanCh)
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only; supplementary upstream files are not included.
+
+---
+## Signal and Evidence Gate
+
+Use this specialist only after a concrete shell/process execution sink or controlled command-execution signal is observed. Generic parameters such as `cmd`, `exec`, or `command` are not sufficient.
+
+Prefer a bounded sequence: sink identification → baseline → benign execution check → reproducibility → impact validation. Response reflection, status changes, errors, WAF blocks, or timing noise alone are not proof.
+
+Preserve the source parameter, transformation path, sink, runtime/OS context, baseline/variant references, and exact execution evidence. Route API context to `api-sec`, authentication context to `auth-sec`, business impact to `business-logic-vuln`, and concrete filter/transformation failures to the existing adaptive-testing chain.
+
+Do not perform destructive commands, persistence, credential theft, or broad collection merely to prove command execution.
