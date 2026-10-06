@@ -80,6 +80,35 @@ export const VrtCheckTable = sqliteTable(
   ],
 )
 
+
+/**
+ * Contextual false-positive memory. Stores validated rejection patterns separately
+ * from findings so future triage can learn from them without mutating skills.
+ */
+export const FalsePositiveTable = sqliteTable(
+  "false_positive_memory",
+  {
+    id: text().primaryKey(),
+    session_id: text().notNull().references(() => SessionTable.id, { onDelete: "cascade" }),
+    fingerprint: text().notNull(),
+    vuln_class: text().notNull(),
+    endpoint_pattern: text(),
+    asset_pattern: text(),
+    reason: text().notNull(),
+    evidence: text({ mode: "json" }).$type<Record<string, unknown>>(),
+    source_finding_id: text(),
+    confidence: real().notNull().default(0.5),
+    hit_count: integer().notNull().default(1),
+    last_seen_at: integer().notNull(),
+    ...Timestamps,
+  },
+  (table) => [
+    uniqueIndex("false_positive_fingerprint_idx").on(table.session_id, table.fingerprint),
+    index("false_positive_class_idx").on(table.session_id, table.vuln_class),
+    index("false_positive_endpoint_idx").on(table.session_id, table.endpoint_pattern),
+  ],
+)
+
 /**
  * 13-phase methodology progression tracking.
  * Phase status is primarily computed from intel entry tags, but this table
