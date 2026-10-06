@@ -24,6 +24,7 @@ import { promoteValidatedHypothesis, type FindingPromotionResult } from "./findi
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
 import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
+import { markReferencesUsed } from "./reference-store"
 import { indexSkillReferences, referencesForSkills } from "./reference-store"
 import { ledgers } from "./ledger"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
@@ -416,6 +417,7 @@ export async function executeAndRecordDispatchedTask(
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
   const baseContext={...base,attemptId:prepared.attempt.id}
   const context=await enrichAgentTaskExecutionContext(root,plan,baseContext)
+  if(context.referenceIds?.length) await markReferencesUsed(root,context.referenceIds)
 
   const intelligence=await loadTargetIntelligence(root,plan.target)
   const exactRequest=context.requestId
