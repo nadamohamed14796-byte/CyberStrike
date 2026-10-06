@@ -89,6 +89,33 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
     const queryOrFragment = urlText.split("?")[1] ?? ""
     const method = (request.method ?? "").toUpperCase()
 
+    const parameterNames = new Set<string>()
+    try {
+      const parsed = new URL(request.url)
+      for (const [name] of parsed.searchParams) parameterNames.add(name)
+    } catch {}
+    const pathParts = (request.path ?? "").split("/").filter(Boolean)
+    for (let index = 0; index < pathParts.length - 1; index++) {
+      if (/^(?:id|uid|user[_-]?id|account[_-]?id|object[_-]?id|item[_-]?id|tenant[_-]?id)$/i.test(pathParts[index])) {
+        parameterNames.add(pathParts[index])
+      }
+    }
+    if (parameterNames.size) {
+      emit({
+        signal: "parameter_discovered",
+        source: "correlation:request",
+        confidence: 0.84,
+        target: input.target,
+        endpoint,
+        metadata: {
+          requestId: request.id,
+          method,
+          names: [...parameterNames],
+          source: "observed-request",
+        },
+      })
+    }
+
     if (/\\bgraphql\\b|\\/graphql(?:[/?]|$)/i.test(urlText)) {
       emit({
         signal: "graphql_detected",
