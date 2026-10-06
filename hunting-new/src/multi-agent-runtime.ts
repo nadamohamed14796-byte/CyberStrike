@@ -48,7 +48,6 @@ export async function prepareMultiAgentPlanFromTargetIntelligence(
     edges:intelligence.edges,
   })
   const registry=await loadSkillRegistry(root)
-  await indexSkillReferences(root,registry.list())
   const persistedLearning=learning ?? LearningEngine.fromObservations((await loadLearning(root,target)).observations)
   const persistedFalsePositives=falsePositives ?? hydrateFalsePositiveIntelligence(await loadFalsePositives(root,target))
   const plan=buildMultiAgentPlanFromRegistry(engine,registry,target,persistedLearning,persistedFalsePositives)
@@ -65,6 +64,11 @@ export async function prepareMultiAgentPlanFromTargetIntelligence(
   }
 
   await saveAgentPlan(root,plan)
+  const routedSkills=[...new Map(
+    plan.tasks.flatMap(task=>[...(task.resolvedSkills??[]).map(name=>registry.get(name))].filter((skill):skill is NonNullable<typeof skill>=>Boolean(skill)))
+      .map(skill=>[skill.name,skill] as const)
+  ).values()]
+  await indexSkillReferences(root,routedSkills)
   await checkpointPhase(root,target,"agent-plan:prepared")
 
   return {
