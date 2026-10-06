@@ -1,6 +1,8 @@
 import { hydrateGraph } from "./correlation"
 import { ingestAndPersistObservation } from "./intake"
 import { loadTargetIntelligence } from "./target-intelligence"
+import { loadMission } from "./mission"
+import { buildAssetRelation } from "./cross-host-graph"
 
 export interface CyberStrikeIntakeRecord{
   target:string
@@ -33,6 +35,7 @@ export async function ingestCyberStrikeRequest(
   input:CyberStrikeIntakeRecord,
 ):Promise<void>{
   const intelligence=await loadTargetIntelligence(root,input.target)
+  const mission=await loadMission(root,input.target)
   const graph=hydrateGraph({
     requests:intelligence.requests,
     responses:intelligence.responses,
@@ -47,4 +50,20 @@ export async function ingestCyberStrikeRequest(
     jsAssetIds:input.jsAssetIds,
     functionIds:input.functionIds,
   })
+
+  const host=input.request.host
+  if(host && mission){
+    const relation=buildAssetRelation(
+      input.target,
+      host,
+      "observed-request",
+      "cyberstrike:session-ingest",
+      mission.scope,
+      1,
+      input.request.observedAt ?? Date.now(),
+    )
+    await import("./target-intelligence").then(({rememberTargetIntelligence}) =>
+      rememberTargetIntelligence(root,input.target,{assetRelations:[relation]})
+    )
+  }
 }
