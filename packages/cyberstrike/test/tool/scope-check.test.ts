@@ -19,6 +19,12 @@ describe("ScopeGuard.check", () => {
     expect(ScopeGuard.check("10.0.0.15", ["10.0.0.0/33"]).inScope).toBe(false)
   })
 
+  test("normalizes URL paths and default ports", () => {
+    expect(ScopeGuard.check("https://example.com:443/api/users?id=1", ["https://example.com"]).inScope).toBe(true)
+    expect(ScopeGuard.check("http://example.com:8080/api", ["example.com"]).inScope).toBe(false)
+    expect(ScopeGuard.check("https://example.com:8443/api", ["example.com:8443"]).inScope).toBe(true)
+  })
+
   test("returns per-scope reasons", () => {
     const result = ScopeGuard.check("api.example.com", ["example.com", "*.example.com"])
     expect(result.inScope).toBe(true)
