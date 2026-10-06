@@ -49,7 +49,7 @@ describe("finding promotion", () => {
     expect(result.finding.status).toBe("validated")
 
     const second=await promoteValidatedHypothesis(root,target,{
-      hypothesisId:"hyp-1",title:"Validated issue",severity:"high",
+      hypothesisId:"hyp-1",title:"Same issue with a different title",severity:"high",
       summary:"A reproducible security behavior was observed with additional evidence.",
       impact:"A separate account can access protected data.",
       remediation:"Enforce server-side authorization.",
