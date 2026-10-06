@@ -278,13 +278,26 @@ async function loadConfiguredSkillMetadata(root:string):Promise<Map<string,Parti
   return result
 }
 
+async function resolveIndexedSkillSource(root:string,entry:SkillIndexEntry):Promise<string|undefined>{
+  const candidates=new Set(await collectSkillFiles(path.join(root,".cyberstrike","skill")))
+  const suffixes=entry.files??["SKILL.md"]
+  for(const file of candidates){
+    const basename=path.basename(path.dirname(file))
+    if(basename===entry.name && suffixes.some(s=>file.endsWith(path.sep+s))) return file
+  }
+  return undefined
+}
+
 export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
   const file=path.join(root,".cyberstrike","skill","index.json")
   const index=await readJson<SkillIndex|null>(file,null)
   const merged=new Map<string,SkillMetadata>()
 
   for(const entry of index?.skills??[]){
-    if(entry.name)merged.set(entry.name,indexMetadata(entry))
+    if(!entry.name)continue
+    const metadata=indexMetadata(entry)
+    metadata.source_path=await resolveIndexedSkillSource(root,entry) ?? metadata.source_path
+    merged.set(entry.name,metadata)
   }
   for(const skill of WEB_SKILLS)merged.set(skill.name,skill)
 
