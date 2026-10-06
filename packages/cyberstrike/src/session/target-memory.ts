@@ -144,6 +144,15 @@ export namespace TargetMemory {
     }).onConflictDoNothing().run())
   }
 
+  export function projectID(sessionID: string): string | undefined {
+    return projectIDForSession(sessionID)
+  }
+
+  export function listForSession(sessionID: string, kind?: Kind, limit = 200): Info[] {
+    const projectID = projectIDForSession(sessionID)
+    return projectID ? list(projectID, kind, limit) : []
+  }
+
   export function list(projectID: string, kind?: Kind, limit = 200): Info[] {
     const rows = Database.use((db) => {
       const query = db.select().from(TargetMemoryTable).where(
