@@ -8,6 +8,8 @@ import { resumePersistedDispatch, completeDispatchedTask, prepareMultiAgentPlanF
 import { resumeHuntingContext } from "./runtime-persistence"
 import { recoverStaleAgentTasks } from "./agent-task-runtime"
 import { executePersistedDispatchWithNativeCyberStrike } from "./native-dispatch"
+import { parseOpenApiJson } from "./api-document"
+import { rememberTargetIntelligence } from "./target-intelligence"
 import { ingestWriteupFile } from "./writeup-store"
 const root=process.env.HUNT_ROOT??path.resolve(import.meta.dir,"..")
 const [command,...args]=Bun.argv.slice(2)
@@ -19,6 +21,7 @@ async function main(){
   if(command==="plan-status"){const target=args[0];if(!target)throw new Error("usage: hunt plan-status <target>");const plan=await loadAgentPlan(root,target);const tasks=await loadTaskStates(root,target);console.log(JSON.stringify({plan,tasks},null,2));return}
   if(command==="writeup-ingest"){const source=args[0];if(!source)throw new Error("usage: hunt writeup-ingest <file> [title]");console.log(JSON.stringify(await ingestWriteupFile(root,source,args[1]),null,2));return}
   if(command==="autoplan"){const target=args[0];if(!target)throw new Error("usage: hunt autoplan <target>");console.log(JSON.stringify(await prepareMultiAgentPlanFromTargetIntelligence(root,target),null,2));return}
+  if(command==="api-doc"){const target=args[0],file=args[1];if(!target||!file)throw new Error("usage: hunt api-doc <target> <openapi.json>");const content=await Bun.file(file).text();const apiSources=parseOpenApiJson(content);if(!apiSources.length)throw new Error("OPENAPI_PARSE_EMPTY");await rememberTargetIntelligence(root,target,{apiSources,tags:["api-documentation"]});console.log(JSON.stringify({target,apiSources},null,2));return}
   if(command==="dispatch"){const target=args[0];if(!target)throw new Error("usage: hunt dispatch <target> [limit]");const limit=Math.max(1,Number(args[1]??4));console.log(JSON.stringify(await resumePersistedDispatch(root,target,limit),null,2));return}
   if(command==="execute"){const target=args[0];if(!target)throw new Error("usage: hunt execute <target> [limit]");const limit=Math.max(1,Number(args[1]??4));const providerID=process.env.HUNT_MODEL_PROVIDER;const modelID=process.env.HUNT_MODEL_ID;const parentSessionID=process.env.HUNT_PARENT_SESSION_ID;console.log(JSON.stringify(await executePersistedDispatchWithNativeCyberStrike(root,target,{limit,parentSessionID,model:providerID&&modelID?{providerID,modelID}:undefined}),null,2));return}
   if(command==="task-complete"){const target=args[0];const taskId=args[1];const state=args[2] as "completed"|"failed"|"blocked";if(!target||!taskId||!["completed","failed","blocked"].includes(state))throw new Error("usage: hunt task-complete <target> <taskId> <completed|failed|blocked>");console.log(JSON.stringify(await completeDispatchedTask(root,target,taskId,state),null,2));return}
