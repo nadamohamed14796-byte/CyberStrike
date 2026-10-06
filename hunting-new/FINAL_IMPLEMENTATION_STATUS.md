@@ -28,11 +28,11 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 | Skill Registry | IMPLEMENTED (canonical dedupe, dependency validation, config-driven metadata) |
 | Runtime Preflight | PARTIAL |
 | Runtime Registry | IMPLEMENTED |
-| Multi-Agent Orchestration | PARTIAL (continuous persisted dispatch + role-based routing + native execution; richer aggregation remains) |
+| Multi-Agent Orchestration | IMPLEMENTED (persisted dispatch + role/skill routing + guarded session auto-execution) |
 | Proxy Intake / Correlator | IMPLEMENTED (CyberStrike /session/ingest feeds persistent hunting intake) |
-| Learning Engine | IMPLEMENTED (persistent observations + FP feedback + bounded strategy ranking) |
-| Writeup Ingestion | IMPLEMENTED (local bounded ingestion + signal/strategy hints) |
-| Report Pipeline | IMPLEMENTED (validated promotion + idempotent report lifecycle + review learning) |
+| Learning Engine | IMPLEMENTED (persistent observations + FP feedback + bounded strategy ranking + writeup strategy hints) |
+| Writeup Ingestion | IMPLEMENTED (local bounded ingestion + global reference catalog + signal/strategy hints) |
+| Report Pipeline | IMPLEMENTED (validated promotion + idempotent ready/submitted/reviewed lifecycle + root-cause/reproduction sections) |
 | Persistent Target Memory | IMPLEMENTED for target graph/accounts/attempts/evidence/findings; broader research/context enrichment remains |
 | Mission Resume Reconstruction | PARTIAL (dispatch recovery wired; generic resume recovery still limited) |
 | Context Budget | IMPLEMENTED |
@@ -67,6 +67,12 @@ Implemented and integrated:
 - per-account observation preservation across CyberStrike request deduplication
 - defensive stored-evidence revalidation before finding promotion
 - automatic finding-promotion hook for fully structured confirmed results
+- guarded session-ingest → native hunting auto-dispatch
+- global security reference catalog with skill-specific references prioritized
+- bounded local writeup ingestion feeding strategy ordering
+- evidence-derived cross-account authorization gate
+- stable task identities and serialized target-state mutation paths
+- report lifecycle enforcement (ready → submitted → accepted/rejected)
 - response-ID persistence through validation attempts
 - signal-linked request identity preserved on agent tasks
 - cross-host asset relations with independent scope state
@@ -76,14 +82,14 @@ Implemented and integrated:
 
 1. Full bidirectional JS/function/request/response correlation from live runtime observations, including automatic JS/function enrichment for every browser capture.
 2. Complete signal-to-skill configuration unification for every imported skill and trigger beyond the core configured mappings.
-3. Full imported-skill audit/integration for OpenHunterAI, recon-skills and yaklang/hack-skills.
+3. Full imported-skill audit/integration for every external skill repository; the loader is dynamic but those repositories are not present in this branch.
 4. Expand config-driven role/skill-to-specialized-agent resolution to all imported skills beyond the core configured assignments.
 5. Improve automatic finding/report generation with richer validator-supplied root-cause and reproduction sections.
 6. Continuous external research ingestion is still not automated; local bounded writeup ingestion is implemented.
 7. Broader cross-host graph enrichment from additional browser/network sources beyond the current observed request/redirect/JS/API-host relations.
 8. Persisted API documentation/source differential is partially implemented; full runtime ingestion into planning still needs to be wired.
 9. Elimination/unification of the legacy parallel validation models; compatibility paths still remain.
-10. End-to-end runtime fixtures and actual CI verification.
+10. End-to-end runtime fixtures are present; actual CI verification is still pending while GitHub Actions remains queued.
 11. Stronger evidence reconciliation for edge cases where the subagent reports only partial correlation metadata.
 
 No completion claim should be made until the remaining runtime integrations are implemented and the test suite/CI is actually executed.
