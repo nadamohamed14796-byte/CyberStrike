@@ -89,6 +89,7 @@ export async function recordAttemptLifecycle(
         : "testing"
   }else if(recorded.state==="rejected") hypothesisStatus=attemptCount >= minimumAttempts ? "rejected" : "testing"
   else if(recorded.state==="blocked") hypothesisStatus="blocked"
+  else if(attemptCount>=minimumAttempts) hypothesisStatus="blocked"
 
   await transitionHypothesis(root,target,hypothesis.id,hypothesisStatus,
     recorded.evidenceIds.length ? [...new Set([...hypothesis.evidenceIds,...recorded.evidenceIds])] : undefined)
