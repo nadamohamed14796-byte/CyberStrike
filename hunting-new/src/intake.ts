@@ -31,7 +31,10 @@ export function ingestObservation(graph:CorrelationGraph,observation:NetworkObse
   const r=observation.request
   const request:RequestNode={...r,sessionId:observation.sessionId,observedAt:r.observedAt??Date.now(),source:"observed"}
   addRequest(graph,request)
-  if(observation.response){const p=observation.response;const response:ResponseNode={...p,requestId:r.id,headers:p.headers??{},observedAt:p.observedAt??Date.now()};addResponse(graph,response)}\n  for(const parameter of observation.parameters ?? discoverRequestParameters(r as RequestNode)){\n    addParameter(graph,{id:parameter.id,requestId:r.id,name:parameter.name,location:parameter.location,source:parameter.sources.includes("tool") ? "inferred" : parameter.sources.includes("js") ? "js" : "observed",observedAt:parameter.lastSeen})\n  }
+  if(observation.response){const p=observation.response;const response:ResponseNode={...p,requestId:r.id,headers:p.headers??{},observedAt:p.observedAt??Date.now()};addResponse(graph,response)}
+  for(const parameter of observation.parameters ?? discoverRequestParameters(r as RequestNode)){
+    addParameter(graph,{id:parameter.id,requestId:r.id,name:parameter.name,location:parameter.location,source:parameter.sources.includes("tool") ? "inferred" : parameter.sources.includes("js") ? "js" : "observed",observedAt:parameter.lastSeen})
+  }
   for(const assetId of observation.jsAssetIds??[]){
     if(!graph.assets.has(assetId))graph.assets.set(assetId,{id:assetId,url:assetId,observedAt:r.observedAt??Date.now()})
     link(graph,{from:assetId,to:r.id,kind:"observed-on",confidence:1,evidence:"browser"})
