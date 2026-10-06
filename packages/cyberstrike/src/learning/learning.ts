@@ -7,6 +7,7 @@ import { BusEvent } from "../bus/bus-event"
 import { LearningSignalTable } from "./learning.sql"
 import { LearningRouter, type LearningHook, type LearningSignal, type RoutedSkill } from "./router"
 import { SkillIndex } from "../skill/index-engine"
+import { planReconTools } from "../tool/recon-toolchain"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
 const MAX_SESSION_ROUTES = 256
@@ -48,10 +49,20 @@ export namespace Learning {
 
   export async function emit(signal: LearningSignal): Promise<RoutedSkill[]> {
     let routes: RoutedSkill[] = []
+    let nextTools: ReturnType<typeof planReconTools> = []
 
     try {
       await SkillIndex.ensureBuilt()
       routes = LearningRouter.route(signal)
+    } catch {}
+
+    try {
+      const activeAuthorized = signal.metadata?.authorized_active_testing === true
+      nextTools = planReconTools({
+        signal: signal.signal,
+        target: signal.target,
+        authorized_active_testing: activeAuthorized,
+      })
     } catch {}
 
     if (signal.sessionID) {
@@ -79,7 +90,7 @@ export namespace Learning {
             target: signal.target,
             category: signal.category,
             outcome: signal.outcome,
-            metadata: signal.metadata,
+            metadata: { ...(signal.metadata ?? {}), next_tools: nextTools },
             time_created: now,
             time_updated: now,
           })
@@ -97,6 +108,7 @@ export namespace Learning {
           target: signal.target,
           agent: signal.agent,
           outcome: signal.outcome,
+          metadata: { ...(signal.metadata ?? {}), next_tools: nextTools },
         },
         routes,
       })
