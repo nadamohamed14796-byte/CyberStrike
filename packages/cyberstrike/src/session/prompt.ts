@@ -74,6 +74,35 @@ const STRUCTURED_OUTPUT_SYSTEM_PROMPT = `IMPORTANT: The user has requested struc
 
 const LEARNING_TEST_TOOLS = new Set(["http_replay", "http_replay_raw", "inject_probe", "hackbrowser"])
 
+
+const RECON_SIGNAL_TOOLS = new Set([
+  "subfinder", "assetfinder", "amass", "tlsx", "puredns", "dnsx", "httpx", "naabu", "nmap",
+  "katana", "gau", "waybackurls", "gospider", "hakrawler", "waymore", "subjs", "arjun",
+  "paramspider", "x8", "ffuf", "dirsearch", "kiterunner", "graphw00f", "nuclei", "dalfox",
+  "kxss", "corsy", "s3scanner", "cloud-enum",
+])
+
+function reconSignalFromResult(toolID: string, result: unknown): string | undefined {
+  if (!RECON_SIGNAL_TOOLS.has(toolID)) return undefined
+  const text = typeof result === "string"
+    ? result
+    : result && typeof result === "object"
+      ? JSON.stringify(result)
+      : ""
+  if (!text) return undefined
+  const lower = text.toLowerCase()
+  if (toolID === "httpx" && /https?:\/\/|status.?code|title|tech.?detect/.test(lower)) return "live HTTP"
+  if (toolID === "subjs" || /source.?map|\\.map\b/.test(lower)) return "JavaScript"
+  if (toolID === "graphw00f" || /graphql/.test(lower)) return "GraphQL"
+  if (toolID === "kiterunner" || /\/api\/|openapi|swagger/.test(lower)) return "API"
+  if (toolID === "arjun" || toolID === "paramspider" || toolID === "x8" || /parameter|param=/.test(lower)) return "parameter"
+  if (toolID === "naabu" || toolID === "nmap" || /open port|service/.test(lower)) return "open port"
+  if (toolID === "dalfox" || toolID === "kxss" || /reflected|xss/.test(lower)) return "reflected parameter"
+  if (toolID === "nuclei" && /cve|exposure|vulnerab/.test(lower)) return "technology signal"
+  return undefined
+}
+
+
 function learningTarget(args: unknown): string | undefined {
   if (!args || typeof args !== "object") return undefined
   const input = args as Record<string, unknown>
@@ -1203,6 +1232,23 @@ export namespace SessionPrompt {
             },
           )
           const result = await item.execute(args, ctx)
+
+          const reconSignal = reconSignalFromResult(item.id, result)
+          if (reconSignal) {
+            await Learning.emit({
+              hook: "during_testing",
+              signal: reconSignal,
+              sessionID: ctx.sessionID,
+              agent: ctx.agent,
+              target: learningTarget(args),
+              metadata: {
+                source_tool: item.id,
+                callID: ctx.callID,
+                derived_from_result: true,
+              },
+            })
+          }
+
           await Plugin.trigger(
             "tool.execute.after",
             {
