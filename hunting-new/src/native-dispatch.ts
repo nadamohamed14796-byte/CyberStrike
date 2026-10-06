@@ -3,6 +3,7 @@ import { dispatchPersistedTasks, executeAndRecordDispatchedTask, type PreparedMu
 import { NativeCyberStrikeExecutor } from "./native-cyberstrike-executor"
 import { finishAgentTask } from "./agent-task-runtime"
 import { checkpointPhase } from "./runtime-persistence"
+import { coverageGate } from "./ledger"
 import { loadTaskStates } from "./task-state-store"
 import { updateMission } from "./mission"
 
@@ -88,17 +89,23 @@ export async function executePersistedDispatchWithNativeCyberStrike(
       .map(task=>task.taskId),
   )
   const allPlannedTasksTerminal=plan.tasks.every(task=>terminalTaskIds.has(task.id))
-  if(allPlannedTasksTerminal && plan.tasks.length>0){
+  const coverage=await coverageGate(root,target)
+  const canComplete=allPlannedTasksTerminal && plan.tasks.length>0 && coverage.complete &&
+    finalTaskState.tasks.every(task=>task.state==="completed" || task.state==="blocked")
+
+  if(canComplete){
     try{
       await updateMission(root,target,"COMPLETED","tasks:completed")
     }catch{}
   }
-  await checkpointPhase(root,target,allPlannedTasksTerminal ? "tasks:completed" : "tasks:executed")
+  await checkpointPhase(root,target,canComplete ? "tasks:completed" : "tasks:executed")
   return {
     batches,
     results,
     dispatched:batches.at(-1),
     allPlannedTasksTerminal,
+    coverage,
+    canComplete,
     taskStates:finalTaskState,
   }
 }
