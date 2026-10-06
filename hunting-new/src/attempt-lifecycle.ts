@@ -161,7 +161,6 @@ export async function recordAttemptLifecycle(
     ...(update.endpoint ? [{type:"endpoint",id:stableLedgerId("endpoint",update.skill ? update.skill+"|"+update.endpoint : update.endpoint),evidence_refs:recorded.evidenceIds}] : []),
     ...(hypothesis.functionId ? [{type:"function",id:hypothesis.functionId,evidence_refs:recorded.evidenceIds}] : []),
     ...(update.evidenceIds??[]).filter(id=>evidenceState.evidence.some(item=>item.id===id && item.kind==="js-asset")).map(id=>({type:"js",id,evidence_refs:[id]})),
-    ...(update.evidenceIds??[]).filter(id=>evidenceState.evidence.some(item=>item.id===id && item.kind==="parameter")).map(id=>({type:"parameter",id,evidence_refs:[id]})),
   ])
   await checkpointPhase(root,target,validation?.decision==="eligible" ? "validation:eligible" : "validation:state-transition")
   return {
