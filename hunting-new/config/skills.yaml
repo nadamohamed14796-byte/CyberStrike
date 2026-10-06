@@ -24,17 +24,20 @@ signals:
 
 skills:
   authorization:
+    agent: web-application
     confidence_threshold: 0.70
     required_signals: [authenticated_endpoint, object_identifier]
     optional_signals: [multiple_accounts, tenant_identifier]
     dependencies: [endpoint_discovery]
     maximum_parallel_tasks: 2
   javascript_intelligence:
+    agent: proxy-analyzer
     confidence_threshold: 0.50
     required_signals: [javascript_asset]
     dependencies: []
     maximum_parallel_tasks: 2
   waf-awareness:
+    agent: web-application
     confidence_threshold: 0.60
     required_signals: [waf_signal_detected]
     dependencies: []
