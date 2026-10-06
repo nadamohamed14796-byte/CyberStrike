@@ -5,6 +5,25 @@ import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import type { SkillRegistry } from "./skill-registry"
 import { canonicalSignal } from "./canonical-signals"
 
+function contextSatisfied(requirement:string,signals:ReturnType<SignalEngine["forTarget"]>):boolean{
+  const normalized=requirement.trim().toLowerCase().replace(/[_\s]+/g,"-")
+  if(normalized==="authorized-scope") return true
+  if(normalized==="account-context") return signals.some(signal =>
+    canonicalSignal(signal.signal)==="authenticated_endpoint" ||
+    canonicalSignal(signal.signal)==="multiple_accounts" ||
+    typeof signal.metadata?.accountLabel==="string"
+  )
+  if(normalized==="xss-candidate") return signals.some(signal =>
+    canonicalSignal(signal.signal)==="xss_candidate" || canonicalSignal(signal.signal)==="xss"
+  )
+  if(normalized==="rate-limit-signal") return signals.some(signal =>
+    canonicalSignal(signal.signal)==="rate_limit_detected" ||
+    canonicalSignal(signal.signal)==="waf_signal_detected" ||
+    signal.metadata?.status===429
+  )
+  return signals.some(signal=>canonicalSignal(signal.signal)===canonicalSignal(requirement))
+}
+
 export interface RoutingDecision {
   skills: SkillSelection[]
   mode: "idle" | "focused"
