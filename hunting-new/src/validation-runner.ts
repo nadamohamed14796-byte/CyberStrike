@@ -1,4 +1,4 @@
-import { AttemptLedger, type AttemptPolicy, type Attempt, type AttemptStrategy } from "./adaptive-attempts"
+import { AttemptLedger, type AttemptPolicy, type Attempt, type StrategyClass } from "./adaptive-attempts"
 import { validateHypothesis, type ValidationEvidence } from "./validation-gate"
 import type { HypothesisRecord } from "./hypotheses"
 import type { LearningEngine } from "./learning-engine"
@@ -6,7 +6,7 @@ import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 
 export interface ValidationPlan {
   hypothesisId: string
-  strategies: AttemptStrategy[]
+  strategies: StrategyClass[]
   variants: Array<{ strategy: AttemptStrategy; variant: string }>
   maxAttempts: number
 }
