@@ -122,7 +122,11 @@ export async function referencesForSkills(
   const wanted=new Set(skillNames)
   return (await loadReferences(root)).references
     .filter(item=>wanted.has(item.skillName) || item.skillName==="__global__")
-    .sort((a,b)=>(b.useCount-a.useCount)||a.url.localeCompare(b.url))
+    .sort((a,b)=>
+      (a.skillName==="__global__" ? 1 : 0)-(b.skillName==="__global__" ? 1 : 0) ||
+      (b.useCount-a.useCount) ||
+      a.url.localeCompare(b.url)
+    )
     .slice(0,Math.max(0,limit))
 }
 
