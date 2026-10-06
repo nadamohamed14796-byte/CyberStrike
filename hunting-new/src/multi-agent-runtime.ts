@@ -279,6 +279,7 @@ export interface AgentTaskExecutor {
     state:"executed"|"inconclusive"|"blocked"|"rejected"|"confirmed"
     attemptId?:string
     requestId?:string
+    responseId?:string
     resultSummary?:string
     resultText?:string
     evidenceIds?:string[]
