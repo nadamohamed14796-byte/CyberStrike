@@ -33,6 +33,7 @@ export interface CorrelationSignalInput {
   requests: Array<{
     id: string
     url: string
+    method?: string
     path?: string
     credentialId?: string
     accountLabel?: string
@@ -84,6 +85,79 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   for (const request of input.requests) {
     const endpoint = request.path ?? request.url
     const response = responseByRequest.get(request.id)
+    const urlText = request.url + " " + endpoint
+    const queryOrFragment = urlText.split("?")[1] ?? ""
+    const method = (request.method ?? "").toUpperCase()
+
+    if (/\\bgraphql\\b|\\/graphql(?:[/?]|$)/i.test(urlText)) {
+      emit({
+        signal: "graphql_detected",
+        source: "correlation:request",
+        confidence: 0.86,
+        target: input.target,
+        endpoint,
+        metadata: { requestId: request.id, method },
+      })
+    }
+
+    if (/^(?:ws|wss):\\/\\//i.test(request.url) || /\\bwebsocket\\b/i.test(urlText)) {
+      emit({
+        signal: "websocket_detected",
+        source: "correlation:request",
+        confidence: 0.86,
+        target: input.target,
+        endpoint,
+        metadata: { requestId: request.id, method },
+      })
+    }
+
+    if (/\\b(?:jwt|authorization)\\b/i.test(urlText) || /(?:^|\\s)authorization\\s*:/i.test(
+      Object.keys(response?.headers ?? {}).join("\\n")
+    )) {
+      emit({
+        signal: "jwt_detected",
+        source: "correlation:request",
+        confidence: 0.62,
+        target: input.target,
+        endpoint,
+        metadata: { requestId: request.id, presenceOnly: true },
+      })
+    }
+
+    if (/\\b(?:upload|multipart|file)\\b/i.test(urlText) || /(?:multipart\\/form-data|application\\/octet-stream)/i.test(
+      Object.entries(response?.headers ?? {}).map(([k,v]) => k + ": " + v).join("\\n")
+    )) {
+      emit({
+        signal: "file_upload_detected",
+        source: "correlation:request",
+        confidence: 0.70,
+        target: input.target,
+        endpoint,
+        metadata: { requestId: request.id, method },
+      })
+    }
+
+    if (/(?:^|[?&])(?:redirect|redirect_uri|return|return_to|next|continue|url|dest|destination)=/i.test(queryOrFragment)) {
+      emit({
+        signal: "redirect_parameter_detected",
+        source: "correlation:request",
+        confidence: 0.78,
+        target: input.target,
+        endpoint,
+        metadata: { requestId: request.id, method },
+      })
+    }
+
+    if (/(?:^|[/?_=-])tenant(?:[_-]?id)?(?:[/?_=-]|$)/i.test(endpoint)) {
+      emit({
+        signal: "tenant_identifier_detected",
+        source: "correlation:request",
+        confidence: 0.80,
+        target: input.target,
+        endpoint,
+        metadata: { requestId: request.id },
+      })
+    }
 
     if (request.credentialId || request.accountLabel) {
       emit({
