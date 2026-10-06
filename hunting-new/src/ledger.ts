@@ -23,5 +23,6 @@ export function ledgers(root:string,target:string){ return Object.fromEntries(["
 export async function coverageGate(root:string,target:string){
   const result=await Promise.all(Object.entries(ledgers(root,target)).map(async([name,ledger])=>[name,await ledger.coverage()] as const))
   const pending=result.filter(([,c])=>c.pending>0)
-  return {complete:pending.length===0,ledgers:Object.fromEntries(result),pending:pending.map(([name,c])=>({name,count:c.pending}))}
+  const total=result.reduce((sum,[,coverage])=>sum+coverage.total,0)
+  return {complete:total>0 && pending.length===0,ledgers:Object.fromEntries(result),pending:pending.map(([name,c])=>({name,count:c.pending}))}
 }
