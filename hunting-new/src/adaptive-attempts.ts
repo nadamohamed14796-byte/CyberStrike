@@ -10,6 +10,7 @@ export interface Attempt {
   reason: string
   state: AttemptState
   requestId?: string
+  responseId?: string
   resultSummary?: string
   evidenceIds: string[]
   createdAt: number
@@ -60,7 +61,7 @@ export class AttemptLedger {
     return attempt
   }
 
-  record(id: string, update: Partial<Pick<Attempt, "state" | "requestId" | "resultSummary">> & { evidenceIds?: string[] }): Attempt {
+  record(id: string, update: Partial<Pick<Attempt, "state" | "requestId" | "responseId" | "resultSummary">> & { evidenceIds?: string[] }): Attempt {
     for (const list of this.attempts.values()) {
       const attempt = list.find(a => a.id === id)
       if (attempt) {
