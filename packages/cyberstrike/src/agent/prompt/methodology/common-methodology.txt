@@ -65,3 +65,22 @@ The methodology follows 13 phases. Respect the phase order:
 2. Do not report findings before validating evidence quality
 3. Check `methodology_status` before claiming a phase is complete
 4. Resolve blocking violations before proceeding to the next phase
+
+
+### Validation Attempt Budget
+
+For a promising vulnerability signal, do not stop after a single payload or mutation.
+When the target is in scope and the test is safe/rate-limit compliant, exercise the hypothesis
+through up to 20 distinct validation attempts/variants before declaring it unconfirmed.
+Vary the relevant dimensions (parameter location, encoding, parser representation, context,
+authentication/role, object value, method, or equivalent class-specific bypass) rather than
+repeating the identical request. Stop early when strong confirmation is obtained, when the
+target/rules impose a lower limit, or when further testing would create material risk.
+Every meaningful attempt must contribute evidence to the final validation decision.
+
+### WAF / Filter Bypass
+
+If a payload is blocked or normalized, treat the block as a signal rather than immediate failure.
+Load the relevant WAF/filter-bypass skill and try class-appropriate alternate representations
+and encodings while remaining within scope and rate limits. Record which variants were blocked,
+which reached the application, and which produced differential behavior.
