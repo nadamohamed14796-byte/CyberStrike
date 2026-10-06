@@ -31,6 +31,15 @@ export interface JSAssetNode {
   observedAt: number
 }
 
+export interface ParameterNode {
+  id: string
+  requestId: string
+  name: string
+  location: "query" | "path" | "body" | "header"
+  source: EvidenceSource
+  observedAt: number
+}
+
 export interface FunctionNode {
   id: string
   name: string
@@ -51,11 +60,12 @@ export interface CorrelationGraph {
   responses: Map<string, ResponseNode>
   assets: Map<string, JSAssetNode>
   functions: Map<string, FunctionNode>
+  parameters: Map<string, ParameterNode>
   edges: Edge[]
 }
 
 export function createGraph(): CorrelationGraph {
-  return { requests: new Map(), responses: new Map(), assets: new Map(), functions: new Map(), edges: [] }
+  return { requests: new Map(), responses: new Map(), assets: new Map(), functions: new Map(), parameters: new Map(), edges: [] }
 }
 
 export interface SerializedCorrelationGraph {
@@ -63,6 +73,7 @@ export interface SerializedCorrelationGraph {
   responses: ResponseNode[]
   assets: JSAssetNode[]
   functions: FunctionNode[]
+  parameters: ParameterNode[]
   edges: Edge[]
 }
 
@@ -72,6 +83,7 @@ export function serializeGraph(graph: CorrelationGraph): SerializedCorrelationGr
     responses: [...graph.responses.values()],
     assets: [...graph.assets.values()],
     functions: [...graph.functions.values()],
+    parameters: [...graph.parameters.values()],
     edges: [...graph.edges],
   }
 }
@@ -82,6 +94,7 @@ export function hydrateGraph(data: Partial<SerializedCorrelationGraph>): Correla
   for (const response of data.responses ?? []) graph.responses.set(response.id, response)
   for (const asset of data.assets ?? []) graph.assets.set(asset.id, asset)
   for (const fn of data.functions ?? []) graph.functions.set(fn.id, fn)
+  for (const parameter of data.parameters ?? []) graph.parameters.set(parameter.id, parameter)
   graph.edges.push(...(data.edges ?? []))
   return graph
 }
