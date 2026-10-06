@@ -446,6 +446,38 @@ export async function executeAndRecordDispatchedTask(
   return {context,result:{...result,state:effectiveState},lifecycle,promotion,refreshedPlan}
 }
 
+export interface MultiAttemptExecutionResult {
+  iterations:number
+  terminal:boolean
+  results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string }>
+}
+
+export async function executeTaskUntilTerminal(
+  root:string,
+  plan:MultiAgentPlan,
+  taskId:string,
+  executor:AgentTaskExecutor,
+  maxIterations=20,
+):Promise<MultiAttemptExecutionResult>{
+  const results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string }>=[]
+
+  for(let i=0;i<Math.min(Math.max(maxIterations,1),20);i++){
+    const execution=await executeAndRecordDispatchedTask(root,plan,taskId,executor)
+    results.push(execution.result)
+    if(
+      execution.result.state==="confirmed" ||
+      execution.result.state==="blocked" ||
+      execution.lifecycle?.hypothesisStatus==="rejected" ||
+      execution.lifecycle?.validation?.decision==="eligible"
+    ){
+      return {iterations:i+1,terminal:true,results}
+    }
+    await checkpointPhase(root,plan.target,`validation:attempt:${i+1}:continue`)
+  }
+
+  return {iterations:results.length,terminal:false,results}
+}
+
 export async function executePersistedTaskWithNativeCyberStrike(
   root:string,
   plan:MultiAgentPlan,
