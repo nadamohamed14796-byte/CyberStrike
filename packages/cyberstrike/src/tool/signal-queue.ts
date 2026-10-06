@@ -3,6 +3,7 @@ import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { SignalQueueTable } from "./signal-queue.sql"
 import { ReconDispatch } from "./recon-dispatch"
+import { normalizeSignal } from "./signal-normalizer"
 
 export namespace SignalQueue {
   export type Status = "pending" | "running" | "completed" | "skipped" | "failed"
@@ -29,7 +30,9 @@ export namespace SignalQueue {
     maxAttempts?: number
     metadata?: Record<string, unknown>
   }) {
-    const key = dedupKey(input)
+    const normalized = normalizeSignal(input.signal)
+    const normalizedInput = { ...input, signal: normalized.signal }
+    const key = dedupKey(normalizedInput)
     const existing = input.sessionID
       ? Database.use((db) => db.select().from(SignalQueueTable)
           .where(and(eq(SignalQueueTable.session_id, input.sessionID), eq(SignalQueueTable.dedup_key, key)))
@@ -43,12 +46,12 @@ export namespace SignalQueue {
       id,
       session_id: input.sessionID,
       parent_id: input.parentID,
-      signal: input.signal,
+      signal: normalized.signal,
       target: input.target,
       depth: Math.max(0, input.depth ?? 0),
       attempts: 0,
       max_attempts: Math.max(1, Math.min(20, input.maxAttempts ?? 1)),
-      priority: priority(input.signal),
+      priority: Math.min(priority(normalized.signal), normalized.priority),
       status: "pending",
       dedup_key: key,
       metadata: input.metadata,
