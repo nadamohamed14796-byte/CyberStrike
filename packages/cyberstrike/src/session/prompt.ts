@@ -921,6 +921,18 @@ export namespace SessionPrompt {
         )
       }
 
+      const nextReconTools = Learning.nextToolsFor(sessionID, 8)
+      if (nextReconTools.length > 0) {
+        system.push(
+          [
+            "# Recon Toolchain Recommendations",
+            "These tools were selected deterministically from the latest runtime signal.",
+            "Use them as the next-tool plan. Respect scope, rate limits, permissions, and the risk gate; do not treat tool output as a finding.",
+            ...nextReconTools.map((tool) => `- **${tool.id}** | phase=${tool.phase} | risk=${tool.risk} | ${tool.command}`),
+          ].join("\n"),
+        )
+      }
+
       // Surface queued web re-tests to the live agent. The queue is advisory and
       // remains pending until an explicit replay/validation action consumes it.
       const nextRetest = WebRetest.next(sessionID)
