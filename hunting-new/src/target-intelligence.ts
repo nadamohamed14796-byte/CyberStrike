@@ -78,6 +78,39 @@ export function sharedEndpointAccounts(state: TargetIntelligence): Map<string, s
   return new Map([...result.entries()].map(([endpoint, accounts]) => [endpoint, [...accounts]]))
 }
 
+export function discoverRequestParameters(request: RequestNode): ParameterCandidate[] {
+  const endpoint = request.path ?? request.url
+  const now = request.observedAt
+  const found = new Map<string, ParameterCandidate>()
+  const add = (name: string, location: ParameterCandidate["location"], confidence: number) => {
+    const clean = name.trim()
+    if (!clean || clean.length > 128 || /[\\s<>"'{}]/.test(clean)) return
+    const id = "param_" + Bun.hash(endpoint + "|" + location + "|" + clean).toString(16)
+    const previous = found.get(id)
+    found.set(id, {
+      id, name: clean, location, endpoint,
+      requestIds: [...new Set([...(previous?.requestIds ?? []), request.id])],
+      sources: [...new Set([...(previous?.sources ?? []), "observed"])],
+      confidence: Math.max(previous?.confidence ?? 0, confidence),
+      firstSeen: Math.min(previous?.firstSeen ?? now, now),
+      lastSeen: Math.max(previous?.lastSeen ?? now, now),
+    })
+  }
+  try {
+    const parsed = new URL(request.url)
+    for (const key of parsed.searchParams.keys()) add(key, "query", 0.95)
+  } catch {}
+  for (const match of endpoint.matchAll(/(?:^|[/:])\\{([^}]+)\\}/g)) add(match[1], "path", 0.82)
+  const raw = (request as RequestNode & { rawRequest?: string }).rawRequest
+  if (raw) {
+    const body = raw.split(/\\r?\\n\\r?\\n/, 2)[1] ?? ""
+    if (body) {
+      for (const key of body.matchAll(/["']([A-Za-z_][A-Za-z0-9_.-]{0,127})["']\\s*:/g)) add(key[1], "body", 0.72)
+    }
+  }
+  return [...found.values()]
+}
+
 export function stableRequestId(method: string, url: string): string {
   return "req_" + Bun.hash(method.trim().toUpperCase() + "|" + url.trim()).toString(16)
 }
