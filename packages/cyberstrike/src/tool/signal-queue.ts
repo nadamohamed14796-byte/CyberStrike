@@ -58,6 +58,11 @@ export namespace SignalQueue {
     return id
   }
 
+  export function get(id: string) {
+    return Database.use((db) => db.select().from(SignalQueueTable)
+      .where(eq(SignalQueueTable.id, id)).limit(1).get())
+  }
+
   export function next(sessionID: string) {
     return Database.use((db) => db.select().from(SignalQueueTable)
       .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.status, "pending")))
