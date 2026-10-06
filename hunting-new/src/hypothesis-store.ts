@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir, readJson, targetDir, writeJson } from "./store"
+import { ensureDir, readJson, targetDir, writeJson, withTargetMutationLock } from "./store"
 import type { HypothesisRecord, HypothesisStatus } from "./hypotheses"
 
 export interface HypothesisState {
@@ -26,11 +26,13 @@ export async function saveHypotheses(root: string, state: HypothesisState): Prom
 }
 
 export async function upsertHypothesis(root: string, target: string, hypothesis: HypothesisRecord): Promise<HypothesisState> {
-  const state = await loadHypotheses(root, target)
-  const index = state.hypotheses.findIndex(x => x.id === hypothesis.id)
-  if (index === -1) state.hypotheses.push(hypothesis)
-  else state.hypotheses[index] = { ...state.hypotheses[index], ...hypothesis }
-  return saveHypotheses(root, state)
+  return withTargetMutationLock(root, target, async () => {
+    const state = await loadHypotheses(root, target)
+    const index = state.hypotheses.findIndex(x => x.id === hypothesis.id)
+    if (index === -1) state.hypotheses.push(hypothesis)
+    else state.hypotheses[index] = { ...state.hypotheses[index], ...hypothesis }
+    return saveHypotheses(root, state)
+  })
 }
 
 export async function transitionHypothesis(
@@ -40,11 +42,12 @@ export async function transitionHypothesis(
   status: HypothesisStatus,
   evidenceIds?: string[],
 ): Promise<HypothesisRecord> {
-  const state = await loadHypotheses(root, target)
-  const item = state.hypotheses.find(x => x.id === id)
-  if (!item) throw new Error("HYPOTHESIS_NOT_FOUND")
-  item.status = status
-  if (evidenceIds) item.evidenceIds = [...new Set(evidenceIds)]
-  await saveHypotheses(root, state)
-  return item
-}
+  return withTargetMutationLock(root, target, async () => {
+    const state = await loadHypotheses(root, target)
+    const item = state.hypotheses.find(x => x.id === id)
+    if (!item) throw new Error("HYPOTHESIS_NOT_FOUND")
+    item.status = status
+    if (evidenceIds) item.evidenceIds = [...new Set(evidenceIds)]
+    await saveHypotheses(root, state)
+    return item
+  })
