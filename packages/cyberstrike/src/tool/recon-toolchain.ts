@@ -48,6 +48,22 @@ function normalize(value: string) {
   return value.trim().toLowerCase().replace(/_/g, "-")
 }
 
+export function planReconTools(input: { signal: string; target?: string; authorized_active_testing?: boolean; max_tools?: number }) {
+  const signal = normalize(input.signal)
+  const max = Math.max(1, Math.min(8, input.max_tools ?? 3))
+  const matches = TOOLS
+    .filter((tool) => tool.when.some((x) => normalize(x).includes(signal) || signal.includes(normalize(x))))
+    .filter((tool) => input.authorized_active_testing === true || (tool.risk !== "active-test" && tool.risk !== "high-impact"))
+    .slice(0, max)
+  const ordered = matches.length ? matches : TOOLS.filter((tool) => tool.risk === "passive").slice(0, max)
+  return ordered.map((tool) => ({
+    id: tool.id,
+    phase: tool.phase,
+    risk: tool.risk,
+    command: tool.command,
+  }))
+}
+
 export const ReconToolchainTool = Tool.define("recon_toolchain", {
   description:
     "Choose the next reconnaissance/security tool from a signal. Returns a safe, ordered execution plan; it does not execute commands. Always perform scope_check before active testing. High-impact tools require explicit authorization.",
@@ -59,13 +75,7 @@ export const ReconToolchainTool = Tool.define("recon_toolchain", {
     authorized_active_testing: z.boolean().default(false).describe("Explicit authorization for active/high-impact testing"),
   }),
   async execute(params) {
-    const signal = normalize(params.signal)
-    const matches = TOOLS
-      .filter((tool) => tool.when.some((x) => normalize(x).includes(signal) || signal.includes(normalize(x))))
-      .filter((tool) => params.authorized_active_testing || (tool.risk !== "active-test" && tool.risk !== "high-impact"))
-      .slice(0, params.max_tools)
-
-    const ordered = matches.length ? matches : TOOLS.filter((tool) => tool.risk === "passive").slice(0, params.max_tools)
+    const ordered = planReconTools(params)
     const lines = [
       "target: " + params.target,
       "signal: " + params.signal,
