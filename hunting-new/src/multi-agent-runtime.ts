@@ -448,7 +448,11 @@ export async function executeAndRecordDispatchedTask(
     }
   }
 
-  const terminal=effectiveState==="blocked" || lifecycle.hypothesisStatus==="confirmed" || lifecycle.hypothesisStatus==="rejected" || lifecycle.validation?.decision==="eligible"
+  const validationEligible=lifecycle.validation?.decision==="eligible"
+  const promotionResolved=!validationEligible || Boolean(promotion?.reportable) || promotion?.action==="skip"
+  const terminal=effectiveState==="blocked" ||
+    lifecycle.hypothesisStatus==="rejected" ||
+    (lifecycle.hypothesisStatus==="confirmed" && promotionResolved)
   const taskState=effectiveState==="blocked"
     ? "blocked"
     : terminal
@@ -478,11 +482,12 @@ export async function executeTaskUntilTerminal(
   for(let i=0;i<Math.min(Math.max(maxIterations,1),20);i++){
     const execution=await executeAndRecordDispatchedTask(root,plan,taskId,executor)
     results.push(execution.result)
+    const eligible=execution.lifecycle?.validation?.decision==="eligible"
+    const promotionResolved=!eligible || Boolean(execution.promotion?.reportable) || execution.promotion?.action==="skip"
     if(
       execution.result.state==="blocked" ||
-      execution.lifecycle?.hypothesisStatus==="confirmed" ||
       execution.lifecycle?.hypothesisStatus==="rejected" ||
-      execution.lifecycle?.validation?.decision==="eligible"
+      (execution.lifecycle?.hypothesisStatus==="confirmed" && promotionResolved)
     ){
       return {iterations:i+1,terminal:true,results}
     }
