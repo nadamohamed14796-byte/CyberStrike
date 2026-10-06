@@ -70,6 +70,13 @@ export function routeRegisteredSkills(
         )
         .map(signal => canonicalSignal(signal.signal)),
     )]
+    const requiredSignals = (metadata.required_signals ?? []).map(canonicalSignal)
+    if (requiredSignals.length && !requiredSignals.every(required =>
+      signals.some(signal =>
+        signal.confidence >= metadata.confidence_threshold &&
+        canonicalSignal(signal.signal) === required,
+      ),
+    )) continue
     if (!matchedSignals.length) continue
     selected.push({
       name: metadata.name,
