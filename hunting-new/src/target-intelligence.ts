@@ -5,6 +5,18 @@ import type { HypothesisRecord } from "./hypotheses"
 import { dedupeEdges } from "./correlation"
 import { dedupeAssetRelations, type AssetRelation } from "./cross-host-graph"
 
+export interface ParameterCandidate {
+  id: string
+  name: string
+  location: "path" | "query" | "body"
+  endpoint: string
+  requestIds: string[]
+  sources: Array<"observed" | "js" | "tool">
+  confidence: number
+  firstSeen: number
+  lastSeen: number
+}
+
 export interface TargetAccount {
   id: string
   label: string
@@ -18,6 +30,7 @@ export interface TargetIntelligence {
   target: string
   updatedAt: string
   accounts: TargetAccount[]
+  parameters: ParameterCandidate[]
   assetRelations: AssetRelation[]
   jsAssets: JSAssetNode[]
   requests: RequestNode[]
@@ -29,7 +42,7 @@ export interface TargetIntelligence {
 }
 
 export function emptyTargetIntelligence(target: string): TargetIntelligence {
-  return { target, updatedAt: new Date().toISOString(), accounts: [], assetRelations: [], jsAssets: [], requests: [], responses: [], functions: [], edges: [], hypotheses: [], tags: [] }
+  return { target, updatedAt: new Date().toISOString(), accounts: [], parameters: [], assetRelations: [], jsAssets: [], requests: [], responses: [], functions: [], edges: [], hypotheses: [], tags: [] }
 }
 
 export function accountForRequest(request: RequestNode): TargetAccount | undefined {
@@ -90,6 +103,23 @@ function mergeAccounts(current:TargetAccount[],incoming:TargetAccount[]):TargetA
   return [...map.values()]
 }
 
+function mergeParameters(current:ParameterCandidate[],incoming:ParameterCandidate[]):ParameterCandidate[]{
+  const map=new Map(current.map(item=>[item.id,item]))
+  for(const item of incoming){
+    const previous=map.get(item.id)
+    if(!previous){ map.set(item.id,{...item,requestIds:[...new Set(item.requestIds)],sources:[...new Set(item.sources)]}); continue }
+    map.set(item.id,{
+      ...previous,...item,
+      requestIds:[...new Set([...previous.requestIds,...item.requestIds])],
+      sources:[...new Set([...previous.sources,...item.sources])],
+      confidence:Math.max(previous.confidence,item.confidence),
+      firstSeen:Math.min(previous.firstSeen,item.firstSeen),
+      lastSeen:Math.max(previous.lastSeen,item.lastSeen),
+    })
+  }
+  return [...map.values()]
+}
+
 function mergeById<T extends { id: string }>(current: T[], incoming: T[]): T[] {
   const map = new Map(current.map(x => [x.id, x]))
   for (const item of incoming) map.set(item.id, item)
@@ -118,6 +148,7 @@ export async function rememberTargetIntelligence(
   return saveTargetIntelligence(root, {
     ...current,
     accounts: mergeAccounts(current.accounts ?? [], patch.accounts ?? []),
+    parameters: mergeParameters(current.parameters ?? [], patch.parameters ?? []),
     assetRelations: dedupeAssetRelations([...(current.assetRelations ?? []), ...(patch.assetRelations ?? [])]),
     jsAssets: mergeById(current.jsAssets, patch.jsAssets ?? []),
     requests: mergeById(current.requests, patch.requests ?? []),
