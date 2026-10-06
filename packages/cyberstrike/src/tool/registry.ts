@@ -59,6 +59,7 @@ import { MethodologyStatusTool } from "./methodology-status"
 import { AttackScriptTool } from "./attack-script"
 import { GenerateReportTool } from "./generate-report"
 import { ValidateFindingTool } from "./validate-finding"
+import { UnderstandApplicationTool } from "./understand-application"
 import { EbpfTool } from "./ebpf"
 import { WinhookTool } from "./winhook"
 import { MachookTool } from "./machook"
@@ -211,6 +212,7 @@ export namespace ToolRegistry {
       AttackScriptTool,
       GenerateReportTool,
       ValidateFindingTool,
+      UnderstandApplicationTool,
       EbpfTool,
       WinhookTool,
       MachookTool,
