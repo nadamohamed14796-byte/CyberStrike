@@ -5,6 +5,7 @@ import { EXTERNAL_TOOLS, externalTool } from "./external-tool-registry"
 import { ScopeGuard } from "./scope-check"
 import { Truncate } from "./truncation"
 import { Instance } from "../project/instance"
+import { TargetWorkspace } from "./target-workspace"
 
 const MAX_OUTPUT = 200_000
 const RISK_ORDER = { passive: 0, "active-read": 1, "active-test": 2, "high-impact": 3 } as const
@@ -90,8 +91,9 @@ export const ExternalToolRunnerTool = Tool.define("external_tool_runner", {
     const argv = buildArgv(spec.command, { target: params.target, parameters: params.parameters })
     if (!argv[0]) throw new Error(`External tool ${spec.id} has an empty command`)
 
+    const workspace = await TargetWorkspace.ensure(params.target, ctx.sessionID)
     const proc = spawn(argv[0], argv.slice(1), {
-      cwd: Instance.directory,
+      cwd: workspace.session,
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
     })
@@ -135,6 +137,8 @@ export const ExternalToolRunnerTool = Tool.define("external_tool_runner", {
         external_tool_id: spec.id,
         risk: spec.risk,
         phase: spec.phase,
+        target_workspace: workspace.root,
+        session_workspace: workspace.session,
         scope_verified: scope.inScope,
         authorization_verified: spec.risk === "passive" || params.authorized_active_testing,
         status,
