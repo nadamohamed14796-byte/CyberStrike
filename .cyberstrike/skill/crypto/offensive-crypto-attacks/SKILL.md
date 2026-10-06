@@ -481,3 +481,7 @@ Ciphertext identification heuristics:
 Source: https://github.com/SnailSploit/Claude-Red
 License: MIT
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only.
+---
+## Signal and Evidence Gate
+Activate only after concrete cryptographic implementation evidence is observed. Algorithm names alone are not enough. Require baseline behavior, a target-specific misuse condition, and reproducible impact before a finding.
+Preserve algorithm/mode, key/nonce/IV context, oracle signal, request/response or trace references, test identity, negative controls, and reproduction count. Prefer synthetic/test data and bounded validation.
