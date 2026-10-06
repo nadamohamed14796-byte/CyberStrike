@@ -1,7 +1,5 @@
-import { canonicalSignal } from "./canonical-signals"
 import type { SignalEngine, SkillRule, SkillSelection } from "./signals"
 import { routeSkills, type RoutingDecision } from "./skill-router"
-import { prioritizeSkills } from "./learned-prioritization"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import type { SkillRegistry, SkillMetadata } from "./skill-registry"
@@ -39,6 +37,23 @@ export interface MultiAgentPlan {
   reason: string
   tasks: AgentTask[]
   lanes: Record<HuntingAgentRole, AgentTask[]>
+}
+
+
+function registryFromRules(rules: SkillRule[]): SkillRegistry {
+  return new SkillRegistry(rules.map(rule => ({
+    name: rule.name,
+    category: "legacy-rule",
+    description: rule.name,
+    triggers: [...rule.required_signals, ...(rule.optional_signals ?? [])],
+    required_context: [],
+    dependencies: rule.dependencies ?? [],
+    risk_level: "medium" as const,
+    scope_requirements: [],
+    validation_requirements: [],
+    confidence_threshold: rule.confidence_threshold,
+    maximum_parallel_tasks: rule.maximum_parallel_tasks ?? 1,
+  })))
 }
 
 function roleForSkill(skill: SkillSelection): HuntingAgentRole {
