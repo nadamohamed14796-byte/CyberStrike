@@ -385,7 +385,11 @@ export async function executeAndRecordDispatchedTask(
     }
   }
 
-  if(context.signal==="parameter_discovered" && context.endpoint){\n    await executeSignalTools(root,plan.target,context.signal,context.endpoint,context.requestId,"arjun")\n  }\n\n  const result=await executor.execute(context)\n  const parsed=result.resultText
+  if(context.signal==="parameter_discovered" && context.endpoint){
+    await executeSignalTools(root,plan.target,context.signal,context.endpoint,context.requestId,"arjun")
+  }
+
+  const result=await executor.execute(context)\n  const parsed=result.resultText
     ? parseExecutionResult(result.resultText,{state:result.state,outcome:"clean"})
     : undefined
   const effectiveState=parsed?.state ?? result.state
@@ -443,7 +447,7 @@ export async function executeAndRecordDispatchedTask(
   if(terminal) await finishAgentTask(root,plan.target,taskId,taskState)
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
-  return {context,result:{...result,state:effectiveState},lifecycle,promotion,refreshedPlan}
+  return {context,result:{...result,state:effectiveState},lifecycle,promotion}
 }
 
 export interface MultiAttemptExecutionResult {
