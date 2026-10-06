@@ -145,7 +145,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
       })
     }
 
-    if (/\\bgraphql\\b|\\/graphql(?:[/?]|$)/i.test(urlText)) {
+    if (/\bgraphql\b|\/graphql(?:[/?]|$)/i.test(urlText)) {
       emit({
         signal: "graphql_detected",
         source: "correlation:request",
@@ -156,7 +156,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
       })
     }
 
-    if (/^(?:ws|wss):\\/\\//i.test(request.url) || /\\bwebsocket\\b/i.test(urlText)) {
+    if (/^(?:ws|wss):\/\//i.test(request.url) || /\bwebsocket\b/i.test(urlText)) {
       emit({
         signal: "websocket_detected",
         source: "correlation:request",
@@ -167,8 +167,8 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
       })
     }
 
-    if (/\\b(?:jwt|authorization)\\b/i.test(urlText) || /(?:^|\\s)authorization\\s*:/i.test(
-      Object.keys(response?.headers ?? {}).join("\\n")
+    if (/\b(?:jwt|authorization)\b/i.test(urlText) || /(?:^|\s)authorization\s*:/i.test(
+      Object.keys(response?.headers ?? {}).join("\n")
     )) {
       emit({
         signal: "jwt_detected",
@@ -180,8 +180,8 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
       })
     }
 
-    if (/\\b(?:upload|multipart|file)\\b/i.test(urlText) || /(?:multipart\\/form-data|application\\/octet-stream)/i.test(
-      Object.entries(response?.headers ?? {}).map(([k,v]) => k + ": " + v).join("\\n")
+    if (/\b(?:upload|multipart|file)\b/i.test(urlText) || /(?:multipart\/form-data|application\/octet-stream)/i.test(
+      Object.entries(response?.headers ?? {}).map(([k,v]) => k + ": " + v).join("\n")
     )) {
       emit({
         signal: "file_upload_detected",
@@ -283,7 +283,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
 
       const headerText = Object.entries(response.headers)
         .map(([key, value]) => key + ": " + value)
-        .join("\\n")
+        .join("\n")
       const wafHeader = /cloudflare|cf-ray|cloudfront|awswaf|akamai|imperva|incapsula|sucuri|f5|barracuda|fortiweb|wallarm/i.test(headerText)
       const wafStatus = response.status === 403 || response.status === 406 || response.status === 429
       if (wafHeader || wafStatus) {
@@ -332,7 +332,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   }
 
   for (const asset of input.jsAssets) {
-    if (/\\.map(?:$|[?#])/i.test(asset.url)) {
+    if (/\.map(?:$|[?#])/i.test(asset.url)) {
       emit({
         signal: "source_map_detected",
         source: "correlation:js",
@@ -342,7 +342,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
       })
     }
 
-    if (/\\.(?:js|mjs)(?:$|[?#])/i.test(asset.url)) {
+    if (/\.(?:js|mjs)(?:$|[?#])/i.test(asset.url)) {
       emit({
         signal: "javascript_asset",
         source: "correlation:js",
