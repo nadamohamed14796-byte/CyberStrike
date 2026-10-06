@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process"
 import { checkScope, type ScopeRule } from "./scope"
-import { rememberTargetIntelligence } from "./target-intelligence"
+import { rememberTargetIntelligence, type ParameterCandidate } from "./target-intelligence"
 import { loadMission } from "./mission"
 export type DiscoveryTool = "arjun" | "x8"
 
