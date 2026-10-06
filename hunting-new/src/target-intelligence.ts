@@ -102,7 +102,7 @@ export function discoverRequestParameters(request: RequestNode): ParameterCandid
     const parsed = new URL(request.url)
     for (const key of parsed.searchParams.keys()) add(key, "query", 0.95)
   } catch {}
-  for (const match of endpoint.matchAll(/(?:^|[/:])\\{([^}]+)\\}/g)) add(match[1], "path", 0.82)
+  for (const match of endpoint.matchAll(/(?:^|[/:])\{([^}]+)\}/g)) add(match[1], "path", 0.82)
   const raw = (request as RequestNode & { rawRequest?: string }).rawRequest
   if (raw) {
     const body = raw.split(/\r?\n\r?\n/, 2)[1] ?? ""
