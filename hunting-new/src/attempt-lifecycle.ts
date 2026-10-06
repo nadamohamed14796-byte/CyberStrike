@@ -7,6 +7,7 @@ import { validateHypothesis, hasBaselineComparison, hasBehaviorChange, hasCrossA
 import { recordAttemptLearningFeedback } from "./attempt-learning-feedback"
 import { setAgentTaskState } from "./agent-task-runtime"
 import type { AttemptState } from "./adaptive-attempts"
+import { canonicalSignal } from "./canonical-signals"
 
 export interface AttemptLifecycleResult {
   attemptState: AttemptState
@@ -79,8 +80,11 @@ export async function recordAttemptLifecycle(
         reproducible:variants >= 2,
         rootCauseSupported:linked.some(x=>x.kind==="function" || x.kind==="js-asset"),
         impactObserved:recorded.state==="confirmed",
-        authorizationContextVerified: hypothesis.signal.includes("object_identifier") || hypothesis.signal.includes("authorization") || hypothesis.signal.includes("tenant")
-          ? hasCrossAccountEvidence(linked.map(x=>({
+        authorizationContextVerified: (() => {
+          const signal=canonicalSignal(hypothesis.signal)
+          const sensitive=["object_identifier_detected","authenticated_endpoint","tenant_identifier_detected","access_control_blocked","authorization","idor"]
+          return sensitive.includes(signal)
+            ? hasCrossAccountEvidence(linked.map(x=>({
               id:x.id,
               kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",
               summary:x.details||x.sourceId,
@@ -91,7 +95,8 @@ export async function recordAttemptLifecycle(
               responseId:x.responseId,
               accountLabel:x.accountLabel,
             })))
-          : true,
+            : true
+        })(),
       })
     : undefined
 
