@@ -1,4 +1,5 @@
 import { Database, eq, and, desc } from "../storage/db"
+import { Request } from "./request"
 import { TargetMemoryTable } from "./target-memory.sql"
 import { SessionTable } from "./session.sql"
 import { Identifier } from "../id/id"
@@ -142,6 +143,47 @@ export namespace TargetMemory {
       time_created: now,
       time_updated: now,
     }).onConflictDoNothing().run())
+  }
+
+  /** Link JS memories to the canonical request that delivered the script. */
+  export function correlateJavascript(sessionID: string): number {
+    const projectID = projectIDForSession(sessionID)
+    if (!projectID) return 0
+    const requests = Request.get(sessionID)
+    const javascript = list(projectID, "javascript", 1000)
+    let linked = 0
+    for (const js of javascript) {
+      if (js.request_id) continue
+      let parsed: URL
+      try { parsed = new URL(js.url) } catch { continue }
+      const match = requests.find((request) => {
+        if (!request.host || request.host.toLowerCase() !== parsed.host.toLowerCase()) return false
+        const requestPath = request.canonical_path || request.normalized_path
+        if (requestPath !== parsed.pathname) return false
+        return request.response_content_type
+          ? /(javascript|ecmascript)/i.test(request.response_content_type)
+          : /\.m?js$/i.test(parsed.pathname)
+      })
+      if (!match) continue
+      Database.use((db) => db.update(TargetMemoryTable)
+        .set({
+          request_id: match.id,
+          page_url: match.page_url ?? null,
+          content_type: match.response_content_type ?? js.content_type ?? null,
+          content: match.processed_response ?? js.content ?? null,
+          metadata: {
+            ...(js.metadata ?? {}),
+            request_id: match.id,
+            credential_id: match.credential_id ?? null,
+            correlated: true,
+          },
+          time_updated: Date.now(),
+        })
+        .where(and(eq(TargetMemoryTable.id, js.id), eq(TargetMemoryTable.project_id, projectID)))
+        .run())
+      linked++
+    }
+    return linked
   }
 
   export function projectID(sessionID: string): string | undefined {
