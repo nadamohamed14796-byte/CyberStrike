@@ -11,6 +11,7 @@ import { Validation } from "../methodology/validation"
 import { Request } from "../session/request"
 import { AgentPerformance } from "../methodology/performance"
 import { Learning } from "../learning"
+import { FindingGate } from "../methodology/finding-gate"
 
 const SEVERITY_ORDER: Record<string, number> = {
   critical: 0,
@@ -57,6 +58,7 @@ export const GenerateReportTool = Tool.define("generate_report", {
   parameters: z.object({
     include_sections: z.array(z.enum(ALL_SECTIONS)).optional().describe("Sections to include (default: all)"),
     format: z.enum(["markdown", "json"]).default("markdown").describe("Structured output format"),
+    scope_items: z.array(z.string()).optional().describe("Programmatic scope used by the report validation gate"),
   }),
   async execute(params, ctx) {
     const rootSession = Session.root(ctx.sessionID)
@@ -73,6 +75,12 @@ export const GenerateReportTool = Tool.define("generate_report", {
     const session = await Session.get(rootSession)
 
     const vulns = Vulnerability.confirmed(rootSession)
+    const findingGates = FindingGate.validateAll(rootSession, params.scope_items ?? [])
+    const blockingFindingGates = findingGates.filter((gate) => !gate.passed)
+    if (vulns.length > 0 && blockingFindingGates.length > 0) {
+      const failures = blockingFindingGates.flatMap((gate) => gate.requirements.filter((r) => !r.passed).map((r) => `#${r.id} ${r.name}: ${r.reason ?? "missing evidence"}`))
+      throw new Error(`Report blocked by finding validation gate. ${blockingFindingGates.length} finding(s) are not report-ready. ${failures.join("; ")}`)
+    }
     const intel = Intel.get(rootSession)
     const coverage = Intel.computeCoverage(rootSession)
     const assetCoverage = Intel.computePerAssetCoverage(rootSession)
