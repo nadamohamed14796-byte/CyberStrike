@@ -32,6 +32,39 @@ export function emptyTargetIntelligence(target: string): TargetIntelligence {
   return { target, updatedAt: new Date().toISOString(), accounts: [], assetRelations: [], jsAssets: [], requests: [], responses: [], functions: [], edges: [], hypotheses: [], tags: [] }
 }
 
+export function accountForRequest(request: RequestNode): TargetAccount | undefined {
+  if (!request.credentialId && !request.accountLabel) return undefined
+  const id = request.credentialId ?? "account:" + (request.accountLabel ?? "authenticated")
+  const label = request.accountLabel ?? id
+  return {
+    id,
+    label,
+    authenticationState: "authenticated",
+    firstSeen: request.observedAt,
+    lastSeen: request.observedAt,
+  }
+}
+
+export function requestsForAccount(state: TargetIntelligence, accountId: string): RequestNode[] {
+  return state.requests.filter(request =>
+    request.credentialId === accountId ||
+    accountForRequest(request)?.id === accountId,
+  )
+}
+
+export function sharedEndpointAccounts(state: TargetIntelligence): Map<string, string[]> {
+  const result = new Map<string, Set<string>>()
+  for (const request of state.requests) {
+    const account = accountForRequest(request)
+    if (!account) continue
+    const endpoint = request.path ?? request.url
+    const accounts = result.get(endpoint) ?? new Set<string>()
+    accounts.add(account.id)
+    result.set(endpoint, accounts)
+  }
+  return new Map([...result.entries()].map(([endpoint, accounts]) => [endpoint, [...accounts]]))
+}
+
 export function stableRequestId(method: string, url: string): string {
   return "req_" + Bun.hash(method.trim().toUpperCase() + "|" + url.trim()).toString(16)
 }
