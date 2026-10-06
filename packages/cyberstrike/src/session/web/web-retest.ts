@@ -143,6 +143,52 @@ export namespace WebRetest {
     }
   }
 
+  /** Claim the highest-priority pending retest for a captured request. */
+  export function claimForRequest(sessionID: string, requestID: string): Info | undefined {
+    const rows = Database.use((db) =>
+      db
+        .select()
+        .from(WebRetestQueueTable)
+        .where(
+          and(
+            eq(WebRetestQueueTable.session_id, sessionID),
+            eq(WebRetestQueueTable.request_id, requestID),
+            eq(WebRetestQueueTable.status, "pending"),
+          ),
+        )
+        .all(),
+    )
+    if (rows.length === 0) return undefined
+
+    rows.sort((a, b) => {
+      const priority = priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder]
+      return priority || a.time_created - b.time_created
+    })
+    const row = rows[0]
+    const now = Date.now()
+    const updated = Database.use((db) =>
+      db
+        .update(WebRetestQueueTable)
+        .set({ status: "processing", time_updated: now })
+        .where(and(eq(WebRetestQueueTable.id, row.id), eq(WebRetestQueueTable.status, "pending")))
+        .returning()
+        .get(),
+    )
+    if (!updated) return undefined
+
+    Database.effect(() => Bus.publish(Event.Updated, { sessionID, queue: getPending(sessionID) }))
+    return {
+      id: updated.id,
+      session_id: updated.session_id,
+      request_id: updated.request_id,
+      trigger_type: updated.trigger_type as Info["trigger_type"],
+      trigger_source: updated.trigger_source,
+      status: updated.status as Info["status"],
+      priority: updated.priority as Info["priority"],
+      time: { created: updated.time_created, updated: updated.time_updated },
+    }
+  }
+
   export function updateStatus(id: string, status: z.infer<typeof Status>): void {
     const now = Date.now()
     Database.use((db) => {
