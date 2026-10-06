@@ -9,45 +9,38 @@ export namespace RequestCorrelation {
     artifacts: ReturnType<typeof ToolArtifact.list>
   }
 
-  function hostOf(url?: string) {
+  function parsed(url?: string) {
     if (!url) return undefined
-    try { return new URL(url).host.toLowerCase() } catch { return undefined }
+    try {
+      return new URL(url)
+    } catch {
+      return undefined
+    }
   }
 
-  function pathOf(url?: string) {
-    if (!url) return undefined
-    try { return new URL(url).pathname } catch { return undefined }
+  function sameDelivery(request: Request.Info, javascript: TargetMemory.Info): boolean {
+    const jsURL = parsed(javascript.url)
+    if (!jsURL || !request.host) return false
+    if (request.host.toLowerCase() !== jsURL.host.toLowerCase()) return false
+
+    const requestPath = request.canonical_path || request.normalized_path || "/"
+    if (requestPath !== jsURL.pathname) return false
+
+    if (request.scheme && request.scheme !== jsURL.protocol.slice(0, -1)) return false
+    if (request.port && String(request.port) !== (jsURL.port || (jsURL.protocol === "https:" ? "443" : "80"))) return false
+
+    return Boolean(request.response_content_type && /(javascript|ecmascript)/i.test(request.response_content_type))
   }
 
-  /**
-   * Build the canonical JS -> request/response -> tool-artifact graph from
-   * persistent records. No second request store is introduced.
-   */
   export function forJavascript(sessionID: string, javascript: TargetMemory.Info): Node {
     const requests = Request.get(sessionID)
-    const jsHost = hostOf(javascript.url)
-    const jsPath = pathOf(javascript.url)
-    const metadata = javascript.metadata ?? {}
     const explicitRequestID = javascript.request_id ?? (
-      typeof metadata.request_id === "string" ? metadata.request_id : undefined
+      typeof javascript.metadata?.request_id === "string" ? javascript.metadata.request_id : undefined
     )
 
-    const correlated = requests.filter((request) => {
-      if (explicitRequestID && request.id === explicitRequestID) return true
-      if (jsHost && request.host?.toLowerCase() !== jsHost) return false
-      const page = hostOf(request.page_url)
-      if (page === jsHost) return true
-      const requestPath = request.canonical_path || request.normalized_path
-      // A JS response is correlated only when the request itself identifies a
-      // script response. Do not guess API relationships from shared hosts.
-      return Boolean(
-        jsPath &&
-        requestPath &&
-        jsPath === requestPath &&
-        request.response_content_type &&
-        /(javascript|ecmascript)/i.test(request.response_content_type),
-      )
-    })
+    const correlated = requests.filter((request) =>
+      Boolean(explicitRequestID && request.id === explicitRequestID) || sameDelivery(request, javascript),
+    )
 
     const ids = new Set(correlated.map((request) => request.id))
     const artifacts = ToolArtifact.list(sessionID, 500).filter((artifact) =>
@@ -62,7 +55,7 @@ export namespace RequestCorrelation {
     if (!request) return undefined
     const artifacts = ToolArtifact.byRequest(sessionID, requestID)
     const javascript = TargetMemory.listForSession(sessionID, "javascript", 500)
-      .filter((item) => item.request_id === requestID || item.url === request.page_url)
+      .filter((item) => item.request_id === requestID)
     return { request, javascript, artifacts }
   }
 }
