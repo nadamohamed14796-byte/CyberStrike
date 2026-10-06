@@ -11,6 +11,7 @@
 import z from "zod"
 import { Tool } from "./tool"
 import { Session } from "../session"
+import { WebRetest } from "../session/web/web-retest"
 import { Request } from "../session/request"
 import { WebCredential, COMMON_AUTH_HEADERS } from "../session/web/web-credential"
 import { HttpMessage } from "../replay/message"
@@ -398,6 +399,12 @@ export const HttpReplayTool = Tool.define("http_replay", {
       signal: ctx.abort,
     }
 
+    // Claim one queued retest for this captured request so it is not surfaced repeatedly.
+    const claimedRetest = params.request_id ? WebRetest.claimForRequest(sessionID, params.request_id) : undefined
+    const finishRetest = () => {
+      if (claimedRetest) WebRetest.updateStatus(claimedRetest.id, "completed")
+    }
+
     // ── Compare mode ──────────────────────────────────────────────────────
     if (params.compare) {
       const { compare } = params
@@ -431,6 +438,7 @@ export const HttpReplayTool = Tool.define("http_replay", {
         diff: buildDiff(baselineResult, exploitResult),
       }
 
+      finishRetest()
       return {
         title: `http_replay compare ${originHost}`,
         output: JSON.stringify(output, null, 2),
@@ -465,6 +473,7 @@ export const HttpReplayTool = Tool.define("http_replay", {
         { concurrency: 3 },
       )
 
+      finishRetest()
       return {
         title: `http_replay sweep (${sweep.values.length} values) ${originHost}`,
         output: JSON.stringify(results.filter(Boolean), null, 2),
@@ -495,6 +504,7 @@ export const HttpReplayTool = Tool.define("http_replay", {
       ...summarize(result, params.marker),
       curl: Apply.toCurl(msg, origin),
     }
+    finishRetest()
     return { title: `http_replay ${msg.method} ${originHost}`, output: JSON.stringify(output, null, 2), metadata: {} }
   },
 })
