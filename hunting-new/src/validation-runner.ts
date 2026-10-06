@@ -3,6 +3,7 @@ import { validateHypothesis, hasCrossAccountEvidence, type ValidationEvidence } 
 import type { HypothesisRecord } from "./hypotheses"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
+import { canonicalSignal } from "./canonical-signals"
 
 export interface ValidationPlan {
   hypothesisId: string
@@ -118,9 +119,11 @@ export function evaluateValidationRun(
     distinctVariants: variants,
     expectedImpact: "medium",
     targetConfirmed: true,
-    authorizationContextVerified: hypothesis.signal.includes("object_identifier") || hypothesis.signal.includes("authorization") || hypothesis.signal.includes("tenant_identifier")
-      ? hasCrossAccountEvidence(evidence)
-      : true,
+    authorizationContextVerified: (() => {
+      const signal=canonicalSignal(hypothesis.signal)
+      const sensitive=["object_identifier_detected","authenticated_endpoint","tenant_identifier_detected","access_control_blocked","authorization","idor"]
+      return sensitive.includes(signal) ? hasCrossAccountEvidence(evidence) : true
+    })(),
   })
   if (result.decision === "eligible") {
     return { hypothesisId: hypothesis.id, attempts, evidence, decision: "eligible", reasons: result.reasons }
