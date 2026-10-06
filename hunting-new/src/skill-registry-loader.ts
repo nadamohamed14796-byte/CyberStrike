@@ -295,6 +295,13 @@ export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
       continue
     }
     existing.triggers=[...new Set([...existing.triggers,...skill.triggers])]
+    existing.required_signals=[...new Set([...(existing.required_signals??[]),...(skill.required_signals??[])])]
+    existing.required_context=[...new Set([...existing.required_context,...skill.required_context])]
+    existing.dependencies=[...new Set([...existing.dependencies,...skill.dependencies])]
+    existing.scope_requirements=[...new Set([...existing.scope_requirements,...skill.scope_requirements])]
+    existing.validation_requirements=[...new Set([...existing.validation_requirements,...skill.validation_requirements])]
+    existing.agent_roles=existing.agent_roles ?? skill.agent_roles
+    existing.agent=existing.agent ?? skill.agent
     existing.source_path=existing.source_path ?? skill.source_path
     merged.set(skill.name,existing)
   }
