@@ -2,7 +2,6 @@ import z from "zod"
 import { Tool } from "./tool"
 import { ScopeGuard } from "./scope-check"
 import { TargetWorkspace } from "./target-workspace"
-import { ToolRegistry } from "./registry"
 import { Agent } from "../agent/agent"
 import { Provider } from "../provider/provider"
 
@@ -13,6 +12,7 @@ export const MissionPreflightTool = Tool.define("mission_preflight", {
     const scope=ScopeGuard.check(params.target,params.scope_items)
     if(!scope.inScope) throw new Error(`Preflight failed: target is out of scope: ${params.target}`)
     const workspace=await TargetWorkspace.ensure(params.target,ctx.sessionID)
+    const { ToolRegistry } = await import("./registry")
     const ids=new Set(await ToolRegistry.ids())
     const missingTools=params.required_tools.filter((id)=>!ids.has(id))
     const agents=await Agent.list()
