@@ -145,6 +145,46 @@ export namespace TargetMemory {
     }).onConflictDoNothing().run())
   }
 
+  /** Promote conservative endpoint/parameter references found in stored JavaScript. */
+  export function extractJavascriptIntel(sessionID: string): number {
+    const projectID = projectIDForSession(sessionID)
+    if (!projectID) return 0
+    const scripts = list(projectID, "javascript", 1000)
+    let stored = 0
+    const absolute = /https?:\/\/[^"'\\s<>]+/gi
+    const relative = /["'`]((?:\/api\/|\/v1\/|\/v2\/|\/graphql(?:\?|$)|\/rest\/)[A-Za-z0-9_./?=&:%{}$-]{1,240})["'`]/gi
+    const params = /[?&]([A-Za-z_][A-Za-z0-9_.-]{1,63})=/g
+    for (const js of scripts) {
+      const content = js.content ?? ""
+      if (!content) continue
+      const refs = new Set<string>()
+      for (const m of content.matchAll(absolute)) refs.add(m[0].replace(/[),.;]+$/g, ""))
+      for (const m of content.matchAll(relative)) refs.add(m[1])
+      for (const ref of refs) {
+        let url: URL
+        try { url = new URL(ref, js.url) } catch { continue }
+        if (url.protocol !== "http:" && url.protocol !== "https:") continue
+        try { Database.use((db) => db.insert(TargetMemoryTable).values({
+          id: Identifier.ascending("target_memory"), project_id: projectID, kind: "endpoint",
+          asset: url.host, method: "GET", url: url.toString(), request_id: js.request_id ?? null,
+          page_url: js.page_url ?? null, metadata: { source: "javascript", source_memory_id: js.id,
+            source_request_id: js.request_id ?? null, credential_id: js.metadata?.credential_id ?? null, extracted_url: ref },
+          time_created: Date.now(), time_updated: Date.now(),
+        }).onConflictDoNothing().run()); stored++ } catch {}
+      }
+      for (const m of content.matchAll(params)) {
+        const name = m[1]
+        try { Database.use((db) => db.insert(TargetMemoryTable).values({
+          id: Identifier.ascending("target_memory"), project_id: projectID, kind: "parameter",
+          asset: js.url, url: "memory://parameter/" + encodeURIComponent(js.url) + "/" + encodeURIComponent(name),
+          metadata: { source: "javascript", source_memory_id: js.id, source_request_id: js.request_id ?? null,
+            credential_id: js.metadata?.credential_id ?? null, parameter: name },
+          time_created: Date.now(), time_updated: Date.now(),
+        }).onConflictDoNothing().run()); stored++ } catch {}
+      }
+    }
+    return stored
+  }
   /** Link JS memories to the canonical request that delivered the script. */
   export function correlateJavascript(sessionID: string): number {
     const projectID = projectIDForSession(sessionID)
