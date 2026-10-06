@@ -6,7 +6,7 @@ import { Skill } from "../skill/skill"
 
 export namespace ReferenceLearning {
   function concepts(content: string): string[] {
-    return Array.from(new Set(content.split("\n").map((line) => line.trim()).filter((line) => /^#{1,4}\s|^- \*\*/.test(line)).map((line) => line.replace(/^#{1,4}\\s+|^- \\*\\*/g, "").trim().toLowerCase()).filter((line) => line.length >= 4 && line.length <= 120))).slice(0, 40)
+    return Array.from(new Set(content.split("\n").map((line) => line.trim()).filter((line) => /^#{1,4}\s|^- \*\*/.test(line)).map((line) => line.replace(/^#{1,4}\s+|^- \*\*/g, "").trim().toLowerCase()).filter((line) => line.length >= 4 && line.length <= 120))).slice(0, 40)
   }
 
   export function observeSkill(skill: Skill.Info, sessionID?: string): void {
