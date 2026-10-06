@@ -495,3 +495,7 @@ Hash-related challenge — what's the scenario?
 Source: https://github.com/yaklang/hack-skills
 License: MIT (Copyright (c) 2026 VillanCh)
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only; supplementary upstream files are not included.
+
+---
+## Signal and Evidence Gate
+Activate only when a concrete hash/MAC construction or oracle signal is observed. Do not infer length extension, collision, or timing weakness from a hash name alone. Verify the construction and attack preconditions before testing, preserve baseline/negative controls, and require reproducible impact.
