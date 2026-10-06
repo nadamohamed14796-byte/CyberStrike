@@ -327,7 +327,7 @@ export async function executeSignalTools(
 ):Promise<ExternalToolDispatchResult>{
   if(signal !== "parameter_discovered") return {tool,executed:false,parameters:0,reason:"signal has no external-tool adapter"}
   if(!endpoint) return {tool,executed:false,parameters:0,reason:"parameter discovery requires an endpoint"}
-  const result=await runScopedParameterDiscovery(root, target, requestId, tool)
+  const result=await runScopedParameterDiscovery(root, target, endpoint, requestId, tool)
   return {tool,executed:result.allowed,parameters:result.parameters.length,reason:result.allowed?undefined:"scope blocked"}
 }
 
