@@ -13,6 +13,7 @@ export interface AgentTask {
   skill: string
   signal: string
   signalConfidence: number
+  requestId?: string
   endpoint?: string
   functionId?: string
   target: string
@@ -145,6 +146,7 @@ export function buildMultiAgentPlanFromRegistry(
         skill: skill.name,
         signal: signal.signal,
         signalConfidence: signal.confidence,
+        requestId: typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
         target,
@@ -206,6 +208,7 @@ export function buildMultiAgentPlan(
         skill: skill.name,
         signal: signal.signal,
         signalConfidence: signal.confidence,
+        requestId: typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
         target,
