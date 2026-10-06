@@ -170,7 +170,6 @@ export async function prepareAgentTaskValidation(
     if(context.endpoint && request.path) return request.path===context.endpoint || request.url.includes(context.endpoint)
     return true
   }).sort((a,b)=>b.observedAt-a.observedAt)[0]
-  const correlatedResponse=correlated ? intelligence.responses.find(response=>response.requestId===correlated.id) : undefined
   const existing=storedHypotheses.hypotheses.find(x=>x.id===hypothesisId)
   const hypothesis:HypothesisRecord=existing ?? {
     id:hypothesisId,
@@ -400,7 +399,7 @@ export async function executeAndRecordDispatchedTask(
     ? parseExecutionResult(result.resultText,{state:result.state,outcome:"clean"})
     : undefined
   const effectiveState=parsed?.state ?? result.state
-  const attemptId=result.attemptId??prepared.attempt.id
+  const attemptId=prepared.attempt.id
   const evidenceState=await (await import("./evidence-store")).loadEvidence(root,plan.target)
   const evidenceIds=[...new Set([...(result.evidenceIds ?? []),...(parsed ? verifiedEvidenceIds(parsed,new Set(evidenceState.evidence.map(item=>item.id))) : [])])]
 
@@ -410,7 +409,9 @@ export async function executeAndRecordDispatchedTask(
     attemptId,
     {
       state:effectiveState,
-      requestId:result.requestId,
+      requestId:result.requestId??context.requestId,
+      responseId:result.responseId??context.responseId,
+      accountMode:context.accountLabel,
       resultSummary:result.resultSummary,
       evidenceIds,
       skill:context.primarySkill,
@@ -445,7 +446,7 @@ export async function executeAndRecordDispatchedTask(
     }
   }
 
-  const terminal=effectiveState==="confirmed" || effectiveState==="blocked" || lifecycle.hypothesisStatus==="rejected"
+  const terminal=effectiveState==="blocked" || lifecycle.hypothesisStatus==="confirmed" || lifecycle.hypothesisStatus==="rejected" || lifecycle.validation?.decision==="eligible"
   const taskState=effectiveState==="blocked"
     ? "blocked"
     : terminal
@@ -476,8 +477,8 @@ export async function executeTaskUntilTerminal(
     const execution=await executeAndRecordDispatchedTask(root,plan,taskId,executor)
     results.push(execution.result)
     if(
-      execution.result.state==="confirmed" ||
       execution.result.state==="blocked" ||
+      execution.lifecycle?.hypothesisStatus==="confirmed" ||
       execution.lifecycle?.hypothesisStatus==="rejected" ||
       execution.lifecycle?.validation?.decision==="eligible"
     ){
