@@ -40,3 +40,20 @@ Imported from `gprime31/WAF-bypass-xss-payloads` (master) on 2026-10-05. Preserv
 
 ## Validation gate
 A reflected string, WAF block, or payload match is not evidence of a vulnerability. Require actual execution and impact validation before reporting.
+## Signal gate
+Activate only when at least one concrete signal is present:
+- WAF block/challenge or filtering behavior observed on an XSS candidate.
+- WAF fingerprint supported by response/header/body evidence.
+- Payload transformation, normalization, or context-specific filtering is observed.
+
+Do not activate from the word "WAF" alone, from a generic 403/401, or from an unrelated XSS signal. If no WAF-specific evidence exists, hand off to the normal XSS skill instead.
+
+## Bounded testing policy
+- Start with one context-appropriate corpus and one controlled mutation at a time.
+- Keep baseline/variant request lineage so every bypass claim is reproducible.
+- Stop after 3 materially different mutations without new evidence; hand off to adaptive-testing when transformation or differential analysis is needed.
+- Never treat a successful HTTP status, reflection, or WAF evasion alone as a finding.
+- External payload collections are reference material only; validate every candidate against the observed application context.
+
+## Compatibility
+Legacy corpus copies under .cyberstrike/skill/WEB/waf-xss-bypass/payloads/ are intentionally preserved for compatibility with older workflows and references. The canonical corpus remains under this skill and both are kept intact.
