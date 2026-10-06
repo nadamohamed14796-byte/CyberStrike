@@ -269,3 +269,14 @@ java -cp ysoserial.jar ysoserial.exploit.JRMPListener 1099 CommonsCollections1 "
 Source: https://github.com/yaklang/hack-skills
 License: MIT (Copyright (c) 2026 VillanCh)
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only; supplementary upstream files are not included.
+
+---
+## Signal and Evidence Gate
+
+Activate only when attacker-controlled data reaches a concrete JNDI lookup/logging lookup/expression path. Java presence or the word `jndi` alone is not sufficient.
+
+Prefer DNS-only or otherwise benign out-of-band confirmation before any higher-impact validation. Record application/runtime evidence, lookup path, request/response references, OOB evidence, and negative controls.
+
+JNDI evaluation is distinct from generic deserialization. Route only when the observed path actually crosses into deserialization/gadget behavior; otherwise keep ownership with this specialist.
+
+Do not treat a Log4j/JNDI-looking string, scanner result, or error message as proof without server-side evaluation evidence.
