@@ -5960,6 +5960,12 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "exploit-development-sec",
+        "heap-exploitation",
+        "stack-overflow-and-rop",
+        "sandbox-escape-techniques"
       ]
     },
     {
@@ -6416,6 +6422,12 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "exploit-development-sec",
+        "stack-overflow-and-rop",
+        "arbitrary-write-to-rce",
+        "binary-protection-bypass"
       ]
     },
     {
@@ -6586,6 +6598,12 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "exploit-development-sec",
+        "heap-exploitation",
+        "stack-overflow-and-rop",
+        "binary-protection-bypass"
       ]
     },
     {
@@ -7103,6 +7121,12 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "exploit-development-sec",
+        "heap-exploitation",
+        "binary-protection-bypass",
+        "arbitrary-write-to-rce"
       ]
     },
     {
@@ -7154,6 +7178,10 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "exploit-development-sec",
+        "code-obfuscation-deobfuscation"
       ]
     },
     {
@@ -8054,7 +8082,124 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "exploit-development-sec",
+      "description": "Signal-driven exploit-development orchestration for authorized vulnerability research, CTFs, owned binaries, and explicitly scoped penetration tests.",
+      "category": "exploit-development",
+      "verified": "official",
+      "tags": [
+        "exploit-development",
+        "vulnerability-research",
+        "pwn",
+        "binary",
+        "browser",
+        "kernel",
+        "signal-driven"
+      ],
+      "tech_stack": [
+        "native",
+        "linux",
+        "windows",
+        "browser",
+        "v8",
+        "ebpf",
+        "kernel"
+      ],
+      "chains_with": [
+        "browser-exploitation-v8",
+        "ebpf-attacks",
+        "heap-exploitation",
+        "kernel-exploitation",
+        "offensive-exploit-dev-course",
+        "offensive-exploit-development",
+        "stack-overflow-and-rop",
+        "symbolic-execution-tools",
+        "format-string-exploitation",
+        "arbitrary-write-to-rce",
+        "binary-protection-bypass",
+        "sandbox-escape-techniques",
+        "vm-and-bytecode-reverse",
+        "evasion-sec"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ebpf-attacks",
+      "description": "eBPF security research and authorized post-exploitation analysis playbook for Linux kernel instrumentation and security boundaries.",
+      "category": "exploit-development",
+      "verified": "community-derived",
+      "tags": [
+        "ebpf",
+        "bpf",
+        "kernel",
+        "linux",
+        "exploit-development"
+      ],
+      "tech_stack": [
+        "linux",
+        "ebpf",
+        "kernel"
+      ],
+      "chains_with": [
+        "exploit-development-sec",
+        "kernel-exploitation"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "offensive-exploit-dev-course",
+      "description": "Exploit-development curriculum and training roadmap for authorized research, CTFs, and lab environments.",
+      "category": "exploit-development",
+      "verified": "community-derived",
+      "tags": [
+        "exploit-development",
+        "training",
+        "ctf",
+        "curriculum"
+      ],
+      "tech_stack": [
+        "native",
+        "linux",
+        "windows"
+      ],
+      "chains_with": [
+        "exploit-development-sec"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "offensive-exploit-development",
+      "description": "Operational exploit-development workflow for authorized PoC creation, debugging, reliability, and controlled validation.",
+      "category": "exploit-development",
+      "verified": "community-derived",
+      "tags": [
+        "exploit-development",
+        "poc",
+        "reliability",
+        "debugging"
+      ],
+      "tech_stack": [
+        "native",
+        "linux",
+        "windows"
+      ],
+      "chains_with": [
+        "exploit-development-sec",
+        "heap-exploitation",
+        "stack-overflow-and-rop",
+        "binary-protection-bypass"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 413
+  "skill_count": 417
 }
