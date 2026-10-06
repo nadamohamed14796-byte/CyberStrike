@@ -54,12 +54,11 @@ export function hasBehaviorChange(evidence: ValidationEvidence[]): boolean {
   if(observed.length<2)return false
   const responseSignatures=new Set(observed.map(x=>[
     x.requestId??"",
-    x.responseId??"",
     x.summary.trim(),
   ].join("|")))
   if(responseSignatures.size<2)return false
   const attempts=new Set(observed.map(x=>x.attemptId).filter(Boolean))
-  if(attempts.size>=2)return true
+  if(attempts.size>=2 && responseSignatures.size>=2)return true
   const summaries=new Set(observed.map(x=>x.summary.trim()).filter(Boolean))
   return summaries.size>=2
 }
