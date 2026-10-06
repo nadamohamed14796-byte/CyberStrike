@@ -2,6 +2,7 @@ import { ToolArtifact } from "./artifact"
 import { planReconTools } from "./recon-toolchain"
 import { ScopeGuard } from "./scope-check"
 import { ToolLearning } from "../learning/tool-learning"
+import { MissionClaims } from "../methodology/mission-claims"
 
 export namespace ReconDispatch {
   export type Input = {
@@ -14,6 +15,7 @@ export namespace ReconDispatch {
     max_tools?: number
     retry?: boolean
     max_attempts?: number
+    agent?: string
   }
 
   function key(tool: string, target: string | undefined, signal: string) {
@@ -61,7 +63,14 @@ export namespace ReconDispatch {
       input.signal,
       input.sessionID,
     )
-    return ranked.map((tool) => ({
+    const claimed = input.agent
+      ? ranked.filter((tool) => MissionClaims.claim({
+          sessionID: input.sessionID,
+          cellKey: key(tool.id, target, input.signal),
+          agent: input.agent!,
+        }).claimed)
+      : ranked
+    return claimed.map((tool) => ({
       ...tool,
       scope_verified: scopeAllowed,
       authorization_verified:
