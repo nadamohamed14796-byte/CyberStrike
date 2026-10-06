@@ -49,6 +49,7 @@ import { Shell } from "@/shell/shell"
 import { Truncate } from "@/tool/truncation"
 import { Token } from "@/util/token"
 import { MethodologyContext } from "@/methodology/context"
+import { Learning } from "../learning"
 import { AgentPerformance } from "@/methodology/performance"
 import { testerClass } from "@/tool/vuln-scope"
 import { stopHackbrowser } from "@/tool/hackbrowser-launcher"
@@ -69,6 +70,18 @@ IMPORTANT:
 - This tool provides your final answer - no further actions are taken after calling it`
 
 const STRUCTURED_OUTPUT_SYSTEM_PROMPT = `IMPORTANT: The user has requested structured output. You MUST use the StructuredOutput tool to provide your final response. Do NOT respond with plain text - you MUST call the StructuredOutput tool with your answer formatted according to the schema.`
+
+const LEARNING_TEST_TOOLS = new Set(["http_replay", "http_replay_raw", "inject_probe", "hackbrowser"])
+
+function learningTarget(args: unknown): string | undefined {
+  if (!args || typeof args !== "object") return undefined
+  const input = args as Record<string, unknown>
+  for (const key of ["target", "url", "origin", "endpoint", "host"]) {
+    const value = input[key]
+    if (typeof value === "string" && value.trim()) return value.trim().slice(0, 500)
+  }
+  return undefined
+}
 
 export namespace SessionPrompt {
   const log = Log.create({ service: "session.prompt" })
@@ -379,6 +392,15 @@ export namespace SessionPrompt {
       }
 
       step++
+      if (step === 1) {
+        await Learning.emit({
+          hook: "before_recon",
+          signal: "assessment_start",
+          sessionID,
+          agent: lastUser.agent,
+          metadata: { step },
+        })
+      }
       if (step === 1)
         ensureTitle({
           session,
@@ -1120,6 +1142,20 @@ export namespace SessionPrompt {
               }
             }
           }
+          if (LEARNING_TEST_TOOLS.has(item.id)) {
+            await Learning.emit({
+              hook: "during_testing",
+              signal: "test_step_start",
+              sessionID: ctx.sessionID,
+              agent: ctx.agent,
+              target: learningTarget(args),
+              metadata: {
+                tool: item.id,
+                callID: ctx.callID,
+              },
+            })
+          }
+
           await Plugin.trigger(
             "tool.execute.before",
             {
