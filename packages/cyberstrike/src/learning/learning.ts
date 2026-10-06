@@ -8,6 +8,9 @@ import { LearningSignalTable } from "./learning.sql"
 import { LearningRouter, type LearningHook, type LearningSignal, type RoutedSkill } from "./router"
 import { SkillIndex } from "../skill/index-engine"
 
+const sessionRoutes = new Map<string, RoutedSkill[]>()
+const MAX_SESSION_ROUTES = 256
+
 export namespace Learning {
   export const Event = {
     Signal: BusEvent.define(
@@ -51,6 +54,16 @@ export namespace Learning {
       routes = LearningRouter.route(signal)
     } catch {}
 
+    if (signal.sessionID) {
+      sessionRoutes.delete(signal.sessionID)
+      sessionRoutes.set(signal.sessionID, routes)
+      while (sessionRoutes.size > MAX_SESSION_ROUTES) {
+        const oldest = sessionRoutes.keys().next().value
+        if (!oldest) break
+        sessionRoutes.delete(oldest)
+      }
+    }
+
     const now = Date.now()
 
     try {
@@ -90,6 +103,10 @@ export namespace Learning {
     } catch {}
 
     return routes
+  }
+
+  export function routesFor(sessionID: string, limit = 8): RoutedSkill[] {
+    return (sessionRoutes.get(sessionID) ?? []).slice(0, limit)
   }
 
   export function recent(input?: { sessionID?: string; hook?: LearningHook; limit?: number }) {
