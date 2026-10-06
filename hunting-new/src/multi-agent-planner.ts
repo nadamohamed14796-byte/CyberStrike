@@ -124,7 +124,15 @@ export function buildMultiAgentPlanFromRegistry(
 
   for (const skill of decision.skills) {
     for (const signal of signalsForSkill(skill)) {
-      const key = `${skill.name}|${signal.signal}|${signal.endpoint ?? ""}|${signal.function_id ?? ""}`
+      const key = [
+        skill.name,
+        canonicalSignal(signal.signal),
+        signal.endpoint ?? "",
+        signal.function_id ?? "",
+        typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : "",
+        typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : "",
+        typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : "",
+      ].join("|")
       if (seen.has(key)) continue
       seen.add(key)
       const role = roleForSkill(skill, registry)
