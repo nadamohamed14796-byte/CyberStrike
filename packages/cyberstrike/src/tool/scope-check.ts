@@ -69,29 +69,53 @@ export const ScopeCheckTool = Tool.define("scope_check", {
   },
 })
 
-function checkMatch(target: string, scope: string): ScopeMatch {
-  if (target === scope) return { matches: true, reason: "exact match" }
-
-  if (scope.startsWith("*.")) {
-    const domain = scope.slice(2)
-    if (target === domain) return { matches: true, reason: `matches root domain of wildcard ${scope}` }
-    if (target.endsWith("." + domain)) return { matches: true, reason: `subdomain matches wildcard ${scope}` }
-    return { matches: false, reason: `does not match wildcard ${scope}` }
+function hostPort(value: string): { host: string; port: string } | undefined {
+  const raw = value.trim()
+  try {
+    const url = /^https?:\/\//i.test(raw) ? new URL(raw) : new URL(`https://${raw}`)
+    const port = url.port || (url.protocol === "https:" ? "443" : "80")
+    return { host: url.hostname.toLowerCase().replace(/\.$/, ""), port }
+  } catch {
+    return undefined
   }
+}
 
-  if (/^\d+\.\d+\.\d+\.\d+\/(?:\d|[12]\d|3[0-2])$/.test(scope)) {
+function checkMatch(target: string, scope: string): ScopeMatch {
+  const targetHost = hostPort(target)
+  const scopeValue = scope.trim().toLowerCase()
+
+  if (/^\d+\.\d+\.\d+\.\d+\/(?:\d|[12]\d|3[0-2])$/.test(scopeValue)) {
     const targetIP = extractIP(target)
     if (!targetIP) return { matches: false, reason: "target is not an IP address" }
-    const inRange = ipInCIDR(targetIP, scope)
+    const inRange = ipInCIDR(targetIP, scopeValue)
     return inRange
-      ? { matches: true, reason: `IP ${targetIP} is within CIDR ${scope}` }
-      : { matches: false, reason: `IP ${targetIP} is outside CIDR ${scope}` }
+      ? { matches: true, reason: `IP ${targetIP} is within CIDR ${scopeValue}` }
+      : { matches: false, reason: `IP ${targetIP} is outside CIDR ${scopeValue}` }
   }
 
-  const targetClean = target.replace(/^https?:\/\//, "").split("/")[0]
-  const scopeClean = scope.replace(/^https?:\/\//, "").split("/")[0]
-  if (targetClean === scopeClean) return { matches: true, reason: "domain match (ignoring protocol)" }
-  if (targetClean.endsWith("." + scopeClean)) return { matches: true, reason: `subdomain of ${scopeClean}` }
+  if (!targetHost) return { matches: false, reason: "target host could not be normalized" }
+
+  const wildcard = scopeValue.startsWith("*.")
+  const scopeHost = hostPort(wildcard ? scopeValue.slice(2) : scopeValue)
+  if (!scopeHost) return { matches: false, reason: "scope item could not be normalized" }
+
+  if (wildcard) {
+    const hostMatches = targetHost.host !== scopeHost.host && targetHost.host.endsWith("." + scopeHost.host)
+    const portMatches = targetHost.port === scopeHost.port
+    return hostMatches && portMatches
+      ? { matches: true, reason: `subdomain matches wildcard ${scopeValue}` }
+      : { matches: false, reason: `does not match wildcard ${scopeValue}` }
+  }
+
+  const hostMatches =
+    targetHost.host === scopeHost.host ||
+    targetHost.host.endsWith("." + scopeHost.host)
+  const portMatches = targetHost.port === scopeHost.port
+  if (hostMatches && portMatches) {
+    return targetHost.host === scopeHost.host
+      ? { matches: true, reason: "exact host match" }
+      : { matches: true, reason: `subdomain of ${scopeHost.host}` }
+  }
 
   return { matches: false, reason: "no match" }
 }
