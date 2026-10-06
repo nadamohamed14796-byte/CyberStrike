@@ -26,12 +26,12 @@ describe("Discovery.pull", () => {
     }
   }, 30_000)
 
-  test("returns empty array for invalid url", async () => {
+  networkTest("returns empty array for invalid url", async () => {
     const dirs = await Discovery.pull("https://example.invalid/.well-known/skills/")
     expect(dirs).toEqual([])
   })
 
-  test("returns empty array for non-json response", async () => {
+  networkTest("returns empty array for non-json response", async () => {
     const dirs = await Discovery.pull("https://example.com/")
     expect(dirs).toEqual([])
   })
