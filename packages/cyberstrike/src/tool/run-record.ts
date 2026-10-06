@@ -173,6 +173,19 @@ export namespace ToolRunRecord {
     })
   }
 
+  export function recover(sessionID: string, reason = "session recovery") {
+    const unfinishedRuns = unfinished(sessionID)
+    for (const run of unfinishedRuns) {
+      finish({
+        id: run.id,
+        status: "cancelled",
+        error: reason,
+        metadata: { recovered: true, previous_status: run.status },
+      })
+    }
+    return unfinishedRuns.length
+  }
+
   export function get(id: string) {
     return Database.use((db) => db.select().from(ToolRunRecordTable).where(eq(ToolRunRecordTable.id, id)).limit(1).get())
   }
