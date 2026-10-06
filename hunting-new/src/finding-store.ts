@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir, readJson, targetDir, writeJson } from "./store"
+import { ensureDir, readJson, targetDir, writeJson, withTargetMutationLock } from "./store"
 import type { FindingRecord } from "./findings"
 
 export interface FindingState {
@@ -22,9 +22,11 @@ export async function saveFindings(root: string, state: FindingState): Promise<F
 }
 
 export async function upsertFinding(root: string, target: string, finding: FindingRecord): Promise<FindingState> {
-  const state = await loadFindings(root, target)
-  const index = state.findings.findIndex(x => x.fingerprint === finding.fingerprint)
-  if (index === -1) state.findings.push(finding)
-  else state.findings[index] = finding
-  return saveFindings(root, state)
+  return withTargetMutationLock(root, target, async () => {
+    const state = await loadFindings(root, target)
+    const index = state.findings.findIndex(x => x.fingerprint === finding.fingerprint)
+    if (index === -1) state.findings.push(finding)
+    else state.findings[index] = finding
+    return saveFindings(root, state)
+  })
 }
