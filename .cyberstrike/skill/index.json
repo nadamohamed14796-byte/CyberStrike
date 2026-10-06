@@ -5785,6 +5785,11 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "evasion-sec",
+        "code-obfuscation-deobfuscation",
+        "offensive-edr-evasion"
       ]
     },
     {
@@ -6067,6 +6072,10 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "evasion-sec",
+        "anti-debugging-techniques"
       ]
     },
     {
@@ -6662,6 +6671,10 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "evasion-sec",
+        "offensive-anti-forensics"
       ]
     },
     {
@@ -6696,6 +6709,9 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "evasion-sec"
       ]
     },
     {
@@ -7325,6 +7341,11 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "evasion-sec",
+        "offensive-edr-evasion",
+        "anti-debugging-techniques"
       ]
     },
     {
@@ -7950,7 +7971,90 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "evasion-sec",
+      "description": "Signal-driven evasion security orchestration for authorized testing, reverse engineering, endpoint protection analysis, anti-debugging, obfuscation, security-control bypass analysis, and forensic-artifact analysis.",
+      "category": "evasion",
+      "verified": "official",
+      "tags": [
+        "evasion",
+        "anti-debugging",
+        "obfuscation",
+        "edr",
+        "av",
+        "anti-forensics",
+        "signal-driven"
+      ],
+      "tech_stack": [
+        "windows",
+        "linux",
+        "macos",
+        "native",
+        "dotnet",
+        "web"
+      ],
+      "chains_with": [
+        "anti-debugging-techniques",
+        "code-obfuscation-deobfuscation",
+        "linux-security-bypass",
+        "macos-security-bypass",
+        "offensive-anti-forensics",
+        "offensive-edr-evasion",
+        "windows-av-evasion",
+        "memory-forensics-volatility",
+        "waf-evasion"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "offensive-anti-forensics",
+      "description": "Authorized anti-forensics and forensic-artifact analysis playbook for understanding indicator removal, evidence manipulation, and defender visibility.",
+      "category": "evasion",
+      "verified": "community-derived",
+      "tags": [
+        "anti-forensics",
+        "forensics",
+        "evasion",
+        "red-team"
+      ],
+      "tech_stack": [
+        "windows",
+        "linux"
+      ],
+      "chains_with": [
+        "evasion-sec",
+        "memory-forensics-volatility"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "offensive-edr-evasion",
+      "description": "Authorized EDR evasion and endpoint-control analysis playbook for observed defensive telemetry and controlled red-team validation.",
+      "category": "evasion",
+      "verified": "community-derived",
+      "tags": [
+        "edr",
+        "evasion",
+        "endpoint-security",
+        "red-team"
+      ],
+      "tech_stack": [
+        "windows"
+      ],
+      "chains_with": [
+        "evasion-sec",
+        "windows-av-evasion",
+        "anti-debugging-techniques"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 410
+  "skill_count": 413
 }
