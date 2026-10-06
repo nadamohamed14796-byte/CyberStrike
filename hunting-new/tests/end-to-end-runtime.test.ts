@@ -6,7 +6,6 @@ import { initMission, canComplete, updateMission } from "../src/mission"
 import { signalEngineFromCorrelation } from "../src/signals"
 import { prepareMultiAgentPlan, dispatchPersistedTasks, executeTaskUntilTerminal } from "../src/multi-agent-runtime"
 import { rememberTargetIntelligence } from "../src/target-intelligence"
-import { ledgers } from "../src/ledger"
 import { loadFindings } from "../src/finding-store"
 import { loadReportsForTarget, transitionReport } from "../src/report"
 import { loadLearning } from "../src/learning-store"
@@ -122,8 +121,6 @@ describe("hunting runtime end-to-end", () => {
       expect(reports.length).toBe(1)
       expect(reports[0].status).toBe("ready")
 
-      const endpointLedger=ledgers(root,target).endpoint
-      await endpointLedger.upsert({item_id:"endpoint-1",type:"endpoint",status:"VALIDATED"})
       const completion=await canComplete(root,target)
       expect(completion.complete).toBe(true)
       await updateMission(root,target,"COMPLETED","e2e-complete")
