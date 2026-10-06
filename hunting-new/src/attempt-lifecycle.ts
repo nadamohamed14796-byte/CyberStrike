@@ -7,6 +7,7 @@ import { validateHypothesis, hasBaselineComparison, hasBehaviorChange, hasCrossA
 import { recordAttemptLearningFeedback } from "./attempt-learning-feedback"
 import { setAgentTaskState } from "./agent-task-runtime"
 import type { AttemptState } from "./adaptive-attempts"
+import { markTested, stableLedgerId } from "./ledger"
 import { canonicalSignal } from "./canonical-signals"
 
 export interface AttemptLifecycleResult {
@@ -154,6 +155,14 @@ export async function recordAttemptLifecycle(
     )
   }
 
+  await markTested(root,target,[
+    {type:"hypothesis",id:hypothesis.id,evidence_refs:recorded.evidenceIds,reason:`attempt=${recorded.id}; state=${recorded.state}`},
+    ...(update.requestId ? [{type:"request",id:update.requestId,evidence_refs:recorded.evidenceIds}] : []),
+    ...(update.endpoint ? [{type:"endpoint",id:stableLedgerId("endpoint",update.skill ? update.skill+"|"+update.endpoint : update.endpoint),evidence_refs:recorded.evidenceIds}] : []),
+    ...(hypothesis.functionId ? [{type:"function",id:hypothesis.functionId,evidence_refs:recorded.evidenceIds}] : []),
+    ...(update.evidenceIds??[]).filter(id=>evidenceState.evidence.some(item=>item.id===id && item.kind==="js-asset")).map(id=>({type:"js",id,evidence_refs:[id]})),
+    ...(update.evidenceIds??[]).filter(id=>evidenceState.evidence.some(item=>item.id===id && item.kind==="parameter")).map(id=>({type:"parameter",id,evidence_refs:[id]})),
+  ])
   await checkpointPhase(root,target,validation?.decision==="eligible" ? "validation:eligible" : "validation:state-transition")
   return {
     attemptState:recorded.state,
