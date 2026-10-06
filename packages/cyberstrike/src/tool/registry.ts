@@ -74,6 +74,7 @@ import { K8sAuditTool } from "./k8s-audit"
 import { CiAuditTool } from "./ci-audit"
 import { CipipeTool } from "./cipipe"
 import { EXTERNAL_TOOLS } from "./external-tool-registry"
+import { ExternalToolRunnerTool } from "./external-tool-runner"
 
 export namespace ToolRegistry {
   const log = Log.create({ service: "tool.registry" })
@@ -204,6 +205,7 @@ export namespace ToolRegistry {
       ReconOrchestratorTool,
       CoverageMatrixTool,
       EnsureToolsTool,
+      ExternalToolRunnerTool,
       MethodologyStatusTool,
       AttackScriptTool,
       GenerateReportTool,
