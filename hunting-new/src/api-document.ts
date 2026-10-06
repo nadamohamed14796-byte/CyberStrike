@@ -11,8 +11,10 @@ export interface OpenApiDocument {
 }
 
 function joinEndpoint(base:string,path:string){
-  const value=(base.replace(//+$/,"") + "/" + path.replace(/^/+/,"")).replace(//+/g,"/")
-  return value.replace(/^https?:/([^/])/,"https://$1")
+  const normalizedBase=base.replace(/\/+$/,"")
+  const normalizedPath=path.replace(/^\/+/, "")
+  if(/^https?:\/\//i.test(normalizedBase)) return normalizedBase + "/" + normalizedPath
+  return (normalizedBase + "/" + normalizedPath).replace(/\/+/g,"/")
 }
 
 export function extractApiSources(document:OpenApiDocument):ApiSource[]{
