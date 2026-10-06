@@ -51,6 +51,8 @@ export function buildSkillExecutionInvocation(
     `skill: ${context.primarySkill}`,
     `resolved_skills: ${context.resolvedSkills.join(", ")}`,
     `resolved_skill_paths: ${(context.resolvedSkillPaths ?? []).join(", ") || "(none)"}`,
+    `reference_ids: ${(context.referenceIds ?? []).join(", ") || "(none)"}`,
+    `reference_urls: ${(context.referenceUrls ?? []).join(", ") || "(none)"}`,
     `signal: ${context.signal}`,
     `confidence: ${context.signalConfidence}`,
     `endpoint: ${context.endpoint ?? "(none)"}`,
