@@ -37,15 +37,15 @@ export function validateHypothesis(input: ValidationInput): ValidationResult {
 
   const checks: Array<[string, boolean, string]> = [
     ["scope", input.inScope, "target is out of scope"],
-    ["target identity", input.targetConfirmed !== false, "target identity/scope was not confirmed"],
+    ["target identity", input.targetConfirmed === true, "target identity/scope was not confirmed"],
     ["execution", input.attemptsExecuted >= 20, "minimum 20 bounded validation attempts have not been completed"],
     ["variant diversity", input.distinctVariants >= 2, "at least two distinct validation variants are required"],
     ["observed evidence", observed.length > 0, "no observed non-inference evidence"],
-    ["baseline comparison", input.baselineObserved !== false, "no baseline behavior was established"],
-    ["behavior change", input.behaviorChanged !== false, "no meaningful behavior change was established"],
-    ["reproducibility", input.reproducible !== false, "result is not reproducible"],
-    ["root-cause support", input.rootCauseSupported !== false, "root cause is not sufficiently supported"],
-    ["impact", input.expectedImpact !== "none" && input.impactObserved !== false, "security impact was not established"],
+    ["baseline comparison", input.baselineObserved === true, "no baseline behavior was established"],
+    ["behavior change", input.behaviorChanged === true, "no meaningful behavior change was established"],
+    ["reproducibility", input.reproducible === true, "result is not reproducible"],
+    ["root-cause support", input.rootCauseSupported === true, "root cause is not sufficiently supported"],
+    ["impact", input.expectedImpact !== undefined && input.expectedImpact !== "none" && input.impactObserved === true, "security impact was not established"],
   ]
 
   if (input.evidence.some(x => x.kind === "inference") && observed.length === 0) {
@@ -58,7 +58,7 @@ export function validateHypothesis(input: ValidationInput): ValidationResult {
     checks[9][2] = "impact needs at least one independent supporting observation"
   }
 
-  if (input.authorizationContextVerified === false) {
+  if (input.authorizationContextVerified !== true) {
     checks[0][1] = false
     checks[0][2] = "authorization/scope context was not verified"
   }
