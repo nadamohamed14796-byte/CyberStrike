@@ -35,3 +35,12 @@ Use only on authorized targets. Prefer test accounts and synthetic data; avoid d
 ## Provenance
 Adapted from **elementalsouls/Claude-BugHunter** under **CC BY 4.0**. This is an adapted CyberStrike skill, not a verbatim copy.
 Source: https://github.com/elementalsouls/Claude-BugHunter
+
+---
+## Signal and Evidence Gate
+
+Require a concrete CORS signal such as Origin reflection, credentialed CORS policy, null-origin acceptance, allowlist weakness, preflight bypass, or browser-readable authenticated response.
+
+A scanner alert or suspicious header is not enough. Require reproducible browser behavior and demonstrated security impact for a finding.
+
+Prefer test accounts and synthetic data; preserve negative results and route only concrete chains to auth, CSRF, API, XSS, or related specialists.
