@@ -101,6 +101,11 @@ export async function prepareMultiAgentPlan(
   }
 
   await saveAgentPlan(root,plan)
+  const routedSkills=[...new Map(
+    plan.tasks.flatMap(task=>[...(task.resolvedSkills??[]).map(name=>registry.get(name))].filter((skill):skill is NonNullable<typeof skill>=>Boolean(skill)))
+      .map(skill=>[skill.name,skill] as const)
+  ).values()]
+  await indexSkillReferences(root,routedSkills)
 
   return {
     plan,
