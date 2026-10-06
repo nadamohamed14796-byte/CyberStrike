@@ -72,7 +72,19 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   const emitted = new Set<string>()
 
   const emit = (signal: Omit<Signal, "timestamp">) => {
-    const key = [signal.signal, signal.endpoint ?? "", signal.function_id ?? "", signal.source].join("|")
+    const metadata=signal.metadata ?? {}
+    const identity=String(
+      metadata.requestId ??
+      metadata.responseId ??
+      metadata.jsAssetId ??
+      metadata.parameterId ??
+      metadata.accountLabel ??
+      metadata.url ??
+      signal.function_id ??
+      signal.endpoint ??
+      "",
+    )
+    const key=[signal.signal,signal.endpoint ?? "",signal.function_id ?? "",signal.source,identity].join("|")
     if (emitted.has(key)) return
     emitted.add(key)
     out.push({
