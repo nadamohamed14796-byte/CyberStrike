@@ -133,6 +133,7 @@ export async function runDiscoveryTool(input: ToolRunRequest): Promise<ToolRunRe
 export async function runScopedParameterDiscovery(
   root: string,
   target: string,
+  endpoint: string,
   requestId?: string,
   tool: DiscoveryTool = "arjun",
 ): Promise<ToolRunResult> {
@@ -140,14 +141,14 @@ export async function runScopedParameterDiscovery(
   if (!mission) throw new Error("MISSION_NOT_FOUND")
 
   const state=await loadToolRuns(root,target)
-  const key=toolRunKey(tool,target,requestId)
+  const key=toolRunKey(tool,target,endpoint,requestId)
   const existing=state.runs.find(x=>x.id===key && x.status==="completed")
   if(existing){
     return {
       tool,target,allowed:true,exitCode:existing.exitCode,timedOut:false,output:"",
       parameters:existing.parameterNames.map(name=>({
-        id:"param_"+Bun.hash(target+"|query|"+name).toString(16),
-        name,location:"query" as const,endpoint:target,
+        id:"param_"+Bun.hash(endpoint+"|query|"+name).toString(16),
+        name,location:"query" as const,endpoint,
         requestIds:requestId?[requestId]:[],sources:["tool" as const],
         confidence:0.70,firstSeen:Date.now(),lastSeen:Date.now(),
       })),
@@ -155,11 +156,11 @@ export async function runScopedParameterDiscovery(
   }
 
   const startedAt=new Date().toISOString()
-  const result = await runDiscoveryTool({ tool, target, scope: mission.scope, root, requestId })
+  const result = await runDiscoveryTool({ tool, target: endpoint, scope: mission.scope, root, requestId })
   const status:ToolRunRecord["status"]=!result.allowed ? "blocked" : result.timedOut ? "timed_out" : result.exitCode===0 ? "completed" : "failed"
   state.runs=state.runs.filter(x=>x.id!==key)
   state.runs.push({
-    id:key,tool,target,requestId,status,exitCode:result.exitCode,
+    id:key,tool,target,endpoint,requestId,status,exitCode:result.exitCode,
     parameterNames:result.parameters.map(x=>x.name),
     startedAt,finishedAt:new Date().toISOString(),
   })
