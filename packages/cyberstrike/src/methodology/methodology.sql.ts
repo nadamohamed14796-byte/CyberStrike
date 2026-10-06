@@ -81,6 +81,27 @@ export const VrtCheckTable = sqliteTable(
 )
 
 
+
+/** Cooperative mission leases prevent agents from concurrently testing the same work cell. */
+export const MissionClaimTable = sqliteTable(
+  "mission_claim",
+  {
+    id: text().primaryKey(),
+    session_id: text().notNull().references(() => SessionTable.id, { onDelete: "cascade" }),
+    cell_key: text().notNull(),
+    agent: text().notNull(),
+    status: text().notNull(), // active, completed, released
+    expires_at: integer().notNull(),
+    result_fingerprint: text(),
+    ...Timestamps,
+  },
+  (table) => [
+    uniqueIndex("mission_claim_cell_idx").on(table.session_id, table.cell_key),
+    index("mission_claim_agent_idx").on(table.session_id, table.agent, table.status),
+    index("mission_claim_expiry_idx").on(table.expires_at),
+  ],
+)
+
 /**
  * Contextual false-positive memory. Stores validated rejection patterns separately
  * from findings so future triage can learn from them without mutating skills.
