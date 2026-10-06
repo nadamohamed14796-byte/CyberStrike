@@ -35,3 +35,10 @@ Use only on authorized targets. Prefer test accounts and synthetic data; avoid d
 ## Provenance
 Adapted from **elementalsouls/Claude-BugHunter** under **CC BY 4.0**. This is an adapted CyberStrike skill, not a verbatim copy.
 Source: https://github.com/elementalsouls/Claude-BugHunter
+
+---
+## Signal-Driven Gate
+
+Activate only when a concrete authorized credential or IAM artifact is present: AWS access key/role ARN, Azure service principal/managed identity/token, GCP service-account material, Kubernetes service-account token, or an observed IAM/RBAC/trust relationship requiring analysis.
+Do not treat a provider name, role name, public IAM documentation, or suspected secret pattern as permission to use credentials.
+Start with identity and permission discovery, then analyze the smallest plausible escalation path. Preserve scope and credential provenance for every action.
