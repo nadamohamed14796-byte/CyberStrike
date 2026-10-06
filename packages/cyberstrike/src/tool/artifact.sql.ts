@@ -8,6 +8,8 @@ export const ToolArtifactTable = sqliteTable(
     id: text().primaryKey(),
     session_id: text().references(() => SessionTable.id, { onDelete: "cascade" }),
     call_id: text(),
+    request_id: text(),
+    credential_id: text(),
     parent_id: text(),
     tool: text().notNull(),
     target: text(),
@@ -26,6 +28,8 @@ export const ToolArtifactTable = sqliteTable(
   (table) => [
     index("tool_artifact_session_idx").on(table.session_id),
     index("tool_artifact_call_idx").on(table.call_id),
+    index("tool_artifact_request_idx").on(table.session_id, table.request_id),
+    index("tool_artifact_credential_idx").on(table.session_id, table.credential_id),
     index("tool_artifact_target_idx").on(table.target),
     index("tool_artifact_tool_idx").on(table.tool),
     index("tool_artifact_signal_idx").on(table.signal),
