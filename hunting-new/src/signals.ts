@@ -50,6 +50,7 @@ export interface CorrelationSignalInput {
   jsAssets: Array<{ id: string; url: string; observedAt: number }>
   functions: Array<{ id: string; name: string; assetId?: string }>
   parameters?: Array<{ id:string; name:string; location:"path"|"query"|"body"; endpoint:string; requestIds:string[]; sources:string[]; confidence:number }>
+  parameters?: Array<{ id:string; name:string; location:"path"|"query"|"body"; endpoint:string; requestIds:string[]; confidence:number; sources:string[] }>
   edges: Array<{
     from: string
     to: string
@@ -319,6 +320,17 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         observedMethods:[...observedMethods],
         requestId:request?.id ?? null,
       },
+    })
+  }
+
+  for (const parameter of input.parameters ?? []) {
+    emit({
+      signal: "parameter_discovered",
+      source: "correlation:parameter",
+      confidence: parameter.confidence,
+      target: input.target,
+      endpoint: parameter.endpoint,
+      metadata: { parameterId: parameter.id, name: parameter.name, location: parameter.location, requestIds: parameter.requestIds, sources: parameter.sources },
     })
   }
 
