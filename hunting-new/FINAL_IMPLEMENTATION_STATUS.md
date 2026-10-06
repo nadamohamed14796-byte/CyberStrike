@@ -85,12 +85,12 @@ Implemented and integrated:
 3. Full imported-skill audit/integration for every external skill repository; the loader is dynamic but those repositories are not present in this branch.
 4. Expand config-driven role/skill-to-specialized-agent resolution to all imported skills beyond the core configured assignments.
 5. Improve automatic finding/report generation with richer validator-supplied root-cause and reproduction sections.
-6. Continuous external research ingestion is still not automated; local bounded writeup ingestion is implemented.
+6. Continuous external research ingestion is still not automated; local bounded writeup ingestion and strategy ordering are implemented.
 7. Broader cross-host graph enrichment from additional browser/network sources beyond the current observed request/redirect/JS/API-host relations.
 8. Persisted API documentation/source differential is partially implemented; full runtime ingestion into planning still needs to be wired.
 9. Elimination/unification of the legacy parallel validation models; compatibility paths still remain.
 10. End-to-end runtime fixtures are present; actual CI verification is still pending while GitHub Actions remains queued.
-11. Stronger evidence reconciliation for edge cases where the subagent reports only partial correlation metadata.
+11. Stronger evidence reconciliation for edge cases where the subagent reports only partial correlation metadata; core attempt/request/response/account/JS/function propagation is now covered.
 
 No completion claim should be made until the remaining runtime integrations are implemented and the test suite/CI is actually executed.
 
@@ -110,8 +110,8 @@ No completion claim should be made until the remaining runtime integrations are 
 ## Important unverified items
 - GitHub Actions checks have been observed in `queued` state only on the latest changes; no pass/fail result has been claimed.
 - The generic `resumeHuntingContext()` API still exposes stale claimed/running tasks until callers explicitly invoke recovery.
-- The persisted false-positive intelligence auto-load inside finding promotion remains pending because the attempted write was blocked by tooling safety.
-- The legacy `target-intelligence.ts` path-template regex still contains one escaping defect; the new fallback parser avoids it where it is used.
+- Persisted false-positive intelligence is now loaded during finding promotion and covered by a promotion-gate test.
+- The target-intelligence path-template regex has been corrected and is covered by a direct extraction test.
 - Full native end-to-end execution against a real CyberStrike session has not been executed in this environment.
 
 
@@ -137,5 +137,5 @@ Implemented since the previous checkpoint:
 Not yet green-verified:
 - GitHub Actions checks for the latest branch state are queued; no successful CI result is claimed.
 - Generic resumeHuntingContext stale-task recovery remains separate from the already-protected dispatch recovery path.
-- OpenAPI sources are persisted and supported by the signal engine, but the previously blocked runtime-constructor patch was not reattempted.
+- OpenAPI sources are persisted and the signal engine supports them; the final target-runtime handoff remains a known integration gap.
 - A full real-target native E2E still requires an execution environment with the CyberStrike runtime and an authorized target fixture.
