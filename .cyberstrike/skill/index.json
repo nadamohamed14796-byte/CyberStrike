@@ -7676,8 +7676,38 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "waf-xss-bypass",
+      "description": "XSS-specific WAF bypass analysis for authorized testing.",
+      "category": "client-side",
+      "verified": "official",
+      "tags": [
+        "xss",
+        "waf",
+        "bypass",
+        "adaptive-testing"
+      ],
+      "tech_stack": [
+        "http",
+        "web",
+        "javascript"
+      ],
+      "cwe_ids": [
+        "CWE-79"
+      ],
+      "chains_with": [
+        "waf-evasion",
+        "adaptive-technique-matcher"
+      ],
+      "prerequisites": [
+        "waf-evasion"
+      ],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 402,
-  "skills_count": 402
+  "skill_count": 403
 }
