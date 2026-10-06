@@ -2,6 +2,8 @@ import { runHuntingTask } from "../../packages/cyberstrike/src/tool/task"
 import { Instance } from "../../packages/cyberstrike/src/project/instance"
 import type { AgentTaskExecutionContext, AgentTaskExecutor } from "./multi-agent-runtime"
 import { buildSkillExecutionInvocation } from "./skill-execution-adapter"
+import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
+import { loadEvidence } from "./evidence-store"
 
 export interface NativeCyberStrikeExecutorOptions {
   agentBySkill?:Record<string,string>
@@ -28,22 +30,27 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
       parentSessionID:this.options.parentSessionID,
       model:this.options.model,
     }) })
-    const state:"executed"|"inconclusive"|"blocked"|"rejected"|"confirmed" =
-      result.outcome==="clean" ? "executed" : "inconclusive"
+    const fallbackState:"executed"|"inconclusive" = result.outcome==="clean" ? "executed" : "inconclusive"
+    const wrappedOutput=[
+      "<execution_result>",
+      `outcome: ${result.outcome}`,
+      `task_id: ${result.taskId}`,
+      "</execution_result>",
+      "",
+      result.output,
+    ].join("\n")
+    const parsed=parseExecutionResult(wrappedOutput,{state:fallbackState,outcome:result.outcome})
+    const available=(await loadEvidence(this.options.worktree ?? process.cwd(),context.target)).evidence
+    const evidenceIds=verifiedEvidenceIds(parsed,new Set(available.map(item=>item.id)))
+    const state = result.outcome==="clean" ? parsed.state : "inconclusive"
     return {
       state,
       attemptId:context.attemptId,
-      requestId:context.requestId,
-      responseId:context.responseId,
-      resultSummary:result.output.slice(0,2000),
-      resultText:[
-        "<execution_result>",
-        `outcome: ${result.outcome}`,
-        `task_id: ${result.taskId}`,
-        "</execution_result>",
-        "",
-        result.output,
-      ].join("\n"),
+      requestId:parsed.requestId ?? context.requestId,
+      responseId:parsed.responseId ?? context.responseId,
+      resultSummary:parsed.resultSummary.slice(0,2000),
+      resultText:wrappedOutput,
+      evidenceIds,
     }
   }
 }
