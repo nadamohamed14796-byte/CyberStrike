@@ -3,7 +3,7 @@ import { transitionHypothesis, loadHypotheses } from "./hypothesis-store"
 import { transitionChain, loadChains } from "./chain-store"
 import { checkpointPhase } from "./runtime-persistence"
 import { loadEvidence } from "./evidence-store"
-import { validateHypothesis, hasBaselineComparison, hasBehaviorChange, type ValidationResult } from "./validation-gate"
+import { validateHypothesis, hasBaselineComparison, hasBehaviorChange, hasCrossAccountEvidence, type ValidationResult } from "./validation-gate"
 import { recordAttemptLearningFeedback } from "./attempt-learning-feedback"
 import { setAgentTaskState } from "./agent-task-runtime"
 import type { AttemptState } from "./adaptive-attempts"
@@ -69,16 +69,29 @@ export async function recordAttemptLifecycle(
           attemptId:x.attemptId,
           requestId:x.requestId,
           responseId:x.responseId,
+          accountLabel:x.accountLabel,
         })),
         distinctVariants:variants,
         expectedImpact:"medium",
         targetConfirmed:true,
-        baselineObserved:hasBaselineComparison(linked.map(x=>({id:x.id,kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",summary:x.details||x.sourceId,independent:x.confidence>=0.8,observed:x.kind!=="inference",attemptId:x.attemptId,requestId:x.requestId,responseId:x.responseId}))),
+        baselineObserved:hasBaselineComparison(linked.map(x=>({id:x.id,kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",summary:x.details||x.sourceId,independent:x.confidence>=0.8,observed:x.kind!=="inference",attemptId:x.attemptId,requestId:x.requestId,responseId:x.responseId,accountLabel:x.accountLabel}))),
         behaviorChanged:hasBehaviorChange(linked.map(x=>({id:x.id,kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",summary:x.details||x.sourceId,independent:x.confidence>=0.8,observed:x.kind!=="inference",attemptId:x.attemptId,requestId:x.requestId,responseId:x.responseId}))),
         reproducible:variants >= 2,
         rootCauseSupported:linked.some(x=>x.kind==="function" || x.kind==="js-asset"),
         impactObserved:recorded.state==="confirmed",
-        authorizationContextVerified:true,
+        authorizationContextVerified: hypothesis.signal.includes("object_identifier") || hypothesis.signal.includes("authorization") || hypothesis.signal.includes("tenant")
+          ? hasCrossAccountEvidence(linked.map(x=>({
+              id:x.id,
+              kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",
+              summary:x.details||x.sourceId,
+              independent:x.confidence>=0.8,
+              observed:x.kind!=="inference",
+              attemptId:x.attemptId,
+              requestId:x.requestId,
+              responseId:x.responseId,
+              accountLabel:x.accountLabel,
+            })))
+          : true,
       })
     : undefined
 
