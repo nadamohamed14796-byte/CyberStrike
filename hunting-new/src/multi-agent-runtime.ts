@@ -389,6 +389,7 @@ export async function executeAndRecordDispatchedTask(
 
   if(context.signal==="parameter_discovered" && context.endpoint){
     await executeSignalTools(root,plan.target,context.signal,context.endpoint,context.requestId,"arjun")
+    await executeSignalTools(root,plan.target,context.signal,context.endpoint,context.requestId,"x8")
   }
 
   const result=await executor.execute(context)
