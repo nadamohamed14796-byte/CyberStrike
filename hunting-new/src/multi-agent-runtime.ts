@@ -87,6 +87,8 @@ export async function prepareMultiAgentPlan(
   for(const task of plan.tasks){
     const resolved=registry.selectForTask(task.skill,[task.signal,...task.strategyHints],task.signalConfidence)
     task.resolvedSkills=resolved.map(skill=>skill.name)
+    task.resolvedSkillPaths=resolved.map(skill=>skill.source_path).filter((value):value is string=>Boolean(value))
+    task.recommendedAgent=registry.get(task.skill)?.agent
   }
 
   await saveAgentPlan(root,plan)
