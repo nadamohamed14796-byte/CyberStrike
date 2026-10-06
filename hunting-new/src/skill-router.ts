@@ -2,7 +2,7 @@ import type { SignalEngine, SkillRule, SkillSelection } from "./signals"
 import { prioritizeSkills } from "./learned-prioritization"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
-import type { SkillRegistry, SkillMetadata } from "./skill-registry"
+import type { SkillRegistry } from "./skill-registry"
 import { canonicalSignal } from "./canonical-signals"
 
 export interface RoutingDecision {
