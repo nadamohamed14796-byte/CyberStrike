@@ -1,5 +1,6 @@
 import { loadAgentPlan } from "./agent-plan-store"
-import { dispatchPersistedTasks, executeAndRecordDispatchedTask, type PreparedMultiAgentPlan } from "./multi-agent-runtime"
+import { dispatchPersistedTasks, executeAndRecordDispatchedTask, prepareAgentTaskValidation, type PreparedMultiAgentPlan } from "./multi-agent-runtime"
+import { recordAttemptLifecycle } from "./attempt-lifecycle"
 import { NativeCyberStrikeExecutor } from "./native-cyberstrike-executor"
 import { finishAgentTask } from "./agent-task-runtime"
 import { checkpointPhase } from "./runtime-persistence"
@@ -63,14 +64,30 @@ export async function executePersistedDispatchWithNativeCyberStrike(
             result.lifecycle?.hypothesisStatus==="rejected" ||
             (result.lifecycle?.hypothesisStatus==="confirmed" && promotionResolved)
         }catch(error){
+          const message=error instanceof Error?error.message:String(error)
+          let lifecycle
           try{
-            await finishAgentTask(root,target,task.id,"failed")
+            const preparedAttempt=await prepareAgentTaskValidation(root,plan,task.id)
+            lifecycle=await recordAttemptLifecycle(
+              root,target,preparedAttempt.attempt.id,{
+                state:"inconclusive",
+                resultSummary:"Executor error: "+message,
+                evidenceIds:[],
+                skill:preparedAttempt.hypothesis.signal,
+                endpoint:preparedAttempt.hypothesis.endpoint,
+                confidence:preparedAttempt.hypothesis.confidence,
+                taskId:task.id,
+              },
+            )
           }catch{}
           taskResults.push({
             taskId:task.id,
-            error:error instanceof Error?error.message:String(error),
+            error:message,
+            lifecycle,
           })
-          terminal=true
+          terminal=lifecycle?.hypothesisStatus==="blocked" ||
+            lifecycle?.hypothesisStatus==="rejected" ||
+            lifecycle?.hypothesisStatus==="confirmed"
         }
       }
 
