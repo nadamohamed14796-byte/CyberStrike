@@ -159,8 +159,10 @@ export async function prepareAgentTaskValidation(
   const hypothesisId="hyp_"+Bun.hash([
     context.signal,
     context.target,
+    context.primarySkill,
     context.endpoint??"",
     context.functionId??"",
+    context.requestId??"",
   ].join("|")).toString(16)
   const storedHypotheses=await loadHypotheses(root,plan.target)
   const intelligence=await loadTargetIntelligence(root,plan.target)
