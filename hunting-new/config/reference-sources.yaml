@@ -1,0 +1,41 @@
+sources:
+  - name: portswigger-web-security-academy
+    url: https://portswigger.net/web-security
+  - name: owasp-web-security-testing-guide
+    url: https://owasp.org/www-project-web-security-testing-guide/
+  - name: owasp-api-security
+    url: https://owasp.org/API-Security/
+  - name: hackerone-hacktivity
+    url: https://hackerone.com/hacktivity
+  - name: hackerone-vrt
+    url: https://www.hackerone.com/vulnerability-rating-taxonomy
+  - name: bugcrowd-vrt
+    url: https://bugcrowd.com/vulnerability-rating-taxonomy
+  - name: intigriti-academy
+    url: https://www.intigriti.com/researchers/academy
+  - name: yeswehack-dojo
+    url: https://dojo.yeswehack.com/
+  - name: payloads-all-the-things
+    url: https://github.com/swisskyrepo/PayloadsAllTheThings
+  - name: payloadbox
+    url: https://github.com/payloadbox
+  - name: projectdiscovery
+    url: https://projectdiscovery.io/
+  - name: nuclei-templates
+    url: https://github.com/projectdiscovery/nuclei-templates
+  - name: assetnote-research
+    url: https://blog.assetnote.io/
+  - name: assetnote-wordlists
+    url: https://wordlists.assetnote.io/
+  - name: trickest
+    url: https://trickest.com/blog/
+  - name: infosecwriteups
+    url: https://infosecwriteups.com/
+  - name: medium-cybersecurity
+    url: https://medium.com/tag/cybersecurity
+  - name: pentesterland
+    url: https://pentester.land/
+  - name: portswigger-research
+    url: https://portswigger.net/research
+  - name: bishop-fox
+    url: https://bishopfox.com/blog
