@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir, readJson, targetDir, writeJson } from "./store"
+import { ensureDir, readJson, targetDir, writeJson, withTargetMutationLock } from "./store"
 import type { Attempt } from "./adaptive-attempts"
 
 export interface AttemptState {
@@ -24,9 +24,11 @@ export async function saveAttempts(root: string, state: AttemptState): Promise<A
 }
 
 export async function appendAttempt(root: string, target: string, attempt: Attempt): Promise<AttemptState> {
-  const state = await loadAttempts(root, target)
-  const index = state.attempts.findIndex(x => x.id === attempt.id)
-  if (index === -1) state.attempts.push(attempt)
-  else state.attempts[index] = attempt
-  return saveAttempts(root, state)
+  return withTargetMutationLock(root, target, async () => {
+    const state = await loadAttempts(root, target)
+    const index = state.attempts.findIndex(x => x.id === attempt.id)
+    if (index === -1) state.attempts.push(attempt)
+    else state.attempts[index] = attempt
+    return saveAttempts(root, state)
+  })
 }
