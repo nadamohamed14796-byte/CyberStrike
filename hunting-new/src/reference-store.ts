@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir, readJson, writeJson } from "./store"
+import { ensureDir, readJson, writeJson, withTargetMutationLock } from "./store"
 
 export interface ReferenceRecord {
   id:string
