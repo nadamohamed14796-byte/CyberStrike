@@ -18,6 +18,8 @@ import { loadLearning } from "./learning-store"
 import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
 import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
+import { loadMission } from "./mission"
+import { checkScope } from "./scope"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -309,9 +311,50 @@ export async function executeAndRecordDispatchedTask(
   taskId:string,
   executor:AgentTaskExecutor,
 ):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult}>{
+  const base=buildAgentTaskExecutionContext(plan,taskId)
+  const mission=await loadMission(root,plan.target)
+  if(!mission) throw new Error("MISSION_NOT_FOUND")
+  const initialScope=checkScope(plan.target,mission.scope)
+  if(!initialScope.allowed) throw new Error("VALIDATION_SCOPE_BLOCKED: "+initialScope.reason)
+
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
-  const baseContext={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
+  const baseContext={...base,attemptId:prepared.attempt.id}
   const context=await enrichAgentTaskExecutionContext(root,plan,baseContext)
+
+  const intelligence=await loadTargetIntelligence(root,plan.target)
+  const exactRequest=context.requestId
+    ? intelligence.requests.find(item=>item.id===context.requestId)
+    : undefined
+  const activeScopeTarget=exactRequest?.url ?? plan.target
+  const activeScope=checkScope(activeScopeTarget,mission.scope)
+  if(!activeScope.allowed){
+    const lifecycle=await recordAttemptLifecycle(
+      root,
+      plan.target,
+      prepared.attempt.id,
+      {
+        state:"blocked",
+        evidenceIds:[],
+        skill:context.primarySkill,
+        endpoint:context.endpoint,
+        confidence:context.signalConfidence,
+        taskId:context.taskId,
+        resultSummary:"Active scope re-check blocked validation: "+activeScope.reason,
+      },
+    )
+    return {
+      context,
+      result:{
+        state:"blocked",
+        attemptId:prepared.attempt.id,
+        requestId:context.requestId,
+        resultSummary:"Active scope re-check blocked validation: "+activeScope.reason,
+        resultText:"scope_blocked",
+      },
+      lifecycle,
+    }
+  }
+
   const result=await executor.execute(context)
   const parsed=result.resultText
     ? parseExecutionResult(result.resultText,{state:result.state,outcome:"clean"})
