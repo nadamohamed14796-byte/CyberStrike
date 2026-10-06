@@ -1,3 +1,4 @@
+import path from "node:path"
 import { runHuntingTask } from "../../packages/cyberstrike/src/tool/task"
 import { Instance } from "../../packages/cyberstrike/src/project/instance"
 import type { AgentTaskExecutionContext, AgentTaskExecutor } from "./multi-agent-runtime"
