@@ -28,3 +28,70 @@ export async function coverageGate(root:string,target:string){
   const total=result.reduce((sum,[,coverage])=>sum+coverage.total,0)
   return {complete:total>0 && pending.length===0,ledgers:Object.fromEntries(result),pending:pending.map(([name,c])=>({name,count:c.pending}))}
 }
+
+export function stableLedgerId(type:string,value:string):string {
+  return type+"_"+Bun.hash(value.trim().toLowerCase()).toString(16)
+}
+
+export async function markDiscovered(
+  root:string,
+  target:string,
+  items:Array<{type:string;id:string;metadata?:Record<string,unknown>}>,
+):Promise<void>{
+  const registry=ledgers(root,target)
+  for(const item of items){
+    const ledger=(registry as Record<string,Ledger>)[item.type]
+    if(!ledger) continue
+    const existing=(await ledger.list()).find(x=>x.item_id===item.id)
+    if(existing){
+      if(existing.status==="DISCOVERED") continue
+      continue
+    }
+    await ledger.upsert({
+      item_id:item.id,
+      type:item.type,
+      status:"DISCOVERED",
+      metadata:item.metadata,
+    })
+  }
+}
+
+export async function markTested(
+  root:string,
+  target:string,
+  items:Array<{type:string;id:string;evidence_refs?:string[];reason?:string}>,
+):Promise<void>{
+  const registry=ledgers(root,target)
+  for(const item of items){
+    const ledger=(registry as Record<string,Ledger>)[item.type]
+    if(!ledger) continue
+    const current=(await ledger.list()).find(x=>x.item_id===item.id)
+    await ledger.upsert({
+      item_id:item.id,
+      type:item.type,
+      status:current?.status==="VALIDATED" ? "VALIDATED" : "TESTED",
+      evidence_refs:[...(current?.evidence_refs??[]),...(item.evidence_refs??[])],
+      reason:item.reason??current?.reason,
+    })
+  }
+}
+
+export async function markValidated(
+  root:string,
+  target:string,
+  items:Array<{type:string;id:string;evidence_refs?:string[];reason?:string}>,
+):Promise<void>{
+  const registry=ledgers(root,target)
+  for(const item of items){
+    const ledger=(registry as Record<string,Ledger>)[item.type]
+    if(!ledger) continue
+    const current=(await ledger.list()).find(x=>x.item_id===item.id)
+    await ledger.upsert({
+      item_id:item.id,
+      type:item.type,
+      status:"VALIDATED",
+      evidence_refs:[...(current?.evidence_refs??[]),...(item.evidence_refs??[])],
+      reason:item.reason??current?.reason,
+    })
+  }
+}
