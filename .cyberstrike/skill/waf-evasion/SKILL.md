@@ -22,7 +22,7 @@ severity_boost: {}
 
 Use this skill when an authorized web security test has already attempted a baseline technique and the observed behavior suggests filtering, intermediary processing, normalization, encoding, or parser differences.
 
-This is a **cross-vulnerability adaptive skill**.
+This is a cross-vulnerability adaptive skill.
 
 It does not replace vulnerability-specific skills such as XSS, SQLi, SSTI, CMDi, XXE, or NoSQL injection.
 
@@ -43,7 +43,7 @@ This skill is responsible for:
 * comparing responses with the baseline
 * returning evidence to the originating vulnerability skill
 
-A failed payload does **not** automatically indicate a WAF.
+A failed payload does not automatically indicate a WAF.
 
 ---
 
@@ -55,7 +55,7 @@ Load this skill when:
 * The request is confirmed in scope.
 * Authorization is known.
 * The baseline request and response are preserved.
-* The failed behavior contains useful filtering/intermediary signals.
+* The failed behavior contains useful filtering or intermediary signals.
 * Additional testing could distinguish between competing hypotheses.
 
 Do not load this skill simply because:
@@ -97,8 +97,8 @@ Classify the observed behavior into the most likely category:
 | `application-validation` | Application rejected or transformed the input                 |
 | `waf-or-intermediary`    | Filtering or intermediary processing is supported by evidence |
 | `parser-differential`    | Different parser behavior is observable                       |
-| `normalization-mismatch` | Canonicalization/normalization differs between layers         |
-| `encoding-mismatch`      | Encoding/decoding differs between layers                      |
+| `normalization-mismatch` | Canonicalization or normalization differs between layers      |
+| `encoding-mismatch`      | Encoding or decoding differs between layers                   |
 | `backend-rejection`      | Backend rejected the processed input                          |
 | `unknown`                | Evidence is insufficient                                      |
 
@@ -125,20 +125,20 @@ Never report `waf-or-intermediary` as confirmed solely because a payload was blo
 
 Look for observable signals such as:
 
-| Signal                   | What to Compare                        |
-| ------------------------ | -------------------------------------- |
-| Status change            | Baseline vs variant status             |
-| Response template change | Application response vs block response |
-| Block page               | Known intermediary/block behavior      |
-| Header change            | Added/removed intermediary headers     |
-| Body marker change       | Consistent filtering markers           |
-| Reflection removal       | Input disappears before rendering      |
-| Parameter stripping      | Parameter is removed or rewritten      |
-| Request rewriting        | Observable representation changes      |
-| Parser error             | Different parser behavior              |
-| Normalization change     | Case/whitespace/delimiter behavior     |
-| Encoding change          | Input representation changes           |
-| Timing difference        | Only when reproducible and controlled  |
+| Signal                   | What to Compare                         |
+| ------------------------ | --------------------------------------- |
+| Status change            | Baseline vs variant status              |
+| Response template change | Application response vs block response  |
+| Block page               | Known intermediary/block behavior       |
+| Header change            | Added or removed intermediary headers   |
+| Body marker change       | Consistent filtering markers            |
+| Reflection removal       | Input disappears before rendering       |
+| Parameter stripping      | Parameter is removed or rewritten       |
+| Request rewriting        | Observable representation changes       |
+| Parser error             | Different parser behavior               |
+| Normalization change     | Case, whitespace, or delimiter behavior |
+| Encoding change          | Input representation changes            |
+| Timing difference        | Only when reproducible and controlled   |
 
 Each signal should be supported by evidence.
 
@@ -351,7 +351,7 @@ response_differential:
   timing_changed: false
 ```
 
-A response difference is **not automatically a vulnerability**.
+A response difference is not automatically a vulnerability.
 
 The originating vulnerability skill must validate exploitability before a finding is produced.
 
@@ -482,7 +482,7 @@ Before returning control to the originating skill:
 * [ ] Request is in scope.
 * [ ] Baseline exists.
 * [ ] Failure is characterized.
-* [ ] Filtering/intermediary behavior has supporting evidence.
+* [ ] Filtering or intermediary behavior has supporting evidence.
 * [ ] Alternative hypotheses were considered.
 * [ ] Selected technique exists in CyberStrike.
 * [ ] Required prerequisites are satisfied.
