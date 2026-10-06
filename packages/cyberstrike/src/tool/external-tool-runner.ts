@@ -4,6 +4,7 @@ import { Tool } from "./tool"
 import { EXTERNAL_TOOLS, externalTool } from "./external-tool-registry"
 import { ScopeGuard } from "./scope-check"
 import { Truncate } from "./truncation"
+import { Instance } from "../project/instance"
 
 const MAX_OUTPUT = 200_000
 const RISK_ORDER = { passive: 0, "active-read": 1, "active-test": 2, "high-impact": 3 } as const
@@ -45,7 +46,7 @@ export function buildArgv(specCommand: string, input: { target: string; paramete
   return argv
 }
 
-function riskRequiresScope(risk: typeof RISK_ORDER extends never ? never : keyof typeof RISK_ORDER) {
+function riskRequiresScope(risk: keyof typeof RISK_ORDER) {
   return risk !== "passive"
 }
 
@@ -89,7 +90,7 @@ export const ExternalToolRunnerTool = Tool.define("external_tool_runner", {
     if (!argv[0]) throw new Error(`External tool ${spec.id} has an empty command`)
 
     const proc = spawn(argv[0], argv.slice(1), {
-      cwd: process.cwd(),
+      cwd: Instance.directory,
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
     })
