@@ -13,7 +13,17 @@ export interface NetworkObservation {
 export async function ingestAndPersistObservation(root: string, target: string, graph: CorrelationGraph, observation: NetworkObservation): Promise<void> {
   ingestObservation(graph, observation)
   const response = observation.response
+  const observedAccount = observation.request.accountLabel
+    ? {
+        id: observation.request.credentialId ?? "account:" + observation.request.accountLabel,
+        label: observation.request.accountLabel,
+        authenticationState: "authenticated" as const,
+        firstSeen: observation.request.observedAt ?? Date.now(),
+        lastSeen: observation.request.observedAt ?? Date.now(),
+      }
+    : undefined
   await rememberTargetIntelligence(root, target, {
+    accounts: observedAccount ? [observedAccount] : [],
     requests: [graph.requests.get(observation.request.id)!],
     responses: response ? [graph.responses.get(response.id)!] : [],
     jsAssets: observation.jsAssets ?? [],
