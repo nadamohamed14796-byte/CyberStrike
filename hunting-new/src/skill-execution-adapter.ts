@@ -29,10 +29,11 @@ export function buildSkillExecutionInvocation(
   context:AgentTaskExecutionContext,
   options:SkillExecutionAdapterOptions={},
 ):SkillExecutionInvocation{
+  const role=context.role ?? "primary-hunter"
   const agent=options.agentBySkill?.[context.primarySkill] ??
-    options.agentByRole?.[context.role] ??
-    process.env[`HUNT_AGENT_ROLE_${context.role.toUpperCase().replace(/-/g,"_")}`] ??
-    DEFAULT_ROLE_AGENTS[context.role] ??
+    options.agentByRole?.[role] ??
+    process.env[`HUNT_AGENT_ROLE_${role.toUpperCase().replace(/-/g,"_")}`] ??
+    DEFAULT_ROLE_AGENTS[role] ??
     options.defaultAgent ??
     process.env.HUNT_DEFAULT_AGENT ??
     "web-application"
@@ -46,7 +47,7 @@ export function buildSkillExecutionInvocation(
     "Do not declare a vulnerability without sufficient evidence.",
     "",
     `target: ${context.target}`,
-    `role: ${context.role}`,
+    `role: ${role}`,
     `skill: ${context.primarySkill}`,
     `resolved_skills: ${context.resolvedSkills.join(", ")}`,
     `signal: ${context.signal}`,
