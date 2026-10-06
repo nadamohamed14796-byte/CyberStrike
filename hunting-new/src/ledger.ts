@@ -30,7 +30,11 @@ export async function coverageGate(root:string,target:string){
 }
 
 export function stableLedgerId(type:string,value:string):string {
-  return type+"_"+Bun.hash(value.trim().toLowerCase()).toString(16)
+  const raw=value.trim().toLowerCase()
+  const normalized=type==="endpoint" && raw.includes("|")
+    ? raw.slice(raw.indexOf("|")+1)
+    : raw
+  return type+"_"+Bun.hash(normalized).toString(16)
 }
 
 export async function markDiscovered(
