@@ -14,6 +14,8 @@ export interface StructuredExecutionResult {
   title?:string
   impact?:string
   remediation?:string
+  rootCause?:string
+  reproduction?:string
   outcome:SubagentOutcome
   attemptId?:string
   requestId?:string
@@ -33,6 +35,7 @@ export function buildExecutionContract():string{
     "Preserve partial evidence when execution is blocked or incomplete.",
     "Separate observed facts from hypotheses and conclusions.",
     "When state is confirmed, include explicit severity and observed impact; do not invent either.",
+    "When available, include root_cause and reproduction/steps as observed, evidence-backed text.",
 
   ].join("\n")
 }
@@ -114,6 +117,8 @@ export function parseExecutionResult(
       title:typeof record.title==="string" ? record.title.trim() || undefined : undefined,
       impact:typeof record.impact==="string" ? record.impact.trim() || undefined : undefined,
       remediation:typeof record.remediation==="string" ? record.remediation.trim() || undefined : undefined,
+      rootCause:typeof record.root_cause==="string" ? record.root_cause.trim() || undefined : typeof record.rootCause==="string" ? record.rootCause.trim() || undefined : undefined,
+      reproduction:typeof record.reproduction==="string" ? record.reproduction.trim() || undefined : typeof record.steps_to_reproduce==="string" ? record.steps_to_reproduce.trim() || undefined : undefined,
       attemptId:typeof record.attempt_id==="string" ? record.attempt_id : typeof record.attemptId==="string" ? record.attemptId : undefined,
       requestId:typeof record.request_id==="string" ? record.request_id : typeof record.requestId==="string" ? record.requestId : undefined,
       responseId:typeof record.response_id==="string" ? record.response_id : typeof record.responseId==="string" ? record.responseId : undefined,
