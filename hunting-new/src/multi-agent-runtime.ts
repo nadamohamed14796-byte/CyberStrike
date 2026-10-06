@@ -111,7 +111,7 @@ export async function prepareMultiAgentPlan(
 
 import { dispatchAgentTasks } from "./multi-agent-planner"
 import { loadTaskStates } from "./task-state-store"
-import { claimAgentTask, finishAgentTask } from "./agent-task-runtime"
+import { claimAgentTask, finishAgentTask, setAgentTaskState } from "./agent-task-runtime"
 
 export async function dispatchPersistedTasks(
   root:string,
@@ -523,6 +523,9 @@ export async function executeAndRecordDispatchedTask(
         next_action:taskState==="completed" ? null : "revisit validation",
       })
     }
+  }
+  if(!terminal){
+    await setAgentTaskState(root,plan.target,taskId,"running",Math.max(1,(await loadTaskStates(root,plan.target)).tasks.find(x=>x.taskId===taskId)?.attempts??1))
   }
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
