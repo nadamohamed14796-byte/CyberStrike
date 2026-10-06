@@ -1,4 +1,5 @@
 import { canonicalSignal, canonicalSignals } from "./canonical-signals"
+import { diffApiSources, type ApiSource } from "./api-diff"
 export type Signal={signal:string;source:string;confidence:number;target:string;timestamp:string;endpoint?:string;function_id?:string;metadata?:Record<string,unknown>}
 export type SkillRule={name:string;confidence_threshold:number;required_signals:string[];optional_signals?:string[];dependencies?:string[];priority?:number;maximum_parallel_tasks?:number}
 export type SkillSelection=SkillRule & { matchedSignals:string[]; score:number }
@@ -50,6 +51,7 @@ export interface CorrelationSignalInput {
   jsAssets: Array<{ id: string; url: string; observedAt: number }>
   functions: Array<{ id: string; name: string; assetId?: string }>
   parameters?: Array<{ id:string; name:string; location:"path"|"query"|"body"; endpoint:string; requestIds:string[]; confidence:number; sources:string[] }>
+  apiSources?: ApiSource[]
   edges: Array<{
     from: string
     to: string
@@ -329,6 +331,26 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         requestId:request?.id ?? null,
       },
     })
+  }
+
+  if(input.apiSources?.length){
+    const observedSources:ApiSource[]=input.requests
+      .filter(request=>requestSourceValue(request)==="js" || requestSourceValue(request)==="observed")
+      .map(request=>({endpoint:request.path??request.url,method:(request.method??"GET").toUpperCase(),source:requestSourceValue(request) as "js"|"observed"}))
+    for(const diff of diffApiSources([...(input.apiSources??[]),...observedSources])){
+      const separator=diff.indexOf(":")
+      const kind=separator>0 ? diff.slice(0,separator) : diff
+      const endpoint=separator>0 ? diff.slice(separator+1) : ""
+      if(!endpoint)continue
+      emit({
+        signal:kind==="METHOD_MISMATCH" ? "api_method_mismatch" : "endpoint_discovery",
+        source:"correlation:api-diff",
+        confidence:kind==="METHOD_MISMATCH" ? 0.79 : 0.65,
+        target:input.target,
+        endpoint,
+        metadata:{apiDiff:diff},
+      })
+    }
   }
 
   for (const asset of input.jsAssets) {
