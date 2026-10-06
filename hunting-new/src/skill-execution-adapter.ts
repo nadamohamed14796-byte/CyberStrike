@@ -14,7 +14,15 @@ export interface SkillExecutionInvocation {
 
 export interface SkillExecutionAdapterOptions {
   agentBySkill?:Record<string,string>
+  agentByRole?:Record<string,string>
   defaultAgent?:string
+}
+
+const DEFAULT_ROLE_AGENTS:Record<string,string>={
+  "primary-hunter":"web-application",
+  validator:"web-application",
+  correlator:"proxy-agent",
+  reviewer:"general",
 }
 
 export function buildSkillExecutionInvocation(
@@ -22,6 +30,9 @@ export function buildSkillExecutionInvocation(
   options:SkillExecutionAdapterOptions={},
 ):SkillExecutionInvocation{
   const agent=options.agentBySkill?.[context.primarySkill] ??
+    options.agentByRole?.[context.role] ??
+    process.env[`HUNT_AGENT_ROLE_${context.role.toUpperCase().replace(/-/g,"_")}`] ??
+    DEFAULT_ROLE_AGENTS[context.role] ??
     options.defaultAgent ??
     process.env.HUNT_DEFAULT_AGENT ??
     "web-application"
@@ -35,6 +46,7 @@ export function buildSkillExecutionInvocation(
     "Do not declare a vulnerability without sufficient evidence.",
     "",
     `target: ${context.target}`,
+    `role: ${context.role}`,
     `skill: ${context.primarySkill}`,
     `resolved_skills: ${context.resolvedSkills.join(", ")}`,
     `signal: ${context.signal}`,
