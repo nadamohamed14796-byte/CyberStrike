@@ -25,3 +25,5 @@ export {
   AgentPerformanceTable,
   ValidationViolationTable,
 } from "../methodology/methodology.sql"
+
+export { SkillLearningTable, SkillLearningEventTable } from "../learning/learning.sql"
