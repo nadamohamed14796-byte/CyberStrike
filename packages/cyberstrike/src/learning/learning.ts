@@ -12,10 +12,12 @@ import { ReconDispatch } from "../tool/recon-dispatch"
 import { ReferenceLearning } from "./reference"
 import { SignalQueue } from "../tool/signal-queue"
 import { ToolLearning } from "./tool-learning"
+import { Log } from "../util/log"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
 const sessionNextTools = new Map<string, ReturnType<typeof planReconTools>>()
 const MAX_SESSION_ROUTES = 256
+const log = Log.create({ service: "learning" })
 
 export namespace Learning {
   export const Event = {
@@ -59,7 +61,9 @@ export namespace Learning {
     try {
       await SkillIndex.ensureBuilt()
       routes = LearningRouter.route(signal)
-    } catch {}
+    } catch (error) {
+      log.warn("learning router failed", { error: String(error), signal: signal.signal })
+    }
 
     try {
       const activeAuthorized = signal.metadata?.authorized_active_testing === true
@@ -68,7 +72,9 @@ export namespace Learning {
         target: signal.target,
         authorized_active_testing: activeAuthorized,
       })
-    } catch {}
+    } catch (error) {
+      log.warn("recon dispatch failed", { error: String(error), signal: signal.signal })
+    }
 
     if (signal.metadata?.source_tool && signal.outcome) ToolLearning.observe({ tool: String(signal.metadata.source_tool), signal: signal.signal, sessionID: signal.sessionID, target: signal.target, outcome: /finding|useful|confirmed|validated/i.test(signal.outcome) ? "useful" : /rejected|disproven|false|duplicate/i.test(signal.outcome) ? "rejected" : "error", evidence: signal.evidence })
 
@@ -91,7 +97,9 @@ export namespace Learning {
           signal: normalized,
           toolID: tool.id,
         }))
-      } catch {}
+      } catch (error) {
+        log.warn("signal coverage check failed", { error: String(error), sessionID: signal.sessionID })
+      }
 
       sessionRoutes.delete(signal.sessionID)
       sessionRoutes.set(signal.sessionID, routes)
@@ -125,7 +133,9 @@ export namespace Learning {
           })
           .run()
       })
-    } catch {}
+    } catch (error) {
+      log.warn("learning persistence failed", { error: String(error), sessionID: signal.sessionID })
+    }
 
     try {
       await Bus.publish(Event.Signal, {
@@ -141,7 +151,9 @@ export namespace Learning {
         },
         routes,
       })
-    } catch {}
+    } catch (error) {
+      log.warn("learning event publish failed", { error: String(error), sessionID: signal.sessionID })
+    }
 
     return routes
   }
