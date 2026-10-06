@@ -62,6 +62,7 @@ import { ValidateFindingTool } from "./validate-finding"
 import { UnderstandApplicationTool } from "./understand-application"
 import { RecordVariantTool } from "./record-variant"
 import { TargetMonitorTool } from "./target-monitor"
+import { MissionPreflightTool } from "./mission-preflight"
 import { EbpfTool } from "./ebpf"
 import { WinhookTool } from "./winhook"
 import { MachookTool } from "./machook"
@@ -217,6 +218,7 @@ export namespace ToolRegistry {
       UnderstandApplicationTool,
       RecordVariantTool,
       TargetMonitorTool,
+      MissionPreflightTool,
       EbpfTool,
       WinhookTool,
       MachookTool,
