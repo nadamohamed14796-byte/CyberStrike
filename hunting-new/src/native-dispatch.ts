@@ -37,6 +37,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
     defaultAgent:options.defaultAgent,
     parentSessionID:options.parentSessionID,
     model:options.model,
+    root,
   }
 
   while(true){
