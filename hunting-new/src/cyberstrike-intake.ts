@@ -47,6 +47,7 @@ export async function ingestCyberStrikeRequest(
     sessionId:input.sessionId,
     request:input.request,
     response:input.response,
+    pageUrl:input.pageUrl,
     jsAssetIds:input.jsAssetIds,
     functionIds:input.functionIds,
   })
