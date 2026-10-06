@@ -4,6 +4,7 @@ import { Identifier } from "../id/id"
 import { SignalQueueTable } from "./signal-queue.sql"
 import { ReconDispatch } from "./recon-dispatch"
 import { normalizeSignal, SignalPhase } from "./signal-normalizer"
+import { ToolArtifact } from "./artifact"
 
 export namespace SignalQueue {
   export type Status = "pending" | "running" | "completed" | "skipped" | "failed"
@@ -66,7 +67,43 @@ export namespace SignalQueue {
       .where(eq(SignalQueueTable.id, id)).limit(1).get())
   }
 
-  function phaseFor(signal: string): SignalPhase {\n    return normalizeSignal(signal).phase\n  }\n\n  export function coverage(sessionID: string) {\n    const rows = list(sessionID, 500)\n    const phases = new Set<SignalPhase>()\n    for (const row of rows) {\n      if (row.status === "completed") phases.add(phaseFor(row.signal))\n    }\n    return { phases: Array.from(phases), completed: rows.filter((x) => x.status === "completed").length, pending: rows.filter((x) => x.status === "pending").length, running: rows.filter((x) => x.status === "running").length }\n  }\n\n  export function next(sessionID: string) {
+  function phaseFor(signal: string): SignalPhase {\n    return normalizeSignal(signal).phase\n  }\n\n  export function matrix(sessionID: string, limit = 1000) {
+    const artifacts = ToolArtifact.list(sessionID, limit)
+    const seen = new Set<string>()
+    for (const artifact of artifacts) {
+      const target = (artifact.target ?? "*").trim().toLowerCase()
+      const phase = artifact.phase ?? normalizeSignal(artifact.signal ?? "").phase
+      const signal = (artifact.signal ?? "").trim().toLowerCase() || "*"
+      seen.add(target + "::" + phase + "::" + signal + "::" + artifact.tool)
+    }
+    const queue = list(sessionID, limit)
+    for (const item of queue) {
+      const target = (item.target ?? "*").trim().toLowerCase()
+      const phase = phaseFor(item.signal)
+      const signal = item.signal.trim().toLowerCase()
+      const key = target + "::" + phase + "::" + signal
+      if (item.status === "completed") seen.add(key + "::*")
+    }
+    return {
+      entries: Array.from(seen),
+      targets: new Set(Array.from(seen).map((x) => x.split("::")[0])).size,
+      total: seen.size,
+    }
+  }
+
+  export function alreadyCovered(input: { sessionID: string; target?: string; signal: string; toolID?: string }) {
+    const target = (input.target ?? "*").trim().toLowerCase()
+    const normalized = normalizeSignal(input.signal)
+    const artifacts = ToolArtifact.list(input.sessionID, 1000)
+    return artifacts.some((artifact) => {
+      const artifactTarget = (artifact.target ?? "*").trim().toLowerCase()
+      if (artifactTarget !== target) return false
+      if (normalizeSignal(artifact.signal ?? "").signal !== normalized.signal) return false
+      return !input.toolID || artifact.tool === input.toolID
+    })
+  }
+
+  export function coverage(sessionID: string) {\n    const rows = list(sessionID, 500)\n    const phases = new Set<SignalPhase>()\n    for (const row of rows) {\n      if (row.status === "completed") phases.add(phaseFor(row.signal))\n    }\n    return { phases: Array.from(phases), completed: rows.filter((x) => x.status === "completed").length, pending: rows.filter((x) => x.status === "pending").length, running: rows.filter((x) => x.status === "running").length }\n  }\n\n  export function next(sessionID: string) {
     const rows = Database.use((db) => db.select().from(SignalQueueTable)
       .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.status, "pending")))
       .orderBy(asc(SignalQueueTable.priority), desc(SignalQueueTable.time_created))
