@@ -277,8 +277,6 @@ export interface AgentTaskExecutionContext {
   jsAssetIds?:string[]
   functionIds?:string[]
   accountLabel?:string
-  referenceIds?:string[]
-  referenceUrls?:string[]
   attemptId?:string
   reason:string
 }
