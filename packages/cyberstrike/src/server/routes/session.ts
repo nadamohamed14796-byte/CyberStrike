@@ -1271,6 +1271,8 @@ export const SessionRoutes = lazy(() =>
                 accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                 observedAt:Date.now(),
               },
+              pageUrl:body.page_url,
+              pageUrl:body.page_url,
               response:body.response ? {
                 id:"obs_"+Bun.hash([
                   sessionID,
@@ -1353,6 +1355,7 @@ export const SessionRoutes = lazy(() =>
               accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
               observedAt:req.time.created,
             },
+            pageUrl:body.page_url,
             response:body.response ? {
               id:req.id+":response",
               status:body.response.status,
