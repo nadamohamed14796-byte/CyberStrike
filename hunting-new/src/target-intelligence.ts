@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir, readJson, writeJson, targetDir } from "./store"
+import { ensureDir, readJson, writeJson, targetDir, withTargetMutationLock } from "./store"
 import type { JSAssetNode, RequestNode, ResponseNode, FunctionNode, ParameterNode, Edge } from "./correlation"
 import type { HypothesisRecord } from "./hypotheses"
 import { dedupeEdges } from "./correlation"
@@ -177,18 +177,20 @@ export async function rememberTargetIntelligence(
   target: string,
   patch: Partial<Omit<TargetIntelligence, "target" | "updatedAt">>,
 ): Promise<TargetIntelligence> {
-  const current = await loadTargetIntelligence(root, target)
-  return saveTargetIntelligence(root, {
-    ...current,
-    accounts: mergeAccounts(current.accounts ?? [], patch.accounts ?? []),
-    parameters: mergeParameters(current.parameters ?? [], patch.parameters ?? []),
-    assetRelations: dedupeAssetRelations([...(current.assetRelations ?? []), ...(patch.assetRelations ?? [])]),
-    jsAssets: mergeById(current.jsAssets, patch.jsAssets ?? []),
-    requests: mergeById(current.requests, patch.requests ?? []),
-    responses: mergeById(current.responses, patch.responses ?? []),
-    functions: mergeById(current.functions, patch.functions ?? []),
-    edges: dedupeEdges([...current.edges, ...(patch.edges ?? [])]),
-    hypotheses: mergeById(current.hypotheses, patch.hypotheses ?? []),
-    tags: [...new Set([...current.tags, ...(patch.tags ?? [])])],
+  return withTargetMutationLock(root, target, async () => {
+    const current = await loadTargetIntelligence(root, target)
+    return saveTargetIntelligence(root, {
+      ...current,
+      accounts: mergeAccounts(current.accounts ?? [], patch.accounts ?? []),
+      parameters: mergeParameters(current.parameters ?? [], patch.parameters ?? []),
+      assetRelations: dedupeAssetRelations([...(current.assetRelations ?? []), ...(patch.assetRelations ?? [])]),
+      jsAssets: mergeById(current.jsAssets, patch.jsAssets ?? []),
+      requests: mergeById(current.requests, patch.requests ?? []),
+      responses: mergeById(current.responses, patch.responses ?? []),
+      functions: mergeById(current.functions, patch.functions ?? []),
+      edges: dedupeEdges([...current.edges, ...(patch.edges ?? [])]),
+      hypotheses: mergeById(current.hypotheses, patch.hypotheses ?? []),
+      tags: [...new Set([...current.tags, ...(patch.tags ?? [])])],
+    })
   })
 }
