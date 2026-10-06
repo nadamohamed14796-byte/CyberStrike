@@ -314,6 +314,44 @@ function inferScheme(rawText: string): "http" | "https" {
 // Bridge between the ingest payload and Normalize.run. Returns null when the
 // raw text isn't a parseable HTTP request (the route then falls through to
 // the chat-style ingest path that handles plain text).
+async function feedHuntingLayerFromRequest(input:{
+  sessionID:string
+  target:string
+  request:{
+    id:string
+    method:string
+    url:string
+    host?:string
+    path?:string
+    credentialId?:string
+    accountLabel?:string
+    observedAt?:number
+  }
+  response?:{
+    id:string
+    status:number
+    headers?:Record<string,string>
+    contentType?:string
+    bodyHash?:string
+    observedAt?:number
+  }
+  jsAssetIds?:string[]
+  functionIds?:string[]
+}):Promise<void>{
+  if(process.env.HUNTING_LAYER_ENABLED==="false")return
+  try{
+    const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
+    const { ingestCyberStrikeRequest }=await import("../../../../hunting-new/src/cyberstrike-intake")
+    await ingestCyberStrikeRequest(root,input)
+  }catch(error){
+    log.warn("hunting layer intake failed",{
+      sessionID:input.sessionID,
+      target:input.target,
+      error:error instanceof Error?error.message:String(error),
+    })
+  }
+}
+
 async function runNormalize(
   body: {
     text: string
@@ -1264,6 +1302,32 @@ export const SessionRoutes = lazy(() =>
 
           // New endpoint shape: record the first observation, linked to the row.
           recordObservation(req.id)
+
+          // Feed the canonical observed request/response into the persistent
+          // hunting layer. This is best-effort so the existing ingest pipeline
+          // remains authoritative if the optional hunting layer is unavailable.
+          void feedHuntingLayerFromRequest({
+            sessionID,
+            target:normalized.site || normalized.host,
+            request:{
+              id:req.id,
+              method:req.method,
+              url:normalized.origin + normalized.normalizedPath,
+              host:normalized.host,
+              path:normalized.normalizedPath,
+              credentialId,
+              accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+              observedAt:req.time.created,
+            },
+            response:body.response ? {
+              id:req.id+":response",
+              status:body.response.status,
+              headers:body.response.headers,
+              contentType:body.response.headers["content-type"],
+              bodyHash:normalized.bodyHash,
+              observedAt:req.time.created,
+            } : undefined,
+          })
 
           // Build the prompt as a thunk so the `## Observed Values` block reflects the
           // observation state at SEND time, not at enqueue time. Prompts queue (LLM calls
