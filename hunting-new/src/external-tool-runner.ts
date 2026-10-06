@@ -20,6 +20,7 @@ export interface ToolRunRecord {
   id:string
   tool:DiscoveryTool
   target:string
+  endpoint:string
   requestId?:string
   status:"completed"|"timed_out"|"failed"|"blocked"|"skipped"
   exitCode:number|null
@@ -57,8 +58,8 @@ async function saveToolRuns(root:string,state:ToolRunState){
   })
 }
 
-function toolRunKey(tool:DiscoveryTool,target:string,requestId?:string){
-  return Bun.hash(tool+"|"+target+"|"+(requestId??"")).toString(16)
+function toolRunKey(tool:DiscoveryTool,target:string,endpoint:string,requestId?:string){
+  return Bun.hash(tool+"|"+target+"|"+endpoint+"|"+(requestId??"")).toString(16)
 }
 
 export async function listToolRuns(root:string,target:string):Promise<ToolRunRecord[]>{
