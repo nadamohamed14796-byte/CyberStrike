@@ -22,6 +22,7 @@ import { loadMission } from "./mission"
 import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
+import { ensureAttemptEvidence } from "./evidence-store"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -400,8 +401,9 @@ export async function executeAndRecordDispatchedTask(
     : undefined
   const effectiveState=parsed?.state ?? result.state
   const attemptId=prepared.attempt.id
+  const executionEvidenceIds=await ensureAttemptEvidence(root,plan.target,{attemptId:prepared.attempt.id,requestId:result.requestId??context.requestId,responseId:result.responseId??context.responseId,accountLabel:context.accountLabel})
   const evidenceState=await (await import("./evidence-store")).loadEvidence(root,plan.target)
-  const evidenceIds=[...new Set([...(result.evidenceIds ?? []),...(parsed ? verifiedEvidenceIds(parsed,new Set(evidenceState.evidence.map(item=>item.id))) : [])])]
+  const evidenceIds=[...new Set([...executionEvidenceIds,...(result.evidenceIds ?? []),...(parsed ? verifiedEvidenceIds(parsed,new Set(evidenceState.evidence.map(item=>item.id))) : [])])]
 
   const lifecycle=await recordAttemptLifecycle(
     root,
