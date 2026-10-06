@@ -7805,7 +7805,41 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "cors-sec",
+      "description": "Signal-driven CORS security orchestration for origin trust, credentialed browser reads, preflight policy, cache interaction, and cross-origin trust chains.",
+      "category": "web-application",
+      "verified": "official",
+      "tags": [
+        "cors",
+        "cross-origin",
+        "browser-security",
+        "access-control",
+        "signal-driven"
+      ],
+      "tech_stack": [
+        "web",
+        "http",
+        "javascript"
+      ],
+      "cwe_ids": [
+        "CWE-942",
+        "CWE-346"
+      ],
+      "chains_with": [
+        "cors-cross-origin-misconfiguration",
+        "hunt-cors",
+        "attack-cors",
+        "auth-sec",
+        "csrf-cross-site-request-forgery",
+        "api-sec",
+        "clickjacking"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 406
+  "skill_count": 407
 }
