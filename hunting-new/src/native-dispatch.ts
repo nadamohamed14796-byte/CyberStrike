@@ -57,9 +57,11 @@ export async function executePersistedDispatchWithNativeCyberStrike(
             new NativeCyberStrikeExecutor(executorOptions),
           )
           taskResults.push(result)
-          terminal=result.lifecycle?.hypothesisStatus==="confirmed" ||
+          const eligible=result.lifecycle?.validation?.decision==="eligible"
+          const promotionResolved=!eligible || Boolean(result.promotion?.reportable) || result.promotion?.action==="skip"
+          terminal=result.lifecycle?.hypothesisStatus==="blocked" ||
             result.lifecycle?.hypothesisStatus==="rejected" ||
-            result.lifecycle?.hypothesisStatus==="blocked"
+            (result.lifecycle?.hypothesisStatus==="confirmed" && promotionResolved)
         }catch(error){
           try{
             await finishAgentTask(root,target,task.id,"failed")
