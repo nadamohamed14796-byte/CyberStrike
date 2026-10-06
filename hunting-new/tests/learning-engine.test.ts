@@ -11,3 +11,16 @@ describe("learning engine", () => {
     expect(scores[0].confirmed).toBe(1)
   })
 })
+
+
+describe("confidence weighting", () => {
+  test("lower-confidence observations contribute less to utility", () => {
+    const high=new LearningEngine()
+    high.record({target:"example.test",signal:"x",skill:"s",strategy:"high",outcome:"confirmed",confidence:1})
+    high.record({target:"example.test",signal:"x",skill:"s",strategy:"high",outcome:"false_positive",confidence:0.1})
+    const low=new LearningEngine()
+    low.record({target:"example.test",signal:"x",skill:"s",strategy:"high",outcome:"confirmed",confidence:0.1})
+    low.record({target:"example.test",signal:"x",skill:"s",strategy:"high",outcome:"false_positive",confidence:1})
+    expect(high.score("example.test")[0].utility).toBeGreaterThan(low.score("example.test")[0].utility)
+  })
+})
