@@ -24,3 +24,25 @@ describe("target intelligence persistence", () => {
     }
   })
 })
+
+
+import { discoverRequestParameters } from "../src/target-intelligence"
+
+describe("request parameter discovery", () => {
+  test("discovers query, path-template, and JSON body parameters", () => {
+    const request={
+      id:"req-params",
+      sessionId:"s1",
+      method:"POST",
+      url:"https://example.test/api/users/{id}?include=profile",
+      path:"/api/users/{id}",
+      rawRequest:"POST /api/users/123 HTTP/1.1\nHost: example.test\nContent-Type: application/json\n\n{\"role\":\"user\"}",
+      observedAt:1,
+      source:"observed" as const,
+    } as any
+    const names=discoverRequestParameters(request).map(x=>x.name)
+    expect(names).toContain("include")
+    expect(names).toContain("id")
+    expect(names).toContain("role")
+  })
+})
