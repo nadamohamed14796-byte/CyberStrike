@@ -3,6 +3,8 @@ import { ingestAndPersistObservation } from "./intake"
 import { loadTargetIntelligence } from "./target-intelligence"
 import { loadMission } from "./mission"
 import { buildAssetRelation } from "./cross-host-graph"
+import type { ParamSlot } from "../../packages/cyberstrike/src/session/normalize/types"
+import { discoverParameters } from "./parameter-discovery"
 
 export interface CyberStrikeIntakeRecord{
   target:string
@@ -28,6 +30,7 @@ export interface CyberStrikeIntakeRecord{
   pageUrl?:string
   jsAssetIds?:string[]
   functionIds?:string[]
+  observedParams?:ParamSlot[]
 }
 
 export async function ingestCyberStrikeRequest(
@@ -43,6 +46,12 @@ export async function ingestCyberStrikeRequest(
     functions:intelligence.functions,
     edges:intelligence.edges,
   })
+  const parameters=discoverParameters({
+    endpoint:input.request.path ?? input.request.url,
+    requestId:input.request.id,
+    observedAt:input.request.observedAt ?? Date.now(),
+    slots:input.observedParams ?? [],
+  })
   await ingestAndPersistObservation(root,input.target,graph,{
     sessionId:input.sessionId,
     request:input.request,
@@ -50,6 +59,7 @@ export async function ingestCyberStrikeRequest(
     pageUrl:input.pageUrl,
     jsAssetIds:input.jsAssetIds,
     functionIds:input.functionIds,
+    parameters,
   })
 
   const host=input.request.host
