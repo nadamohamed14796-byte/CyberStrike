@@ -14,7 +14,7 @@ describe("signal normalization", () => {
   })
 
   test("computes phase direction", () => {
-    expect(phaseDistance("live-http" as any, "api-discovery")).toBeGreaterThan(0)
+    expect(phaseDistance("http-validation", "api-discovery")).toBeGreaterThan(0)
     expect(phaseDistance("api-discovery", "vulnerability-validation")).toBeGreaterThan(0)
   })
 })
