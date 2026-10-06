@@ -2,6 +2,7 @@ import { and, asc, desc, eq, sql } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { SignalQueueTable } from "./signal-queue.sql"
+import { ReconDispatch } from "./recon-dispatch"
 
 export namespace SignalQueue {
   export type Status = "pending" | "running" | "completed" | "skipped" | "failed"
