@@ -113,7 +113,13 @@ export function addRequest(graph: CorrelationGraph, node: RequestNode): void {
   graph.requests.set(node.id, node)
 }
 
-export function addParameter(graph: CorrelationGraph, node: ParameterNode): void {\n  if (!graph.requests.has(node.requestId)) throw new Error(`Cannot attach parameter to unknown request: ${node.requestId}`)\n  graph.parameters.set(node.id, node)\n  graph.edges.push({ from: node.id, to: node.requestId, kind: "observed-on", confidence: 1, evidence: node.source })\n}\n\nexport function addResponse(graph: CorrelationGraph, node: ResponseNode): void {
+export function addParameter(graph: CorrelationGraph, node: ParameterNode): void {
+  if (!graph.requests.has(node.requestId)) throw new Error(`Cannot attach parameter to unknown request: ${node.requestId}`)
+  graph.parameters.set(node.id, node)
+  graph.edges.push({ from: node.id, to: node.requestId, kind: "observed-on", confidence: 1, evidence: node.source })
+}
+
+export function addResponse(graph: CorrelationGraph, node: ResponseNode): void {
   if (!graph.requests.has(node.requestId)) throw new Error(`Cannot attach response to unknown request: ${node.requestId}`)
   graph.responses.set(node.id, node)
   graph.edges.push({ from: node.id, to: node.requestId, kind: "responds-to", confidence: 1, evidence: "observed" })
