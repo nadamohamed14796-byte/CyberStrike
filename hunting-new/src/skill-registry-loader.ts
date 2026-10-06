@@ -1,4 +1,5 @@
 import path from "node:path"
+import { readdir, readFile } from "node:fs/promises"
 import { readJson } from "./store"
 import { SkillRegistry, type SkillMetadata } from "./skill-registry"
 
@@ -92,6 +93,94 @@ const CONFIG_SKILL_ALIASES:Record<string,string>={
   "javascript_intelligence":"analyze-js",
 }
   
+async function collectSkillFiles(root:string):Promise<string[]>{
+  const output:string[]=[]
+  async function visit(dir:string):Promise<void>{
+    let entries
+    try{ entries=await readdir(dir,{withFileTypes:true}) }catch{ return }
+    for(const entry of entries){
+      const full=path.join(dir,entry.name)
+      if(entry.isDirectory()){ await visit(full); continue }
+      if(entry.isFile() && entry.name==="SKILL.md") output.push(full)
+    }
+  }
+  await visit(root)
+  return output
+}
+
+function parseFrontmatter(text:string):Record<string,string>{
+  const match=text.match(/^---\\s*\\n([\\s\\S]*?)\\n---/m)
+  if(!match)return {}
+  const values:Record<string,string>={}
+  for(const line of match[1].split(/\\r?\\n/)){
+    const field=line.match(/^([A-Za-z0-9_-]+):\\s*(.+)$/)
+    if(!field)continue
+    values[field[1]]=field[2].trim().replace(/^["']|["']$/g,"")
+  }
+  return values
+}
+
+function inferExternalTriggers(name:string,category:string,text:string):string[]{
+  const haystack=(name+" "+category+" "+text.slice(0,8000)).toLowerCase()
+  const triggers=new Set<string>([name,category].filter(Boolean))
+  const rules:Array<[RegExp,string[]]>=[
+    [/\\b(?:idor|bola|broken[- ]object|object[- ]authorization)\\b/,"object_identifier_detected"],
+    [/\\b(?:auth|authentication|login|mfa|oauth|saml|session)\\b/,"authenticated_endpoint"],
+    [/\\b(?:waf|firewall|403|406|429|bypass)\\b/,["waf_signal_detected","access_control_blocked"] as unknown as string],
+    [/\\b(?:graphql)\\b/,["graphql_detected"] as unknown as string],
+    [/\\b(?:websocket)\\b/,["websocket_detected"] as unknown as string],
+    [/\\b(?:jwt)\\b/,["jwt_detected"] as unknown as string],
+    [/\\b(?:javascript|dom|xss|prototype[- ]pollution|source[- ]map)\\b/,["javascript_asset","javascript_function_request_correlation"] as unknown as string],
+    [/\\b(?:api|rest|grpc|json[- ]rpc)\\b/,["endpoint_discovery","api_method_mismatch"] as unknown as string],
+    [/\\b(?:recon|enumeration|subdomain|vhost|osint)\\b/,["endpoint_discovery"] as unknown as string],
+    [/\\b(?:upload|file)\\b/,["file_upload_detected"] as unknown as string],
+    [/\\b(?:redirect)\\b/,["redirect_parameter_detected"] as unknown as string],
+    [/\\b(?:source[- ]leak|secret)\\b/,["source_map_detected"] as unknown as string],
+  ]
+  for(const [pattern,values] of rules){
+    if(!pattern.test(haystack))continue
+    if(Array.isArray(values)) for(const value of values) triggers.add(value)
+    else triggers.add(values)
+  }
+  return [...triggers].filter(Boolean)
+}
+
+async function loadExternalSkills(root:string):Promise<SkillMetadata[]>{
+  const configured=(process.env.HUNT_EXTERNAL_SKILL_ROOTS??"").split(path.delimiter).map(x=>x.trim()).filter(Boolean)
+  const home=process.env.HOME ?? ""
+  const defaults=[
+    path.resolve(home,"bug-bounty-agent","skills"),
+    path.resolve(home,".agents","skills"),
+    path.resolve(root,"skills"),
+  ].filter(value=>value && !configured.includes(value))
+  const roots=[...configured,...defaults]
+  const files=[...new Set((await Promise.all(roots.map(collectSkillFiles))).flat())]
+  const skills:SkillMetadata[]=[]
+  for(const file of files){
+    let textValue:string
+    try{ textValue=await readFile(file,"utf8") }catch{ continue }
+    const rel=file.split(path.sep)
+    const skillName=rel[rel.length-2] || path.basename(file,".md")
+    const frontmatter=parseFrontmatter(textValue)
+    const category=rel.includes("redteam") ? "redteam" : rel.includes("recon") ? "recon" : rel.includes("auth") ? "authentication" : rel.includes("infra") ? "infrastructure" : rel.includes("skills") ? "web-application" : "external"
+    const name=frontmatter.name || skillName
+    skills.push({
+      name,
+      category,
+      description:frontmatter.description || name,
+      triggers:inferExternalTriggers(name,category,textValue),
+      required_context:["authorized-scope"],
+      dependencies:[],
+      risk_level:"medium",
+      scope_requirements:["authorized-scope"],
+      validation_requirements:["evidence"],
+      confidence_threshold:0.5,
+      maximum_parallel_tasks:1,
+      source_path:file,
+    })
+  }
+  return skills
+}
 async function loadConfiguredSignalMappings(root:string):Promise<Map<string,string[]>>{
   const file=path.join(root,"config","skills.yaml")
   if(!await Bun.file(file).exists())return new Map()
@@ -128,6 +217,17 @@ export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
     if(entry.name)merged.set(entry.name,indexMetadata(entry))
   }
   for(const skill of WEB_SKILLS)merged.set(skill.name,skill)
+
+  for(const skill of await loadExternalSkills(root)){
+    const existing=merged.get(skill.name)
+    if(!existing){
+      merged.set(skill.name,skill)
+      continue
+    }
+    existing.triggers=[...new Set([...existing.triggers,...skill.triggers])]
+    existing.source_path=existing.source_path ?? skill.source_path
+    merged.set(skill.name,existing)
+  }
 
   const configured=await loadConfiguredSignalMappings(root)
   for(const [skillName,signals] of configured){
