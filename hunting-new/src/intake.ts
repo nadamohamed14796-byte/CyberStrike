@@ -29,7 +29,7 @@ export async function ingestAndPersistObservation(root:string,target:string,grap
 
   await markDiscovered(root,target,[
     {type:"request",id:observation.request.id,metadata:{method:observation.request.method,url:observation.request.url}},
-    {type:"endpoint",id:stableLedgerId("endpoint",observation.request.method+"|"+(observation.request.path??observation.request.url)),metadata:{method:observation.request.method,endpoint:observation.request.path??observation.request.url}},
+    {type:"endpoint",id:stableLedgerId("endpoint",observation.request.path??observation.request.url),metadata:{method:observation.request.method,endpoint:observation.request.path??observation.request.url}},
     ...[...graph.parameters.values()].filter(node=>node.requestId===observation.request.id).map(node=>({type:"parameter",id:node.id,metadata:{name:node.name,location:node.location}})),
     ...[...graph.assets.values()].map(asset=>({type:"js",id:asset.id,metadata:{url:asset.url}})),
   ])
