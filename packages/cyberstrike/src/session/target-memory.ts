@@ -3,7 +3,6 @@ import { Request } from "./request"
 import { TargetMemoryTable } from "./target-memory.sql"
 import { SessionTable } from "./session.sql"
 import { Identifier } from "../id/id"
-import type { Request } from "./request"
 
 export namespace TargetMemory {
   export type Kind = "endpoint" | "javascript" | "asset" | "technology" | "parameter" | "finding" | "rejected-finding" | "technique"
