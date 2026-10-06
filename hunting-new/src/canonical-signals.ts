@@ -17,6 +17,10 @@ export const SIGNAL_ALIASES: Record<string,string> = {
   "endpoint-discovery": "endpoint_discovery",
   "access-control-blocked": "access_control_blocked",
   "waf-signal-detected": "waf_signal_detected",
+  "parameter-discovered": "parameter_discovered",
+  "parameter-discovery": "parameter_discovered",
+  "multiple-account": "multiple_accounts",
+  "multiple-accounts": "multiple_accounts",
 }
 
 export function canonicalSignal(signal: string): string {
