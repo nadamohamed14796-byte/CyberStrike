@@ -3,6 +3,7 @@ import { routeSkills, routeRegisteredSkills, type RoutingDecision } from "./skil
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import type { SkillRegistry, SkillMetadata } from "./skill-registry"
+import { canonicalSignal } from "./canonical-signals"
 
 export type HuntingAgentRole = "primary-hunter" | "validator" | "correlator" | "reviewer"
 
@@ -93,7 +94,7 @@ export function buildMultiAgentPlanFromRegistry(
 
   const decision: RoutingDecision = routeRegisteredSkills(engine, registry, target, learning, falsePositives)
 
-  const signalByName = new Map(signals.map(signal => [signal.signal, signal]))
+  const signalsForSkill = (skill: SkillSelection) => signals.filter(signal => skill.matchedSignals.includes(canonicalSignal(signal.signal)))
   const lanes: MultiAgentPlan["lanes"] = {
     "primary-hunter": [],
     validator: [],
@@ -104,9 +105,7 @@ export function buildMultiAgentPlanFromRegistry(
   const seen = new Set<string>()
 
   for (const skill of decision.skills) {
-    for (const signalName of skill.matchedSignals) {
-      const signal = signalByName.get(signalName)
-      if (!signal) continue
+    for (const signal of signalsForSkill(skill)) {
       const key = `${skill.name}|${signal.signal}|${signal.endpoint ?? ""}|${signal.function_id ?? ""}`
       if (seen.has(key)) continue
       seen.add(key)
@@ -162,10 +161,7 @@ export function buildMultiAgentPlan(
   const seen = new Set<string>()
 
   for (const skill of decision.skills) {
-    const matched = skill.matchedSignals
-      .map(name => signalByName.get(name))
-      .filter((signal): signal is NonNullable<typeof signal> => Boolean(signal))
-      .sort((a, b) => b.confidence - a.confidence)
+    const matched = signalsForSkill(skill).sort((a, b) => b.confidence - a.confidence)
 
     for (const signal of matched) {
       const key = `${skill.name}|${signal.signal}|${signal.endpoint ?? ""}|${signal.function_id ?? ""}`
