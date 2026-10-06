@@ -10,6 +10,7 @@ import type { ValidationResult, ValidationEvidence } from "./validation-gate"
 import { validateHypothesis } from "./validation-gate"
 import { loadMission } from "./mission"
 import { checkScope } from "./scope"
+import { writeReport, createReportRecord } from "./report"
 
 export interface FindingPromotionInput {
   hypothesisId:string
@@ -77,7 +78,9 @@ export async function promoteValidatedHypothesis(
   if(!completeness.complete){await upsertFinding(root,target,finding);return {finding,reportable:false,missing:completeness.missing,action:"recheck",reason:"finding evidence is incomplete"}}
   const validated=markReportable(finding)
   await upsertFinding(root,target,validated)
-  return {finding:validated,reportable:true,missing:[],action:"create",reason:"validated finding passed report evidence gate"}
+  const reportFile=await writeReport(root,validated)
+  await createReportRecord(root,validated,reportFile)
+  return {finding:validated,reportable:true,missing:[],action:"create",reason:"validated finding passed report evidence gate and report was created"}
 }
 export async function findStoredFinding(root:string,target:string,fingerprint:string){
   const state=await loadFindings(root,target)
