@@ -37,7 +37,7 @@ export async function autoDispatchForTarget(
     return {enabled:false,started:false,reason:"HUNTING_AUTO_EXECUTE is not enabled"}
   }
   const previous=queues.get(target) ?? Promise.resolve()
-  const current=previous.then(()=>run(root,target,options))
+  const current=previous.catch(()=>undefined).then(()=>run(root,target,options))
   queues.set(target,current)
   try{
     return await current
