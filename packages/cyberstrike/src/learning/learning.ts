@@ -9,6 +9,7 @@ import { LearningRouter, type LearningHook, type LearningSignal, type RoutedSkil
 import { SkillIndex } from "../skill/index-engine"
 import { planReconTools } from "../tool/recon-toolchain"
 import { ReconDispatch } from "../tool/recon-dispatch"
+import { ReferenceLearning } from "./reference"
 import { SignalQueue } from "../tool/signal-queue"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
