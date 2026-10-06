@@ -42,6 +42,7 @@ export async function prepareMultiAgentPlanFromTargetIntelligence(
     responses:intelligence.responses,
     jsAssets:intelligence.jsAssets,
     functions:intelligence.functions,
+    parameters:intelligence.parameters,
     edges:intelligence.edges,
   })
   const registry=await loadSkillRegistry(root)
