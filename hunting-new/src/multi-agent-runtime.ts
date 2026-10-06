@@ -159,13 +159,14 @@ export async function prepareAgentTaskValidation(
   taskId:string,
 ):Promise<PreparedTaskValidation>{
   const context=buildAgentTaskExecutionContext(plan,taskId)
+  const accountSensitive=["multiple_accounts","object_identifier_detected","tenant_identifier_detected","authenticated_endpoint"].includes(context.signal)
   const hypothesisId="hyp_"+Bun.hash([
     context.signal,
     context.target,
     context.primarySkill,
     context.endpoint??"",
     context.functionId??"",
-    context.requestId??"",
+    accountSensitive ? "" : (context.requestId??""),
   ].join("|")).toString(16)
   const storedHypotheses=await loadHypotheses(root,plan.target)
   const intelligence=await loadTargetIntelligence(root,plan.target)
