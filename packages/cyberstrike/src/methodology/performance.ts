@@ -213,8 +213,7 @@ export namespace AgentPerformance {
       }
     }
 
-    return lines.join("
-")
+    return lines.join("\n")
   }
 
   // --- Agent Meta ---
