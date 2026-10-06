@@ -5,6 +5,7 @@ import { buildSkillExecutionInvocation } from "./skill-execution-adapter"
 
 export interface NativeCyberStrikeExecutorOptions {
   agentBySkill?:Record<string,string>
+  agentByRole?:Record<string,string>
   defaultAgent?:string
   parentSessionID?:string
   model?:{providerID:string;modelID:string}
@@ -17,6 +18,7 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
   async execute(context:AgentTaskExecutionContext){
     const invocation=buildSkillExecutionInvocation(context,{
       agentBySkill:this.options.agentBySkill,
+      agentByRole:this.options.agentByRole,
       defaultAgent:this.options.defaultAgent,
     })
     const result=await Instance.provide({ directory: this.options.worktree ?? process.cwd(), fn: async () => runHuntingTask({
