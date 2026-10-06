@@ -279,7 +279,12 @@ async function loadConfiguredSkillMetadata(root:string):Promise<Map<string,Parti
 }
 
 async function resolveIndexedSkillSource(root:string,entry:SkillIndexEntry):Promise<string|undefined>{
-  const candidates=new Set(await collectSkillFiles(path.join(root,".cyberstrike","skill")))
+  const skillRoots=[
+    path.join(root,".cyberstrike","skill"),
+    path.resolve(root,"..",".cyberstrike","skill"),
+    path.resolve(process.cwd(),".cyberstrike","skill"),
+  ]
+  const candidates=new Set((await Promise.all(skillRoots.map(collectSkillFiles))).flat())
   const suffixes=entry.files??["SKILL.md"]
   for(const file of candidates){
     const basename=path.basename(path.dirname(file))
