@@ -391,7 +391,8 @@ export async function executeAndRecordDispatchedTask(
     await executeSignalTools(root,plan.target,context.signal,context.endpoint,context.requestId,"arjun")
   }
 
-  const result=await executor.execute(context)\n  const parsed=result.resultText
+  const result=await executor.execute(context)
+  const parsed=result.resultText
     ? parseExecutionResult(result.resultText,{state:result.state,outcome:"clean"})
     : undefined
   const effectiveState=parsed?.state ?? result.state
