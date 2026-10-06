@@ -219,6 +219,7 @@ export interface AgentTaskExecutionContext {
   primarySkill:string
   resolvedSkills:string[]
   resolvedSkillPaths?:string[]
+  recommendedAgent?:string
   strategyHints:string[]
   signal:string
   signalConfidence:number
@@ -275,7 +276,7 @@ export async function enrichAgentTaskExecutionContext(
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
-  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
+  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, recommendedAgent:task.recommendedAgent, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
 }
 
 export async function prepareSkillExecutionInvocation(
