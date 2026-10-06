@@ -14,7 +14,7 @@ cwe_ids: []
 chains_with: [adaptive-failure-analysis, transformation-analysis, adaptive-technique-matcher, adaptive-mutation-policy, adaptive-response-differential]
 prerequisites: [adaptive-failure-analysis, transformation-analysis]
 severity_boost: {}
-------------------
+---
 
 # WAF Evasion
 
