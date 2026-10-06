@@ -23,6 +23,7 @@ import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
+import { ledgers } from "./ledger"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
 import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
 
@@ -502,7 +503,25 @@ export async function executeAndRecordDispatchedTask(
     : terminal
       ? "completed"
       : "running"
-  if(terminal) await finishAgentTask(root,plan.target,taskId,taskState)
+  if(terminal){
+    await finishAgentTask(root,plan.target,taskId,taskState)
+    if(context.endpoint){
+      const endpointLedger=ledgers(root,plan.target).endpoint
+      const endpointId="endpoint_"+Bun.hash([
+        context.endpoint.trim(),
+        context.requestId??"",
+      ].join("|")).toString(16)
+      await endpointLedger.upsert({
+        item_id:endpointId,
+        type:"endpoint",
+        status:taskState==="blocked"?"BLOCKED":taskState==="completed"?"VALIDATED":"IN_PROGRESS",
+        assigned_task:taskId,
+        last_tested:new Date().toISOString(),
+        evidence_refs:evidenceIds,
+        next_action:taskState==="completed" ? null : "revisit validation",
+      })
+    }
+  }
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
   return {context,result:{...result,state:effectiveState},lifecycle,promotion}
