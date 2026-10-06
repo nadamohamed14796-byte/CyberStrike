@@ -82,6 +82,8 @@ export const BashTool = Tool.define("bash", async () => {
       .replaceAll("${maxBytes}", String(Truncate.MAX_BYTES)),
     parameters: z.object({
       command: z.string().describe("The command to execute"),
+      scope_items: z.array(z.string()).optional().describe("Programmatic scope for network/security commands"),
+      authorized_active_testing: z.boolean().optional().describe("Explicit authorization for active network/security commands"),
       timeout: z.number().describe("Optional timeout in milliseconds").optional(),
       workdir: z
         .string()
