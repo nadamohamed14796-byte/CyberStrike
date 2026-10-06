@@ -28,4 +28,5 @@ export {
 } from "../methodology/methodology.sql"
 
 export { SkillLearningTable, SkillLearningEventTable, LearningSignalTable } from "../learning/learning.sql"
-\nexport { ToolArtifactTable } from "../tool/artifact.sql"\n
+\nexport { ToolArtifactTable } from "../tool/artifact.sql"
+export { SignalQueueTable } from "../tool/signal-queue.sql"\n
