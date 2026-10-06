@@ -44,42 +44,50 @@ export namespace Learning {
   }
 
   export async function emit(signal: LearningSignal): Promise<RoutedSkill[]> {
-    await SkillIndex.ensureBuilt()
+    let routes: RoutedSkill[] = []
+
+    try {
+      await SkillIndex.ensureBuilt()
+      routes = LearningRouter.route(signal)
+    } catch {}
 
     const now = Date.now()
-    const routes = LearningRouter.route(signal)
 
-    Database.use((db) => {
-      db.insert(LearningSignalTable)
-        .values({
-          id: Identifier.ascending("learning_signal"),
-          session_id: signal.sessionID,
+    try {
+      Database.use((db) => {
+        db.insert(LearningSignalTable)
+          .values({
+            id: Identifier.ascending("learning_signal"),
+            session_id: signal.sessionID,
+            hook: signal.hook,
+            signal: signal.signal,
+            skill_name: signal.skill_name,
+            agent: signal.agent,
+            target: signal.target,
+            category: signal.category,
+            outcome: signal.outcome,
+            metadata: signal.metadata,
+            time_created: now,
+            time_updated: now,
+          })
+          .run()
+      })
+    } catch {}
+
+    try {
+      await Bus.publish(Event.Signal, {
+        signal: {
+          sessionID: signal.sessionID,
           hook: signal.hook,
           signal: signal.signal,
           skill_name: signal.skill_name,
-          agent: signal.agent,
           target: signal.target,
-          category: signal.category,
+          agent: signal.agent,
           outcome: signal.outcome,
-          metadata: signal.metadata,
-          time_created: now,
-          time_updated: now,
-        })
-        .run()
-    })
-
-    await Bus.publish(Event.Signal, {
-      signal: {
-        sessionID: signal.sessionID,
-        hook: signal.hook,
-        signal: signal.signal,
-        skill_name: signal.skill_name,
-        target: signal.target,
-        agent: signal.agent,
-        outcome: signal.outcome,
-      },
-      routes,
-    })
+        },
+        routes,
+      })
+    } catch {}
 
     return routes
   }
