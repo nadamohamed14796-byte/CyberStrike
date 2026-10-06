@@ -1226,6 +1226,30 @@ export const SessionRoutes = lazy(() =>
 
           if (isDuplicate) {
             recordObservation()
+
+            // Preserve cross-account observations even when the endpoint shape is already known.
+            await feedHuntingLayerFromRequest({
+              target: process.env.HUNT_TARGET ?? normalized.origin ?? normalized.site ?? normalized.host ?? "",
+              sessionId: sessionID,
+              request: {
+                id: "observed:" + sessionID + ":" + normalized.keyHash,
+                method: normalized.method,
+                url: (normalized.origin ?? "") + (normalized.canonicalPath ?? normalized.normalizedPath),
+                host: normalized.host,
+                path: normalized.canonicalPath ?? normalized.normalizedPath,
+                credentialId: credentialID,
+                accountLabel: credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+                observedAt: Date.now(),
+              },
+              response: body.response ? {
+                id: "observed:" + sessionID + ":" + normalized.keyHash + ":response",
+                status: body.response.status,
+                headers: body.response.headers,
+                contentType: body.response.headers["content-type"],
+                bodyHash: normalized.bodyHash,
+                observedAt: Date.now(),
+              } : undefined,
+            })
             log.info("duplicate request skipped", {
               sessionID,
               method: normalized.method,
