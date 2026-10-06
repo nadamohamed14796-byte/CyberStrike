@@ -4,6 +4,7 @@ import type { JSAssetNode, RequestNode, ResponseNode, FunctionNode, ParameterNod
 import type { HypothesisRecord } from "./hypotheses"
 import { dedupeEdges } from "./correlation"
 import { dedupeAssetRelations, type AssetRelation } from "./cross-host-graph"
+import type { ApiSource } from "./api-diff"
 
 export interface ParameterCandidate {
   id: string
@@ -39,10 +40,11 @@ export interface TargetIntelligence {
   edges: Edge[]
   hypotheses: HypothesisRecord[]
   tags: string[]
+  apiSources: ApiSource[]
 }
 
 export function emptyTargetIntelligence(target: string): TargetIntelligence {
-  return { target, updatedAt: new Date().toISOString(), accounts: [], parameters: [], assetRelations: [], jsAssets: [], requests: [], responses: [], functions: [], edges: [], hypotheses: [], tags: [] }
+  return { target, updatedAt: new Date().toISOString(), accounts: [], parameters: [], assetRelations: [], jsAssets: [], requests: [], responses: [], functions: [], edges: [], hypotheses: [], tags: [], apiSources: [] }
 }
 
 export function accountForRequest(request: RequestNode): TargetAccount | undefined {
@@ -191,6 +193,10 @@ export async function rememberTargetIntelligence(
       edges: dedupeEdges([...current.edges, ...(patch.edges ?? [])]),
       hypotheses: mergeById(current.hypotheses, patch.hypotheses ?? []),
       tags: [...new Set([...current.tags, ...(patch.tags ?? [])])],
+      apiSources: [...new Map(
+        [...(current.apiSources ?? []), ...(patch.apiSources ?? [])]
+          .map(item=>[`${item.source}|${item.method.toUpperCase()}|${item.endpoint}`,item] as const),
+      ).values()],
     })
   })
 }
