@@ -23,6 +23,7 @@ import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
+import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
 
 export interface PreparedMultiAgentPlan {
