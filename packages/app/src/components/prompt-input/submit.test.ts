@@ -91,7 +91,10 @@ beforeAll(async () => {
     useSDK: () => ({
       directory: "/repo/main",
       client: rootClient,
-      createClient: ({ directory }: { directory: string }) => clientFor(directory),
+      createClient: ({ directory }: { directory: string }) => {
+        createdClients.push(directory)
+        return clientFor(directory)
+      },
       url: "http://localhost:4096",
     }),
   }))
