@@ -3,7 +3,7 @@ import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { SignalQueueTable } from "./signal-queue.sql"
 import { ReconDispatch } from "./recon-dispatch"
-import { normalizeSignal } from "./signal-normalizer"
+import { normalizeSignal, SignalPhase } from "./signal-normalizer"
 
 export namespace SignalQueue {
   export type Status = "pending" | "running" | "completed" | "skipped" | "failed"
@@ -66,11 +66,19 @@ export namespace SignalQueue {
       .where(eq(SignalQueueTable.id, id)).limit(1).get())
   }
 
-  export function next(sessionID: string) {
-    return Database.use((db) => db.select().from(SignalQueueTable)
+  function phaseFor(signal: string): SignalPhase {\n    return normalizeSignal(signal).phase\n  }\n\n  export function coverage(sessionID: string) {\n    const rows = list(sessionID, 500)\n    const phases = new Set<SignalPhase>()\n    for (const row of rows) {\n      if (row.status === "completed") phases.add(phaseFor(row.signal))\n    }\n    return { phases: Array.from(phases), completed: rows.filter((x) => x.status === "completed").length, pending: rows.filter((x) => x.status === "pending").length, running: rows.filter((x) => x.status === "running").length }\n  }\n\n  export function next(sessionID: string) {
+    const rows = Database.use((db) => db.select().from(SignalQueueTable)
       .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.status, "pending")))
       .orderBy(asc(SignalQueueTable.priority), desc(SignalQueueTable.time_created))
-      .limit(1).get())
+      .limit(100).all())
+    if (!rows.length) return undefined
+    const completed = new Set(
+      Database.use((db) => db.select().from(SignalQueueTable)
+        .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.status, "completed")))
+        .limit(500).all()).map((x) => phaseFor(x.signal)),
+    )
+    const uncovered = rows.filter((x) => !completed.has(phaseFor(x.signal)))
+    return (uncovered[0] ?? rows[0])
   }
 
   export function claimForTool(input: {
