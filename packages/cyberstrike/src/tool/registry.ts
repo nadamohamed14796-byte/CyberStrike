@@ -244,6 +244,16 @@ export namespace ToolRegistry {
     return tools
   }
 
+  export async function metadata() {
+    const tools = await all()
+    const result = []
+    for (const tool of tools) {
+      const info = await tool.init()
+      result.push({ id: tool.id, name: tool.id, description: info.description, parameters: info.parameters })
+    }
+    return result
+  }
+
   export async function ids() {
     return all().then((x) => x.map((t) => t.id))
   }
