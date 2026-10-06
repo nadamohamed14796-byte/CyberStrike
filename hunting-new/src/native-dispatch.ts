@@ -72,7 +72,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
                 state:"inconclusive",
                 resultSummary:"Executor error: "+message,
                 evidenceIds:[],
-                skill:preparedAttempt.hypothesis.signal,
+                skill:task.skill,
                 endpoint:preparedAttempt.hypothesis.endpoint,
                 confidence:preparedAttempt.hypothesis.confidence,
                 taskId:task.id,
@@ -86,7 +86,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
           })
           terminal=lifecycle?.hypothesisStatus==="blocked" ||
             lifecycle?.hypothesisStatus==="rejected" ||
-            lifecycle?.hypothesisStatus==="confirmed"
+            (lifecycle?.hypothesisStatus==="confirmed" && lifecycle.validation?.decision==="eligible")
         }
       }
 
