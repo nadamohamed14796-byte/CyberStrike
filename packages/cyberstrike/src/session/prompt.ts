@@ -50,6 +50,7 @@ import { Truncate } from "@/tool/truncation"
 import { Token } from "@/util/token"
 import { MethodologyContext } from "@/methodology/context"
 import { Learning } from "../learning"
+import { TargetMemory } from "./target-memory"
 import { ToolArtifact } from "../tool/artifact"
 import { WebRetest } from "./web/web-retest"
 import { AgentPerformance } from "@/methodology/performance"
@@ -1267,6 +1268,19 @@ export namespace SessionPrompt {
             })
           } catch (error) {
             log.warn("failed to persist tool artifact", { error, tool: item.id, callID: ctx.callID })
+          }
+
+          if (reconSignal && /https?:\/\//i.test(typeof result === "string" ? result : JSON.stringify(result ?? ""))) {
+            try {
+              TargetMemory.rememberDiscovery(ctx.sessionID, {
+                tool: item.id,
+                output: result,
+                signal: reconSignal,
+                callID: ctx.callID,
+              })
+            } catch (error) {
+              log.warn("failed to promote discovery to target memory", { error, tool: item.id, callID: ctx.callID })
+            }
           }
 
           if (reconSignal) {
