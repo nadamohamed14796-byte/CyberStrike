@@ -19,6 +19,7 @@ import { Truncate } from "./truncation"
 import { Plugin } from "@/plugin"
 import { EXTERNAL_TOOLS, externalTool } from "./external-tool-registry"
 import { ScopeGuard } from "./scope-check"
+import { TargetWorkspace } from "./target-workspace"
 
 const MAX_METADATA_LENGTH = 30_000
 const NETWORK_COMMANDS = new Set([...EXTERNAL_TOOLS.map((tool) => tool.check), "curl", "wget", "nmap", "masscan", "nc", "netcat", "sqlmap"])
@@ -82,6 +83,7 @@ export const BashTool = Tool.define("bash", async () => {
       .replaceAll("${maxBytes}", String(Truncate.MAX_BYTES)),
     parameters: z.object({
       command: z.string().describe("The command to execute"),
+      target: z.string().optional().describe("Optional target identity. When set, run inside that target/session workspace."),
       scope_items: z.array(z.string()).optional().describe("Programmatic scope for network/security commands"),
       authorized_active_testing: z.boolean().optional().describe("Explicit authorization for active network/security commands"),
       timeout: z.number().describe("Optional timeout in milliseconds").optional(),
@@ -98,7 +100,11 @@ export const BashTool = Tool.define("bash", async () => {
         ),
     }),
     async execute(params, ctx) {
-      const cwd = params.workdir || Instance.directory
+      const workspace = params.target ? await TargetWorkspace.ensure(params.target, ctx.sessionID) : undefined
+      if (workspace && params.workdir && !TargetWorkspace.contains(params.target!, params.workdir, ctx.sessionID)) {
+        throw new Error("workdir must remain inside the target workspace when target is set")
+      }
+      const cwd = params.workdir || workspace?.session || Instance.directory
       if (params.timeout !== undefined && params.timeout < 0) {
         throw new Error(`Invalid timeout value: ${params.timeout}. Timeout must be a positive number.`)
       }
