@@ -18,10 +18,10 @@ function joinEndpoint(base:string,path:string){
 }
 
 export function extractApiSources(document:OpenApiDocument):ApiSource[]{
-  const base=document.servers?.find(item=>item.url)?.url
-    ?? (document.host ? `${document.schemes?.[0]??"https"}://${document.host}` : "")
-    || document.basePath
-    || ""
+  const swaggerHost=document.host
+    ? `${document.schemes?.[0]??"https"}://${document.host}${document.basePath??""}`
+    : ""
+  const base=document.servers?.find(item=>item.url)?.url ?? swaggerHost
   const output:ApiSource[]=[]
   for(const [route,operations] of Object.entries(document.paths??{})){
     for(const method of Object.keys(operations)){
