@@ -11,6 +11,8 @@ export namespace ReconDispatch {
     scope_verified?: boolean
     authorized_active_testing?: boolean
     max_tools?: number
+    retry?: boolean
+    max_attempts?: number
   }
 
   function key(tool: string, target: string | undefined, signal: string) {
@@ -24,6 +26,12 @@ export namespace ReconDispatch {
   export function next(input: Input) {
     const planned = planReconTools(input)
     const artifacts = ToolArtifact.list(input.sessionID, 500)
+    const maxAttempts = Math.max(1, Math.min(20, input.max_attempts ?? 1))
+    const attempts = new Map<string, number>()
+    for (const artifact of artifacts) {
+      const k = key(artifact.tool, artifact.target, artifact.signal ?? "")
+      attempts.set(k, (attempts.get(k) ?? 0) + 1)
+    }
     const seen = new Set(
       artifacts.map((item) => key(item.tool, item.target, item.signal ?? "")),
     )
@@ -35,7 +43,9 @@ export namespace ReconDispatch {
 
     const scopeAllowed = input.scope_verified === true || scope?.inScope === true
     const fresh = planned.filter((tool) => {
-      if (seen.has(key(tool.id, target, input.signal))) return false
+      const k = key(tool.id, target, input.signal)
+      if (seen.has(k) && !input.retry) return false
+      if ((attempts.get(k) ?? 0) >= maxAttempts) return false
 
       const active = tool.risk === "active-test" || tool.risk === "high-impact"
       if (active && !scopeAllowed) return false
