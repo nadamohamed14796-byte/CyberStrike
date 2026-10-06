@@ -123,19 +123,19 @@ function parseFrontmatter(text:string):Record<string,string>{
 function inferExternalTriggers(name:string,category:string,text:string):string[]{
   const haystack=(name+" "+category+" "+text.slice(0,8000)).toLowerCase()
   const triggers=new Set<string>([name,category].filter(Boolean))
-  const rules:Array<[RegExp,string[]]>=[
+  const rules:Array<[RegExp,string|string[]]>=[
     [/\\b(?:idor|bola|broken[- ]object|object[- ]authorization)\\b/,"object_identifier_detected"],
     [/\\b(?:auth|authentication|login|mfa|oauth|saml|session)\\b/,"authenticated_endpoint"],
-    [/\\b(?:waf|firewall|403|406|429|bypass)\\b/,["waf_signal_detected","access_control_blocked"] as unknown as string],
-    [/\\b(?:graphql)\\b/,["graphql_detected"] as unknown as string],
-    [/\\b(?:websocket)\\b/,["websocket_detected"] as unknown as string],
-    [/\\b(?:jwt)\\b/,["jwt_detected"] as unknown as string],
-    [/\\b(?:javascript|dom|xss|prototype[- ]pollution|source[- ]map)\\b/,["javascript_asset","javascript_function_request_correlation"] as unknown as string],
-    [/\\b(?:api|rest|grpc|json[- ]rpc)\\b/,["endpoint_discovery","api_method_mismatch"] as unknown as string],
-    [/\\b(?:recon|enumeration|subdomain|vhost|osint)\\b/,["endpoint_discovery"] as unknown as string],
-    [/\\b(?:upload|file)\\b/,["file_upload_detected"] as unknown as string],
-    [/\\b(?:redirect)\\b/,["redirect_parameter_detected"] as unknown as string],
-    [/\\b(?:source[- ]leak|secret)\\b/,["source_map_detected"] as unknown as string],
+    [/\\b(?:waf|firewall|403|406|429|bypass)\\b/,["waf_signal_detected","access_control_blocked"]],
+    [/\\b(?:graphql)\\b/,"graphql_detected"],
+    [/\\b(?:websocket)\\b/,"websocket_detected"],
+    [/\\b(?:jwt)\\b/,"jwt_detected"],
+    [/\\b(?:javascript|dom|xss|prototype[- ]pollution|source[- ]map)\\b/,["javascript_asset","javascript_function_request_correlation"]],
+    [/\\b(?:api|rest|grpc|json[- ]rpc)\\b/,["endpoint_discovery","api_method_mismatch"]],
+    [/\\b(?:recon|enumeration|subdomain|vhost|osint)\\b/,"endpoint_discovery"],
+    [/\\b(?:upload|file)\\b/,"file_upload_detected"],
+    [/\\b(?:redirect)\\b/,"redirect_parameter_detected"],
+    [/\\b(?:source[- ]leak|secret)\\b/,"source_map_detected"],
   ]
   for(const [pattern,values] of rules){
     if(!pattern.test(haystack))continue
