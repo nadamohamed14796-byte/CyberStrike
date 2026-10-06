@@ -1,4 +1,5 @@
 import { Intel } from "../methodology/intel"
+import { TargetMemory } from "../session/target-memory"
 
 const PARAMETER_TOOLS = new Set(["arjun", "paramspider", "x8"])
 
@@ -62,7 +63,16 @@ export function ingestParameterDiscovery(input: {
       confidence: input.tool === "paramspider" ? "medium" : "high",
       detail: "Canonical parameter discovery ingestion",
     })
-    if (!result.duplicate) added++
+    if (!result.duplicate) {
+      added++
+      TargetMemory.rememberKnowledge(input.sessionID, {
+        kind: "parameter",
+        asset: endpoint,
+        url: endpoint,
+        confidence: input.tool === "paramspider" ? 60 : 80,
+        metadata: { parameter: name, source_tool: input.tool, intel_entry_id: result.id },
+      })
+    }
   }
   return added
 }
