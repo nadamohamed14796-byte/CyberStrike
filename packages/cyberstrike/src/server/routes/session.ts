@@ -1272,7 +1272,6 @@ export const SessionRoutes = lazy(() =>
                 observedAt:Date.now(),
               },
               pageUrl:body.page_url,
-              pageUrl:body.page_url,
               response:body.response ? {
                 id:"obs_"+Bun.hash([
                   sessionID,
