@@ -42,8 +42,10 @@ export async function withTargetMutationLock<T>(
 }
 
 export async function appendEvent(root: string, target: string, event: Record<string, unknown>) {
-  const file = path.join(targetDir(root, target), "events.jsonl")
-  await ensureDir(path.dirname(file))
-  const current = await Bun.file(file).exists() ? await Bun.file(file).text() : ""
-  await Bun.write(file, current + JSON.stringify(event) + "\n")
+  return withTargetMutationLock(root, target, async () => {
+    const file = path.join(targetDir(root, target), "events.jsonl")
+    await ensureDir(path.dirname(file))
+    const current = await Bun.file(file).exists() ? await Bun.file(file).text() : ""
+    await Bun.write(file, current + JSON.stringify(event) + "\n")
+  })
 }
