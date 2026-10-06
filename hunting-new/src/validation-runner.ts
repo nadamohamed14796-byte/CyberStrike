@@ -46,6 +46,7 @@ const SIGNAL_STRATEGY_ORDER:Record<string, AttemptStrategy[]>={
   graphql_detected:["request-shape","parameter","method","content-type","parser","encoding","header","path","workflow","alternate-client","identifier","account-context"],
   redirect_parameter_detected:["parameter","encoding","path","header","request-shape","method","parser","alternate-client","workflow","content-type","identifier","account-context"],
   source_map_detected:["parameter","parser","request-shape","path","header","encoding","method","content-type","workflow","alternate-client","identifier","account-context"],
+  api_method_mismatch:["method","request-shape","parameter","content-type","parser","alternate-client","header","path","workflow","encoding","identifier","account-context"],
 }
 
 function rankStrategiesForHypothesis(hypothesis:HypothesisRecord, variants:Array<{strategy:AttemptStrategy;variant:string}>):Array<{strategy:AttemptStrategy;variant:string}>{
