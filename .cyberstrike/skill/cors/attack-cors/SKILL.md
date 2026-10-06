@@ -114,3 +114,12 @@ fetch('https://TARGET/api/user/profile', {
 
 - [PortSwigger: CORS](https://portswigger.net/web-security/cors)
 - [OWASP: CORS Misconfiguration](https://owasp.org/www-project-web-security-testing-guide/latest/4-Web_Application_Security_Testing/11-Client-side_Testing/07-Testing_Cross_Origin_Resource_Sharing)
+
+---
+## Signal and Evidence Gate
+
+Activate only on concrete CORS policy evidence or a browser cross-origin trust question. Generic CORS terminology is not sufficient.
+
+Require browser-level validation for impact claims. Header reflection alone is a candidate; public non-sensitive data and wildcard ACAO without credentialed access are not automatically findings.
+
+Preserve Origin, ACAO/ACAC, credentials mode, endpoint sensitivity, browser read result, and negative controls. Do not exfiltrate real secrets during validation.
