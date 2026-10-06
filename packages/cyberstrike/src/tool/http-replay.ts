@@ -399,10 +399,11 @@ export const HttpReplayTool = Tool.define("http_replay", {
       signal: ctx.abort,
     }
 
-    // Claim one queued retest for this captured request so it is not surfaced repeatedly.
-    const claimedRetest = params.request_id ? WebRetest.claimForRequest(sessionID, params.request_id) : undefined
-    const finishRetest = () => {
-      if (claimedRetest) WebRetest.updateStatus(claimedRetest.id, "completed")
+    const claimRetest = () => {
+      const item = params.request_id ? WebRetest.claimForRequest(sessionID, params.request_id) : undefined
+      return () => {
+        if (item) WebRetest.updateStatus(item.id, "completed")
+      }
     }
 
     // ── Compare mode ──────────────────────────────────────────────────────
@@ -427,6 +428,7 @@ export const HttpReplayTool = Tool.define("http_replay", {
       if (compare.exploit.mutations)
         exploitMsg = Apply.mutations(exploitMsg, compare.exploit.mutations as Apply.Mutation[])
 
+      const finishRetest = claimRetest()
       const [baselineResult, exploitResult] = await Promise.all([
         sendGoverned(baselineMsg, origin, sendOpts),
         sendGoverned(exploitMsg, origin, sendOpts),
@@ -458,6 +460,7 @@ export const HttpReplayTool = Tool.define("http_replay", {
       sharedMsg = authResult
       if (params.mutations) sharedMsg = Apply.mutations(sharedMsg, params.mutations as Apply.Mutation[])
 
+      const finishRetest = claimRetest()
       const results = await Batch.run(
         sweep.values,
         async (value) => {
@@ -497,6 +500,7 @@ export const HttpReplayTool = Tool.define("http_replay", {
       }
     }
 
+    const finishRetest = claimRetest()
     const result = await sendGoverned(msg, origin, sendOpts)
 
     const output = {
