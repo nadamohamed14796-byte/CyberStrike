@@ -228,6 +228,26 @@ async function loadConfiguredRequiredSignals(root:string):Promise<Map<string,str
   return result
 }
 
+async function loadConfiguredSkillMetadata(root:string):Promise<Map<string,Partial<SkillMetadata>>>{
+  const file=path.join(root,"config","skills.yaml")
+  if(!await Bun.file(file).exists())return new Map()
+  const result=new Map<string,Partial<SkillMetadata>>()
+  let section=""
+  let skill=""
+  for(const line of (await Bun.file(file).text()).split(/\r?\n/)){
+    if(/^skills:\s*$/.test(line)){section="skills";skill="";continue}
+    if(section!=="skills")continue
+    const header=line.match(/^  ([A-Za-z0-9_-]+):\s*$/)
+    if(header){skill=header[1];result.set(skill,{});continue}
+    const meta=result.get(skill); if(!meta)continue
+    let m=line.match(/^\s{4}confidence_threshold:\s*([0-9.]+)/); if(m)meta.confidence_threshold=Number(m[1])
+    m=line.match(/^\s{4}maximum_parallel_tasks:\s*(\d+)/); if(m)meta.maximum_parallel_tasks=Number(m[1])
+    m=line.match(/^\s{4}(?:dependencies|optional_signals|required_context|validation_requirements|scope_requirements):\s*\[([^\]]*)\]/)
+    if(m){const key=line.trim().split(":")[0] as keyof SkillMetadata; (meta as any)[key]=m[1].split(",").map(v=>v.trim().replace(/^['\"]|['\"]$/g,"")).filter(Boolean)}
+  }
+  return result
+}
+
 export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
   const file=path.join(root,".cyberstrike","skill","index.json")
   const index=await readJson<SkillIndex|null>(file,null)
@@ -251,10 +271,18 @@ export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
 
   const configured=await loadConfiguredSignalMappings(root)
   const configuredRequired=await loadConfiguredRequiredSignals(root)
+  const configuredMetadata=await loadConfiguredSkillMetadata(root)
   for(const [skillName,signals] of configured){
     const skill=merged.get(skillName)
     if(!skill)continue
     skill.triggers=[...new Set([...skill.triggers,...signals])]
+    merged.set(skillName,skill)
+  }
+
+  for(const [skillName,metadata] of configuredMetadata){
+    const skill=merged.get(skillName)
+    if(!skill)continue
+    Object.assign(skill,metadata)
     merged.set(skillName,skill)
   }
 
