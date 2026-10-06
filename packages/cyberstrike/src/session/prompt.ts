@@ -1246,7 +1246,30 @@ export namespace SessionPrompt {
               args,
             },
           )
-          const result = await item.execute(args, ctx)
+          let runningQueueID: string | undefined
+          try {
+            const queueTarget = learningTarget(args)
+            const queueItem = SignalQueue.next(ctx.sessionID)
+            if (queueItem && (!queueItem.target || !queueTarget || queueItem.target === queueTarget)) {
+              if (SignalQueue.markRunning(queueItem.id)) runningQueueID = queueItem.id
+            }
+          } catch (error) {
+            log.warn("failed to claim signal queue item", { error, tool: item.id, callID: ctx.callID })
+          }
+
+          let result: any
+          try {
+            result = await item.execute(args, ctx)
+          } catch (error) {
+            if (runningQueueID) {
+              try { SignalQueue.fail(runningQueueID); SignalQueue.retry(runningQueueID) } catch {}
+            }
+            throw error
+          }
+
+          if (runningQueueID) {
+            try { SignalQueue.complete(runningQueueID) } catch {}
+          }
 
           const reconSignal = reconSignalFromResult(item.id, result)
 
