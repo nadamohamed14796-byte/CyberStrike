@@ -207,7 +207,7 @@ export async function prepareAgentTaskValidation(
 export interface AgentTaskExecutionContext {
   taskId:string
   target:string
-  role:import("./multi-agent-planner").HuntingAgentRole
+  role?:import("./multi-agent-planner").HuntingAgentRole
   primarySkill:string
   resolvedSkills:string[]
   strategyHints:string[]
