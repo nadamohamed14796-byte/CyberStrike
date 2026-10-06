@@ -11,6 +11,7 @@ import { planReconTools } from "../tool/recon-toolchain"
 import { ReconDispatch } from "../tool/recon-dispatch"
 import { ReferenceLearning } from "./reference"
 import { SignalQueue } from "../tool/signal-queue"
+import { ToolLearning } from "./tool-learning"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
 const sessionNextTools = new Map<string, ReturnType<typeof planReconTools>>()
@@ -68,6 +69,8 @@ export namespace Learning {
         authorized_active_testing: activeAuthorized,
       })
     } catch {}
+
+    if (signal.metadata?.source_tool && signal.outcome) ToolLearning.observe({ tool: String(signal.metadata.source_tool), signal: signal.signal, sessionID: signal.sessionID, target: signal.target, outcome: /finding|useful|confirmed|validated/i.test(signal.outcome) ? "useful" : /rejected|disproven|false|duplicate/i.test(signal.outcome) ? "rejected" : "error", evidence: signal.evidence })
 
     if (signal.skill_name && signal.outcome) {
       const outcome =
