@@ -38,6 +38,25 @@ function referenceFile(root:string){
   return path.join(root,"intelligence","references.json")
 }
 
+function catalogFile(root:string){
+  return path.join(root,"config","reference-sources.yaml")
+}
+
+async function configuredGlobalReferences(root:string):Promise<Array<{name:string;url:string}>>{
+  const file=catalogFile(root)
+  if(!(await Bun.file(file).exists()))return []
+  const lines=(await Bun.file(file).text()).split(/\r?\n/)
+  const out:Array<{name:string;url:string}>=[]
+  let current=""
+  for(const line of lines){
+    const name=line.match(/^\s+-\s+name:\s*(.+)$/)?.[1]?.trim()
+    if(name){current=name;continue}
+    const url=line.match(/^\s+url:\s*(\S+)$/)?.[1]?.trim()
+    if(url && current)out.push({name:current,url:cleanUrl(url)})
+  }
+  return out
+}
+
 export async function loadReferences(root:string):Promise<ReferenceState>{
   return (await readJson<ReferenceState|null>(referenceFile(root),null)) ??
     {references:[],updatedAt:new Date(0).toISOString()}
@@ -78,6 +97,16 @@ export async function indexSkillReferences(
       })
     }
   }
+    for(const source of await configuredGlobalReferences(root)){
+      const id=referenceId(source.url,"__global__:"+source.name)
+      const existing=byId.get(id)
+      const now=new Date().toISOString()
+      byId.set(id,{
+        id,url:source.url,skillName:"__global__",
+        sourcePath:catalogFile(root),
+        firstSeen:existing?.firstSeen??now,lastSeen:now,useCount:existing?.useCount??0,
+      })
+    }
   const next={references:[...byId.values()].sort((a,b)=>a.skillName.localeCompare(b.skillName)||a.url.localeCompare(b.url)),updatedAt:new Date().toISOString()}
   await ensureDir(path.dirname(referenceFile(root)))
     await writeJson(referenceFile(root),next)
@@ -92,7 +121,7 @@ export async function referencesForSkills(
 ):Promise<ReferenceRecord[]>{
   const wanted=new Set(skillNames)
   return (await loadReferences(root)).references
-    .filter(item=>wanted.has(item.skillName))
+    .filter(item=>wanted.has(item.skillName) || item.skillName==="__global__")
     .sort((a,b)=>(b.useCount-a.useCount)||a.url.localeCompare(b.url))
     .slice(0,Math.max(0,limit))
 }
