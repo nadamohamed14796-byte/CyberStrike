@@ -72,6 +72,53 @@ export namespace TargetMemory {
     })
   }
 
+  /** Promote URL-bearing discovery output into durable target memory. */
+  export function rememberDiscovery(
+    sessionID: string,
+    input: { tool: string; output: unknown; signal?: string; callID?: string },
+  ): number {
+    const projectID = projectIDForSession(sessionID)
+    if (!projectID) return 0
+    const raw = typeof input.output === "string"
+      ? input.output
+      : input.output && typeof input.output === "object" ? JSON.stringify(input.output) : ""
+    if (!raw) return 0
+
+    const urls = new Set<string>()
+    for (const token of raw.split(/\s+/)) {
+      const value = token.replace(/^[("'\[]+|[),.;'\]"]+$/g, "")
+      if (!/^https?:\/\//i.test(value)) continue
+      try {
+        const url = new URL(value)
+        if (url.protocol === "http:" || url.protocol === "https:") urls.add(url.toString())
+      } catch {}
+      if (urls.size >= 500) break
+    }
+
+    let stored = 0
+    for (const url of urls) {
+      const parsed = new URL(url)
+      const isJS = /\.m?js(?:[?#]|$)/i.test(parsed.pathname) || /javascript|ecmascript/i.test(input.signal ?? "")
+      const kind: Kind = isJS ? "javascript" : "endpoint"
+      try {
+        Database.use((db) => db.insert(TargetMemoryTable).values({
+          id: Identifier.ascending("target_memory"),
+          project_id: projectID,
+          kind,
+          asset: parsed.host,
+          method: kind === "endpoint" ? "GET" : null,
+          url,
+          content_type: isJS ? "application/javascript" : null,
+          metadata: { source_tool: input.tool, signal: input.signal ?? null, call_id: input.callID ?? null, discovered: true },
+          time_created: Date.now(),
+          time_updated: Date.now(),
+        }).onConflictDoNothing().run())
+        stored++
+      } catch {}
+    }
+    return stored
+  }
+
   export function list(projectID: string, kind?: Kind, limit = 200): Info[] {
     const rows = Database.use((db) => {
       const query = db.select().from(TargetMemoryTable).where(
