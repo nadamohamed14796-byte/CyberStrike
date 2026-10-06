@@ -471,6 +471,7 @@ export async function executeAndRecordDispatchedTask(
       skill:context.primarySkill,
       endpoint:context.endpoint,
       confidence:context.signalConfidence,
+      impactObserved:Boolean(parsed?.impact?.trim()),
       taskId:context.taskId,
     },
   )
