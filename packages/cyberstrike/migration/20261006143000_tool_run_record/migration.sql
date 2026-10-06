@@ -29,8 +29,13 @@ CREATE TABLE IF NOT EXISTS `tool_run_record` (
   `time_created` integer NOT NULL,
   `time_updated` integer NOT NULL
 );
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `tool_run_session_idx` ON `tool_run_record` (`session_id`);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `tool_run_key_idx` ON `tool_run_record` (`session_id`, `run_key`);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `tool_run_status_idx` ON `tool_run_record` (`session_id`, `status`);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `tool_run_tool_idx` ON `tool_run_record` (`tool_id`, `status`);
+--> statement-breakpoint
 CREATE INDEX IF NOT EXISTS `tool_run_target_idx` ON `tool_run_record` (`target`);
