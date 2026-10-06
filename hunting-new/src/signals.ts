@@ -283,17 +283,6 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
       })
     }
   }
-
-  for (const asset of input.jsAssets) {
-    emit({
-      signal: "javascript_asset",
-      source: "correlation:js",
-      confidence: 0.86,
-      target: input.target,
-      metadata: { jsAssetId: asset.id, url: asset.url },
-    })
-  }
-
   for (const edge of input.edges.filter(edge => edge.kind === "triggered-by" || edge.kind === "observed-on")) {
     const request = input.requests.find(item => item.id === edge.to)
     if (!request) continue
