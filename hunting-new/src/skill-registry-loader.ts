@@ -301,7 +301,7 @@ export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
   for(const entry of index?.skills??[]){
     if(!entry.name)continue
     const metadata=indexMetadata(entry)
-    metadata.source_path=await resolveIndexedSkillSource(root,entry) ?? metadata.source_path
+    metadata.source_path=await resolveIndexedSkillSource(root,entry)
     merged.set(entry.name,metadata)
   }
   for(const skill of WEB_SKILLS)merged.set(skill.name,skill)
