@@ -26,4 +26,4 @@ export {
   ValidationViolationTable,
 } from "../methodology/methodology.sql"
 
-export { SkillLearningTable, SkillLearningEventTable } from "../learning/learning.sql"
+export { SkillLearningTable, SkillLearningEventTable, LearningSignalTable } from "../learning/learning.sql"
