@@ -5,13 +5,13 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 | Component | Status |
 |---|---|
 | Scope Engine | IMPLEMENTED (host/path/protocol/port/exclusion checks + validation-time re-check) |
-| Target Intelligence | PARTIAL |
+| Target Intelligence | PARTIAL (persistent core implemented; broader multi-source enrichment remains) |
 | Coverage Ledgers | PARTIAL |
 | JavaScript Discovery | PARTIAL |
 | JavaScript Analysis | PARTIAL |
-| JS / Request Correlation | PARTIAL |
-| Request / Response Correlation | IMPLEMENTED in the hunting graph/intake adapter; direct CyberStrike traffic wiring still pending |
-| Function-Centric Model | PARTIAL |
+| JS / Request Correlation | PARTIAL (graph + persistence implemented; automatic live JS/function enrichment remains) |
+| Request / Response Correlation | IMPLEMENTED (hunting graph + CyberStrike session-ingest bridge) |
+| Function-Centric Model | PARTIAL (persisted function linkage; broader UI/function discovery remains) |
 | Account Context | IMPLEMENTED (persisted observed labels + deduplicated per-account observations) |
 | Browser Session Correlation | PARTIAL |
 | Finding Lifecycle | PARTIAL |
@@ -28,12 +28,12 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 | Skill Registry | PARTIAL |
 | Runtime Preflight | PARTIAL |
 | Runtime Registry | IMPLEMENTED |
-| Multi-Agent Orchestration | PARTIAL (continuous native dispatch + role-based agent routing implemented; deeper specialized runtime aggregation remains) |
-| Proxy Intake / Correlator | IMPLEMENTED (CyberStrike /session/ingest feeds the hunting intake; deeper live proxy correlation remains) |
+| Multi-Agent Orchestration | PARTIAL (continuous persisted dispatch + role-based routing + native execution; richer aggregation remains) |
+| Proxy Intake / Correlator | IMPLEMENTED (CyberStrike /session/ingest feeds persistent hunting intake) |
 | Learning Engine | PARTIAL |
 | Writeup Ingestion | MISSING |
-| Report Pipeline | PARTIAL |
-| Persistent Target Memory | PARTIAL |
+| Report Pipeline | PARTIAL (defensive promotion gate + report writer connected; richer automated reporting remains) |
+| Persistent Target Memory | IMPLEMENTED for target graph/accounts/attempts/evidence/findings; broader research/context enrichment remains |
 | Mission Resume Reconstruction | PARTIAL |
 | Context Budget | IMPLEMENTED |
 | JS-derived Wordlists | IMPLEMENTED |
@@ -66,17 +66,21 @@ Implemented and integrated:
 - direct CyberStrike session-ingest bridge into hunting persistence
 - per-account observation preservation across CyberStrike request deduplication
 - defensive stored-evidence revalidation before finding promotion
+- automatic finding-promotion hook for fully structured confirmed results
+- response-ID persistence through validation attempts
+- signal-linked request identity preserved on agent tasks
+- cross-host asset relations with independent scope state
 - runtime registry, configuration and foundation tests
 
 ## Verified gaps still remaining
 
-1. Full bidirectional JS/function/request/response correlation from live runtime observations, including automatic JS/function IDs from all browser captures.
+1. Full bidirectional JS/function/request/response correlation from live runtime observations, including automatic JS/function enrichment for every browser capture.
 2. Complete signal-to-skill configuration unification for every imported skill and trigger.
 3. Full imported-skill audit/integration for OpenHunterAI, recon-skills and yaklang/hack-skills.
-4. Automatic role/skill-to-specialized-agent resolution beyond the current role defaults and explicit overrides.
-5. Automatic finding promotion/report generation from the native lifecycle with complete impact/root-cause evidence supplied by the validator.
+4. Full config-driven role/skill-to-specialized-agent resolution beyond the current role defaults and explicit overrides.
+5. Richer automatic finding/report generation from the native lifecycle, including validator-supplied root-cause and reproduction sections.
 6. Continuous research/writeup ingestion and bounded learning extraction.
-7. Cross-host relationship graph with explicit scope state per relationship.
+7. Broader cross-host graph enrichment from redirects, JS assets and API hosts beyond the current observed-request relation.
 8. API documentation/source differential integrated into signals and planning.
 9. Elimination/unification of the legacy parallel validation models.
 10. End-to-end runtime fixtures and actual CI verification.
