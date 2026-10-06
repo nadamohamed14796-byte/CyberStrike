@@ -37,7 +37,7 @@ function inferAction(method: string, actionType: string, trigger?: string) {
   return `${method} ${action}`
 }
 
-function inverseHypotheses(method: string, actionType: string, roles: string[], trigger?: string): string[] {
+export function inverseHypotheses(method: string, actionType: string, roles: string[], trigger?: string): string[] {
   const out = [
     "Can the action be invoked before its observed preconditions are satisfied?",
     "Can the same action be replayed after the observed state transition?",
@@ -50,7 +50,7 @@ function inverseHypotheses(method: string, actionType: string, roles: string[], 
   return [...new Set(out)]
 }
 
-function classifications(method: string, actionType: string, trigger?: string): string[] {
+export function classifications(method: string, actionType: string, trigger?: string): string[] {
   const s = `${method} ${actionType} ${trigger ?? ""}`.toLowerCase()
   const out: string[] = []
   if (/create|update|delete|post|put|patch/.test(s)) out.push("state-transition-abuse")
