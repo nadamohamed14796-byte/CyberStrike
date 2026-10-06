@@ -143,7 +143,8 @@ export async function recordAttemptLifecycle(
   )
 
   if(update.taskId){
-    const terminal=hypothesisStatus==="confirmed" || hypothesisStatus==="rejected" || hypothesisStatus==="blocked"
+    const terminal=hypothesisStatus==="rejected" || hypothesisStatus==="blocked" ||
+      (hypothesisStatus==="confirmed" && validation?.decision==="eligible")
     await setAgentTaskState(
       root,
       target,
