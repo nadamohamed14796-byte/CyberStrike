@@ -467,3 +467,7 @@ Symmetric cipher challenge — what can you observe?
 Source: https://github.com/yaklang/hack-skills
 License: MIT
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only.
+
+---
+## Signal and Evidence Gate
+Activate only with concrete ciphertext/mode/nonce/IV/PRNG behavior or an observable cryptographic oracle. Confirm the mode and attack preconditions before mutation. Do not treat repeated ciphertext or an error alone as proof; preserve baseline, differential behavior, and bounded reproduction.
