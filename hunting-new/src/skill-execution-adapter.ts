@@ -60,6 +60,8 @@ export function buildSkillExecutionInvocation(
     `account_label: ${context.accountLabel ?? "(none)"}`,
     `js_asset_ids: ${(context.jsAssetIds ?? []).join(", ") || "(none)"}`,
     `function_ids: ${(context.functionIds ?? []).join(", ") || "(none)"}`,
+    `reference_ids: ${(context.referenceIds ?? []).join(", ") || "(none)"}`,
+    `reference_urls: ${(context.referenceUrls ?? []).join(", ") || "(none)"}`,
     `strategy_hints: ${context.strategyHints.join(", ") || "(none)"}`,
     "",
     "reason:",
