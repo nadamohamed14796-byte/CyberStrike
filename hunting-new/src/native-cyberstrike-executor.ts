@@ -12,13 +12,14 @@ export interface NativeCyberStrikeExecutorOptions {
   parentSessionID?:string
   model?:{providerID:string;modelID:string}
   worktree?:string
+  root?:string
 }
 
 export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
   constructor(private readonly options:NativeCyberStrikeExecutorOptions={}){}
 
   async execute(context:AgentTaskExecutionContext){
-    if(context.referenceIds?.length) await markReferencesUsed(this.options.worktree ?? process.cwd(),context.referenceIds)
+    if(context.referenceIds?.length) await markReferencesUsed(this.options.root ?? process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new"),context.referenceIds)
     const invocation=buildSkillExecutionInvocation(context,{
       agentBySkill:this.options.agentBySkill,
       agentByRole:this.options.agentByRole,
