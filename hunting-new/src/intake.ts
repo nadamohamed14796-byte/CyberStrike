@@ -1,5 +1,5 @@
 import { addRequest, addResponse, link, serializeGraph, type CorrelationGraph, type RequestNode, type ResponseNode, type JSAssetNode, type FunctionNode } from "./correlation"
-import { rememberTargetIntelligence } from "./target-intelligence"
+import { rememberTargetIntelligence, discoverRequestParameters } from "./target-intelligence"
 import type { ParameterCandidate } from "./target-intelligence"
 
 export interface NetworkObservation {
