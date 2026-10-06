@@ -1,7 +1,9 @@
 ---
 name: ai-ml-security
 description: >-
-  Signal-driven AI/ML security assessment covering model supply chain, adversarial robustness, poisoning, extraction, privacy, LLM, and agent-security risks. Activate only when target evidence indicates an AI/ML surface.
+  Signal-driven AI/ML security assessment covering model supply chain, adversarial robustness,
+  poisoning, extraction, privacy, LLM, and agentic AI risks. Activate only when concrete evidence
+  shows an AI or ML component is present in scope.
 category: ai-security
 version: "2.1.0"
 author: CyberStrike
@@ -153,58 +155,11 @@ resources:
 
 Provide a signal-driven routing and assessment layer for AI/ML security.
 
-This skill is a **domain router and assessment framework**, not a reason to load every AI/ML attack technique. The runtime should activate it only when observable target evidence indicates an AI/ML surface.
+This skill is a domain router and assessment framework, not a reason to load every AI/ML attack technique. It should be activated only when there is concrete evidence that the target exposes an AI or ML surface.
 
 Required flow:
 
-`surface signal → scope/auth gate → identify AI/ML component → select specialized skill → select bounded resource/tool → test → evidence validation → handoff or stop`
-
-## Resource-Assisted Assessment
-
-External resources are **on-demand references**, not automatic skill activation.
-
-Before using one:
-
-1. Confirm the AI/ML signal.
-2. Confirm authorization and scope.
-3. Select the smallest relevant resource collection.
-4. Prefer a local specialized skill when one already covers the task.
-5. Run at most the bounded tool budget.
-6. Store provenance and output references.
-7. Feed only validated observations into the normal evidence pipeline.
-
-Resource output is never a vulnerability finding by itself.
-
-## Resource Selection Examples
-
-```
-model-file-discovered
-  → model-supply-chain
-  → Fickling / ModelScan
-  → validate unsafe-load hypothesis
-```
-
-```
-llm-surface
-  → llm-prompt-injection
-  → garak or PyRIT when justified
-  → response/evidence validation
-```
-
-```
-ml-model-surface + model-privacy-signal
-  → model-privacy
-  → ART or a specialized local skill
-  → bounded privacy hypothesis test
-```
-
-```
-unknown web target
-  → do not load AI resources
-  → continue normal target-surface discovery
-```
-
-Do not execute all resources in a collection automatically.
+surface signal → scope/auth gate → identify AI/ML component → select specialized skill → select bounded resource/tool → test → evidence validation → handoff or stop
 
 ## Activation Gate
 
@@ -212,7 +167,7 @@ Activate only when there is concrete evidence of an AI/ML surface, such as:
 
 - model files or model-serving endpoints;
 - ML inference APIs;
-- Hugging Face/model registry references;
+- Hugging Face or model registry references;
 - PyTorch/TensorFlow/ONNX/SafeTensors artifacts;
 - training or evaluation pipelines;
 - federated-learning infrastructure;
@@ -220,40 +175,7 @@ Activate only when there is concrete evidence of an AI/ML surface, such as:
 - AI agent/tool-use workflows;
 - model-specific configuration or deployment metadata.
 
-Do **not** activate because:
-
-- the application contains generic JavaScript;
-- a normal API returns JSON;
-- the application uses the word "AI" in marketing copy only;
-- an endpoint contains a generic `model` parameter without corroborating evidence;
-- a scanner labels something "AI" without supporting evidence.
-
-If the evidence is weak, remain inactive or request a narrowly scoped discovery step.
-
-## Required Inputs
-
-Before assessment, require:
-
-- authorization and scope;
-- target/endpoint or artifact reference;
-- AI/ML surface evidence;
-- triggering signal;
-- authentication/session context when relevant;
-- provenance of the observed artifact;
-- current test budget.
-
-When available, also consume:
-
-- technology fingerprints;
-- model format;
-- deployment metadata;
-- API behavior;
-- model registry references;
-- existing findings;
-- account/tenant context;
-- previous test results.
-
-Missing required evidence means `stop`, not speculative testing.
+Do not activate because the application includes generic JavaScript, a normal JSON API, or marketing text mentioning AI without clear evidence.
 
 ## Routing Matrix
 
@@ -265,224 +187,27 @@ Missing required evidence means `stop`, not speculative testing.
 | Training pipeline / untrusted training data | model-poisoning |
 | Federated learning | federated-learning security skill |
 | Classification/inference API | adversarial-robustness |
-| Repeated-query behavioral similarity signal | model-extraction |
-| Sensitive training data / privacy concern | model-privacy |
-| LLM/chatbot | `llm-prompt-injection` and other registered LLM skills |
+| LLM/chatbot | `llm-prompt-injection` and related LLM skills |
 | Autonomous agent with tools | agent-security |
-| AI API with external tool access | agent/tool-use security |
-| No specialized evidence | stop or perform one bounded discovery action |
-
-The router must prefer a registered specialized skill over this broad skill when both match.
-
-## Specialized Routing Rules
-
-The runtime should emit a new routing signal rather than loading all branches simultaneously.
-
-A broad AI/ML signal must **not** activate every AI/ML technique.
-
-## Assessment Domains
-
-### 1. Model Supply Chain
-
-Assess only when model artifacts or model-loading infrastructure are present.
-
-Look for:
-
-- unsafe serialization formats;
-- untrusted model provenance;
-- executable/custom model code;
-- remote-code loading;
-- dependency confusion in ML pipelines;
-- integrity/signature gaps;
-- unsafe model download/load paths.
-
-Do not claim code execution from file format alone. Require evidence of an unsafe load path or equivalent execution behavior.
-
-### 2. Adversarial Robustness
-
-Assess when an inference/classification surface is confirmed.
-
-Record:
-
-- model input type;
-- attacker control;
-- prediction/output behavior;
-- baseline behavior;
-- perturbation constraints;
-- reproducibility.
-
-Use bounded tests appropriate to the authorized environment. Do not equate any misclassification with a security vulnerability.
-
-### 3. Model Poisoning
-
-Assess only when the researcher can legitimately influence:
-
-- training data;
-- model updates;
-- labels;
-- federated updates;
-- model artifacts;
-- training dependencies.
-
-Separate availability/quality degradation from security impact.
-
-### 4. Model Extraction
-
-Require an observable model API and evidence that query behavior can reveal model-specific information.
-
-Track:
-
-- query budget;
-- returned output granularity;
-- confidence/probability exposure;
-- rate limits;
-- response similarity;
-- reproducibility.
-
-Do not assume a fixed query count is universally sufficient.
-
-### 5. Model Privacy
-
-Potential areas:
-
-- membership inference;
-- model inversion;
-- training-data exposure;
-- gradient leakage;
-- sensitive output leakage.
-
-Require evidence that the data is sensitive and that the model/API behavior supports the hypothesis.
-
-### 6. LLM Security
-
-Route detailed LLM testing to registered specialized skills.
-
-Potential signals:
-
-- prompt injection;
-- indirect prompt injection;
-- system-instruction exposure;
-- unsafe tool use;
-- sensitive data disclosure;
-- cross-tenant/context leakage.
-
-Do not duplicate detailed payload libraries here.
-
-### 7. Agent Security
-
-When an autonomous agent is confirmed, inspect:
-
-- available tools;
-- authorization boundaries;
-- tool argument validation;
-- confirmation requirements;
-- external-content trust;
-- inter-agent trust;
-- data-flow boundaries;
-- side-effect permissions.
-
-A tool invocation alone is not proof of privilege escalation or data exfiltration.
-
-## Evidence Model
-
-Produce:
-
-```
-ai_ml_assessment:
-  outcome: no-signal | candidate | routed | validated | inconclusive
-  surface:
-    type: <ai|ml|llm|agent|pipeline|model-artifact>
-    evidence_refs:
-      - <ref>
-  signal:
-    name: <signal>
-    confidence: 0.00
-  scope:
-    status: in-scope | out-of-scope | unknown
-  primary_route:
-    skill: <registered-skill-or-null>
-    reason: <reason>
-  supporting_routes:
-    - skill: <registered-skill>
-      reason: <reason>
-  resource_refs:
-    - resource_id: <id>
-      reason: <why>
-      output_refs:
-        - <ref>
-  observations:
-    - <fact>
-  hypotheses:
-    - <hypothesis>
-  test_budget:
-    initial_checks: <integer>
-    followups: <integer>
-    tool_runs: <integer>
-  next_action:
-    type: route | resource | bounded-discovery | validate | stop
-    reason: <reason>
-```
-
-Confidence represents evidence for the AI/ML surface or routing decision. It is not exploitability or severity.
-
-## Handoff Contract
-
-When routing to a specialized skill or resource-assisted workflow, preserve:
-
-- `ai_ml_assessment`;
-- original signal;
-- surface evidence;
-- scope/auth state;
-- artifact/endpoint references;
-- account/session context;
-- prior observations;
-- hypotheses;
-- resource references and provenance;
-- test budget.
-
-The downstream skill must not silently reset the budget or discard the parent evidence.
-
-If a specialized skill or resource is unavailable, do not invent one. Return `stop` or perform one bounded discovery action.
-
-## Deduplication and Loop Prevention
-
-- Identify skills and resources by canonical registered identity/resource ID.
-- Do not load the same skill or run the same resource twice for the same hypothesis without new evidence.
-- Prefer a specialized child skill over this broad router for execution.
-- Maximum one primary route and two supporting routes unless an explicit chain requires more.
-- Maximum four resource references and two active tool runs per handoff.
-- A child/resource failure should emit a new evidence-based signal; it must not automatically trigger every sibling technique/resource.
-- Avoid loops such as:
-  `AI signal → broad AI skill → LLM skill → broad AI skill`.
-- Preserve parent/child/resource lineage for every handoff.
-
-## Decision Gate
-
-Before activating a specialized branch or external resource, answer:
-
-1. Is the target authorized and in scope?
-2. Is there concrete AI/ML evidence?
-3. Which exact surface is present?
-4. What signal triggered routing?
-5. Which registered skill/resource is canonical for the task?
-6. What evidence supports that choice?
-7. What is the smallest useful test/tool run?
-8. What is the expected distinguishing observation?
-9. What is the remaining budget?
-10. What result would cause a stop?
-
-If these cannot be answered, stop rather than guessing.
+| No specialized evidence | stop or perform a bounded discovery action |
 
 ## Safety and Quality Rules
 
 - Preserve authorization and scope as hard gates.
 - Never treat marketing language as technical evidence.
-- Never fabricate model files, endpoints, outputs, provenance, or resource results.
-- Do not claim RCE from a model format without an unsafe load/execution path.
+- Do not claim RCE from a model format without an unsafe load or execution path.
 - Do not claim model extraction from query volume alone.
 - Do not claim privacy impact without sensitive-data evidence.
-- Do not claim adversarial robustness failure is automatically a security vulnerability.
-- Keep broad AI/ML routing separate from specialized execution skills.
-- Prefer registered canonical skills and explicit signals over keyword matching.
+- Prefer local specialized skills over broad routing.
 - External resources may inform a hypothesis but cannot create a finding without validation.
 - Stop when evidence or information gain is insufficient.
+---
+
+# Research Checklist
+
+- Confirm authorization and scope.
+- Confirm the AI/ML surface.
+- Select the smallest relevant specialized skill.
+- Use bounded resources only when justified.
+- Record provenance and evidence.
+- Validate before reporting a vulnerability.
