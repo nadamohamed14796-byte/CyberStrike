@@ -186,7 +186,14 @@ export namespace Tool {
                 input: args,
                 output: result.output,
                 signal: `tool:${id}:${aborted ? "cancelled" : timedOut ? "timed_out" : "completed"}`,
-                metadata: { runID: run.id, runKey: run.runKey, scopeVerified, agent: ctx.agent },
+                metadata: {
+                  runID: run.id,
+                  runKey: run.runKey,
+                  scopeVerified,
+                  agent: ctx.agent,
+                  ...(typeof result.metadata.target_workspace === "string" ? { target_workspace: result.metadata.target_workspace } : {}),
+                  ...(typeof result.metadata.session_workspace === "string" ? { session_workspace: result.metadata.session_workspace } : {}),
+                },
               })
               await Learning.emit({
                 hook: "during_testing",
