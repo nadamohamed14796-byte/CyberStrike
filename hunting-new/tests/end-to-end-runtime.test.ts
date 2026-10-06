@@ -33,8 +33,8 @@ describe("hunting runtime end-to-end", () => {
       const responses=Array.from({length:20},(_,index)=>({
         id:"res-"+(index+1),
         requestId:"req-1",
-        status:200,
-        headers:{"content-type":"application/json"},
+        status:403,
+        headers:{"content-type":"application/json","cf-ray":"ray-"+(index+1)},
         contentType:"application/json",
         bodyHash:"body-"+(index+1),
         observedAt:index+2,
@@ -63,13 +63,12 @@ describe("hunting runtime end-to-end", () => {
           {from:"js-1",to:"req-1",kind:"observed-on",confidence:1,evidence:"browser"},
         ],
       })
-      expect(engine.forTarget(target).some(x=>x.signal==="object_identifier_detected")).toBe(true)
-      expect(engine.forTarget(target).some(x=>x.signal==="authenticated_endpoint")).toBe(true)
+      expect(engine.forTarget(target).some(x=>x.signal==="waf_signal_detected")).toBe(true)
 
       const prepared=await prepareMultiAgentPlan(root,engine,[{
-        name:"authorization-check",
-        confidence_threshold:.7,
-        required_signals:["object_identifier_detected","authenticated_endpoint"],
+        name:"waf-check",
+        confidence_threshold:.6,
+        required_signals:["waf_signal_detected"],
         optional_signals:[],
         dependencies:[],
         maximum_parallel_tasks:1,
