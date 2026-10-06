@@ -44,14 +44,14 @@ export namespace ReconDispatch {
       ? ScopeGuard.check(target, input.scope_items)
       : undefined
 
-    const scopeAllowed = input.scope_verified === true || scope?.inScope === true
+    const scopeAllowed = scope?.inScope === true
     if (target && input.scope_items?.length && scope?.inScope === false) return []
     const fresh = planned.filter((tool) => {
       const k = key(tool.id, target, input.signal)
       if (seen.has(k) && !input.retry) return false
       if ((attempts.get(k) ?? 0) >= maxAttempts) return false
 
-      const active = tool.risk === "active-test" || tool.risk === "high-impact"
+      const active = tool.risk !== "passive"
       if (active && !scopeAllowed) return false
       if (active && input.authorized_active_testing !== true) return false
 
