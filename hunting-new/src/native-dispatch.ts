@@ -7,6 +7,7 @@ import { checkpointPhase } from "./runtime-persistence"
 export interface NativeDispatchOptions {
   limit?:number
   agentBySkill?:Record<string,string>
+  agentByRole?:Record<string,string>
   defaultAgent?:string
   parentSessionID?:string
   model?:{providerID:string;modelID:string}
@@ -29,6 +30,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
   const results=[]
   const executorOptions={
     agentBySkill:options.agentBySkill,
+    agentByRole:options.agentByRole,
     defaultAgent:options.defaultAgent,
     parentSessionID:options.parentSessionID,
     model:options.model,
