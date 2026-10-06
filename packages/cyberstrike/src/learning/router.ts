@@ -97,7 +97,10 @@ export namespace LearningRouter {
 
     return Array.from(candidates.entries())
       .map(([name, value]) => {
-        const learned = ReferenceLearning.score(name)
+        let learned = 50
+        try {
+          learned = ReferenceLearning.score(name)
+        } catch {}
         const learningBoost = Math.max(-10, Math.min(10, Math.round((learned - 50) / 5)))
         return {
           name,
