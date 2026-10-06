@@ -133,6 +133,16 @@ export async function transitionReport(
     if((current.status==="accepted"||current.status==="rejected") && current.status!==status){
       throw new Error("REPORT_STATE_CONFLICT: terminal report cannot transition")
     }
+    const allowed:Record<ReportStatus,ReportStatus[]> = {
+      draft:["ready"],
+      ready:["submitted"],
+      submitted:["accepted","rejected"],
+      accepted:[],
+      rejected:[],
+    }
+    if(current.status!==status && !allowed[current.status].includes(status)){
+      throw new Error(`REPORT_STATE_CONFLICT: ${current.status} -> ${status} is not allowed`)
+    }
     if(current.status===status){ unchanged=true; return current }
     current.status=status
     if(meta.submissionRef!==undefined)current.submissionRef=meta.submissionRef
