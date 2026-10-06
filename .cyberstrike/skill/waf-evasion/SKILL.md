@@ -1,10 +1,9 @@
 ---
-
 name: waf-evasion
-description:
-Evidence-driven analysis of web filtering, intermediary processing,
-normalization, encoding, and parser differentials during authorized
-security testing.
+description: |
+  Evidence-driven analysis of web filtering, intermediary processing,
+  normalization, encoding, and parser differentials during authorized
+  security testing.
 category: input-validation
 version: "2.0.0"
 author: CyberStrike
@@ -20,7 +19,7 @@ severity_boost: {}
 
 ## High-Level Description
 
-Use this skill when an authorized web security test has already attempted a baseline technique and the observed behavior suggests filtering, intermediary processing, normalization, encoding, or parser differences.
+Use this skill when an authorized web security test has already attempted a baseline technique and the observed behavior suggests filtering, intermediary processing, normalization, encoding, or parser differentials that may require adaptive investigation.
 
 This is a cross-vulnerability adaptive skill.
 
@@ -205,9 +204,9 @@ transformation:
   type: normalization
   status: observed
   confidence: 0.78
-  evidence:
-    - response-id-123
-    - response-id-124
+evidence:
+  - response-id-123
+  - response-id-124
 ```
 
 Prefer the smallest test capable of distinguishing competing hypotheses.
