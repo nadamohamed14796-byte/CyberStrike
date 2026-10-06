@@ -7404,7 +7404,25 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "reference-learning",
+      "description": "Persistent learning layer for security reference skills and outcome-driven routing.",
+      "category": "meta",
+      "verified": "official",
+      "tags": [
+        "learning",
+        "references",
+        "skill-routing",
+        "feedback",
+        "false-positive-control"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 393
+  "skill_count": 394
 }
