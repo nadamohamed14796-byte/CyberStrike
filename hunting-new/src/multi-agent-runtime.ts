@@ -482,6 +482,8 @@ export async function executeAndRecordDispatchedTask(
         summary:parsed.resultSummary,
         impact:parsed.impact,
         remediation:parsed.remediation,
+        rootCause:parsed.rootCause,
+        reproduction:parsed.reproduction,
         validation:lifecycle.validation,
         signal:context.signal,
         skill:context.primarySkill,
