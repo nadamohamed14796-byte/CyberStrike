@@ -40,3 +40,20 @@ describe("execution result", () => {
     expect(verifiedEvidenceIds(result, new Set(["ev-real"]))).toEqual(["ev-real"])
   })
 })
+
+describe("structured report fields", () => {
+  test("preserves root cause and reproduction text", () => {
+    const result=parseExecutionResult(JSON.stringify({
+      state:"confirmed",
+      outcome:"clean",
+      severity:"high",
+      impact:"security impact",
+      root_cause:"server authorization check is missing",
+      steps_to_reproduce:"1. Authenticate as account A. 2. Request object B.",
+      evidence:[],
+      observations:[],
+    }),{state:"inconclusive",outcome:"clean"})
+    expect(result.rootCause).toBe("server authorization check is missing")
+    expect(result.reproduction).toContain("Authenticate as account A")
+  })
+})
