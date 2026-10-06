@@ -207,6 +207,7 @@ export async function prepareAgentTaskValidation(
 export interface AgentTaskExecutionContext {
   taskId:string
   target:string
+  role:import("./multi-agent-planner").HuntingAgentRole
   primarySkill:string
   resolvedSkills:string[]
   strategyHints:string[]
@@ -258,7 +259,7 @@ export async function enrichAgentTaskExecutionContext(
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
-  return { taskId:task.id, target:task.target, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
+  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
 }
 
 export async function prepareSkillExecutionInvocation(
