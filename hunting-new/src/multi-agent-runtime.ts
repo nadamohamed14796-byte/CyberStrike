@@ -62,6 +62,7 @@ export async function prepareMultiAgentPlanFromTargetIntelligence(
     )
     task.resolvedSkills=resolved.map(skill=>skill.name)
     task.resolvedSkillPaths=resolved.map(skill=>skill.source_path).filter((value):value is string=>Boolean(value))
+    task.recommendedAgent=registry.get(task.skill)?.agent
   }
 
   await saveAgentPlan(root,plan)
