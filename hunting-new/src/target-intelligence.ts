@@ -4,9 +4,19 @@ import type { JSAssetNode, RequestNode, ResponseNode, FunctionNode, Edge } from 
 import type { HypothesisRecord } from "./hypotheses"
 import { dedupeEdges } from "./correlation"
 
+export interface TargetAccount {
+  id: string
+  label: string
+  authenticationState: "anonymous" | "authenticated"
+  credentialFingerprint?: string
+  firstSeen: number
+  lastSeen: number
+}
+
 export interface TargetIntelligence {
   target: string
   updatedAt: string
+  accounts: TargetAccount[]
   jsAssets: JSAssetNode[]
   requests: RequestNode[]
   responses: ResponseNode[]
@@ -17,7 +27,7 @@ export interface TargetIntelligence {
 }
 
 export function emptyTargetIntelligence(target: string): TargetIntelligence {
-  return { target, updatedAt: new Date().toISOString(), jsAssets: [], requests: [], responses: [], functions: [], edges: [], hypotheses: [], tags: [] }
+  return { target, updatedAt: new Date().toISOString(), accounts: [], jsAssets: [], requests: [], responses: [], functions: [], edges: [], hypotheses: [], tags: [] }
 }
 
 export function stableRequestId(method: string, url: string): string {
@@ -51,6 +61,7 @@ export async function rememberTargetIntelligence(
   const current = await loadTargetIntelligence(root, target)
   return saveTargetIntelligence(root, {
     ...current,
+    accounts: mergeById(current.accounts ?? [], patch.accounts ?? []).map(item => ({ ...item })),
     jsAssets: mergeById(current.jsAssets, patch.jsAssets ?? []),
     requests: mergeById(current.requests, patch.requests ?? []),
     responses: mergeById(current.responses, patch.responses ?? []),
