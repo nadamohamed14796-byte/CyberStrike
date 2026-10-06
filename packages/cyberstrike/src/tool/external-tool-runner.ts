@@ -69,6 +69,7 @@ export const ExternalToolRunnerTool = Tool.define("external_tool_runner", {
   parameters: z.object({
     tool_id: z.string().describe(`Registered external tool ID. Available: ${EXTERNAL_TOOLS.map((x) => x.id).join(", ")}`),
     target: z.string().describe("In-scope target for the tool"),
+    endpoint: z.string().optional().describe("Optional endpoint identity for run tracking"),
     scope_items: z.array(z.string()).describe("Programmatic in-scope hosts/URLs/CIDRs"),
     authorized_active_testing: z.boolean().default(false).describe("Explicit authorization for active testing"),
     parameters: z.record(z.string(), z.unknown()).optional(),
