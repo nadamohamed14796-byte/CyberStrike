@@ -33,7 +33,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
 
   const parameters = z.object({
     action: z
-      .enum(["load", "unload", "search", "chain", "suggest", "list"])
+      .enum(["load", "unload", "search", "chain", "suggest", "list", "learn"])
       .default("load")
       .describe("Action to perform"),
     name: z.string().optional().describe("Skill name (for load/unload/learn)"),
