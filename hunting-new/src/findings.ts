@@ -42,9 +42,13 @@ export interface FindingInput {
 
 const unique=(v:string[])=>[...new Set(v.filter(Boolean))]
 
-export function findingFingerprint(input:Pick<FindingInput,"target"|"title"|"hypothesisId"|"chainId"|"evidence">):string {
-  const evidenceKeys=input.evidence.map(x=>[x.kind,x.sourceId,x.requestId??"",x.responseId??"",x.jsAssetId??"",x.functionId??""].join(":")).sort()
-  return crypto.createHash("sha256").update([input.target.trim().toLowerCase(),input.title.trim().toLowerCase(),input.hypothesisId,input.chainId??"",...evidenceKeys].join("|")).digest("hex")
+export function findingFingerprint(input:Pick<FindingInput,"target"|"title"|"hypothesisId"|"chainId">):string {
+  return crypto.createHash("sha256").update([
+    input.target.trim().toLowerCase(),
+    input.title.trim().toLowerCase(),
+    input.hypothesisId,
+    input.chainId??"",
+  ].join("|")).digest("hex")
 }
 
 export function buildFinding(input:FindingInput):FindingRecord {
