@@ -291,8 +291,27 @@ export namespace Validation {
         message: `Asset "${a.asset}" has only ${a.coveragePercent}% coverage (${a.completedChecks}/${a.totalChecks} checks) — minimum ${MIN_COVERAGE}%`,
       }))
 
+    // Clean results need real iterative depth. A "tested_not_vulnerable" result
+    // without enough distinct attempts is not strong enough to close the check.
+    const iterativeViolations: ViolationItem[] = Intel.getVrtChecks(sessionID)
+      .filter((c) => c.status === "tested_not_vulnerable")
+      .flatMap((c) => {
+        const evidence = c.evidence as Record<string, unknown> | undefined
+        const attempts = Number(evidence?.attemptCount ?? 0)
+        if (attempts >= 20) return []
+        return [{
+          gate: "iterative_depth",
+          severity: "blocking" as const,
+          message: 'Clean result "' + c.category + '" has only ' + attempts + ' distinct validation attempts (need >=20 unless the test is safely inapplicable).',
+          field: "attemptCount",
+          expectedValue: ">=20",
+          actualValue: String(attempts),
+        }]
+      })
+
     const allViolations = [
       ...coverageViolations,
+      ...iterativeViolations,
       ...evidenceResults.flatMap((r) => r.violations),
       ...triagerResults.flatMap((r) => r.violations),
     ]
