@@ -1,6 +1,7 @@
 import { ToolArtifact } from "./artifact"
 import { planReconTools } from "./recon-toolchain"
 import { ScopeGuard } from "./scope-check"
+import { ToolLearning } from "../learning/tool-learning"
 
 export namespace ReconDispatch {
   export type Input = {
@@ -54,7 +55,12 @@ export namespace ReconDispatch {
       return true
     })
 
-    return fresh.map((tool) => ({
+    const ranked = ToolLearning.rank(
+      fresh,
+      input.signal,
+      input.sessionID,
+    )
+    return ranked.map((tool) => ({
       ...tool,
       scope_verified: scopeAllowed,
       authorization_verified:
