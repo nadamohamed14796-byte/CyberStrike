@@ -5,6 +5,7 @@ export interface NetworkObservation {
   sessionId: string
   request: { id: string; method: string; url: string; host?: string; path?: string; credentialId?: string; accountLabel?: string; observedAt?: number }
   response?: { id: string; status: number; headers?: Record<string,string>; contentType?: string; bodyHash?: string; observedAt?: number }
+  pageUrl?: string
   jsAssetIds?: string[]
   jsAssets?: JSAssetNode[]
   functionIds?: string[]
@@ -28,6 +29,15 @@ export function ingestObservation(graph:CorrelationGraph,observation:NetworkObse
     link(graph,{from:assetId,to:r.id,kind:"observed-on",confidence:1,evidence:"browser"})
   }
   for(const asset of observation.jsAssets??[])graph.assets.set(asset.id,asset)
+  // Browser page context can correlate a request with JS assets already persisted
+  // for that page, even when the capture did not provide explicit asset IDs.
+  if(observation.pageUrl){
+    for(const asset of graph.assets.values()){
+      if(asset.pageUrl===observation.pageUrl){
+        link(graph,{from:asset.id,to:r.id,kind:"observed-on",confidence:0.88,evidence:"browser"})
+      }
+    }
+  }
   for(const functionId of observation.functionIds??[]){
     if(!graph.functions.has(functionId))graph.functions.set(functionId,{id:functionId,name:functionId})
     link(graph,{from:functionId,to:r.id,kind:"triggered-by",confidence:1,evidence:"browser"})
