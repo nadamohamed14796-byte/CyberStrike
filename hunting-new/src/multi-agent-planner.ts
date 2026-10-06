@@ -1,7 +1,5 @@
 import type { SignalEngine, SkillRule, SkillSelection } from "./signals"
 import { routeSkills, routeRegisteredSkills, type RoutingDecision } from "./skill-router"
-import { prioritizeSkills } from "./learned-prioritization"
-import { canonicalSignal } from "./canonical-signals"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import type { SkillRegistry, SkillMetadata } from "./skill-registry"
@@ -92,45 +90,6 @@ export function buildMultiAgentPlanFromRegistry(
   falsePositives?: FalsePositiveIntelligence,
 ): MultiAgentPlan {
   const signals = engine.forTarget(target)
-  const selections: SkillSelection[] = []
-
-  for (const metadata of registry.list()) {
-    const matchedSignals = [...new Set(
-      signals
-        .filter(signal =>
-          signal.confidence >= metadata.confidence_threshold &&
-          metadata.triggers.some(trigger =>
-            canonicalSignal(signal.signal) === canonicalSignal(trigger),
-          ),
-        )
-        .map(signal => signal.signal),
-    )]
-    if (!matchedSignals.length) continue
-    const score = matchedSignals.length / Math.max(1, metadata.triggers.length)
-    selections.push({
-      name: metadata.name,
-      confidence_threshold: metadata.confidence_threshold,
-      required_signals: matchedSignals,
-      optional_signals: metadata.triggers,
-      dependencies: metadata.dependencies,
-      priority: 0,
-      maximum_parallel_tasks: metadata.maximum_parallel_tasks,
-      matchedSignals,
-      score,
-    })
-  }
-
-  const selected = target && learning && selections.length
-    ? (() => {
-        const learned = prioritizeSkills(selections, learning, target, undefined, falsePositives)
-        const rank = new Map(learned.map((item, index) => [`${item.skill}|${item.signal}`, index]))
-        return [...selections].sort((a, b) => {
-          const aRank = Math.min(...a.matchedSignals.map(signal => rank.get(`${a.name}|${signal}`) ?? Number.MAX_SAFE_INTEGER))
-          const bRank = Math.min(...b.matchedSignals.map(signal => rank.get(`${b.name}|${signal}`) ?? Number.MAX_SAFE_INTEGER))
-          return aRank - bRank || b.score - a.score
-        })
-      })()
-    : selections
 
   const decision: RoutingDecision = routeRegisteredSkills(engine, registry, target, learning, falsePositives)
 
