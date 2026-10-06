@@ -191,14 +191,16 @@ export namespace TargetMemory {
   }
 
   /** Promote conservative endpoint/parameter references found in stored JavaScript. */
-  export function extractJavascriptIntel(sessionID: string): number {
+  export function extractJavascriptIntel(sessionID: string, requestID?: string): number {
     const projectID = projectIDForSession(sessionID)
     if (!projectID) return 0
-    const scripts = list(projectID, "javascript", 1000)
+    const scripts = requestID
+      ? list(projectID, "javascript", 1000).filter((script) => script.request_id === requestID)
+      : list(projectID, "javascript", 1000)
     let stored = 0
-    const absolute = /https?:\/\/[^"'\\s<>]+/gi
+    const absolute = /https?:\/\/[^"'\s<>]+/gi
     const relative = /["'`]((?:\/api\/|\/v1\/|\/v2\/|\/graphql(?:\?|$)|\/rest\/)[A-Za-z0-9_./?=&:%{}$-]{1,240})["'`]/gi
-    const params = /[?&]([A-Za-z_][A-Za-z0-9_.-]{1,63})=/g
+    const params = /[?&]([A-Za-z_][A-Za-z0-9_.-]{0,63})=/g
     for (const js of scripts) {
       const content = js.content ?? ""
       if (!content) continue
