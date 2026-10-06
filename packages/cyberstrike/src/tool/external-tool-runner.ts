@@ -83,7 +83,7 @@ export const ExternalToolRunnerTool = Tool.define("external_tool_runner", {
     if (riskRequiresScope(spec.risk) && !scope.inScope) {
       throw new Error(`Out-of-scope external tool execution refused for ${params.target}`)
     }
-    if ((spec.risk === "active-test" || spec.risk === "high-impact") && !params.authorized_active_testing) {
+    if (spec.risk !== "passive" && !params.authorized_active_testing) {
       throw new Error(`External tool ${spec.id} requires explicit active-testing authorization`)
     }
 
@@ -136,7 +136,7 @@ export const ExternalToolRunnerTool = Tool.define("external_tool_runner", {
         risk: spec.risk,
         phase: spec.phase,
         scope_verified: scope.inScope,
-        authorization_verified: spec.risk === "passive" || spec.risk === "active-read" || params.authorized_active_testing,
+        authorization_verified: spec.risk === "passive" || params.authorized_active_testing,
         status,
         exit: exitCode,
         timed_out: timedOut,
