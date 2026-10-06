@@ -3,6 +3,7 @@ import type { MessageV2 } from "../session/message-v2"
 import type { Agent } from "../agent/agent"
 import type { PermissionNext } from "../permission/next"
 import { Truncate } from "./truncation"
+import { ToolRunRecord } from "./run-record"
 
 export namespace Tool {
   interface Metadata {
@@ -45,6 +46,40 @@ export namespace Tool {
   export type InferParameters<T extends Info> = T extends Info<infer P> ? z.infer<P> : never
   export type InferMetadata<T extends Info> = T extends Info<any, infer M> ? M : never
 
+  function executionIdentity(args: unknown) {
+    if (!args || typeof args !== "object" || Array.isArray(args)) return {}
+    const value = args as Record<string, unknown>
+    const target =
+      typeof value.target === "string"
+        ? value.target
+        : value.target && typeof value.target === "object" && typeof (value.target as Record<string, unknown>).url === "string"
+          ? String((value.target as Record<string, unknown>).url)
+          : typeof value.url === "string"
+            ? value.url
+            : undefined
+    const endpoint =
+      typeof value.endpoint === "string"
+        ? value.endpoint
+        : typeof target === "string" && /^https?:\/\//i.test(target)
+          ? target
+          : undefined
+    return { target, endpoint }
+  }
+
+  async function verifyExecutionScope(args: unknown): Promise<boolean | undefined> {
+    if (!args || typeof args !== "object" || Array.isArray(args)) return undefined
+    const value = args as Record<string, unknown>
+    const items = Array.isArray(value.scope_items) ? value.scope_items.filter((x): x is string => typeof x === "string") : []
+    const identity = executionIdentity(args)
+    if (!items.length || !identity.target) {
+      return typeof value.scope_verified === "boolean" ? value.scope_verified : undefined
+    }
+    const { ScopeGuard } = await import("./scope-check")
+    const decision = ScopeGuard.check(identity.target, items)
+    if (!decision.inScope) throw new Error(`Out-of-scope execution refused for target "${identity.target}".`)
+    return true
+  }
+
   export function define<Parameters extends z.ZodType, Result extends Metadata>(
     id: string,
     init: Info<Parameters, Result>["init"] | Awaited<ReturnType<Info<Parameters, Result>["init"]>>,
@@ -66,20 +101,84 @@ export namespace Tool {
               { cause: error },
             )
           }
-          const result = await execute(args, ctx)
-          // skip truncation for tools that handle it themselves
-          if (result.metadata.truncated !== undefined) {
-            return result
-          }
-          const truncated = await Truncate.output(result.output, {}, initCtx?.agent)
-          return {
-            ...result,
-            output: truncated.content,
-            metadata: {
-              ...result.metadata,
-              truncated: truncated.truncated,
-              ...(truncated.truncated && { outputPath: truncated.outputPath }),
-            },
+
+          const identity = executionIdentity(args)
+          let scopeVerified: boolean | undefined
+          let run: ReturnType<typeof ToolRunRecord.begin> | undefined
+
+          try {
+            scopeVerified = await verifyExecutionScope(args)
+            run = ToolRunRecord.begin({
+              sessionID: ctx.sessionID,
+              toolID: id,
+              toolName: id,
+              target: identity.target,
+              endpoint: identity.endpoint,
+              parameters: args as Record<string, unknown>,
+              callID: ctx.callID,
+              scopeVerified,
+              agent: ctx.agent,
+              metadata: { messageID: ctx.messageID },
+            })
+
+            if (run.deduplicated) {
+              return {
+                title: `Skipped duplicate execution: ${id}`,
+                output: `An equivalent ${id} execution is already running (run ${run.id}).`,
+                metadata: {
+                  truncated: false,
+                  deduplicated: true,
+                  runID: run.id,
+                  runKey: run.runKey,
+                  scopeVerified,
+                } as Result,
+              }
+            }
+
+            const result = await execute(args, ctx)
+            const aborted = ctx.abort.aborted
+            const resultMetadata = result.metadata as Record<string, unknown>
+            const timedOut =
+              resultMetadata.timed_out === true ||
+              resultMetadata.timeout === true ||
+              (typeof resultMetadata.output === "string" && /terminated .*timeout/i.test(resultMetadata.output))
+
+            ToolRunRecord.finish({
+              id: run.id,
+              status: aborted ? "cancelled" : timedOut ? "timed_out" : "completed",
+              exitCode: typeof resultMetadata.exit === "number" ? resultMetadata.exit : undefined,
+              stdout: typeof resultMetadata.stdout === "string" ? resultMetadata.stdout : undefined,
+              stderr: typeof resultMetadata.stderr === "string" ? resultMetadata.stderr : undefined,
+              resultSummary: result.output,
+              metadata: { ...resultMetadata, scopeVerified },
+            })
+
+            if (result.metadata.truncated !== undefined) return result
+            const truncated = await Truncate.output(result.output, {}, initCtx?.agent)
+            return {
+              ...result,
+              output: truncated.content,
+              metadata: {
+                ...result.metadata,
+                truncated: truncated.truncated,
+                ...(truncated.truncated && { outputPath: truncated.outputPath }),
+                runID: run.id,
+                runKey: run.runKey,
+                scopeVerified,
+              },
+            }
+          } catch (error) {
+            if (run) {
+              try {
+                ToolRunRecord.finish({
+                  id: run.id,
+                  status: ctx.abort.aborted ? "cancelled" : "failed",
+                  error: error instanceof Error ? error.message : String(error),
+                  metadata: { scopeVerified },
+                })
+              } catch {}
+            }
+            throw error
           }
         }
         return toolInfo
