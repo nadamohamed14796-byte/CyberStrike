@@ -9,6 +9,8 @@ import { Request } from "../session/request"
 import { Observation } from "../session/observation"
 import { Session } from "../session"
 import { Vulnerability } from "../session/vulnerability"
+import { TargetMemory } from "../session/target-memory"
+import { Instance } from "../project/instance"
 
 const description = `Get the bounded web-application context for this session — scoped to the endpoint you are testing, so it stays small no matter how large the session grows.
 
@@ -92,6 +94,29 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
       objects: WebObject.get(sessionID).map((o) => o.name),
       functions: WebFunction.get(sessionID).map((f) => f.name),
       roles: WebRole.get(sessionID).map((r) => r.name),
+    }
+
+    // Project-scoped memory survives session boundaries and exposes previously
+    // observed endpoints plus captured JavaScript resources without dumping the
+    // entire historical corpus into the prompt.
+    const projectID = Instance.project.id
+    context.target_memory = {
+      endpoints: TargetMemory.list(projectID, "endpoint", 30).map((m) => ({
+        url: m.url,
+        method: m.method,
+        asset: m.asset,
+        request_id: m.request_id,
+        last_seen: m.time.updated,
+      })),
+      javascript: TargetMemory.list(projectID, "javascript", 8).map((m) => ({
+        url: m.url,
+        asset: m.asset,
+        request_id: m.request_id,
+        page_url: m.page_url,
+        content_type: m.content_type,
+        content: m.content,
+        last_seen: m.time.updated,
+      })),
     }
 
     // 3. credentials — strip 3rd-party tracking-cookie noise (keep auth/session).
