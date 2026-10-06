@@ -53,6 +53,7 @@ import { RecordCoverageNoteTool, GetCoverageNotesTool } from "./coverage-note"
 import { ScopeCheckTool } from "./scope-check"
 import { ReconToolchainTool } from "./recon-toolchain"
 import { ReconOrchestratorTool } from "./recon-orchestrator"
+import { CoverageMatrixTool } from "./coverage-matrix"
 import { EnsureToolsTool } from "./ensure-tools"
 import { MethodologyStatusTool } from "./methodology-status"
 import { AttackScriptTool } from "./attack-script"
@@ -200,6 +201,7 @@ export namespace ToolRegistry {
       ScopeCheckTool,
       ReconToolchainTool,
       ReconOrchestratorTool,
+      CoverageMatrixTool,
       EnsureToolsTool,
       MethodologyStatusTool,
       AttackScriptTool,
