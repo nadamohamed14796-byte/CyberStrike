@@ -1249,10 +1249,11 @@ export namespace SessionPrompt {
           let runningQueueID: string | undefined
           try {
             const queueTarget = learningTarget(args)
-            const queueItem = SignalQueue.next(ctx.sessionID)
-            if (queueItem && (!queueItem.target || !queueTarget || queueItem.target === queueTarget)) {
-              if (SignalQueue.markRunning(queueItem.id)) runningQueueID = queueItem.id
-            }
+            runningQueueID = SignalQueue.claimForTool({
+              sessionID: ctx.sessionID,
+              toolID: item.id,
+              target: queueTarget,
+            })
           } catch (error) {
             log.warn("failed to claim signal queue item", { error, tool: item.id, callID: ctx.callID })
           }
