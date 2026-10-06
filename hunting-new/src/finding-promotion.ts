@@ -5,6 +5,7 @@ import { loadAttempts } from "./attempt-store"
 import { loadHypotheses } from "./hypothesis-store"
 import { loadFindings, upsertFinding } from "./finding-store"
 import { FalsePositiveIntelligence } from "./false-positive-intelligence"
+import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
 import { dedupeDecision, shouldRecheckAfterNewEvidence } from "./dedupe-engine"
 import type { ValidationResult, ValidationEvidence } from "./validation-gate"
 import { validateHypothesis, hasBaselineComparison, hasBehaviorChange, hasCrossAccountEvidence } from "./validation-gate"
@@ -77,7 +78,7 @@ export async function promoteValidatedHypothesis(
     if(!newEvidence)return {finding:existing,reportable:existing.status==="validated"||existing.status==="reported",missing:[],action:"skip",reason:"matching finding already exists with no new evidence"}
   }
   const fpContext={target,signal:input.signal??hypothesis.signal,skill:input.skill??"unknown",strategy:input.strategy??"validation",endpoint:input.endpoint,accountMode:input.accountMode}
-  const intelligence=falsePositives??new FalsePositiveIntelligence()
+  const intelligence=falsePositives ?? hydrateFalsePositiveIntelligence(await loadFalsePositives(root,target))
   const dedupe=dedupeDecision(intelligence,fpContext)
   if(dedupe.action==="skip"&&!shouldRecheckAfterNewEvidence(intelligence,{...fpContext,evidenceIds:linkedEvidence.map(x=>x.id)}))return {reportable:false,missing:[],action:"skip",reason:dedupe.reason}
   const finding=buildFinding({target,title:input.title,severity:input.severity,hypothesisId:hypothesis.id,chainId:input.chainId,attemptIds:linkedAttempts.map(x=>x.id),evidence:linkedEvidence,summary:input.summary,impact:input.impact,remediation:input.remediation})
