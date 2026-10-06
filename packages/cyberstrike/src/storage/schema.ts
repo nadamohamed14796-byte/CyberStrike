@@ -28,3 +28,4 @@ export {
 } from "../methodology/methodology.sql"
 
 export { SkillLearningTable, SkillLearningEventTable, LearningSignalTable } from "../learning/learning.sql"
+\nexport { ToolArtifactTable } from "../tool/artifact.sql"\n
