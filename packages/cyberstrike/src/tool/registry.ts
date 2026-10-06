@@ -60,6 +60,7 @@ import { AttackScriptTool } from "./attack-script"
 import { GenerateReportTool } from "./generate-report"
 import { ValidateFindingTool } from "./validate-finding"
 import { UnderstandApplicationTool } from "./understand-application"
+import { RecordVariantTool } from "./record-variant"
 import { EbpfTool } from "./ebpf"
 import { WinhookTool } from "./winhook"
 import { MachookTool } from "./machook"
@@ -213,6 +214,7 @@ export namespace ToolRegistry {
       GenerateReportTool,
       ValidateFindingTool,
       UnderstandApplicationTool,
+      RecordVariantTool,
       EbpfTool,
       WinhookTool,
       MachookTool,
