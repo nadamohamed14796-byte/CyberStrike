@@ -118,6 +118,8 @@ export function parseExecutionResult(
       impact:typeof record.impact==="string" ? record.impact.trim() || undefined : undefined,
       remediation:typeof record.remediation==="string" ? record.remediation.trim() || undefined : undefined,
       rootCause:typeof record.root_cause==="string" ? record.root_cause.trim() || undefined : typeof record.rootCause==="string" ? record.rootCause.trim() || undefined : undefined,
+      reproduction:typeof record.reproduction==="string" ? record.reproduction.trim() || undefined : undefined,
+      rootCause:typeof record.root_cause==="string" ? record.root_cause.trim() || undefined : typeof record.rootCause==="string" ? record.rootCause.trim() || undefined : undefined,
       reproduction:typeof record.reproduction==="string" ? record.reproduction.trim() || undefined : typeof record.steps_to_reproduce==="string" ? record.steps_to_reproduce.trim() || undefined : undefined,
       attemptId:typeof record.attempt_id==="string" ? record.attempt_id : typeof record.attemptId==="string" ? record.attemptId : undefined,
       requestId:typeof record.request_id==="string" ? record.request_id : typeof record.requestId==="string" ? record.requestId : undefined,
