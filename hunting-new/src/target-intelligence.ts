@@ -3,6 +3,7 @@ import { ensureDir, readJson, writeJson, targetDir } from "./store"
 import type { JSAssetNode, RequestNode, ResponseNode, FunctionNode, Edge } from "./correlation"
 import type { HypothesisRecord } from "./hypotheses"
 import { dedupeEdges } from "./correlation"
+import { dedupeAssetRelations, type AssetRelation } from "./cross-host-graph"
 
 export interface TargetAccount {
   id: string
@@ -17,6 +18,7 @@ export interface TargetIntelligence {
   target: string
   updatedAt: string
   accounts: TargetAccount[]
+  assetRelations: AssetRelation[]
   jsAssets: JSAssetNode[]
   requests: RequestNode[]
   responses: ResponseNode[]
@@ -27,7 +29,7 @@ export interface TargetIntelligence {
 }
 
 export function emptyTargetIntelligence(target: string): TargetIntelligence {
-  return { target, updatedAt: new Date().toISOString(), accounts: [], jsAssets: [], requests: [], responses: [], functions: [], edges: [], hypotheses: [], tags: [] }
+  return { target, updatedAt: new Date().toISOString(), accounts: [], assetRelations: [], jsAssets: [], requests: [], responses: [], functions: [], edges: [], hypotheses: [], tags: [] }
 }
 
 export function stableRequestId(method: string, url: string): string {
@@ -83,6 +85,7 @@ export async function rememberTargetIntelligence(
   return saveTargetIntelligence(root, {
     ...current,
     accounts: mergeAccounts(current.accounts ?? [], patch.accounts ?? []),
+    assetRelations: dedupeAssetRelations([...(current.assetRelations ?? []), ...(patch.assetRelations ?? [])]),
     jsAssets: mergeById(current.jsAssets, patch.jsAssets ?? []),
     requests: mergeById(current.requests, patch.requests ?? []),
     responses: mergeById(current.responses, patch.responses ?? []),
