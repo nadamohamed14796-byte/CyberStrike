@@ -667,3 +667,7 @@ Morse:                From Morse Code
 Source: https://github.com/yaklang/hack-skills
 License: MIT (Copyright (c) 2026 VillanCh)
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only; supplementary upstream files are not included.
+
+---
+## Signal and Evidence Gate
+Use this skill when ciphertext/encoded material provides a concrete classical-cipher signal such as substitution, Vigenere, transposition, or XOR characteristics. Do not classify arbitrary encoded text as a cipher vulnerability. Keep CTF/analysis conclusions separate from real application security findings.
