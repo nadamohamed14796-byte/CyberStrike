@@ -36,6 +36,7 @@ export interface CorrelationSignalInput {
     credentialId?: string
     accountLabel?: string
     observedAt: number
+    source?: "observed" | "browser" | "js" | "inferred" | "replay"
   }>
   responses: Array<{
     id: string
@@ -57,6 +58,10 @@ export interface CorrelationSignalInput {
 
 const OBJECT_ID_PATTERN = /(?:^|[/?_=-])(id|uid|user[_-]?id|account[_-]?id|object[_-]?id|item[_-]?id|tenant[_-]?id)(?:[/?_=-]|$)/i
 const AUTH_PATH_PATTERN = /(?:login|logout|account|profile|settings|admin|dashboard|api|graphql|user|tenant)/i
+
+function requestSourceValue(request:CorrelationSignalInput["requests"][number]):"js"|"observed"|"other"{
+  return request.source==="js" ? "js" : request.source==="observed" ? "observed" : "other"
+}
 
 export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] {
   const out: Signal[] = []
@@ -140,6 +145,38 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         })
       }
     }
+  }
+
+  const apiMethods=new Map<string,Map<"js"|"observed",Set<string>>>()
+  for(const request of input.requests){
+    const key=request.path ?? request.url
+    const source=requestSource(request)
+    if(source!=="js" && source!=="observed")continue
+    const methods=apiMethods.get(key) ?? new Map<"js"|"observed",Set<string>>()
+    const values=methods.get(source) ?? new Set<string>()
+    values.add(request.method.toUpperCase())
+    methods.set(source,values)
+    apiMethods.set(key,methods)
+  }
+  for(const [endpoint,methods] of apiMethods){
+    const jsMethods=methods.get("js")
+    const observedMethods=methods.get("observed")
+    if(!jsMethods || !observedMethods)continue
+    const mismatch=[...jsMethods].some(method=>[...observedMethods].every(value=>value!==method))
+    if(!mismatch)continue
+    const request=input.requests.find(item=>(item.path ?? item.url)===endpoint)
+    emit({
+      signal:"api_method_mismatch",
+      source:"correlation:api-diff",
+      confidence:0.74,
+      target:input.target,
+      endpoint,
+      metadata:{
+        jsMethods:[...jsMethods],
+        observedMethods:[...observedMethods],
+        requestId:request?.id ?? null,
+      },
+    })
   }
 
   for (const asset of input.jsAssets) {
