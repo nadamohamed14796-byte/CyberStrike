@@ -19,8 +19,8 @@ describe("persistent attempt ledger", () => {
     expect(second.list("hyp-1")).toHaveLength(1)
     expect(second.remaining("hyp-1")).toBe(19)
 
-    const duplicate = await second.plan("hyp-1", "encoding", "baseline", "should be blocked")
-    expect(duplicate).toBeUndefined()
+    const duplicateVariantAcrossStrategy = await second.plan("hyp-1", "encoding", "baseline", "different strategy is allowed")
+    expect(duplicateVariantAcrossStrategy).toBeTruthy()
 
     const a2 = await second.plan("hyp-1", "encoding", "mixed-encoding", "alternate validation")
     expect(a2?.id).toBe("attempt-hyp-1-2")
