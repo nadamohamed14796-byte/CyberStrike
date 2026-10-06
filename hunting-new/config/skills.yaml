@@ -17,6 +17,8 @@ signals:
     skills: [waf-awareness]
   source_map_detected:
     skills: [javascript_intelligence]
+  parameter_discovered:
+    skills: [endpoint_discovery, authorization]
   graphql_and_authorization_anomaly:
     skills: [graphql, authorization]
 
