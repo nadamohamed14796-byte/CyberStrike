@@ -40,3 +40,26 @@ describe("skill selection confidence", () => {
     expect(selected).toHaveLength(0)
   })
 })
+
+
+describe("API documentation differential signals", () => {
+  test("emits endpoint and method drift signals from OpenAPI sources", () => {
+    const engine=signalEngineFromCorrelation({
+      target:"example.test",
+      requests:[
+        {id:"js-1",url:"https://example.test/users",method:"GET",path:"/users",observedAt:1,source:"js"},
+        {id:"obs-1",url:"https://example.test/admin",method:"POST",path:"/admin",observedAt:2,source:"observed"},
+      ],
+      responses:[],
+      jsAssets:[],
+      functions:[],
+      apiSources:[
+        {endpoint:"https://example.test/users",method:"POST",source:"swagger"},
+        {endpoint:"https://example.test/admin",method:"GET",source:"swagger"},
+      ],
+      edges:[],
+    })
+    expect(engine.list().some(x=>x.signal==="api_method_mismatch")).toBe(true)
+    expect(engine.list().some(x=>x.signal==="endpoint_discovery" && x.endpoint==="https://example.test/admin")).toBe(true)
+  })
+})
