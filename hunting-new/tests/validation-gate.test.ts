@@ -21,12 +21,19 @@ describe("validation gate", () => {
       attemptsExecuted: 20,
       distinctVariants: 2,
       expectedImpact: "high",
-      evidence: [{
-        id: "res-1",
-        kind: "response",
-        summary: "independent response difference",
-        independent: true,
-      }],
+      targetConfirmed: true,
+      baselineObserved: true,
+      behaviorChanged: true,
+      reproducible: true,
+      rootCauseSupported: true,
+      impactObserved: true,
+      authorizationContextVerified: true,
+      evidence: [
+        { id: "req-1", kind: "request", summary: "baseline request", observed: true },
+        { id: "res-1", kind: "response", summary: "baseline response", observed: true, independent: true },
+        { id: "res-2", kind: "response", summary: "changed response", observed: true, independent: true },
+        { id: "fn-1", kind: "js", summary: "function correlation", observed: true },
+      ],
     })
     expect(result.decision).toBe("eligible")
   })
