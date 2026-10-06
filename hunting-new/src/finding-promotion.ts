@@ -19,6 +19,8 @@ export interface FindingPromotionInput {
   summary:string
   impact:string
   remediation?:string
+  rootCause?:string
+  reproduction?:string
   chainId?:string
   validation:ValidationResult
   signal?:string
@@ -82,7 +84,10 @@ export async function promoteValidatedHypothesis(
   if(!completeness.complete){await upsertFinding(root,target,finding);return {finding,reportable:false,missing:completeness.missing,action:"recheck",reason:"finding evidence is incomplete"}}
   const validated=markReportable(finding)
   await upsertFinding(root,target,validated)
-  const reportFile=await writeReport(root,validated)
+  const reportFile=await writeReport(root,validated,{
+    root_cause:input.rootCause,
+    steps:input.reproduction,
+  })
   await createReportRecord(root,validated,reportFile)
   return {finding:validated,reportable:true,missing:[],action:"create",reason:"validated finding passed report evidence gate and report was created"}
 }
