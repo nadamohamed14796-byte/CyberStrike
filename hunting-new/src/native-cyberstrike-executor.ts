@@ -34,6 +34,7 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
       state,
       attemptId:context.attemptId,
       requestId:context.requestId,
+      responseId:context.responseId,
       resultSummary:result.output.slice(0,2000),
       resultText:[
         "<execution_result>",
