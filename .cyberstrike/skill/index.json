@@ -7769,7 +7769,43 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "command-injection-sec",
+      "description": "Signal-driven command/JNDI injection routing for shell, process-execution, Java JNDI, and blind/OOB execution surfaces.",
+      "category": "injection",
+      "verified": "official",
+      "tags": [
+        "command-injection",
+        "cmdi",
+        "jndi",
+        "rce",
+        "injection",
+        "signal-driven"
+      ],
+      "tech_stack": [
+        "web",
+        "http",
+        "linux",
+        "windows",
+        "java"
+      ],
+      "cwe_ids": [
+        "CWE-78",
+        "CWE-917"
+      ],
+      "chains_with": [
+        "cmdi-command-injection",
+        "jndi-injection",
+        "wstg-inpv-12",
+        "hunt-rce",
+        "deserialization-insecure",
+        "expression-language-injection"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 405
+  "skill_count": 406
 }
