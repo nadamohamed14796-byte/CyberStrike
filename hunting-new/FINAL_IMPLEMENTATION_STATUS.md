@@ -12,7 +12,7 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 | JS / Request Correlation | PARTIAL |
 | Request / Response Correlation | IMPLEMENTED in the hunting graph/intake adapter; direct CyberStrike traffic wiring still pending |
 | Function-Centric Model | PARTIAL |
-| Account Context | PARTIAL (persisted for observed request labels) |
+| Account Context | IMPLEMENTED (persisted observed labels + deduplicated per-account observations) |
 | Browser Session Correlation | PARTIAL |
 | Finding Lifecycle | PARTIAL |
 | Validation Gate | IMPLEMENTED (10 gates + bounded minimum validation budget) |
@@ -23,13 +23,13 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 | Severity Gate | PARTIAL |
 | Variant Ledger | PARTIAL |
 | Chain Board | IMPLEMENTED |
-| OOB Tracking | MISSING |
+| OOB Tracking | IMPLEMENTED |
 | Signal Engine | IMPLEMENTED |
 | Skill Registry | PARTIAL |
 | Runtime Preflight | PARTIAL |
 | Runtime Registry | IMPLEMENTED |
-| Multi-Agent Orchestration | PARTIAL (native persisted dispatch loop implemented; specialized runtime wiring remains) |
-| Proxy Intake / Correlator | PARTIAL (hunting intake exists; live CyberStrike proxy wiring pending) |
+| Multi-Agent Orchestration | PARTIAL (continuous native dispatch + role-based agent routing implemented; deeper specialized runtime aggregation remains) |
+| Proxy Intake / Correlator | IMPLEMENTED (CyberStrike /session/ingest feeds the hunting intake; deeper live proxy correlation remains) |
 | Learning Engine | PARTIAL |
 | Writeup Ingestion | MISSING |
 | Report Pipeline | PARTIAL |
@@ -63,23 +63,23 @@ Implemented and integrated:
 - native CyberStrike execution bridge
 - continuous persisted native dispatch across task batches
 - WAF signals from blocked/filtering response patterns
+- direct CyberStrike session-ingest bridge into hunting persistence
+- per-account observation preservation across CyberStrike request deduplication
+- defensive stored-evidence revalidation before finding promotion
 - runtime registry, configuration and foundation tests
 
 ## Verified gaps still remaining
 
-1. Direct wiring from CyberStrike live browser/proxy/session traffic into the hunting intake path.
-2. Full bidirectional JS/function/request/response correlation from live runtime observations.
-3. Complete signal-to-skill configuration unification between config/skills.yaml and the CyberStrike registry.
-4. Full imported-skill audit/integration for OpenHunterAI, recon-skills and yaklang/hack-skills.
-5. Automatic role/skill-to-specialized-agent resolution.
-6. Automatic finding promotion and report generation from the runtime validation lifecycle.
-7. OOB/callback tracking.
-8. Continuous research/writeup ingestion and bounded learning extraction.
-9. Cross-host relationship graph with explicit scope state per relationship.
-10. API documentation/source differential integrated into signals and planning.
-11. Elimination/unification of the legacy parallel validation models.
-12. End-to-end runtime fixtures and actual CI verification.
-13. Completion-state integration so mission completion is driven by all relevant task/ledger states.
-14. Stronger evidence reconciliation so request/response/JS/function/account references are consistently carried into promoted findings.
+1. Full bidirectional JS/function/request/response correlation from live runtime observations, including automatic JS/function IDs from all browser captures.
+2. Complete signal-to-skill configuration unification for every imported skill and trigger.
+3. Full imported-skill audit/integration for OpenHunterAI, recon-skills and yaklang/hack-skills.
+4. Automatic role/skill-to-specialized-agent resolution beyond the current role defaults and explicit overrides.
+5. Automatic finding promotion/report generation from the native lifecycle with complete impact/root-cause evidence supplied by the validator.
+6. Continuous research/writeup ingestion and bounded learning extraction.
+7. Cross-host relationship graph with explicit scope state per relationship.
+8. API documentation/source differential integrated into signals and planning.
+9. Elimination/unification of the legacy parallel validation models.
+10. End-to-end runtime fixtures and actual CI verification.
+11. Stronger evidence reconciliation so request/response/JS/function/account references are consistently carried from live runtime observations into promoted findings.
 
 No completion claim should be made until the remaining runtime integrations are implemented and the test suite/CI is actually executed.
