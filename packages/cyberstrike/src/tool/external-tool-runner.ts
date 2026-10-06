@@ -4,7 +4,6 @@ import { Tool } from "./tool"
 import { EXTERNAL_TOOLS, externalTool } from "./external-tool-registry"
 import { ScopeGuard } from "./scope-check"
 import { Truncate } from "./truncation"
-import { Instance } from "../project/instance"
 import { TargetWorkspace } from "./target-workspace"
 
 const MAX_OUTPUT = 200_000
