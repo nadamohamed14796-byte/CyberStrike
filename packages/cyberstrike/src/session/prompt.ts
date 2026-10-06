@@ -1309,7 +1309,7 @@ export namespace SessionPrompt {
 
           if (reconSignal) {
             const target = learningTarget(args)
-            const parentQueue = SignalQueue.list(ctx.sessionID, 100).find((item) => item.id === ctx.callID)
+            const parentQueue = runningQueueID ? SignalQueue.get(runningQueueID) : undefined
             const queueID = SignalQueue.enqueue({
               sessionID: ctx.sessionID,
               parentID: runningQueueID ?? ctx.callID,
