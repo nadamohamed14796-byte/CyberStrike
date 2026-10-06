@@ -160,6 +160,29 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
     }
 
     if (request.credentialId || request.accountLabel) {
+      const accountLabel = request.accountLabel ?? request.credentialId
+      const shared = input.requests.filter(other =>
+        (other.path ?? other.url) === endpoint &&
+        other.id !== request.id &&
+        Boolean(other.credentialId || other.accountLabel) &&
+        (other.accountLabel ?? other.credentialId) !== accountLabel,
+      )
+      if (shared.length) {
+        emit({
+          signal: "multiple_accounts",
+          source: "correlation:account",
+          confidence: 0.91,
+          target: input.target,
+          endpoint,
+          metadata: {
+            requestId: request.id,
+            accountLabel,
+            distinctAccounts: [...new Set(shared.map(other => other.accountLabel ?? other.credentialId).filter(Boolean))],
+          },
+        })
+      }
+      emit({
+
       emit({
         signal: "authenticated_endpoint",
         source: "correlation:request",
