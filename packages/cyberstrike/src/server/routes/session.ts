@@ -1425,6 +1425,32 @@ export const SessionRoutes = lazy(() =>
                   excludeHistory: true,
                   parts: [{ type: "text", text: promptText }],
                 })
+                const learnedFunction=WebFunction.getByRequest(req.id)
+                if(learnedFunction){
+                  void feedHuntingLayerFromRequest({
+                    sessionID,
+                    target:normalized.site || normalized.host,
+                    request:{
+                      id:req.id,
+                      method:req.method,
+                      url:normalized.origin + normalized.normalizedPath,
+                      host:normalized.host,
+                      path:normalized.normalizedPath,
+                      credentialId,
+                      accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+                      observedAt:req.time.created,
+                    },
+                    response:body.response ? {
+                      id:req.id+":response",
+                      status:body.response.status,
+                      headers:body.response.headers,
+                      contentType:body.response.headers["content-type"],
+                      bodyHash:normalized.bodyHash,
+                      observedAt:req.time.created,
+                    } : undefined,
+                    functionIds:[learnedFunction.id],
+                  })
+                }
                 const model = body.model ?? (await SessionPrompt.lastModel(sessionID))
                 await IngestSummary.write({
                   sessionID,
