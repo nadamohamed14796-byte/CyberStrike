@@ -125,7 +125,8 @@ describe("hunting runtime end-to-end", () => {
       expect(completion.complete).toBe(true)
       await updateMission(root,target,"COMPLETED","e2e-complete")
 
-      await transitionReport(root,target,reports[0].id,"accepted",{submissionRef:"test"})
+      await transitionReport(root,target,reports[0].id,"submitted",{submissionRef:"test-submit"})
+      await transitionReport(root,target,reports[0].id,"accepted",{submissionRef:"test-submit"})
       const learning=await loadLearning(root,target)
       expect(learning.observations.some(x=>x.outcome==="confirmed")).toBe(true)
     } finally {
