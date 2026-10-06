@@ -8,6 +8,8 @@ export namespace ToolArtifact {
   export type RecordInput = {
     sessionID?: string
     callID?: string
+    requestID?: string
+    credentialID?: string
     parentID?: string
     tool: string
     target?: string
@@ -42,6 +44,8 @@ export namespace ToolArtifact {
         id,
         session_id: input.sessionID,
         call_id: input.callID,
+        request_id: input.requestID,
+        credential_id: input.credentialID,
         parent_id: input.parentID,
         tool: input.tool,
         target: input.target,
@@ -68,6 +72,15 @@ export namespace ToolArtifact {
         .where(eq(ToolArtifactTable.session_id, sessionID))
         .orderBy(desc(ToolArtifactTable.time_created))
         .limit(limit).all(),
+    )
+  }
+
+  export function byRequest(sessionID: string, requestID: string) {
+    return Database.use((db) =>
+      db.select().from(ToolArtifactTable)
+        .where(and(eq(ToolArtifactTable.session_id, sessionID), eq(ToolArtifactTable.request_id, requestID)))
+        .orderBy(desc(ToolArtifactTable.time_created))
+        .all(),
     )
   }
 
