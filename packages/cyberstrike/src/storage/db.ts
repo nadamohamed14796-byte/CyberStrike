@@ -86,8 +86,31 @@ export namespace Database {
     return (row?.c ?? 0) > 0
   }
 
+  function ensureSignalQueueTable(sqlite: BunDatabase) {
+    sqlite.run(`CREATE TABLE IF NOT EXISTS signal_queue (
+      id TEXT PRIMARY KEY,
+      session_id TEXT REFERENCES session(id) ON DELETE CASCADE,
+      parent_id TEXT,
+      signal TEXT NOT NULL,
+      target TEXT,
+      depth INTEGER NOT NULL DEFAULT 0,
+      attempts INTEGER NOT NULL DEFAULT 0,
+      max_attempts INTEGER NOT NULL DEFAULT 1,
+      priority INTEGER NOT NULL DEFAULT 50,
+      status TEXT NOT NULL DEFAULT 'pending',
+      dedup_key TEXT NOT NULL,
+      metadata TEXT,
+      time_created INTEGER NOT NULL,
+      time_updated INTEGER NOT NULL
+    )`)
+    sqlite.run("CREATE UNIQUE INDEX IF NOT EXISTS signal_queue_dedup_idx ON signal_queue(session_id, dedup_key)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS signal_queue_session_status_idx ON signal_queue(session_id, status)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS signal_queue_priority_idx ON signal_queue(priority)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS signal_queue_parent_idx ON signal_queue(parent_id)")
+  }
+
   function reconcile(sqlite: BunDatabase) {
-    // Phase 1: Structural repairs (table reshaping that can't be handled by ADD COLUMN)
+    ensureSignalQueueTable(sqlite)\n\n    // Phase 1: Structural repairs (table reshaping that can't be handled by ADD COLUMN)
     // web_credential: old schema had type/value columns → new schema uses headers JSON
     if (tableExists(sqlite, "web_credential")) {
       const have = tableColumns(sqlite, "web_credential")
