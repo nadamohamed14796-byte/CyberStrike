@@ -35,6 +35,7 @@ import { Identifier } from "../id/id"
 import { Session } from "../session"
 import { HackbrowserStatus } from "../session/hackbrowser-status"
 import { Global } from "../global"
+import { persistBusinessFunctionWalk } from "../methodology/business-function-walk"
 import type {
   WorkerOptions,
   WorkerMessage,
@@ -396,6 +397,10 @@ async function backgroundRun(
                 finishedAt: Date.now(),
                 cost,
               })
+              await persistBusinessFunctionWalk({ target: targetUrl, sessionID }).catch((err) =>
+                log.warn("failed to persist business function walk", { sessionID, error: String(err) }),
+              )
+
               // Karar 2 in §13.1: success stays sidebar-only. No synthetic
               // message — LLM doesn't get nudged into polling loops.
             }
