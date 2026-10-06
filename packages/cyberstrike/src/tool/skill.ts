@@ -10,6 +10,7 @@ import { PermissionNext } from "../permission/next"
 import { Ripgrep } from "../file/ripgrep"
 import { iife } from "@/util/iife"
 import { Agent } from "../agent/agent"
+import { ReferenceLearning } from "../learning/reference"
 
 const accessibleCache = new Map<string, Skill.Info[]>()
 
@@ -25,6 +26,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
     "  chain   - Analyze current findings for kill chain opportunities",
     "  suggest - Get next-step skill suggestions based on findings",
     "  list    - Show all available skills or currently loaded skills",
+    "  learn   - Record whether a reference skill was useful, produced a finding, was rejected, or disproven",
     "",
     'Thousands of skills available. Use "search" or "list" action to discover them.',
   ].join("\n")
@@ -34,7 +36,9 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
       .enum(["load", "unload", "search", "chain", "suggest", "list"])
       .default("load")
       .describe("Action to perform"),
-    name: z.string().optional().describe("Skill name (for load/unload)"),
+    name: z.string().optional().describe("Skill name (for load/unload/learn)"),
+    outcome: z.enum(["useful", "finding", "rejected", "disproven"]).optional().describe("Learning outcome for learn action"),
+    evidence: z.string().optional().describe("Short evidence explaining the learning outcome"),
     query: z.string().optional().describe("Search query (for search action)"),
     tech: z.array(z.string()).optional().describe("Tech stack filter (for search action)"),
     cwe: z.string().optional().describe("CWE ID filter (for search action)"),
@@ -172,6 +176,13 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
         }
       }
 
+      if (params.action === "learn") {
+        if (!params.name) throw new Error("Skill name required for learn action")
+        if (!params.outcome) throw new Error("Outcome required for learn action")
+        ReferenceLearning.recordOutcome(params.name, params.outcome, ctx.sessionID, params.evidence)
+        return { title: `Learning recorded: ${params.name}`, output: `Recorded ${params.outcome} for ${params.name}.`, metadata: {} as { name?: string; dir?: string } }
+      }
+
       if (params.action === "chain") {
         if (!params.findings?.length) throw new Error("Findings required for chain analysis")
         const summary = KillChain.summary(params.findings)
@@ -215,6 +226,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
       })
 
       SkillContext.load(params.name)
+      ReferenceLearning.observeSkill(skill, ctx.sessionID)
 
       const dir = path.dirname(skill.location)
       const base = pathToFileURL(dir).href
