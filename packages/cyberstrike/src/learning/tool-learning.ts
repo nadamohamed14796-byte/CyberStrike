@@ -69,7 +69,9 @@ export namespace ToolLearning {
           time_updated: now,
         }).run()
       })
-    } catch {}
+    } catch (error) {
+      console.warn("[cyberstrike] tool learning persistence failed:", error)
+    }
   }
 
   export function score(tool: string, signal: string, sessionID?: string) {
