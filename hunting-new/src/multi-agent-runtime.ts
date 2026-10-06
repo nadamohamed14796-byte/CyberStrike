@@ -23,6 +23,7 @@ import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
+import { indexSkillReferences, referencesForSkills } from "./reference-store"
 import { ledgers } from "./ledger"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
 import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
@@ -50,6 +51,7 @@ export async function prepareMultiAgentPlanFromTargetIntelligence(
     edges:intelligence.edges,
   })
   const registry=await loadSkillRegistry(root)
+  await indexSkillReferences(root,registry.list())
   const persistedLearning=learning ?? LearningEngine.fromObservations((await loadLearning(root,target)).observations)
   const persistedFalsePositives=falsePositives ?? hydrateFalsePositiveIntelligence(await loadFalsePositives(root,target))
   const plan=buildMultiAgentPlanFromRegistry(engine,registry,target,persistedLearning,persistedFalsePositives)
@@ -64,6 +66,9 @@ export async function prepareMultiAgentPlanFromTargetIntelligence(
     task.resolvedSkills=resolved.map(skill=>skill.name)
     task.resolvedSkillPaths=resolved.map(skill=>skill.source_path).filter((value):value is string=>Boolean(value))
     task.recommendedAgent=registry.get(task.skill)?.agent
+    const refs=await referencesForSkills(root,task.resolvedSkills,8)
+    task.referenceIds=refs.map(x=>x.id)
+    task.referenceUrls=refs.map(x=>x.url)
   }
 
   await saveAgentPlan(root,plan)
@@ -259,6 +264,8 @@ export interface AgentTaskExecutionContext {
   resolvedSkills:string[]
   resolvedSkillPaths?:string[]
   recommendedAgent?:string
+  referenceIds?:string[]
+  referenceUrls?:string[]
   strategyHints:string[]
   signal:string
   signalConfidence:number
@@ -321,7 +328,7 @@ export async function enrichAgentTaskExecutionContext(
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
-  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, recommendedAgent:task.recommendedAgent, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
+  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, recommendedAgent:task.recommendedAgent, referenceIds:task.referenceIds, referenceUrls:task.referenceUrls, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
 }
 
 export async function prepareSkillExecutionInvocation(
