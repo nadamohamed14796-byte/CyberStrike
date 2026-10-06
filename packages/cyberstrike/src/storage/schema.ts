@@ -32,3 +32,4 @@ export { ToolLearningTable, ToolLearningEventTable } from "../learning/tool-lear
 
 export { ToolArtifactTable } from "../tool/artifact.sql"
 export { SignalQueueTable } from "../tool/signal-queue.sql"
+export { ToolRunRecordTable } from "../tool/run-record.sql"
