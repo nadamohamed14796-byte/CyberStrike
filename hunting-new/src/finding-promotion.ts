@@ -7,7 +7,7 @@ import { loadFindings, upsertFinding } from "./finding-store"
 import { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { dedupeDecision, shouldRecheckAfterNewEvidence } from "./dedupe-engine"
 import type { ValidationResult, ValidationEvidence } from "./validation-gate"
-import { validateHypothesis } from "./validation-gate"
+import { validateHypothesis, hasBaselineComparison, hasBehaviorChange } from "./validation-gate"
 import { loadMission } from "./mission"
 import { checkScope } from "./scope"
 import { writeReport, createReportRecord } from "./report"
@@ -54,13 +54,14 @@ export async function promoteValidatedHypothesis(
   const validationEvidence:ValidationEvidence[]=linkedEvidence.map(x=>({
     id:x.id,kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",
     summary:x.details||x.sourceId,independent:x.confidence>=0.8,observed:x.kind!=="inference",
+    attemptId:x.attemptId,requestId:x.requestId,responseId:x.responseId,
   }))
   const storedValidation=validateHypothesis({
     hypothesisId:hypothesis.id,inScope:true,attemptsExecuted:linkedAttempts.length,evidence:validationEvidence,
     distinctVariants:new Set(linkedAttempts.map(x=>x.strategy+":"+x.variant)).size,
     expectedImpact:input.severity==="critical"?"critical":input.severity==="high"?"high":"medium",
-    targetConfirmed:true,baselineObserved:linkedEvidence.some(x=>x.kind==="request")&&linkedEvidence.some(x=>x.kind==="response"),
-    behaviorChanged:linkedEvidence.filter(x=>x.kind==="response").length>=2,reproducible:new Set(linkedAttempts.map(x=>x.strategy+":"+x.variant)).size>=2,
+    targetConfirmed:true,baselineObserved:hasBaselineComparison(validationEvidence),
+    behaviorChanged:hasBehaviorChange(validationEvidence),reproducible:new Set(linkedAttempts.map(x=>x.strategy+":"+x.variant)).size>=2,
     rootCauseSupported:linkedEvidence.some(x=>x.kind==="function"||x.kind==="js-asset"),impactObserved:true,authorizationContextVerified:true,
   })
   if(input.validation.decision!=="eligible"||storedValidation.decision!=="eligible") throw new Error("FINDING_BLOCKED: stored validation evidence did not pass the promotion gate")
