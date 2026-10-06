@@ -214,6 +214,7 @@ export namespace SessionPrompt {
   export type PromptInput = z.infer<typeof PromptInput>
 
   export const prompt = fn(PromptInput, async (input) => {
+    if (!state()[input.sessionID]) await Session.recoverRuntime(input.sessionID)
     const session = await Session.get(input.sessionID)
     await SessionRevert.cleanup(session)
 
