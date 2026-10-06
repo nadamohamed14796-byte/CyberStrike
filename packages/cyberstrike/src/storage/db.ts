@@ -109,8 +109,46 @@ export namespace Database {
     sqlite.run("CREATE INDEX IF NOT EXISTS signal_queue_parent_idx ON signal_queue(parent_id)")
   }
 
+  function ensureToolLearningTables(sqlite: BunDatabase) {
+    sqlite.run(`CREATE TABLE IF NOT EXISTS tool_learning (
+      id TEXT PRIMARY KEY,
+      session_id TEXT REFERENCES session(id) ON DELETE CASCADE,
+      tool TEXT NOT NULL,
+      signal TEXT NOT NULL,
+      observations INTEGER NOT NULL DEFAULT 0,
+      successes INTEGER NOT NULL DEFAULT 0,
+      rejections INTEGER NOT NULL DEFAULT 0,
+      usefulness REAL NOT NULL DEFAULT 50,
+      last_outcome TEXT,
+      last_target TEXT,
+      last_evidence TEXT,
+      time_created INTEGER NOT NULL,
+      time_updated INTEGER NOT NULL
+    )`)
+    sqlite.run("CREATE UNIQUE INDEX IF NOT EXISTS tool_learning_session_tool_signal_idx ON tool_learning(session_id, tool, signal)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS tool_learning_tool_idx ON tool_learning(tool)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS tool_learning_signal_idx ON tool_learning(signal)")
+    sqlite.run(`CREATE TABLE IF NOT EXISTS tool_learning_event (
+      id TEXT PRIMARY KEY,
+      session_id TEXT REFERENCES session(id) ON DELETE CASCADE,
+      tool TEXT NOT NULL,
+      signal TEXT NOT NULL,
+      target TEXT,
+      outcome TEXT NOT NULL,
+      evidence TEXT,
+      time_created INTEGER NOT NULL,
+      time_updated INTEGER NOT NULL
+    )`)
+    sqlite.run("CREATE INDEX IF NOT EXISTS tool_learning_event_tool_idx ON tool_learning_event(tool)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS tool_learning_event_signal_idx ON tool_learning_event(signal)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS tool_learning_event_session_idx ON tool_learning_event(session_id)")
+  }
+
   function reconcile(sqlite: BunDatabase) {
-    ensureSignalQueueTable(sqlite)\n\n    // Phase 1: Structural repairs (table reshaping that can't be handled by ADD COLUMN)
+    ensureSignalQueueTable(sqlite)
+    ensureToolLearningTables(sqlite)
+
+    // Phase 1: Structural repairs (table reshaping that can't be handled by ADD COLUMN)
     // web_credential: old schema had type/value columns → new schema uses headers JSON
     if (tableExists(sqlite, "web_credential")) {
       const have = tableColumns(sqlite, "web_credential")
