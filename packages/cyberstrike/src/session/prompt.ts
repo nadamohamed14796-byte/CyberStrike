@@ -52,6 +52,7 @@ import { MethodologyContext } from "@/methodology/context"
 import { Learning } from "../learning"
 import { TargetMemory } from "./target-memory"
 import { ToolArtifact } from "../tool/artifact"
+import { SignalQueue } from "../tool/signal-queue"
 import { WebRetest } from "./web/web-retest"
 import { AgentPerformance } from "@/methodology/performance"
 import { testerClass } from "@/tool/vuln-scope"
@@ -1284,15 +1285,30 @@ export namespace SessionPrompt {
           }
 
           if (reconSignal) {
+            const target = learningTarget(args)
+            const queueID = SignalQueue.enqueue({
+              sessionID: ctx.sessionID,
+              parentID: ctx.callID,
+              signal: reconSignal,
+              target,
+              depth: 0,
+              maxAttempts: 1,
+              metadata: {
+                source_tool: item.id,
+                callID: ctx.callID,
+                derived_from_result: true,
+              },
+            })
             await Learning.emit({
               hook: "during_testing",
               signal: reconSignal,
               sessionID: ctx.sessionID,
               agent: ctx.agent,
-              target: learningTarget(args),
+              target,
               metadata: {
                 source_tool: item.id,
                 callID: ctx.callID,
+                queueID,
                 derived_from_result: true,
               },
             })
