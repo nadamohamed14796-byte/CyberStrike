@@ -4,6 +4,8 @@ import type { Agent } from "../agent/agent"
 import type { PermissionNext } from "../permission/next"
 import { Truncate } from "./truncation"
 import { ToolRunRecord } from "./run-record"
+import { ToolArtifact } from "./artifact"
+import { Learning } from "../learning/learning"
 
 export namespace Tool {
   interface Metadata {
@@ -153,6 +155,32 @@ export namespace Tool {
               metadata: { ...resultMetadata, scopeVerified },
             })
 
+            try {
+              ToolArtifact.record({
+                sessionID: ctx.sessionID,
+                callID: ctx.callID,
+                tool: id,
+                target: identity.target,
+                input: args,
+                output: result.output,
+                signal: `tool:${id}:${aborted ? "cancelled" : timedOut ? "timed_out" : "completed"}`,
+                metadata: { runID: run.id, runKey: run.runKey, scopeVerified, agent: ctx.agent },
+              })
+              await Learning.emit({
+                hook: "during_testing",
+                signal: `tool:${id}:${aborted ? "cancelled" : timedOut ? "timed_out" : "completed"}`,
+                sessionID: ctx.sessionID,
+                target: identity.target,
+                agent: ctx.agent,
+                outcome: aborted ? "cancelled" : timedOut ? "timed_out" : "completed",
+                metadata: {
+                  source_tool: id,
+                  tool_run_id: run.id,
+                  tool_run_key: run.runKey,
+                  authorized_active_testing: (args as Record<string, unknown>).authorized_active_testing === true,
+                },
+              })
+            } catch {}
             if (result.metadata.truncated !== undefined) return result
             const truncated = await Truncate.output(result.output, {}, initCtx?.agent)
             return {
