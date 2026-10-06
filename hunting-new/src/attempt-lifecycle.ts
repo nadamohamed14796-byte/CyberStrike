@@ -24,6 +24,7 @@ export async function recordAttemptLifecycle(
   update:{
     state:AttemptState
     requestId?:string
+    responseId?:string
     resultSummary?:string
     evidenceIds?:string[]
     skill?:string
