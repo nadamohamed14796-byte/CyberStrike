@@ -21,6 +21,7 @@ import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
 import { loadMission } from "./mission"
 import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
+import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -304,6 +305,27 @@ export async function prepareDispatchedTaskInvocation(
   return buildSkillExecutionInvocation(context,options)
 }
 
+export interface ExternalToolDispatchResult {
+  tool: DiscoveryTool
+  executed: boolean
+  parameters: number
+  reason?: string
+}
+
+export async function executeSignalTools(
+  root:string,
+  target:string,
+  signal:string,
+  endpoint?:string,
+  requestId?:string,
+  tool:DiscoveryTool="arjun",
+):Promise<ExternalToolDispatchResult>{
+  if(signal !== "parameter_discovered") return {tool,executed:false,parameters:0,reason:"signal has no external-tool adapter"}
+  if(!endpoint) return {tool,executed:false,parameters:0,reason:"parameter discovery requires an endpoint"}
+  const result=await runScopedParameterDiscovery(root, target, requestId, tool)
+  return {tool,executed:result.allowed,parameters:result.parameters.length,reason:result.allowed?undefined:"scope blocked"}
+}
+
 export async function executeDispatchedTask(
   root:string,
   plan:MultiAgentPlan,
@@ -363,8 +385,7 @@ export async function executeAndRecordDispatchedTask(
     }
   }
 
-  const result=await executor.execute(context)
-  const parsed=result.resultText
+  if(context.signal==="parameter_discovered" && context.endpoint){\n    await executeSignalTools(root,plan.target,context.signal,context.endpoint,context.requestId,"arjun")\n  }\n\n  const result=await executor.execute(context)\n  const parsed=result.resultText
     ? parseExecutionResult(result.resultText,{state:result.state,outcome:"clean"})
     : undefined
   const effectiveState=parsed?.state ?? result.state
