@@ -41,7 +41,7 @@ export function prioritizeSkills(
           basePriority: rule.priority ?? 0,
           learningUtility: utility,
           falsePositivePenalty: fpPenalty,
-          adjustedPriority: (rule.priority ?? 0) + utility - fpPenalty,
+          adjustedPriority: (rule.priority ?? 0) + (utility * 10) - (fpPenalty * 10),
         }
       }),
   )
