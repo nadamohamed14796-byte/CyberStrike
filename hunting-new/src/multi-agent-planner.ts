@@ -58,6 +58,20 @@ function registryFromRules(rules: SkillRule[]): SkillRegistry {
   })))
 }
 
+function stableTaskId(target:string,skill:SkillSelection,signal:{signal:string;endpoint?:string;function_id?:string;metadata?:Record<string,unknown>}):string{
+  const identity=[
+    target,
+    skill.name,
+    canonicalSignal(signal.signal),
+    signal.endpoint??"",
+    signal.function_id??"",
+    typeof signal.metadata?.requestId==="string" ? signal.metadata.requestId : "",
+    typeof signal.metadata?.accountLabel==="string" ? signal.metadata.accountLabel : "",
+    typeof signal.metadata?.parameterId==="string" ? signal.metadata.parameterId : "",
+  ].join("|")
+  return "task-"+Bun.hash(identity).toString(16)
+}
+
 function roleForSkill(skill: SkillSelection, registry?: SkillRegistry): HuntingAgentRole {
   const explicit = registry?.get(skill.name)?.agent_roles?.[0]
   if (explicit) return explicit
@@ -113,7 +127,7 @@ export function buildMultiAgentPlanFromRegistry(
       const role = roleForSkill(skill, registry)
       const hints = strategyHints(signal.signal, skill.name)
       const task: AgentTask = {
-        id: `task-${tasks.length + 1}`,
+        id: stableTaskId(target,skill,signal),
         role,
         skill: skill.name,
         signal: signal.signal,
@@ -173,7 +187,7 @@ export function buildMultiAgentPlan(
       const role = roleForSkill(skill)
       const hints = strategyHints(signal.signal, skill.name)
       const task: AgentTask = {
-        id: `task-${tasks.length + 1}`,
+        id: stableTaskId(target,skill,signal),
         role,
         skill: skill.name,
         signal: signal.signal,
