@@ -68,6 +68,7 @@ export const VrtCheckTable = sqliteTable(
       responseSummary?: string
       reasoning?: string
       requestCount?: number
+      attemptCount?: number
       findingRef?: string
     }>(),
     ...Timestamps,
