@@ -1,6 +1,7 @@
 import { addRequest, addResponse, addParameter, link, serializeGraph, type CorrelationGraph, type RequestNode, type ResponseNode, type JSAssetNode, type FunctionNode } from "./correlation"
 import { rememberTargetIntelligence, discoverRequestParameters } from "./target-intelligence"
 import type { ParameterCandidate } from "./target-intelligence"
+import { markDiscovered, stableLedgerId } from "./ledger"
 
 export interface NetworkObservation {
   sessionId: string
@@ -25,6 +26,13 @@ export async function ingestAndPersistObservation(root:string,target:string,grap
     lastSeen:observation.request.observedAt??Date.now()
   }:undefined
   await rememberTargetIntelligence(root,target,{accounts:observedAccount?[observedAccount]:[],requests:[graph.requests.get(observation.request.id)!],responses:response?[graph.responses.get(response.id)!]:[],jsAssets:[...graph.assets.values()],functions:[...graph.functions.values()],edges:serializeGraph(graph).edges,parameters:[...new Map([...graph.parameters.values()].map(node=>[node.id,{id:node.id,name:node.name,location:node.location,endpoint:graph.requests.get(node.requestId)?.path ?? graph.requests.get(node.requestId)?.url ?? target,requestIds:[node.requestId],sources:node.source==="inferred"?["tool" as const]:node.source==="js"?["js" as const]:["observed" as const],confidence:node.source==="inferred"?0.70:node.source==="js"?0.80:0.90,firstSeen:node.observedAt,lastSeen:node.observedAt}])).values()],hypotheses:[],tags:[]})
+
+  await markDiscovered(root,target,[
+    {type:"request",id:observation.request.id,metadata:{method:observation.request.method,url:observation.request.url}},
+    {type:"endpoint",id:stableLedgerId("endpoint",observation.request.method+"|"+(observation.request.path??observation.request.url)),metadata:{method:observation.request.method,endpoint:observation.request.path??observation.request.url}},
+    ...[...graph.parameters.values()].filter(node=>node.requestId===observation.request.id).map(node=>({type:"parameter",id:node.id,metadata:{name:node.name,location:node.location}})),
+    ...[...graph.assets.values()].map(asset=>({type:"js",id:asset.id,metadata:{url:asset.url}})),
+  ])
 }
 
 export function ingestObservation(graph:CorrelationGraph,observation:NetworkObservation):void{
