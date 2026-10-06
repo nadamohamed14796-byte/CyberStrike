@@ -31,6 +31,7 @@ const WEB_SKILLS:SkillMetadata[]=[
     confidence_threshold:0.6,
     maximum_parallel_tasks:1,
     source_path:".cyberstrike/skill/WEB/waf-xss-bypass/SKILL.md",
+    agent_roles:["primary-hunter"],
   },
   {
     name:"attack-rate-limit-bypass",
@@ -45,6 +46,7 @@ const WEB_SKILLS:SkillMetadata[]=[
     confidence_threshold:0.6,
     maximum_parallel_tasks:1,
     source_path:".cyberstrike/skill/attack-rate-limit-bypass/SKILL.md",
+    agent_roles:["primary-hunter"],
   },
   {
     name:"attack-idor-automation",
@@ -59,6 +61,7 @@ const WEB_SKILLS:SkillMetadata[]=[
     confidence_threshold:0.7,
     maximum_parallel_tasks:2,
     source_path:".cyberstrike/skill/attack-idor-automation/SKILL.md",
+    agent_roles:["primary-hunter","correlator"],
   },
 ]
 
@@ -120,6 +123,14 @@ function parseFrontmatter(text:string):Record<string,string>{
   return values
 }
 
+function inferAgentRoles(name:string,category:string):("primary-hunter"|"validator"|"correlator"|"reviewer")[]{
+  const value=(name+" "+category).toLowerCase()
+  if(/report|review/.test(value)) return ["reviewer"]
+  if(/validat|verif|confirm|evidence/.test(value)) return ["validator"]
+  if(/js|javascript|proxy|correlat|parser|analy/.test(value)) return ["correlator"]
+  return ["primary-hunter"]
+}
+
 function inferExternalTriggers(name:string,category:string,text:string):string[]{
   const haystack=(name+" "+category+" "+text.slice(0,8000)).toLowerCase()
   const triggers=new Set<string>([name,category].filter(Boolean))
@@ -177,6 +188,7 @@ async function loadExternalSkills(root:string):Promise<SkillMetadata[]>{
       confidence_threshold:0.5,
       maximum_parallel_tasks:1,
       source_path:file,
+      agent_roles: inferAgentRoles(name, category),
     })
   }
   return skills
@@ -242,7 +254,7 @@ async function loadConfiguredSkillMetadata(root:string):Promise<Map<string,Parti
     const meta=result.get(skill); if(!meta)continue
     let m=line.match(/^\s{4}confidence_threshold:\s*([0-9.]+)/); if(m)meta.confidence_threshold=Number(m[1])
     m=line.match(/^\s{4}maximum_parallel_tasks:\s*(\d+)/); if(m)meta.maximum_parallel_tasks=Number(m[1])
-    m=line.match(/^\s{4}(?:dependencies|optional_signals|required_context|validation_requirements|scope_requirements):\s*\[([^\]]*)\]/)
+    m=line.match(/^\s{4}(?:dependencies|optional_signals|required_context|validation_requirements|scope_requirements|agent_roles):\s*\[([^\]]*)\]/)
     if(m){const key=line.trim().split(":")[0] as keyof SkillMetadata; (meta as any)[key]=m[1].split(",").map(v=>v.trim().replace(/^['\"]|['\"]$/g,"")).filter(Boolean)}
   }
   return result
