@@ -52,6 +52,7 @@ import { UpdateVrtCheckTool } from "./vrt-check"
 import { RecordCoverageNoteTool, GetCoverageNotesTool } from "./coverage-note"
 import { ScopeCheckTool } from "./scope-check"
 import { ReconToolchainTool } from "./recon-toolchain"
+import { ReconOrchestratorTool } from "./recon-orchestrator"
 import { EnsureToolsTool } from "./ensure-tools"
 import { MethodologyStatusTool } from "./methodology-status"
 import { AttackScriptTool } from "./attack-script"
@@ -198,6 +199,7 @@ export namespace ToolRegistry {
       GetCoverageNotesTool,
       ScopeCheckTool,
       ReconToolchainTool,
+      ReconOrchestratorTool,
       EnsureToolsTool,
       MethodologyStatusTool,
       AttackScriptTool,
