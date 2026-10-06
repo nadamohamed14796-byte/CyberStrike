@@ -150,7 +150,8 @@ export function buildMultiAgentPlan(
 ): MultiAgentPlan {
   const decision = routeSkills(engine, rules, target, learning, falsePositives)
   const signals = engine.forTarget(target)
-  const signalByName = new Map(signals.map(signal => [signal.signal, signal]))
+  const signalsForSkill = (skill: SkillSelection) =>
+    signals.filter(signal => skill.matchedSignals.includes(canonicalSignal(signal.signal)))
   const lanes: MultiAgentPlan["lanes"] = {
     "primary-hunter": [],
     validator: [],
