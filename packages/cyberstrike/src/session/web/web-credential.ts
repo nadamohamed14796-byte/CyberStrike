@@ -4,6 +4,7 @@ import z from "zod"
 import { Database, eq, and } from "../../storage/db"
 import { WebCredentialTable } from "../session.sql"
 import { Identifier } from "../../id/id"
+import { WebRetest } from "./web-retest"
 
 // Common auth headers to track
 export const COMMON_AUTH_HEADERS = [
@@ -70,6 +71,13 @@ export namespace WebCredential {
 
     const list = get(input.sessionID)
     Bus.publish(Event.Updated, { sessionID: input.sessionID, credentials: list })
+
+    WebRetest.checkTriggers({
+      sessionID: input.sessionID,
+      triggerType: "new_credential",
+      triggerSource: id,
+      maxRetests: 20,
+    })
 
     return {
       id,
