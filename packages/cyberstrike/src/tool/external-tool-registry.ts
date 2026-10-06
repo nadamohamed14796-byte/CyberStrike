@@ -1,0 +1,41 @@
+export type ExternalToolRisk = "passive" | "active-read" | "active-test" | "high-impact"
+export type ExternalToolSpec = {
+  id: string
+  phase: string
+  risk: ExternalToolRisk
+  when: string[]
+  command: string
+  check: string
+  install?: string
+  version?: string[]
+}
+
+export const EXTERNAL_TOOLS: readonly ExternalToolSpec[] = [
+  { id:"subfinder",phase:"asset-discovery",risk:"passive",when:["new root","subdomain","asset"],command:"subfinder -d <target> -silent",check:"subfinder",install:"go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest" },
+  { id:"assetfinder",phase:"asset-discovery",risk:"passive",when:["new root","subdomain","asset"],command:"assetfinder --subs-only <target>",check:"assetfinder",install:"go install github.com/tomnomnom/assetfinder@latest" },
+  { id:"github-subdomains",phase:"asset-discovery",risk:"passive",when:["github","subdomain","repository"],command:"github-subdomains -d <target>",check:"github-subdomains",install:"go install github.com/gwen001/github-subdomains@latest" },
+  { id:"findomain",phase:"asset-discovery",risk:"passive",when:["new root","subdomain","asset"],command:"findomain -t <target> -q",check:"findomain",install:"go install github.com/Findomain/Findomain@latest" },
+  { id:"shosubgo",phase:"asset-discovery",risk:"passive",when:["new root","subdomain","asset"],command:"shosubgo -d <target>",check:"shosubgo",install:"go install github.com/incogbyte/shosubgo@latest" },
+  { id:"httpx",phase:"http-validation",risk:"active-read",when:["live http","http","technology"],command:"httpx -silent -json -status-code -title -tech-detect -ip -cdn",check:"httpx",install:"go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest" },
+  { id:"dnsx",phase:"dns-validation",risk:"active-read",when:["dns","a record","cname"],command:"dnsx -silent -a -cname -resp",check:"dnsx",install:"go install -v github.com/projectdiscovery/dnsx/cmd/dnsx@latest" },
+  { id:"katana",phase:"url-discovery",risk:"active-read",when:["live http","crawl","endpoint"],command:"katana -silent -u <target>",check:"katana",install:"go install github.com/projectdiscovery/katana/cmd/katana@latest" },
+  { id:"gau",phase:"historical-url",risk:"passive",when:["historical url","archive"],command:"gau <target>",check:"gau",install:"go install github.com/lc/gau/v2/cmd/gau@latest" },
+  { id:"waybackurls",phase:"historical-url",risk:"passive",when:["historical url","archive"],command:"waybackurls <target>",check:"waybackurls",install:"go install github.com/tomnomnom/waybackurls@latest" },
+  { id:"waymore",phase:"historical-url",risk:"passive",when:["historical url","archive"],command:"waymore -i <target>",check:"waymore",install:"pip3 install waymore" },
+  { id:"gospider",phase:"url-discovery",risk:"active-read",when:["crawl","endpoint"],command:"gospider -s <target> -c 5 -d 2",check:"gospider",install:"go install github.com/jaeles-project/gospider@latest" },
+  { id:"hakrawler",phase:"url-discovery",risk:"active-read",when:["crawl","endpoint"],command:"hakrawler -url <target>",check:"hakrawler",install:"go install github.com/hakluke/hakrawler@latest" },
+  { id:"subjs",phase:"javascript-discovery",risk:"active-read",when:["javascript","js bundle"],command:"subjs <input>",check:"subjs",install:"go install github.com/lc/subjs@latest" },
+  { id:"arjun",phase:"parameter-discovery",risk:"active-read",when:["parameter","hidden parameter"],command:"arjun -u <target>",check:"arjun",install:"pip3 install arjun" },
+  { id:"paramspider",phase:"parameter-discovery",risk:"passive",when:["parameter","historical parameter"],command:"paramspider -d <target>",check:"paramspider",install:"pip3 install paramspider" },
+  { id:"x8",phase:"parameter-discovery",risk:"active-read",when:["parameter","hidden parameter"],command:"x8 -u <target>",check:"x8",install:"cargo install x8" },
+  { id:"ffuf",phase:"content-discovery",risk:"active-read",when:["directory","vhost","parameter","api route"],command:"ffuf -u <target>/FUZZ -w <wordlist>",check:"ffuf",install:"go install github.com/ffuf/ffuf/v2@latest" },
+  { id:"kiterunner",phase:"api-discovery",risk:"active-read",when:["api","api route"],command:"kr scan <target> -w <routes>",check:"kr",install:"go install github.com/assetnote/kiterunner/cmd/kr@latest" },
+  { id:"dalfox",phase:"xss-validation",risk:"active-test",when:["reflected parameter","xss candidate"],command:"dalfox url <target>",check:"dalfox",install:"go install github.com/hahwul/dalfox/v2@latest" },
+  { id:"nuclei",phase:"focused-scanning",risk:"active-test",when:["known exposure","cve","technology signal"],command:"nuclei -u <target>",check:"nuclei",install:"go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest" },
+  { id:"secretfinder",phase:"secret-discovery",risk:"passive",when:["javascript","secret","credential"],command:"python3 SecretFinder.py -i <js> -o cli",check:"SecretFinder.py" },
+  { id:"trufflehog",phase:"secret-discovery",risk:"passive",when:["repository","secret","credential"],command:"trufflehog filesystem <path>",check:"trufflehog",install:"go install github.com/trufflesecurity/trufflehog/v3@latest" },
+]
+
+export function externalTool(id: string) {
+  return EXTERNAL_TOOLS.find((tool) => tool.id === id)
+}
