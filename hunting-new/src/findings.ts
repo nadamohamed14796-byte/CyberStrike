@@ -62,3 +62,34 @@ export function buildFinding(input:FindingInput):FindingRecord {
 export function updateFinding(f:FindingRecord,p:Partial<Pick<FindingRecord,"status"|"summary"|"impact"|"remediation">>):FindingRecord {
   return {...f,...p,updatedAt:new Date().toISOString()}
 }
+
+export interface LegacyFinding {
+  finding_id:string
+  target:string
+  category:string
+  root_cause:string
+  state:"VERIFIED"|"FALSE_POSITIVE"|"INCONCLUSIVE"|"BLOCKED"
+  confidence:number
+  exploitability:number
+  impact:number
+  evidence_refs:string[]
+}
+
+export function dedupe(findings:LegacyFinding[]):LegacyFinding[] {
+  const seen=new Map<string,LegacyFinding>()
+  for(const finding of findings){
+    const key=[finding.target.trim().toLowerCase(),finding.category.trim().toLowerCase(),finding.root_cause.trim().toLowerCase()].join("|")
+    const existing=seen.get(key)
+    if(!existing || finding.confidence>existing.confidence || finding.impact>existing.impact) seen.set(key,finding)
+  }
+  return [...seen.values()]
+}
+
+export function evidenceBackedSeverity(confidence:number,exploitability:number,impact:number):FindingSeverity {
+  const score=Math.max(0,Math.min(1,confidence))*0.35+Math.max(0,Math.min(1,exploitability))*0.3+Math.max(0,Math.min(1,impact))*0.35
+  if(score>=0.85)return "critical"
+  if(score>=0.7)return "high"
+  if(score>=0.5)return "medium"
+  if(score>=0.3)return "low"
+  return "info"
+}
