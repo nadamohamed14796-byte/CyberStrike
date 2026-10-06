@@ -1,0 +1,42 @@
+import { describe, expect, test } from "bun:test"
+import { parseExecutionResult, verifiedEvidenceIds } from "../src/execution-result"
+
+describe("execution result", () => {
+  test("parses structured output", () => {
+    const payload = {
+      state: "confirmed",
+      outcome: "clean",
+      attempt_id: "att-1",
+      request_id: "req-1",
+      response_id: "res-1",
+      result_summary: "Observed a reproducible difference",
+      evidence: [{ id: "ev-1", kind: "response", summary: "response changed", observed: true, independent: true }],
+      observations: ["response changed"],
+    }
+    const result = parseExecutionResult(JSON.stringify(payload), { state: "executed", outcome: "clean" })
+    expect(result.state).toBe("confirmed")
+    expect(result.attemptId).toBe("att-1")
+    expect(result.requestId).toBe("req-1")
+    expect(result.responseId).toBe("res-1")
+    expect(result.evidence[0]?.kind).toBe("response")
+    expect(result.observations).toEqual(["response changed"])
+  })
+
+  test("keeps fallback state for malformed structured output", () => {
+    const result = parseExecutionResult("state: blocked\n{not-json}", { state: "inconclusive", outcome: "errored" })
+    expect(result.state).toBe("blocked")
+    expect(result.outcome).toBe("errored")
+  })
+
+  test("filters evidence references to the authoritative evidence set", () => {
+    const result = parseExecutionResult(JSON.stringify({
+      state: "executed",
+      outcome: "clean",
+      evidence: [
+        { id: "ev-real", kind: "response", summary: "observed" },
+        { id: "ev-fake", kind: "response", summary: "not persisted" },
+      ],
+    }), { state: "executed", outcome: "clean" })
+    expect(verifiedEvidenceIds(result, new Set(["ev-real"]))).toEqual(["ev-real"])
+  })
+})
