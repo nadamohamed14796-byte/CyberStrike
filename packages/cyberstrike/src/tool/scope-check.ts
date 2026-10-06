@@ -100,7 +100,7 @@ function checkMatch(target: string, scope: string): ScopeMatch {
   if (!scopeHost) return { matches: false, reason: "scope item could not be normalized" }
 
   if (wildcard) {
-    const hostMatches = targetHost.host !== scopeHost.host && targetHost.host.endsWith("." + scopeHost.host)
+    const hostMatches = targetHost.host === scopeHost.host || targetHost.host.endsWith("." + scopeHost.host)
     const portMatches = targetHost.port === scopeHost.port
     return hostMatches && portMatches
       ? { matches: true, reason: `subdomain matches wildcard ${scopeValue}` }
