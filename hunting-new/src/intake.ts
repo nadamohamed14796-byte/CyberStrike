@@ -1,4 +1,4 @@
-import { addRequest, addResponse, link, serializeGraph, type CorrelationGraph, type RequestNode, type ResponseNode, type JSAssetNode, type FunctionNode } from "./correlation"
+import { addRequest, addResponse, addParameter, link, serializeGraph, type CorrelationGraph, type RequestNode, type ResponseNode, type JSAssetNode, type FunctionNode } from "./correlation"
 import { rememberTargetIntelligence, discoverRequestParameters } from "./target-intelligence"
 import type { ParameterCandidate } from "./target-intelligence"
 
@@ -24,14 +24,14 @@ export async function ingestAndPersistObservation(root:string,target:string,grap
     firstSeen:observation.request.observedAt??Date.now(),
     lastSeen:observation.request.observedAt??Date.now()
   }:undefined
-  await rememberTargetIntelligence(root,target,{accounts:observedAccount?[observedAccount]:[],requests:[graph.requests.get(observation.request.id)!],responses:response?[graph.responses.get(response.id)!]:[],jsAssets:[...graph.assets.values()],functions:[...graph.functions.values()],edges:serializeGraph(graph).edges,hypotheses:[],tags:[]})
+  await rememberTargetIntelligence(root,target,{accounts:observedAccount?[observedAccount]:[],requests:[graph.requests.get(observation.request.id)!],responses:response?[graph.responses.get(response.id)!]:[],jsAssets:[...graph.assets.values()],functions:[...graph.functions.values()],edges:serializeGraph(graph).edges,parameters:[...new Map([...graph.parameters.values()].map(node=>[node.id,{id:node.id,name:node.name,location:node.location,endpoint:graph.requests.get(node.requestId)?.path ?? graph.requests.get(node.requestId)?.url ?? target,requestIds:[node.requestId],sources:node.source==="inferred"?["tool" as const]:node.source==="js"?["js" as const]:["observed" as const],confidence:node.source==="inferred"?0.70:node.source==="js"?0.80:0.90,firstSeen:node.observedAt,lastSeen:node.observedAt}])).values()],hypotheses:[],tags:[]})
 }
 
 export function ingestObservation(graph:CorrelationGraph,observation:NetworkObservation):void{
   const r=observation.request
   const request:RequestNode={...r,sessionId:observation.sessionId,observedAt:r.observedAt??Date.now(),source:"observed"}
   addRequest(graph,request)
-  if(observation.response){const p=observation.response;const response:ResponseNode={...p,requestId:r.id,headers:p.headers??{},observedAt:p.observedAt??Date.now()};addResponse(graph,response)}
+  if(observation.response){const p=observation.response;const response:ResponseNode={...p,requestId:r.id,headers:p.headers??{},observedAt:p.observedAt??Date.now()};addResponse(graph,response)}\n  for(const parameter of observation.parameters ?? discoverRequestParameters(r as RequestNode)){\n    addParameter(graph,{id:parameter.id,requestId:r.id,name:parameter.name,location:parameter.location,source:parameter.sources.includes("tool") ? "inferred" : parameter.sources.includes("js") ? "js" : "observed",observedAt:parameter.lastSeen})\n  }
   for(const assetId of observation.jsAssetIds??[]){
     if(!graph.assets.has(assetId))graph.assets.set(assetId,{id:assetId,url:assetId,observedAt:r.observedAt??Date.now()})
     link(graph,{from:assetId,to:r.id,kind:"observed-on",confidence:1,evidence:"browser"})
