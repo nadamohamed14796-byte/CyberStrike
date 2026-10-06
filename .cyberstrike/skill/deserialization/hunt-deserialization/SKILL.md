@@ -7,6 +7,34 @@ source: "Claude-BugHunter"
 category: input-validation
 ---
 
+## CyberStrike load gate
+
+Activate only when concrete deserialization evidence exists: serialized-object
+signatures, a known deserializer sink, attacker-controlled type metadata, unsafe
+object reconstruction, a framework-specific serialization boundary, or
+reproducible deserialization behavior.
+
+Do not activate from generic JSON/Base64/cookie/Java/PHP/Python keywords or a
+scanner RCE label alone.
+
+Evidence lifecycle:
+signal -> format-confirmed -> sink-observed -> controlled-deserialization ->
+execution-or-impact-proven -> finding
+
+A serialized-looking blob, parser error, compatible gadget, or missing filter is
+a candidate only. Prefer inert parsing, unique DNS/OOB confirmation, or bounded
+delay before any higher-impact validation. Preserve exact request/response,
+runtime/version, serializer, sink, identity, scope, and provenance.
+
+Canonical deduplication key:
+target + channel + endpoint + format + runtime + deserializer + sink
+
+Use one primary validation path and only evidence-driven variants. Stop when
+impact is reproduced, the hypothesis is disproven, or further testing has low
+evidence value. Route orchestration through deserialization-sec and avoid
+repeating evidence already established by another specialist.
+
+
 # hunt-deserialization
 
 ## Purpose
