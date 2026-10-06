@@ -14,6 +14,7 @@ export async function persistDiscovery(root: string, input: PersistDiscoveryInpu
   const graphRequests = [...input.graph.requests.values()]
   const graphResponses = [...input.graph.responses.values()]
   const graphAssets = [...input.graph.assets.values()]
+  const graphFunctions = [...input.graph.functions.values()]
 
   return rememberTargetIntelligence(root, input.target, {
     tags: input.tags ?? [],
@@ -38,6 +39,8 @@ export async function persistDiscovery(root: string, input: PersistDiscoveryInpu
       })),
     ],
     responses: graphResponses,
+    functions: graphFunctions,
+    edges: input.graph.edges,
   })
 }
 
