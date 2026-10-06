@@ -7648,23 +7648,72 @@
       "description": "Comprehensive API security testing for REST, gRPC, and WebSocket surfaces. Loaded by api-sec only when protocol/security-testing signals justify it.",
       "category": "api-testing",
       "verified": "official",
-      "tags": ["api", "rest", "grpc", "websocket", "api-security"],
-      "tech_stack": ["rest", "grpc", "websocket"],
+      "tags": [
+        "api",
+        "rest",
+        "grpc",
+        "websocket",
+        "api-security"
+      ],
+      "tech_stack": [
+        "rest",
+        "grpc",
+        "websocket"
+      ],
       "cwe_ids": [],
-      "chains_with": ["api-sec", "offensive-api-abuse", "api-recon-and-docs"],
-      "files": ["SKILL.md"]
+      "chains_with": [
+        "api-sec",
+        "offensive-api-abuse",
+        "api-recon-and-docs"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     },
     {
       "name": "offensive-api-abuse",
       "description": "API business-flow and abuse testing for stateful transactions, workflow manipulation, resource abuse, and misuse cases. Loaded only when concrete abuse signals exist.",
       "category": "api-testing",
       "verified": "official",
-      "tags": ["api", "abuse", "business-logic", "workflow"],
-      "tech_stack": ["rest", "graphql"],
-      "cwe_ids": ["CWE-840"],
-      "chains_with": ["api-sec", "offensive-api-security", "business-logic-vulnerabilities"],
-      "files": ["SKILL.md"]
+      "tags": [
+        "api",
+        "abuse",
+        "business-logic",
+        "workflow"
+      ],
+      "tech_stack": [
+        "rest",
+        "graphql"
+      ],
+      "cwe_ids": [
+        "CWE-840"
+      ],
+      "chains_with": [
+        "api-sec",
+        "offensive-api-security",
+        "business-logic-vulnerabilities"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "offensive-business-logic",
+      "description": "Business logic offensive testing methodology for workflow, state-machine, replay, race, pricing, quota, and transactional abuse.",
+      "category": "security-testing",
+      "verified": "community-derived",
+      "source": "yaklang/hack-skills",
+      "tags": [
+        "bug-bounty",
+        "security-testing",
+        "business-logic"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 403
+  "skill_count": 404
 }
