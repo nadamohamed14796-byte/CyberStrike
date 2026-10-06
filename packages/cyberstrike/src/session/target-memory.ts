@@ -49,6 +49,50 @@ export namespace TargetMemory {
     const id = Identifier.ascending("target_memory")
     const now = Date.now()
     Database.use((db) => {
+      const existing = db
+        .select()
+        .from(TargetMemoryTable)
+        .where(and(
+          eq(TargetMemoryTable.project_id, projectID),
+          eq(TargetMemoryTable.kind, kind),
+          eq(TargetMemoryTable.method, request.method),
+          eq(TargetMemoryTable.url, url),
+        ))
+        .get()
+
+      const previous = (existing?.metadata as Record<string, unknown> | null) ?? {}
+      const previousCredentialIDs = Array.isArray(previous.credential_ids)
+        ? previous.credential_ids.filter((value): value is string => typeof value === "string")
+        : []
+      const credentialIDs = request.credential_id && !previousCredentialIDs.includes(request.credential_id)
+        ? [...previousCredentialIDs, request.credential_id]
+        : previousCredentialIDs
+
+      if (existing) {
+        db.update(TargetMemoryTable)
+          .set({
+            request_id: request.id,
+            page_url: request.page_url ?? existing.page_url,
+            content_type: request.response_content_type ?? existing.content_type,
+            content: kind === "javascript" ? (request.processed_response ?? existing.content) : existing.content,
+            metadata: {
+              ...previous,
+              normalized_path: request.normalized_path,
+              template_id: request.template_id ?? previous.template_id ?? null,
+              credential_id: request.credential_id ?? previous.credential_id ?? null,
+              credential_ids: credentialIDs,
+              request_ids: Array.from(new Set([
+                ...(Array.isArray(previous.request_ids) ? previous.request_ids.filter((value): value is string => typeof value === "string") : []),
+                request.id,
+              ])),
+            },
+            time_updated: now,
+          })
+          .where(eq(TargetMemoryTable.id, existing.id))
+          .run()
+        return
+      }
+
       db.insert(TargetMemoryTable)
         .values({
           id,
@@ -65,6 +109,8 @@ export namespace TargetMemory {
             normalized_path: request.normalized_path,
             template_id: request.template_id ?? null,
             credential_id: request.credential_id ?? null,
+            credential_ids: request.credential_id ? [request.credential_id] : [],
+            request_ids: [request.id],
           },
           time_created: now,
           time_updated: now,
