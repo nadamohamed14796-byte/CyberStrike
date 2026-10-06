@@ -6,13 +6,13 @@ import { Skill } from "../skill/skill"
 
 export namespace ReferenceLearning {
   function concepts(content: string): string[] {
-    return Array.from(new Set(content.split("\n").map((line) => line.trim()).filter((line) => /^#{1,4}\\s|^- \\*\\*/.test(line)).map((line) => line.replace(/^#{1,4}\\s+|^- \\*\\*/g, "").trim().toLowerCase()).filter((line) => line.length >= 4 && line.length <= 120))).slice(0, 40)
+    return Array.from(new Set(content.split("\n").map((line) => line.trim()).filter((line) => /^#{1,4}\s|^- \*\*/.test(line)).map((line) => line.replace(/^#{1,4}\\s+|^- \\*\\*/g, "").trim().toLowerCase()).filter((line) => line.length >= 4 && line.length <= 120))).slice(0, 40)
   }
 
   export function observeSkill(skill: Skill.Info, sessionID?: string): void {
     const now = Date.now()
     const learned = concepts(skill.content)
-    const source = skill.content.includes("https://github.com/yaklang/hack-skills") ? "yaklang/hack-skills" : skill.author ?? skill.verified ?? "reference"
+    const sourceMatch = skill.content.match(/(?:^|\\n)Source:\\s*(\\S+)/i)\n    const source = sourceMatch?.[1] ?? skill.author ?? skill.verified ?? "reference"
     Database.use((db) => {
       const where = sessionID ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skill.name)) : eq(SkillLearningTable.skill_name, skill.name)
       const existing = db.select().from(SkillLearningTable).where(where).get()
