@@ -7411,6 +7411,178 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "adaptive-failure-analysis",
+      "description": "Analyze failed baseline security tests and classify observable causes.",
+      "category": "adaptive-testing",
+      "verified": "official",
+      "tags": [
+        "adaptive-testing",
+        "failure-analysis",
+        "diagnostics",
+        "response-analysis"
+      ],
+      "tech_stack": [
+        "http",
+        "web"
+      ],
+      "cwe_ids": [],
+      "chains_with": [
+        "transformation-analysis",
+        "adaptive-technique-matcher"
+      ],
+      "prerequisites": [],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "transformation-analysis",
+      "description": "Analyze observable decoding, normalization, canonicalization, and parser transformations.",
+      "category": "adaptive-testing",
+      "verified": "official",
+      "tags": [
+        "adaptive-testing",
+        "transformation",
+        "encoding",
+        "decoding",
+        "normalization",
+        "parser"
+      ],
+      "tech_stack": [
+        "http",
+        "web"
+      ],
+      "cwe_ids": [],
+      "chains_with": [
+        "adaptive-technique-matcher",
+        "waf-evasion"
+      ],
+      "prerequisites": [
+        "adaptive-failure-analysis"
+      ],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "adaptive-technique-matcher",
+      "description": "Rank existing vulnerability and evasion techniques against context and transformation evidence.",
+      "category": "adaptive-testing",
+      "verified": "official",
+      "tags": [
+        "adaptive-testing",
+        "technique-selection",
+        "tags",
+        "context",
+        "ranking"
+      ],
+      "tech_stack": [
+        "http",
+        "web"
+      ],
+      "cwe_ids": [],
+      "chains_with": [
+        "adaptive-mutation-policy",
+        "waf-evasion"
+      ],
+      "prerequisites": [
+        "adaptive-failure-analysis"
+      ],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "adaptive-mutation-policy",
+      "description": "Apply bounded, evidence-driven mutation rules and stop conditions.",
+      "category": "adaptive-testing",
+      "verified": "official",
+      "tags": [
+        "adaptive-testing",
+        "mutation",
+        "policy",
+        "limits",
+        "deduplication"
+      ],
+      "tech_stack": [
+        "http",
+        "web"
+      ],
+      "cwe_ids": [],
+      "chains_with": [
+        "adaptive-technique-matcher",
+        "adaptive-response-differential"
+      ],
+      "prerequisites": [
+        "adaptive-failure-analysis"
+      ],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "adaptive-response-differential",
+      "description": "Compare baseline and variant responses for meaningful, reproducible evidence.",
+      "category": "adaptive-testing",
+      "verified": "official",
+      "tags": [
+        "adaptive-testing",
+        "response-differential",
+        "evidence",
+        "validation"
+      ],
+      "tech_stack": [
+        "http",
+        "web"
+      ],
+      "cwe_ids": [],
+      "chains_with": [
+        "adaptive-mutation-policy"
+      ],
+      "prerequisites": [
+        "adaptive-failure-analysis"
+      ],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "waf-evasion",
+      "description": "Specialized bounded analysis of web filtering and intermediary transformations for authorized testing.",
+      "category": "evasion",
+      "verified": "official",
+      "tags": [
+        "waf",
+        "evasion",
+        "filter-analysis",
+        "encoding",
+        "normalization",
+        "parser-differential"
+      ],
+      "tech_stack": [
+        "http",
+        "web"
+      ],
+      "cwe_ids": [],
+      "chains_with": [
+        "adaptive-failure-analysis",
+        "transformation-analysis",
+        "adaptive-technique-matcher"
+      ],
+      "prerequisites": [
+        "adaptive-failure-analysis"
+      ],
+      "severity_boost": {},
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
   "skill_count": 394
