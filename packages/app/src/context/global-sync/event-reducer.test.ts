@@ -82,6 +82,7 @@ const baseState = (input: Partial<State> = {}) =>
     limit: 10,
     message: {},
     part: {},
+    request: {},
     ...input,
   }) as State
 
