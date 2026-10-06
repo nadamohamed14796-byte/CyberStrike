@@ -181,7 +181,17 @@ export namespace Tool {
                 },
               })
             } catch {}
-            if (result.metadata.truncated !== undefined) return result
+            if (result.metadata.truncated !== undefined) {
+              return {
+                ...result,
+                metadata: {
+                  ...result.metadata,
+                  runID: run.id,
+                  runKey: run.runKey,
+                  scopeVerified,
+                },
+              }
+            }
             const truncated = await Truncate.output(result.output, {}, initCtx?.agent)
             return {
               ...result,
