@@ -2,6 +2,8 @@ import { spawn } from "node:child_process"
 import { checkScope, type ScopeRule } from "./scope"
 import { rememberTargetIntelligence, type ParameterCandidate } from "./target-intelligence"
 import { loadMission } from "./mission"
+import path from "node:path"
+import { readJson, targetDir, writeJson } from "./store"
 export type DiscoveryTool = "arjun" | "x8"
 
 export interface ToolRunRequest {
@@ -13,6 +15,20 @@ export interface ToolRunRequest {
   root?: string
   requestId?: string
 }
+
+export interface ToolRunRecord {
+  id:string
+  tool:DiscoveryTool
+  target:string
+  requestId?:string
+  status:"completed"|"timed_out"|"failed"|"blocked"|"skipped"
+  exitCode:number|null
+  parameterNames:string[]
+  startedAt:string
+  finishedAt:string
+}
+
+interface ToolRunState { target:string; runs:ToolRunRecord[]; updatedAt:string }
 
 export interface ToolRunResult {
   tool: DiscoveryTool
@@ -28,6 +44,27 @@ const COMMANDS: Record<DiscoveryTool, string> = {
   arjun: "arjun",
   x8: "x8",
 }
+
+async function loadToolRuns(root:string,target:string):Promise<ToolRunState>{
+  return (await readJson<ToolRunState|null>(
+    path.join(targetDir(root,target),"intelligence","tool-runs.json"),null,
+  )) ?? {target,runs:[],updatedAt:new Date(0).toISOString()}
+}
+
+async function saveToolRuns(root:string,state:ToolRunState){
+  await writeJson(path.join(targetDir(root,state.target),"intelligence","tool-runs.json"),{
+    ...state,updatedAt:new Date().toISOString(),
+  })
+}
+
+function toolRunKey(tool:DiscoveryTool,target:string,requestId?:string){
+  return Bun.hash(tool+"|"+target+"|"+(requestId??"")).toString(16)
+}
+
+export async function listToolRuns(root:string,target:string):Promise<ToolRunRecord[]>{
+  return (await loadToolRuns(root,target)).runs
+}
+
 
 function parseParameterNames(tool: DiscoveryTool, output: string): string[] {
   const names = new Set<string>()
@@ -101,7 +138,33 @@ export async function runScopedParameterDiscovery(
 ): Promise<ToolRunResult> {
   const mission = await loadMission(root, target)
   if (!mission) throw new Error("MISSION_NOT_FOUND")
+
+  const state=await loadToolRuns(root,target)
+  const key=toolRunKey(tool,target,requestId)
+  const existing=state.runs.find(x=>x.id===key && x.status==="completed")
+  if(existing){
+    return {
+      tool,target,allowed:true,exitCode:existing.exitCode,timedOut:false,output:"",
+      parameters:existing.parameterNames.map(name=>({
+        id:"param_"+Bun.hash(target+"|query|"+name).toString(16),
+        name,location:"query" as const,endpoint:target,
+        requestIds:requestId?[requestId]:[],sources:["tool" as const],
+        confidence:0.70,firstSeen:Date.now(),lastSeen:Date.now(),
+      })),
+    }
+  }
+
+  const startedAt=new Date().toISOString()
   const result = await runDiscoveryTool({ tool, target, scope: mission.scope, root, requestId })
+  const status:ToolRunRecord["status"]=!result.allowed ? "blocked" : result.timedOut ? "timed_out" : result.exitCode===0 ? "completed" : "failed"
+  state.runs=state.runs.filter(x=>x.id!==key)
+  state.runs.push({
+    id:key,tool,target,requestId,status,exitCode:result.exitCode,
+    parameterNames:result.parameters.map(x=>x.name),
+    startedAt,finishedAt:new Date().toISOString(),
+  })
+  await saveToolRuns(root,state)
+
   if (!result.allowed || !result.parameters.length) return result
   await rememberTargetIntelligence(root, target, { parameters: result.parameters, tags: [`parameter-tool:${tool}`] })
   return result
