@@ -3,6 +3,7 @@ import { Instance } from "../../packages/cyberstrike/src/project/instance"
 import type { AgentTaskExecutionContext, AgentTaskExecutor } from "./multi-agent-runtime"
 import { buildSkillExecutionInvocation } from "./skill-execution-adapter"
 import { parseExecutionResult } from "./execution-result"
+import { markReferencesUsed } from "./reference-store"
 
 export interface NativeCyberStrikeExecutorOptions {
   agentBySkill?:Record<string,string>
@@ -17,6 +18,7 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
   constructor(private readonly options:NativeCyberStrikeExecutorOptions={}){}
 
   async execute(context:AgentTaskExecutionContext){
+    if(context.referenceIds?.length) await markReferencesUsed(this.options.worktree ?? process.cwd(),context.referenceIds)
     const invocation=buildSkillExecutionInvocation(context,{
       agentBySkill:this.options.agentBySkill,
       agentByRole:this.options.agentByRole,
