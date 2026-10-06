@@ -68,6 +68,7 @@ function indexMetadata(entry:SkillIndexEntry):SkillMetadata{
     ...(entry.tags??[]),
     ...(entry.tech_stack??[]),
     ...(entry.cwe_ids??[]),
+    ...(entry.category?.toLowerCase().includes("api-testing") ? ["api_method_mismatch"] : []),
   ].filter(Boolean)
   return {
     name:entry.name,
