@@ -7,7 +7,7 @@ import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 export interface ValidationPlan {
   hypothesisId: string
   strategies: StrategyClass[]
-  variants: Array<{ strategy: AttemptStrategy; variant: string }>
+  variants: Array<{ strategy: StrategyClass; variant: string }>
   maxAttempts: number
 }
 
@@ -19,13 +19,13 @@ export interface ValidationRunState {
   reasons: string[]
 }
 
-const DEFAULT_STRATEGIES: AttemptStrategy[] = [
+const DEFAULT_STRATEGIES: StrategyClass[] = [
   "parameter", "encoding", "method", "content-type",
   "request-shape", "account-context", "identifier",
   "path", "header", "workflow", "parser", "alternate-client",
 ]
 
-const DEFAULT_VARIANTS: Array<{ strategy: AttemptStrategy; variant: string }> = [
+const DEFAULT_VARIANTS: Array<{ strategy: StrategyClass; variant: string }> = [
   ...DEFAULT_STRATEGIES.map(strategy => ({ strategy, variant: "baseline" })),
   { strategy: "parameter", variant: "duplicate-parameter" },
   { strategy: "encoding", variant: "mixed-encoding" },
@@ -37,7 +37,7 @@ const DEFAULT_VARIANTS: Array<{ strategy: AttemptStrategy; variant: string }> = 
   { strategy: "workflow", variant: "replayed-step" },
 ]
 
-const SIGNAL_STRATEGY_ORDER:Record<string, AttemptStrategy[]>={
+const SIGNAL_STRATEGY_ORDER:Record<string, StrategyClass[]>={
   object_identifier_detected:["account-context","identifier","parameter","request-shape","method","encoding","header","path","workflow","parser","alternate-client","content-type"],
   authenticated_endpoint:["account-context","parameter","request-shape","method","header","identifier","workflow","encoding","path","parser","alternate-client","content-type"],
   javascript_function_request_correlation:["parameter","request-shape","encoding","parser","path","method","header","workflow","identifier","content-type","alternate-client","account-context"],
@@ -49,7 +49,7 @@ const SIGNAL_STRATEGY_ORDER:Record<string, AttemptStrategy[]>={
   api_method_mismatch:["method","request-shape","parameter","content-type","parser","alternate-client","header","path","workflow","encoding","identifier","account-context"],
 }
 
-function rankStrategiesForHypothesis(hypothesis:HypothesisRecord, variants:Array<{strategy:AttemptStrategy;variant:string}>):Array<{strategy:AttemptStrategy;variant:string}>{
+function rankStrategiesForHypothesis(hypothesis:HypothesisRecord, variants:Array<{strategy:StrategyClass;variant:string}>):Array<{strategy:StrategyClass;variant:string}>{
   const preferred=SIGNAL_STRATEGY_ORDER[hypothesis.signal]
   if(!preferred)return variants
   const rank=new Map(preferred.map((strategy,index)=>[strategy,index]))
@@ -61,11 +61,11 @@ function rankStrategiesForHypothesis(hypothesis:HypothesisRecord, variants:Array
 
 export function rankValidationVariants(
   hypothesis: HypothesisRecord,
-  variants: Array<{ strategy: AttemptStrategy; variant: string }>,
+  variants: Array<{ strategy: StrategyClass; variant: string }>,
   learning?: LearningEngine,
   falsePositives?: FalsePositiveIntelligence,
   target?: string,
-): Array<{ strategy: AttemptStrategy; variant: string }> {
+): Array<{ strategy: StrategyClass; variant: string }> {
   if (!learning || !target) return variants
   const scores = learning.score(target)
   return [...variants].sort((a,b) => {
