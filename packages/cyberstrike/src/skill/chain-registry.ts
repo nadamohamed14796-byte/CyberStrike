@@ -26,11 +26,17 @@ export namespace ChainRegistry {
     return !!SkillIndex.get(name)
   }
 
+  function skillPrerequisites(name: string): string[] {
+    // Some legacy/NIST skills use human-readable prerequisite prose rather than
+    // skill IDs. Only prerequisites that resolve to known skills can gate routing.
+    return SkillIndex.prerequisitesFor(name).filter((required) => known(required))
+  }
+
   export function eligible(from: string, target: string, completed: Iterable<string>): boolean {
     if (!known(from) || !known(target) || from === target) return false
     const completedSet = new Set(completed)
     if (completedSet.has(target)) return false
-    return SkillIndex.prerequisitesFor(target).every((required) => completedSet.has(required))
+    return skillPrerequisites(target).every((required) => completedSet.has(required))
   }
 
   export function next(input: {
