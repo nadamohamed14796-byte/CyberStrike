@@ -33,6 +33,7 @@ export async function recordAttemptLifecycle(
     endpoint?:string
     accountMode?:string
     confidence?:number
+    impactObserved?:boolean
     taskId?:string
   },
 ):Promise<AttemptLifecycleResult>{
@@ -80,7 +81,7 @@ export async function recordAttemptLifecycle(
         behaviorChanged:hasBehaviorChange(linked.map(x=>({id:x.id,kind:x.kind==="request"?"request":x.kind==="response"?"response":x.kind==="js-asset"?"js":x.kind==="replay"?"replay":x.kind==="inference"?"inference":"browser",summary:x.details||x.sourceId,independent:x.confidence>=0.8,observed:x.kind!=="inference",attemptId:x.attemptId,requestId:x.requestId,responseId:x.responseId}))),
         reproducible:variants >= 2,
         rootCauseSupported:linked.some(x=>x.kind==="function" || x.kind==="js-asset"),
-        impactObserved:recorded.state==="confirmed",
+        impactObserved:update.impactObserved===true,
         authorizationContextVerified: (() => {
           const signal=canonicalSignal(hypothesis.signal)
           const sensitive=["object_identifier_detected","authenticated_endpoint","tenant_identifier_detected","access_control_blocked","authorization","idor"]
