@@ -106,12 +106,8 @@ function safeURL(u: string): URL | undefined {
 // the SSRF-shaped hole where a mutated Host/target could aim at an arbitrary
 // host. Empty allowlist is refused, not waved through.
 function inScope(sessionID: string, host: string): boolean {
-  const allowed = new Set(
-    Request.get(sessionID)
-      .map((r) => r.host)
-      .filter((h): h is string => Boolean(h)),
-  )
-  return allowed.size > 0 && allowed.has(host)
+  const allowed = [...new Set(Request.get(sessionID).map((r) => r.host).filter((h): h is string => Boolean(h)))]
+  return ScopeGuard.check(host, allowed).inScope
 }
 
 // Build a base message + origin from a constructed target (the FALLBACK source
