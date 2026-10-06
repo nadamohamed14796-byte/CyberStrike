@@ -67,7 +67,11 @@ export namespace SignalQueue {
       .where(eq(SignalQueueTable.id, id)).limit(1).get())
   }
 
-  function phaseFor(signal: string): SignalPhase {\n    return normalizeSignal(signal).phase\n  }\n\n  export function matrix(sessionID: string, limit = 1000) {
+  function phaseFor(signal: string): SignalPhase {
+    return normalizeSignal(signal).phase
+  }
+
+  export function matrix(sessionID: string, limit = 1000) {
     const artifacts = ToolArtifact.list(sessionID, limit)
     const seen = new Set<string>()
     for (const artifact of artifacts) {
@@ -103,7 +107,16 @@ export namespace SignalQueue {
     })
   }
 
-  export function coverage(sessionID: string) {\n    const rows = list(sessionID, 500)\n    const phases = new Set<SignalPhase>()\n    for (const row of rows) {\n      if (row.status === "completed") phases.add(phaseFor(row.signal))\n    }\n    return { phases: Array.from(phases), completed: rows.filter((x) => x.status === "completed").length, pending: rows.filter((x) => x.status === "pending").length, running: rows.filter((x) => x.status === "running").length }\n  }\n\n  export function next(sessionID: string) {
+  export function coverage(sessionID: string) {
+    const rows = list(sessionID, 500)
+    const phases = new Set<SignalPhase>()
+    for (const row of rows) {
+      if (row.status === "completed") phases.add(phaseFor(row.signal))
+    }
+    return { phases: Array.from(phases), completed: rows.filter((x) => x.status === "completed").length, pending: rows.filter((x) => x.status === "pending").length, running: rows.filter((x) => x.status === "running").length }
+  }
+
+  export function next(sessionID: string) {
     const rows = Database.use((db) => db.select().from(SignalQueueTable)
       .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.status, "pending")))
       .orderBy(asc(SignalQueueTable.priority), desc(SignalQueueTable.time_created))
