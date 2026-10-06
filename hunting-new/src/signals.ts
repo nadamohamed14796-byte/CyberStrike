@@ -17,7 +17,7 @@ export class SignalEngine{
     return rules
       .map(r=>{
         const matchedSignals=[...new Set(signals.filter(s=>canonicalSignals(r.required_signals).includes(canonicalSignal(s.signal))&&s.confidence>=r.confidence_threshold).map(s=>canonicalSignal(s.signal)))]
-        const requiredSatisfied=canonicalSignals(r.required_signals).every(x=>signals.some(s=>canonicalSignal(s.signal)===x))
+        const requiredSatisfied=canonicalSignals(r.required_signals).every(x=>signals.some(s=>canonicalSignal(s.signal)===x&&s.confidence>=r.confidence_threshold))
         const score=matchedSignals.length/Math.max(1,r.required_signals.length)
         return { ...r, matchedSignals, score, requiredSatisfied }
       })
