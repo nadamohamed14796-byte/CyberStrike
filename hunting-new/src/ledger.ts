@@ -1,5 +1,5 @@
 import path from "node:path"
-import { readJson, writeJson, ensureDir, targetDir } from "./store"
+import { readJson, writeJson, ensureDir, targetDir, withTargetMutationLock } from "./store"
 export type LedgerState = "DISCOVERED"|"QUEUED"|"IN_PROGRESS"|"TESTED"|"VALIDATED"|"BLOCKED"|"SKIPPED_WITH_REASON"|"NOT_APPLICABLE"
 export type LedgerItem = { item_id:string; type:string; status:LedgerState; priority?:"P1"|"P2"|"P3"|"P4"; assigned_task?:string; reason?:string; last_tested?:string; evidence_refs?:string[]; next_action?:string|null; metadata?:Record<string,unknown> }
 export class Ledger {
@@ -7,11 +7,13 @@ export class Ledger {
   private file(){ return path.join(targetDir(this.root,this.target),"ledgers",this.name+".json") }
   async list(){ return readJson<LedgerItem[]>(this.file(),[]) }
   async upsert(item:LedgerItem){
-    await ensureDir(path.dirname(this.file()))
-    const items=await this.list()
-    const next=items.some(x=>x.item_id===item.item_id)?items.map(x=>x.item_id===item.item_id?{...x,...item}:x):[...items,item]
-    await writeJson(this.file(),next)
-    return item
+    return withTargetMutationLock(this.root,this.target,async()=>{
+      await ensureDir(path.dirname(this.file()))
+      const items=await this.list()
+      const next=items.some(x=>x.item_id===item.item_id)?items.map(x=>x.item_id===item.item_id?{...x,...item}:x):[...items,item]
+      await writeJson(this.file(),next)
+      return item
+    })
   }
   async coverage(){
     const items=await this.list()
