@@ -6,6 +6,7 @@ import { RequestTable } from "./session.sql"
 import { Identifier } from "../id/id"
 import { createHash } from "crypto"
 import { processResponse, type ResponseInput } from "./response-processor"
+import { TargetMemory } from "./target-memory"
 
 const Status = z.enum(["queued", "processing", "processed"])
 const Method = z.enum(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"])
@@ -155,6 +156,10 @@ export namespace Request {
     if (inserted.length === 0) return undefined
     const list = get(input.sessionID)
     Bus.publish(Event.Updated, { sessionID: input.sessionID, requests: list })
+
+    const remembered = list.find((request) => request.id === id)
+    if (remembered) TargetMemory.rememberRequest(input.sessionID, remembered)
+
     return {
       id,
       session_id: input.sessionID,
