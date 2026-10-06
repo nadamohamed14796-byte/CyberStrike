@@ -66,7 +66,7 @@ export async function promoteValidatedHypothesis(
     expectedImpact:input.severity==="critical"?"critical":input.severity==="high"?"high":"medium",
     targetConfirmed:true,baselineObserved:hasBaselineComparison(validationEvidence),
     behaviorChanged:hasBehaviorChange(validationEvidence),reproducible:new Set(linkedAttempts.map(x=>x.strategy+":"+x.variant)).size>=2,
-    rootCauseSupported:linkedEvidence.some(x=>x.kind==="function"||x.kind==="js-asset"),impactObserved:true,
+    rootCauseSupported:linkedEvidence.some(x=>x.kind==="function"||x.kind==="js-asset"),impactObserved:Boolean(input.impact.trim()),
     authorizationContextVerified: ["object_identifier_detected","authorization","tenant_identifier_detected"].some(signal =>
       (input.signal??hypothesis.signal).includes(signal)
     ) ? hasCrossAccountEvidence(validationEvidence) : true,
