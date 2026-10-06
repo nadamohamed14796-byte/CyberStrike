@@ -114,6 +114,6 @@ export async function ensureAttemptEvidence(
   
     const unique = additions.filter(item => !existing.has(item.id))
     if (unique.length) await saveEvidence(root, { ...state, evidence: [...state.evidence, ...unique] })
-  
+    return additions.map(item => item.id)
   })
 }
