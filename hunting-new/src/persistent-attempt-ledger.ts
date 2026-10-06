@@ -28,7 +28,7 @@ export class PersistentAttemptLedger {
     return attempt
   }
 
-  async record(id:string,update:Partial<Pick<Attempt,"state"|"requestId"|"resultSummary">> & {evidenceIds?:string[]}):Promise<Attempt>{
+  async record(id:string,update:Partial<Pick<Attempt,"state"|"requestId"|"responseId"|"resultSummary">> & {evidenceIds?:string[]}):Promise<Attempt>{
     const attempt=this.ledger.record(id,update)
     await appendAttempt(this.root,this.target,attempt)
     await checkpointPhase(this.root,this.target,"validation:recorded")
