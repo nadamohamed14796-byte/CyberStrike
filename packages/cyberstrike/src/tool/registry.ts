@@ -51,6 +51,7 @@ import { AddIntelTool } from "./intel"
 import { UpdateVrtCheckTool } from "./vrt-check"
 import { RecordCoverageNoteTool, GetCoverageNotesTool } from "./coverage-note"
 import { ScopeCheckTool } from "./scope-check"
+import { ReconToolchainTool } from "./recon-toolchain"
 import { EnsureToolsTool } from "./ensure-tools"
 import { MethodologyStatusTool } from "./methodology-status"
 import { AttackScriptTool } from "./attack-script"
@@ -196,6 +197,7 @@ export namespace ToolRegistry {
       RecordCoverageNoteTool,
       GetCoverageNotesTool,
       ScopeCheckTool,
+      ReconToolchainTool,
       EnsureToolsTool,
       MethodologyStatusTool,
       AttackScriptTool,
