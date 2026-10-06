@@ -168,6 +168,8 @@ export namespace Tool {
               ToolArtifact.record({
                 sessionID: ctx.sessionID,
                 callID: ctx.callID,
+                requestID: typeof args === "object" && args && "request_id" in args ? String((args as any).request_id) : undefined,
+                credentialID: typeof args === "object" && args && "credential_id" in args ? String((args as any).credential_id) : undefined,
                 tool: id,
                 target: identity.target,
                 input: args,
