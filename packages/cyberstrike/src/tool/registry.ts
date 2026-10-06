@@ -58,6 +58,7 @@ import { EnsureToolsTool } from "./ensure-tools"
 import { MethodologyStatusTool } from "./methodology-status"
 import { AttackScriptTool } from "./attack-script"
 import { GenerateReportTool } from "./generate-report"
+import { ValidateFindingTool } from "./validate-finding"
 import { EbpfTool } from "./ebpf"
 import { WinhookTool } from "./winhook"
 import { MachookTool } from "./machook"
@@ -209,6 +210,7 @@ export namespace ToolRegistry {
       MethodologyStatusTool,
       AttackScriptTool,
       GenerateReportTool,
+      ValidateFindingTool,
       EbpfTool,
       WinhookTool,
       MachookTool,
