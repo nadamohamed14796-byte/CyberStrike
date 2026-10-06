@@ -8,6 +8,7 @@ import { LearningSignalTable } from "./learning.sql"
 import { LearningRouter, type LearningHook, type LearningSignal, type RoutedSkill } from "./router"
 import { SkillIndex } from "../skill/index-engine"
 import { planReconTools } from "../tool/recon-toolchain"
+import { ReconDispatch } from "../tool/recon-dispatch"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
 const sessionNextTools = new Map<string, ReturnType<typeof planReconTools>>()
@@ -59,7 +60,7 @@ export namespace Learning {
 
     try {
       const activeAuthorized = signal.metadata?.authorized_active_testing === true
-      nextTools = planReconTools({
+      nextTools = ReconDispatch.next({
         signal: signal.signal,
         target: signal.target,
         authorized_active_testing: activeAuthorized,
