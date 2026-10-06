@@ -26,6 +26,20 @@ export namespace ToolArtifact {
   const MAX_OUTPUT = 200_000
   const MAX_PREVIEW = 2_000
 
+  function redactInput(value: unknown): unknown {
+    if (Array.isArray(value)) return value.map(redactInput)
+    if (!value || typeof value !== "object") return value
+    const out: Record<string, unknown> = {}
+    for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+      if (/authorization|cookie|password|passwd|secret|token|api[_-]?key|private[_-]?key/i.test(key)) {
+        out[key] = "[REDACTED]"
+      } else {
+        out[key] = redactInput(item)
+      }
+    }
+    return out
+  }
+
   function serialize(value: unknown): string {
     if (typeof value === "string") return value
     try { return JSON.stringify(value) ?? "" } catch { return String(value) }
@@ -52,7 +66,7 @@ export namespace ToolArtifact {
         phase: input.phase,
         risk: input.risk,
         scope_decision: input.scopeDecision,
-        input: input.input && typeof input.input === "object" ? input.input as Record<string, unknown> : undefined,
+        input: input.input && typeof input.input === "object" ? redactInput(input.input) as Record<string, unknown> : undefined,
         output: output.length <= MAX_OUTPUT ? output : undefined,
         output_preview: output.slice(0, MAX_PREVIEW),
         output_hash: output ? hash(output) : undefined,
