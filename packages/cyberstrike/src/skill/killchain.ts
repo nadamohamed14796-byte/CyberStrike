@@ -1,5 +1,6 @@
 import { Log } from "../util/log"
 import { SkillIndex } from "./index-engine"
+import { ChainRegistry } from "./chain-registry"
 
 export namespace KillChain {
   const log = Log.create({ service: "killchain" })
@@ -81,24 +82,44 @@ export namespace KillChain {
   }
 
   export function nextSteps(finding: Finding): string[] {
-    const entry = SkillIndex.get(finding.skill_id)
-    if (!entry) return []
-
-    const steps: string[] = []
-    for (const chain of entry.chains_with) {
-      steps.push(chain)
+    const evidence = {
+      state: "validated" as const,
+      key: `finding:${finding.skill_id}:${finding.cwe_id ?? "unknown"}:${finding.severity}`,
     }
+    const chained = ChainRegistry.next({
+      from: finding.skill_id,
+      completed: [finding.skill_id],
+      evidence,
+      max: ChainRegistry.LIMITS.maxUniqueSkills,
+    }).map((plan) => plan.skill)
 
     if (finding.tech_stack?.length) {
       const related = SkillIndex.byTechStack(finding.tech_stack)
       for (const skill of related) {
-        if (skill.name !== finding.skill_id && !steps.includes(skill.name)) {
-          steps.push(skill.name)
+        if (skill.name !== finding.skill_id && !chained.includes(skill.name)) {
+          chained.push(skill.name)
         }
       }
     }
 
-    return steps
+    return chained
+  }
+
+  /**
+   * Build a bounded, evidence-carrying execution plan from an observed finding.
+   * The plan is advisory: callers still decide whether to execute each skill.
+   */
+  export function plan(finding: Finding): ChainRegistry.Plan[] {
+    return ChainRegistry.next({
+      from: finding.skill_id,
+      completed: [finding.skill_id],
+      evidence: {
+        state: "validated",
+        key: `finding:${finding.skill_id}:${finding.cwe_id ?? "unknown"}`,
+        summary: `${finding.severity} finding from ${finding.skill_id}`,
+      },
+      max: 4,
+    })
   }
 
   export function summary(findings: Finding[]): string {
