@@ -7613,71 +7613,6 @@
       ]
     },
     {
-      "name": "401-403-bypass",
-      "description": "Access-control and routing differential testing for authorized targets returning 401 or 403.",
-      "category": "authorization",
-      "verified": "official",
-      "tags": [
-        "401",
-        "403",
-        "access-control",
-        "authorization",
-        "path-normalization",
-        "waf"
-      ],
-      "tech_stack": [
-        "http",
-        "web"
-      ],
-      "cwe_ids": [
-        "CWE-285",
-        "CWE-862",
-        "CWE-863"
-      ],
-      "chains_with": [
-        "waf-bypass",
-        "waf-evasion",
-        "adaptive-response-differential"
-      ],
-      "prerequisites": [],
-      "severity_boost": {},
-      "files": [
-        "SKILL.md"
-      ]
-    },
-    {
-      "name": "waf-bypass-techniques",
-      "description": "Generic WAF and intermediary bypass techniques for authorized security testing.",
-      "category": "input-validation",
-      "verified": "community-derived",
-      "source": "yaklang/hack-skills",
-      "tags": [
-        "waf",
-        "bypass",
-        "encoding",
-        "normalization",
-        "parser-differential",
-        "intermediary"
-      ],
-      "tech_stack": [
-        "http",
-        "web"
-      ],
-      "cwe_ids": [],
-      "chains_with": [
-        "waf-evasion",
-        "adaptive-technique-matcher",
-        "adaptive-mutation-policy"
-      ],
-      "prerequisites": [
-        "waf-evasion"
-      ],
-      "severity_boost": {},
-      "files": [
-        "SKILL.md"
-      ]
-    },
-    {
       "name": "waf-xss-bypass",
       "description": "XSS-specific WAF bypass analysis for authorized testing.",
       "category": "client-side",
@@ -7709,5 +7644,5 @@
       ]
     }
   ],
-  "skill_count": 403
+  "skill_count": 401
 }
