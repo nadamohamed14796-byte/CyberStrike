@@ -1,8 +1,21 @@
 ---
 name: 401-403-bypass
 description: >-
-  Access-control and routing differential testing for authorized targets returning 401 or 403, including path normalization, HTTP methods, trusted headers, protocol differences, and technology-specific routing behavior.
+  Access-control and routing differential testing for authorized targets returning
+  401 or 403, including path normalization, HTTP methods, trusted headers,
+  protocol differences, and technology-specific routing behavior.
+category: authorization
 version: "2.0.0"
+author: CyberStrike
+tags: [401, 403, access-control, authorization, path-normalization, http-method, headers, proxy, waf]
+tech_stack: [http, web]
+cwe_ids: [CWE-285, CWE-862, CWE-863]
+chains_with: [waf-bypass, waf-evasion, adaptive-failure-analysis, adaptive-response-differential]
+prerequisites: []
+severity_boost: {}
+---
+
+# 401/403 Bypass
 
 A bypass candidate appears when two HTTP-processing layers (CDN, reverse proxy,
 web server, framework) decide differently about the same request. The useful
@@ -399,6 +412,25 @@ Adapted for CyberStrike skill runtime.
 ## Consolidated Coverage
 
 The canonical skill incorporates the complementary 401/403 playbook coverage for URL rewrite headers, trusted IP headers, protocol differences, technology-specific behavior, automated 4xx testing, combination testing, false-positive checks, and related routing. Duplicate procedures are intentionally kept once.
+
+### Additional Tooling
+
+- `403bypasser` may be used when available for bounded differential testing.
+- `dirsearch` and `feroxbuster` remain content-discovery tools, not proof of authorization bypass.
+
+### Related Routing
+
+- `waf-bypass` for WAF-layer routing.
+- `waf-bypass-techniques` for generic WAF/filter techniques.
+- `waf-evasion` for adaptive failure and transformation analysis.
+- `request-smuggling` and `http2-specific-attacks` for protocol-specific differentials.
+- `http-host-header-attacks` for Host routing behavior.
+- Authentication/authorization skills for actual access-control validation.
+
+
+## Consolidated Coverage
+
+The canonical skill consolidates the complementary 401/403 playbook coverage for URL rewrite headers, trusted IP headers, protocol differences, technology-specific behavior, automated 4xx testing, combination testing, and false-positive checks. Duplicate procedures are intentionally kept once.
 
 ### Additional Tooling
 
