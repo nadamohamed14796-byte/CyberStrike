@@ -56,18 +56,8 @@ export namespace RequestCorrelation {
     const request = Request.get(sessionID).find((item) => item.id === requestID)
     if (!request) return undefined
     const artifacts = ToolArtifact.byRequest(sessionID, requestID)
-    const javascript = TargetMemory.list(
-      projectIDForSession(sessionID),
-      "javascript",
-      500,
-    ).filter((item) => item.request_id === requestID || item.url === request.page_url)
+    const javascript = TargetMemory.listForSession(sessionID, "javascript", 500)
+      .filter((item) => item.request_id === requestID || item.url === request.page_url)
     return { request, javascript, artifacts }
-  }
-
-  function projectIDForSession(sessionID: string) {
-    const requests = Request.get(sessionID)
-    const first = requests[0]
-    if (!first) return ""
-    return first.session_id ? "" : ""
   }
 }
