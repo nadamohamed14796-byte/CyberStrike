@@ -109,7 +109,7 @@ describe("hunting runtime end-to-end", () => {
       expect(last?.state).toBe("confirmed")
 
       const findings=await loadFindings(root,target)
-      expect(findings.finding?.length).toBeGreaterThan(0)
+      expect(findings.findings.length).toBeGreaterThan(0)
       const finding=findings.findings[0]
       expect(finding.status).toBe("validated")
       expect(finding.requestIds).toContain("req-1")
