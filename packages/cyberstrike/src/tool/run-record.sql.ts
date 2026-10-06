@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index, primaryKey } from "drizzle-orm/sqlite-core"
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core"
 import { Timestamps } from "@/storage/schema.sql"
 
 /**
