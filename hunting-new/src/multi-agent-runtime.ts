@@ -247,7 +247,11 @@ export async function enrichAgentTaskExecutionContext(
     return true
   }).sort((a,b)=>b.observedAt-a.observedAt)
   const request=exact ?? candidates[0]
-  const response=request ? intelligence.responses.find(item=>item.requestId===request.id) : undefined
+  const response=context.responseId
+    ? intelligence.responses.find(item=>item.id===context.responseId)
+    : request
+      ? intelligence.responses.find(item=>item.requestId===request.id)
+      : undefined
   const relatedEdges=request
     ? intelligence.edges.filter(edge=>edge.from===request.id || edge.to===request.id)
     : []
@@ -262,7 +266,7 @@ export async function enrichAgentTaskExecutionContext(
     ...context,
     requestId:request?.id,
     responseId:response?.id,
-    accountLabel:request?.accountLabel,
+    accountLabel:context.accountLabel ?? request?.accountLabel,
     functionIds:[...functionIds],
     jsAssetIds:[...jsAssetIds],
   }
