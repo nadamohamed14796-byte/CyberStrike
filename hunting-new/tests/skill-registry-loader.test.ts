@@ -25,3 +25,41 @@ describe("external skill registry", () => {
     }
   })
 })
+
+describe("external skill metadata", () => {
+  test("loads dependencies, required signals, agent and validation metadata", async () => {
+    const root=await mkdtemp("/tmp/cyberstrike-registry-meta-")
+    const external=path.join(root,"external")
+    const skillDir=path.join(external,"skills","meta-skill")
+    await mkdir(skillDir,{recursive:true})
+    await writeFile(path.join(skillDir,"SKILL.md"),[
+      "---",
+      "name: meta-skill",
+      "description: metadata test",
+      "required_signals: [graphql_detected]",
+      "dependencies: [base-skill]",
+      "validation_requirements: [request-response-evidence]",
+      "agent: web-application",
+      "confidence_threshold: 0.8",
+      "maximum_parallel_tasks: 3",
+      "---",
+      "# Meta",
+    ].join("\n"))
+    const previous=process.env.HUNT_EXTERNAL_SKILL_ROOTS
+    process.env.HUNT_EXTERNAL_SKILL_ROOTS=external
+    try{
+      const registry=await loadSkillRegistry(root)
+      const skill=registry.get("meta-skill")
+      expect(skill?.required_signals).toEqual(["graphql_detected"])
+      expect(skill?.dependencies).toEqual(["base-skill"])
+      expect(skill?.validation_requirements).toEqual(["request-response-evidence"])
+      expect(skill?.agent).toBe("web-application")
+      expect(skill?.confidence_threshold).toBe(0.8)
+      expect(skill?.maximum_parallel_tasks).toBe(3)
+    }finally{
+      if(previous===undefined)delete process.env.HUNT_EXTERNAL_SKILL_ROOTS
+      else process.env.HUNT_EXTERNAL_SKILL_ROOTS=previous
+      await rm(root,{recursive:true,force:true})
+    }
+  })
+})
