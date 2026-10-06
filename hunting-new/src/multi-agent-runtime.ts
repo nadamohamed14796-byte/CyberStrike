@@ -20,6 +20,7 @@ import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-po
 import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
 import { loadMission } from "./mission"
 import { checkScope } from "./scope"
+import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -312,7 +313,7 @@ export async function executeAndRecordDispatchedTask(
   plan:MultiAgentPlan,
   taskId:string,
   executor:AgentTaskExecutor,
-):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult}>{
+):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult; promotion?:FindingPromotionResult}>{
   const base=buildAgentTaskExecutionContext(plan,taskId)
   const mission=await loadMission(root,plan.target)
   if(!mission) throw new Error("MISSION_NOT_FOUND")
@@ -382,6 +383,31 @@ export async function executeAndRecordDispatchedTask(
     },
   )
 
+  let promotion:FindingPromotionResult|undefined
+  if(
+    lifecycle.hypothesisStatus==="confirmed" &&
+    lifecycle.validation?.decision==="eligible" &&
+    parsed?.impact
+  ){
+    try{
+      promotion=await promoteValidatedHypothesis(root,plan.target,{
+        hypothesisId:prepared.hypothesis.id,
+        title:parsed.title ?? (context.signal+" validated finding"),
+        severity:parsed.severity ?? "medium",
+        summary:parsed.resultSummary,
+        impact:parsed.impact,
+        remediation:parsed.remediation,
+        validation:lifecycle.validation,
+        signal:context.signal,
+        skill:context.primarySkill,
+        endpoint:context.endpoint,
+        strategy:prepared.attempt.strategy,
+      })
+    }catch{
+      await checkpointPhase(root,plan.target,"finding:promotion-blocked:"+prepared.hypothesis.id)
+    }
+  }
+
   const terminal=effectiveState==="confirmed" || effectiveState==="blocked" || lifecycle.hypothesisStatus==="rejected"
   const taskState=effectiveState==="blocked"
     ? "blocked"
@@ -391,7 +417,7 @@ export async function executeAndRecordDispatchedTask(
   if(terminal) await finishAgentTask(root,plan.target,taskId,taskState)
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
-  return {context,result:{...result,state:effectiveState},lifecycle}
+  return {context,result:{...result,state:effectiveState},lifecycle,promotion}
 }
 
 export async function executePersistedTaskWithNativeCyberStrike(
