@@ -10,8 +10,8 @@ export namespace ReconDispatch {
     max_tools?: number
   }
 
-  function key(tool: string, target: string | undefined) {
-    return tool + "::" + (target ?? "*").trim().toLowerCase()
+  function key(tool: string, target: string | undefined, signal: string) {
+    return tool + "::" + (target ?? "*").trim().toLowerCase() + "::" + signal.trim().toLowerCase()
   }
 
   /**
@@ -25,7 +25,7 @@ export namespace ReconDispatch {
       artifacts.map((item) => key(item.tool, item.target)),
     )
     const target = input.target
-    const fresh = planned.filter((tool) => !seen.has(key(tool.id, target)))
+    const fresh = planned.filter((tool) => !seen.has(key(tool.id, target, input.signal)))
     return fresh.length > 0 ? fresh : []
   }
 }
