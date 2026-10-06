@@ -10,6 +10,7 @@ import { SkillIndex } from "../skill/index-engine"
 import { planReconTools } from "../tool/recon-toolchain"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
+const sessionNextTools = new Map<string, ReturnType<typeof planReconTools>>()
 const MAX_SESSION_ROUTES = 256
 
 export namespace Learning {
@@ -68,6 +69,8 @@ export namespace Learning {
     if (signal.sessionID) {
       sessionRoutes.delete(signal.sessionID)
       sessionRoutes.set(signal.sessionID, routes)
+      sessionNextTools.delete(signal.sessionID)
+      sessionNextTools.set(signal.sessionID, nextTools)
       while (sessionRoutes.size > MAX_SESSION_ROUTES) {
         const oldest = sessionRoutes.keys().next().value
         if (!oldest) break
@@ -115,6 +118,10 @@ export namespace Learning {
     } catch {}
 
     return routes
+  }
+
+  export function nextToolsFor(sessionID: string, limit = 8) {
+    return (sessionNextTools.get(sessionID) ?? []).slice(0, limit)
   }
 
   export function routesFor(sessionID: string, limit = 8): RoutedSkill[] {
