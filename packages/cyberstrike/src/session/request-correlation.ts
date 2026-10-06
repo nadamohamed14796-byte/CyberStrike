@@ -38,10 +38,15 @@ export namespace RequestCorrelation {
       const page = hostOf(request.page_url)
       if (page === jsHost) return true
       const requestPath = request.canonical_path || request.normalized_path
-      return Boolean(jsPath && requestPath && (
-        jsPath === requestPath ||
-        jsPath.startsWith(requestPath.endsWith("/") ? requestPath : requestPath + "/")
-      ))
+      // A JS response is correlated only when the request itself identifies a
+      // script response. Do not guess API relationships from shared hosts.
+      return Boolean(
+        jsPath &&
+        requestPath &&
+        jsPath === requestPath &&
+        request.response_content_type &&
+        /(javascript|ecmascript)/i.test(request.response_content_type),
+      )
     })
 
     const ids = new Set(correlated.map((request) => request.id))
