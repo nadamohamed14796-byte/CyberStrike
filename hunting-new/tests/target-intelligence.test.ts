@@ -1,3 +1,19 @@
+
+import { describe, expect, test } from "bun:test"
+import { discoverRequestParameters } from "../src/target-intelligence"
+import type { RequestNode } from "../src/correlation"
+
+describe("target intelligence parameter extraction",()=>{
+  test("extracts query, path and JSON body parameters",()=>{
+    const request:RequestNode & {rawRequest?:string}={
+      id:"req-1",sessionId:"s1",method:"POST",url:"https://example.test/api/users/{id}?page=2",path:"/api/users/{id}",observedAt:1,source:"observed",
+      rawRequest:'POST /api/users/{id}?page=2 HTTP/1.1\r\nHost: example.test\r\nContent-Type: application/json\r\n\r\n{"name":"alice","role":"user"}',
+    }
+    const names=discoverRequestParameters(request).map(x=>x.name).sort()
+    expect(names).toEqual(["id","name","page","role"])
+  })
+})
+
 import { describe, expect, test } from "bun:test"
 import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
