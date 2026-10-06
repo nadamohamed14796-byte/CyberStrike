@@ -340,7 +340,7 @@ export async function executeAndRecordDispatchedTask(
   plan:MultiAgentPlan,
   taskId:string,
   executor:AgentTaskExecutor,
-):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult; promotion?:FindingPromotionResult}>{
+):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult; promotion?:FindingPromotionResult; refreshedPlan?:PreparedMultiAgentPlan}>{
   const base=buildAgentTaskExecutionContext(plan,taskId)
   const mission=await loadMission(root,plan.target)
   if(!mission) throw new Error("MISSION_NOT_FOUND")
@@ -443,7 +443,7 @@ export async function executeAndRecordDispatchedTask(
   if(terminal) await finishAgentTask(root,plan.target,taskId,taskState)
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
-  return {context,result:{...result,state:effectiveState},lifecycle,promotion}
+  return {context,result:{...result,state:effectiveState},lifecycle,promotion,refreshedPlan}
 }
 
 export async function executePersistedTaskWithNativeCyberStrike(
