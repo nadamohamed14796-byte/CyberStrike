@@ -63,7 +63,7 @@ export const ToolRunRecordTable = sqliteTable(
     ...Timestamps,
   },
   (table) => [
-    // One row per unique (session, run_key, attempt) triple
+    // Indexed by session/run identity; each execution attempt gets its own row
     index("tool_run_session_idx").on(table.session_id),
     index("tool_run_key_idx").on(table.session_id, table.run_key),
     index("tool_run_status_idx").on(table.session_id, table.status),
