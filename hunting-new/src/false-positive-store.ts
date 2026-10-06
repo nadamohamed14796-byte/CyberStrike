@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir, readJson, targetDir, writeJson } from "./store"
+import { ensureDir, readJson, targetDir, writeJson, withTargetMutationLock } from "./store"
 import { FalsePositiveIntelligence, type FalsePositiveRecord } from "./false-positive-intelligence"
 
 export interface FalsePositiveState {
@@ -26,11 +26,13 @@ export async function saveFalsePositives(root: string, state: FalsePositiveState
 }
 
 export async function recordFalsePositive(root: string, target: string, record: FalsePositiveRecord): Promise<FalsePositiveState> {
-  const state = await loadFalsePositives(root, target)
-  const index = state.records.findIndex(x => x.fingerprint === record.fingerprint)
-  if (index === -1) state.records.push(record)
-  else state.records[index] = record
-  return saveFalsePositives(root, state)
+  return withTargetMutationLock(root, target, async () => {
+    const state = await loadFalsePositives(root, target)
+    const index = state.records.findIndex(x => x.fingerprint === record.fingerprint)
+    if (index === -1) state.records.push(record)
+    else state.records[index] = record
+    return saveFalsePositives(root, state)
+  })
 }
 
 export function hydrateFalsePositiveIntelligence(state: FalsePositiveState): FalsePositiveIntelligence {
