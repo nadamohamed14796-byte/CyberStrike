@@ -23,6 +23,56 @@ export namespace TargetMemory {
     time: { created: number; updated: number }
   }
 
+  function mergeProvenance(previous: Record<string, unknown> | null | undefined, next: Record<string, unknown>) {
+    const merged = { ...(previous ?? {}), ...next }
+    for (const key of ["credential_ids", "request_ids", "source_request_ids", "source_memory_ids", "source_tools", "source_call_ids", "source_finding_ids", "extracted_urls"]) {
+      const values = [
+        ...(Array.isArray(previous?.[key]) ? previous[key].filter((x) => typeof x === "string") : []),
+        ...(Array.isArray(next[key]) ? next[key].filter((x) => typeof x === "string") : []),
+      ]
+      if (values.length) merged[key] = Array.from(new Set(values))
+    }
+    return merged
+  }
+
+  function upsertDiscovery(input: {
+    projectID: string
+    kind: Kind
+    asset: string
+    method: string | null
+    url: string
+    metadata: Record<string, unknown>
+  }) {
+    return Database.use((db) => {
+      const existing = db.select().from(TargetMemoryTable).where(and(
+        eq(TargetMemoryTable.project_id, input.projectID),
+        eq(TargetMemoryTable.kind, input.kind),
+        eq(TargetMemoryTable.method, input.method),
+        eq(TargetMemoryTable.url, input.url),
+      )).get()
+      if (existing) {
+        db.update(TargetMemoryTable).set({
+          request_id: existing.request_id ?? (typeof input.metadata.source_request_id === "string" ? input.metadata.source_request_id : null),
+          metadata: mergeProvenance(existing.metadata, input.metadata),
+          time_updated: Date.now(),
+        }).where(eq(TargetMemoryTable.id, existing.id)).run()
+        return false
+      }
+      db.insert(TargetMemoryTable).values({
+        id: Identifier.ascending("target_memory"),
+        project_id: input.projectID,
+        kind: input.kind,
+        asset: input.asset,
+        method: input.method,
+        url: input.url,
+        metadata: input.metadata,
+        time_created: Date.now(),
+        time_updated: Date.now(),
+      }).run()
+      return true
+    })
+  }
+
   function projectIDForSession(sessionID: string): string | undefined {
     return Database.use((db) =>
       db
@@ -133,10 +183,11 @@ export namespace TargetMemory {
 
     const urls = new Set<string>()
     for (const token of raw.split(/\s+/)) {
-      const value = token.replace(/^[("'\[]+|[),.;'\]"]+$/g, "")
+      const value = token.replace(/^[("'[]+|[),.;']"]+$/g, "")
       if (!/^https?:\/\//i.test(value)) continue
       try {
         const url = new URL(value)
+        url.hash = ""
         if (url.protocol === "http:" || url.protocol === "https:") urls.add(url.toString())
       } catch {}
       if (urls.size >= 500) break
@@ -147,21 +198,23 @@ export namespace TargetMemory {
       const parsed = new URL(url)
       const isJS = /\.m?js(?:[?#]|$)/i.test(parsed.pathname) || /javascript|ecmascript/i.test(input.signal ?? "")
       const kind: Kind = isJS ? "javascript" : "endpoint"
-      try {
-        Database.use((db) => db.insert(TargetMemoryTable).values({
-          id: Identifier.ascending("target_memory"),
-          project_id: projectID,
-          kind,
-          asset: parsed.host,
-          method: kind === "endpoint" ? "GET" : null,
-          url,
-          content_type: isJS ? "application/javascript" : null,
-          metadata: { source_tool: input.tool, signal: input.signal ?? null, call_id: input.callID ?? null, discovered: true },
-          time_created: Date.now(),
-          time_updated: Date.now(),
-        }).onConflictDoNothing().run())
-        stored++
-      } catch {}
+      upsertDiscovery({
+        projectID,
+        kind,
+        asset: parsed.host,
+        method: kind === "endpoint" ? "GET" : null,
+        url,
+        metadata: {
+          source_tool: input.tool,
+          source_tools: [input.tool],
+          signal: input.signal ?? null,
+          call_id: input.callID ?? null,
+          source_call_ids: input.callID ? [input.callID] : [],
+          discovered: true,
+          extracted_urls: [url],
+        },
+      })
+      stored++
     }
     return stored
   }
