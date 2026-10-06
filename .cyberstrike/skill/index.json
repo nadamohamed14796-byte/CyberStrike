@@ -3170,7 +3170,7 @@
     },
     {
       "name": "hunt-clickjacking",
-      "description": "Hunt Clickjacking — missing X-Frame-Options / CSP frame-ancestors lets an attacker embed the target page in an invisible iframe and trick victims into clicking buttons they cannot see (UI redressing). Targets: login flows, money transfers, account settings, OAuth confirmation pages. Confirm by fetching the page, then PROVE it frames in a real browser and a sensitive state-changing action survives the cross-site context (SameSite cookies / framebusting JS can defeat it) — header-absence alone is not a finding.",
+      "description": "Validate frameable pages in a real browser and prove security-relevant UI-redress impact; header absence alone is insufficient.",
       "category": "web-testing",
       "verified": "community-derived",
       "source": "Claude-BugHunter",
@@ -3178,12 +3178,20 @@
         "bug-bounty",
         "security-testing",
         "hunt",
-        "clickjacking"
+        "clickjacking",
+        "framing-validation",
+        "evidence-gate"
       ],
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "auth-sec",
+        "csrf-cross-site-request-forgery",
+        "business-logic-vuln",
+        "api-sec"
       ]
     },
     {
@@ -6002,19 +6010,29 @@
     },
     {
       "name": "clickjacking",
-      "description": "HackSkills security skill for clickjacking.",
-      "category": "security-testing",
-      "verified": "community-derived",
+      "description": "Signal-driven clickjacking orchestration for effective framing policy, browser validation, and sensitive-action impact.",
+      "category": "client-side",
+      "verified": "official",
       "source": "yaklang/hack-skills",
       "tags": [
         "bug-bounty",
         "security-testing",
-        "hack-skills"
+        "hack-skills",
+        "framing",
+        "ui-redress",
+        "evidence-gate"
       ],
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "hunt-clickjacking",
+        "auth-sec",
+        "csrf-cross-site-request-forgery",
+        "business-logic-vuln",
+        "api-sec"
       ]
     },
     {
