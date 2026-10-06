@@ -66,3 +66,70 @@ export async function writeReport(
   await Bun.write(file,lines.join("\n").replace(/\n{3,}/g,"\n\n")+"\n")
   return file
 }
+
+
+export type ReportStatus = "draft" | "ready" | "submitted" | "accepted" | "rejected"
+
+export interface ReportRecord {
+  id:string
+  findingId:string
+  fingerprint:string
+  target:string
+  status:ReportStatus
+  file:string
+  createdAt:string
+  updatedAt:string
+  submissionRef?:string
+  reviewerNote?:string
+}
+
+interface ReportState { target:string; reports:ReportRecord[]; updatedAt:string }
+
+async function loadReportState(root:string,target:string):Promise<ReportState>{
+  const file=path.join(targetDir(root,target),"intelligence","reports.json")
+  const { readJson }=await import("./store")
+  return (await readJson<ReportState|null>(file,null)) ?? {target,reports:[],updatedAt:new Date().toISOString()}
+}
+
+async function saveReportState(root:string,state:ReportState):Promise<ReportState>{
+  const dir=path.join(targetDir(root,state.target),"intelligence")
+  await ensureDir(dir)
+  const { writeJson }=await import("./store")
+  const next={...state,updatedAt:new Date().toISOString()}
+  await writeJson(path.join(dir,"reports.json"),next)
+  return next
+}
+
+export async function createReportRecord(root:string,finding:FindingRecord,file:string):Promise<ReportRecord>{
+  if(finding.status!=="validated" && finding.status!=="reported") throw new Error("REPORT_GATE_FAILED")
+  const state=await loadReportState(root,finding.target)
+  const existing=state.reports.find(x=>x.findingId===finding.id)
+  if(existing)return existing
+  const now=new Date().toISOString()
+  const report:ReportRecord={
+    id:"report_"+finding.id,findingId:finding.id,fingerprint:finding.fingerprint,
+    target:finding.target,status:"ready",file,createdAt:now,updatedAt:now
+  }
+  state.reports.push(report)
+  await saveReportState(root,state)
+  return report
+}
+
+export async function transitionReport(
+  root:string,target:string,reportId:string,status:ReportStatus,
+  meta:{submissionRef?:string;reviewerNote?:string}={},
+):Promise<ReportRecord>{
+  const state=await loadReportState(root,target)
+  const report=state.reports.find(x=>x.id===reportId)
+  if(!report)throw new Error("REPORT_NOT_FOUND")
+  report.status=status
+  if(meta.submissionRef!==undefined)report.submissionRef=meta.submissionRef
+  if(meta.reviewerNote!==undefined)report.reviewerNote=meta.reviewerNote
+  report.updatedAt=new Date().toISOString()
+  await saveReportState(root,state)
+  return report
+}
+
+export async function loadReportsForTarget(root:string,target:string):Promise<ReportRecord[]>{
+  return (await loadReportState(root,target)).reports
+}
