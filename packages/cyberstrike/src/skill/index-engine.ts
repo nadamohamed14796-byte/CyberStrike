@@ -110,7 +110,7 @@ export namespace SkillIndex {
       if (score > 0) scored.push({ entry, score })
     }
     return scored
-      .sort((a, b) => b.score - a.score)
+      .sort((a, b) => b.score - a.score || a.entry.name.localeCompare(b.entry.name))
       .slice(0, limit)
       .map((s) => s.entry)
   }
@@ -152,6 +152,47 @@ export namespace SkillIndex {
       .slice(0, limit)
       .map((n) => entries.get(n)!)
       .filter(Boolean)
+  }
+
+  export function prerequisitesSatisfied(skillName: string, available: Iterable<string>): boolean {
+    const availableSet = new Set(available)
+    return prerequisitesFor(skillName).every((name) => availableSet.has(name))
+  }
+
+  export function rankForContext(input: {
+    query?: string
+    tech?: string[]
+    cwe?: string
+    category?: string
+    availableSkills?: string[]
+    limit?: number
+  }): Array<Entry & { score: number; prerequisitesSatisfied: boolean }> {
+    const candidates = input.cwe
+      ? byCWE(input.cwe, Infinity)
+      : input.tech?.length
+        ? byTechStack(input.tech, Infinity)
+        : input.category
+          ? byCategory(input.category, Infinity)
+          : input.query
+            ? search(input.query, Infinity)
+            : all()
+    const available = input.availableSkills ?? []
+    const scored = candidates.map((entry) => {
+      let score = 0
+      if (input.query) {
+        const q = input.query.toLowerCase()
+        if (entry.name.toLowerCase() === q) score += 100
+        if (entry.description.toLowerCase().includes(q)) score += 10
+      }
+      if (input.tech?.length) score += input.tech.filter((x) => entry.tech_stack.some((t) => t.toLowerCase() === x.toLowerCase())).length * 20
+      if (input.cwe) score += entry.cwe_ids.some((x) => x.toUpperCase() === input.cwe!.toUpperCase()) ? 30 : 0
+      if (input.category) score += entry.category?.toLowerCase() === input.category.toLowerCase() ? 20 : 0
+      const ready = prerequisitesSatisfied(entry.name, available)
+      if (ready) score += 15
+      else score -= 15
+      return { ...entry, score, prerequisitesSatisfied: ready }
+    })
+    return scored.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name)).slice(0, input.limit ?? 20)
   }
 
   export function chainsFrom(skillName: string): Array<{ target: string; boost?: string }> {
