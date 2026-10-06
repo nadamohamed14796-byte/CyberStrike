@@ -278,15 +278,15 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
   const blocked: AgentTask[] = []
   const completed = new Set([...states.entries()].filter(([, state]) => state === "completed").map(([id]) => id))
   const dependenciesSatisfied = (task: AgentTask): boolean =>
-    task.dependencies.every(role =>
-      plan.lanes[role].some(dep =>
-        completed.has(dep.id) &&
+    task.dependencies.every(role => {
+      const candidates = plan.lanes[role].filter(dep =>
         dep.target === task.target &&
         dep.signal === task.signal &&
         (task.endpoint ? dep.endpoint === task.endpoint : true) &&
         (task.functionId ? dep.functionId === task.functionId : true),
-      ),
-    )
+      )
+      return candidates.length === 0 || candidates.some(dep => completed.has(dep.id))
+    })
 
   for (const task of [...plan.tasks].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))) {
     const state = states.get(task.id) ?? "pending"
