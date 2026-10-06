@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir,targetDir } from "./store"
+import { ensureDir,targetDir, withTargetMutationLock } from "./store"
 import type { FindingRecord } from "./findings"
 import { loadFindings } from "./finding-store"
 import { loadHypotheses } from "./hypothesis-store"
@@ -106,17 +106,19 @@ async function saveReportState(root:string,state:ReportState):Promise<ReportStat
 
 export async function createReportRecord(root:string,finding:FindingRecord,file:string):Promise<ReportRecord>{
   if(finding.status!=="validated" && finding.status!=="reported") throw new Error("REPORT_GATE_FAILED")
-  const state=await loadReportState(root,finding.target)
-  const existing=state.reports.find(x=>x.findingId===finding.id)
-  if(existing)return existing
-  const now=new Date().toISOString()
-  const report:ReportRecord={
-    id:"report_"+finding.id,findingId:finding.id,fingerprint:finding.fingerprint,
-    target:finding.target,status:"ready",file,createdAt:now,updatedAt:now
-  }
-  state.reports.push(report)
-  await saveReportState(root,state)
-  return report
+  return withTargetMutationLock(root, finding.target, async () => {
+    const state=await loadReportState(root,finding.target)
+    const existing=state.reports.find(x=>x.findingId===finding.id)
+    if(existing)return existing
+    const now=new Date().toISOString()
+    const report:ReportRecord={
+      id:"report_"+finding.id,findingId:finding.id,fingerprint:finding.fingerprint,
+      target:finding.target,status:"ready",file,createdAt:now,updatedAt:now
+    }
+    state.reports.push(report)
+    await saveReportState(root,state)
+    return report
+  })
 }
 
 export async function transitionReport(
