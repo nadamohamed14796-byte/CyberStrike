@@ -7,6 +7,7 @@ import { ToolRunRecord } from "./run-record"
 import { ToolArtifact } from "./artifact"
 import { Learning } from "../learning/learning"
 import { TargetMemory } from "../session/target-memory"
+import { ingestParameterDiscovery } from "../methodology/parameter-ingest"
 
 export namespace Tool {
   interface Metadata {
@@ -203,6 +204,17 @@ export namespace Tool {
                 },
               }
             }
+            try {
+              ingestParameterDiscovery({
+                sessionID: ctx.sessionID,
+                tool: id,
+                args: args as Record<string, unknown>,
+                output: result.output,
+              })
+            } catch (error) {
+              Log.create({ service: "tool.parameter-ingest" }).warn("parameter ingestion failed", { tool: id, error })
+            }
+
             const truncated = await Truncate.output(result.output, {}, initCtx?.agent)
             return {
               ...result,
