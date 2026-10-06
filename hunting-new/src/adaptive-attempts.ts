@@ -44,6 +44,11 @@ export class AttemptLedger {
     const current = this.attempts.get(hypothesisId) ?? []
     if (current.length >= this.policy.maxAttempts) return undefined
     if (this.policy.requireDistinctVariants && current.some(a => a.strategy === strategy && a.variant === variant)) return undefined
+    if (this.policy.requireDistinctVariants && current.some(a => a.variant === variant && a.strategy !== strategy)) return {
+      ...current.find(a => a.variant === variant && a.strategy !== strategy)!,
+      strategy,
+      reason,
+    }
     if (current.some(a => a.state === "confirmed" && this.policy.stopOnConfirmation)) return undefined
     if (current.length >= this.policy.minimumAttempts && current.some(a => a.state === "rejected" && this.policy.stopOnRejection)) return undefined
 
