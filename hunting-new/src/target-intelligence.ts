@@ -34,6 +34,27 @@ export function stableRequestId(method: string, url: string): string {
   return "req_" + Bun.hash(method.trim().toUpperCase() + "|" + url.trim()).toString(16)
 }
 
+function mergeAccounts(current:TargetAccount[],incoming:TargetAccount[]):TargetAccount[]{
+  const map=new Map(current.map(item=>[item.id,item]))
+  for(const item of incoming){
+    const previous=map.get(item.id)
+    if(!previous){
+      map.set(item.id,{...item})
+      continue
+    }
+    map.set(item.id,{
+      ...previous,
+      ...item,
+      firstSeen:Math.min(previous.firstSeen,item.firstSeen),
+      lastSeen:Math.max(previous.lastSeen,item.lastSeen),
+      authenticationState:previous.authenticationState==="authenticated" || item.authenticationState==="authenticated"
+        ? "authenticated"
+        : "anonymous",
+    })
+  }
+  return [...map.values()]
+}
+
 function mergeById<T extends { id: string }>(current: T[], incoming: T[]): T[] {
   const map = new Map(current.map(x => [x.id, x]))
   for (const item of incoming) map.set(item.id, item)
@@ -61,7 +82,7 @@ export async function rememberTargetIntelligence(
   const current = await loadTargetIntelligence(root, target)
   return saveTargetIntelligence(root, {
     ...current,
-    accounts: mergeById(current.accounts ?? [], patch.accounts ?? []).map(item => ({ ...item })),
+    accounts: mergeAccounts(current.accounts ?? [], patch.accounts ?? []),
     jsAssets: mergeById(current.jsAssets, patch.jsAssets ?? []),
     requests: mergeById(current.requests, patch.requests ?? []),
     responses: mergeById(current.responses, patch.responses ?? []),
