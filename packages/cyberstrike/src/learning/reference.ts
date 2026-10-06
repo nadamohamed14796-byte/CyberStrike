@@ -12,7 +12,7 @@ export namespace ReferenceLearning {
   export function observeSkill(skill: Skill.Info, sessionID?: string): void {
     const now = Date.now()
     const learned = concepts(skill.content)
-    const sourceMatch = skill.content.match(/(?:^|\\n)Source:\\s*(\\S+)/i)\n    const source = sourceMatch?.[1] ?? skill.author ?? skill.verified ?? "reference"
+    const sourceMatch = skill.content.match(/(?:^|\n)Source:\s*(\S+)/i)
     Database.use((db) => {
       const where = sessionID ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skill.name)) : eq(SkillLearningTable.skill_name, skill.name)
       const existing = db.select().from(SkillLearningTable).where(where).get()
