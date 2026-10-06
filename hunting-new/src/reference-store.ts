@@ -17,6 +17,14 @@ interface ReferenceState {
 }
 
 const URL_RE=/https?:\/\/[^\s<>"'\)\]\}]+/gi
+let referenceQueue=Promise.resolve()
+async function withReferenceMutation<T>(work:()=>Promise<T>):Promise<T>{
+  const previous=referenceQueue
+  let release!:()=>void
+  referenceQueue=new Promise<void>(resolve=>{release=resolve})
+  await previous
+  try{return await work()}finally{release()}
+}
 
 function cleanUrl(value:string):string{
   return value.replace(/[.,;:!?]+$/,"")
@@ -39,9 +47,10 @@ export async function indexSkillReferences(
   root:string,
   skills:Array<{name:string;source_path?:string}>,
 ):Promise<ReferenceState>{
-  const state=await loadReferences(root)
-  const byId=new Map(state.references.map(item=>[item.id,item]))
-  for(const skill of skills){
+  return withReferenceMutation(async()=>{
+    const state=await loadReferences(root)
+    const byId=new Map(state.references.map(item=>[item.id,item]))
+    for(const skill of skills){
     if(!skill.source_path)continue
     let content:string
     try{content=await Bun.file(skill.source_path).text()}catch{continue}
@@ -59,8 +68,9 @@ export async function indexSkillReferences(
   }
   const next={references:[...byId.values()].sort((a,b)=>a.skillName.localeCompare(b.skillName)||a.url.localeCompare(b.url)),updatedAt:new Date().toISOString()}
   await ensureDir(path.dirname(referenceFile(root)))
-  await writeJson(referenceFile(root),next)
-  return next
+    await writeJson(referenceFile(root),next)
+    return next
+  })
 }
 
 export async function referencesForSkills(
@@ -81,12 +91,14 @@ export async function markReferencesUsed(
 ):Promise<ReferenceState>{
   const wanted=new Set(ids)
   if(!wanted.size)return loadReferences(root)
-  const state=await loadReferences(root)
-  const next={
-    references:state.references.map(item=>wanted.has(item.id)?{...item,useCount:item.useCount+1,lastSeen:new Date().toISOString()}:item),
-    updatedAt:new Date().toISOString(),
-  }
-  await ensureDir(path.dirname(referenceFile(root)))
-  await writeJson(referenceFile(root),next)
-  return next
+  return withReferenceMutation(async()=>{
+    const state=await loadReferences(root)
+    const next={
+      references:state.references.map(item=>wanted.has(item.id)?{...item,useCount:item.useCount+1,lastSeen:new Date().toISOString()}:item),
+      updatedAt:new Date().toISOString(),
+    }
+    await ensureDir(path.dirname(referenceFile(root)))
+    await writeJson(referenceFile(root),next)
+    return next
+  })
 }
