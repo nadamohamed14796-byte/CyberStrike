@@ -19,6 +19,28 @@ export async function writeJson(file: string, value: unknown) {
 export async function ensureDir(dir: string) {
   await mkdir(dir, { recursive: true })
 }
+
+const targetMutationQueues = new Map<string, Promise<void>>()
+
+export async function withTargetMutationLock<T>(
+  root: string,
+  target: string,
+  work: () => Promise<T>,
+): Promise<T> {
+  const key = targetDir(root, target)
+  const previous = targetMutationQueues.get(key) ?? Promise.resolve()
+  let release!: () => void
+  const current = new Promise<void>(resolve => { release = resolve })
+  targetMutationQueues.set(key, current)
+  await previous
+  try {
+    return await work()
+  } finally {
+    release()
+    if (targetMutationQueues.get(key) === current) targetMutationQueues.delete(key)
+  }
+}
+
 export async function appendEvent(root: string, target: string, event: Record<string, unknown>) {
   const file = path.join(targetDir(root, target), "events.jsonl")
   await ensureDir(path.dirname(file))
