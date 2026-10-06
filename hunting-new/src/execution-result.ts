@@ -10,6 +10,10 @@ export interface ExecutionEvidenceRef {
 
 export interface StructuredExecutionResult {
   state:"executed"|"inconclusive"|"blocked"|"rejected"|"confirmed"
+  severity?: "info"|"low"|"medium"|"high"|"critical"
+  title?:string
+  impact?:string
+  remediation?:string
   outcome:SubagentOutcome
   attemptId?:string
   requestId?:string
@@ -28,6 +32,8 @@ export function buildExecutionContract():string{
     "Every claimed behavior change must reference observed request/response evidence.",
     "Preserve partial evidence when execution is blocked or incomplete.",
     "Separate observed facts from hypotheses and conclusions.",
+    "When state is confirmed, include explicit severity and observed impact; do not invent either.",
+
   ].join("\n")
 }
 
@@ -104,6 +110,10 @@ export function parseExecutionResult(
     return {
       state:asState(record.state ?? record.status,fallback.state),
       outcome:asOutcome(record.outcome,fallback.outcome),
+      severity:typeof record.severity==="string" && ["info","low","medium","high","critical"].includes(record.severity) ? record.severity as StructuredExecutionResult["severity"] : undefined,
+      title:typeof record.title==="string" ? record.title.trim() || undefined : undefined,
+      impact:typeof record.impact==="string" ? record.impact.trim() || undefined : undefined,
+      remediation:typeof record.remediation==="string" ? record.remediation.trim() || undefined : undefined,
       attemptId:typeof record.attempt_id==="string" ? record.attempt_id : typeof record.attemptId==="string" ? record.attemptId : undefined,
       requestId:typeof record.request_id==="string" ? record.request_id : typeof record.requestId==="string" ? record.requestId : undefined,
       responseId:typeof record.response_id==="string" ? record.response_id : typeof record.responseId==="string" ? record.responseId : undefined,
