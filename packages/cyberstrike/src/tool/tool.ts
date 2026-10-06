@@ -6,6 +6,7 @@ import { Truncate } from "./truncation"
 import { ToolRunRecord } from "./run-record"
 import { ToolArtifact } from "./artifact"
 import { Learning } from "../learning/learning"
+import { TargetMemory } from "../session/target-memory"
 
 export namespace Tool {
   interface Metadata {
@@ -156,6 +157,14 @@ export namespace Tool {
             })
 
             try {
+              if (ctx.sessionID && identity.target) {
+                TargetMemory.rememberDiscovery(ctx.sessionID, {
+                  tool: id,
+                  output: result.output,
+                  signal: `tool:${id}`,
+                  callID: ctx.callID,
+                })
+              }
               ToolArtifact.record({
                 sessionID: ctx.sessionID,
                 callID: ctx.callID,
