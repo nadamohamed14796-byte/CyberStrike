@@ -50,6 +50,7 @@ import { Truncate } from "@/tool/truncation"
 import { Token } from "@/util/token"
 import { MethodologyContext } from "@/methodology/context"
 import { Learning } from "../learning"
+import { WebRetest } from "./web/web-retest"
 import { AgentPerformance } from "@/methodology/performance"
 import { testerClass } from "@/tool/vuln-scope"
 import { stopHackbrowser } from "@/tool/hackbrowser-launcher"
@@ -875,6 +876,36 @@ export namespace SessionPrompt {
           lines.push("", `Currently loaded: ${loaded.join(", ")} (${SkillContext.tokenCount()} tokens)`)
         }
         system.push(lines.join("\n"))
+      }
+
+      // Feed deterministic learning-router output back into the live model loop.
+      // Learning remains advisory: the model still decides which skill to load.
+      const routedSkills = Learning.routesFor(sessionID, 8).filter((route) => route.score >= 20)
+      if (routedSkills.length > 0) {
+        system.push(
+          [
+            "# Learning Router Recommendations",
+            "These skills were ranked from the latest runtime signal. Treat them as prioritized leads, not findings.",
+            "Before testing a relevant lead, use the skill tool to search/load the recommended skill and follow its validation procedure.",
+            ...routedSkills.map((route) => `- **${route.name}** (score ${route.score}): ${route.reasons.join("; ")}`),
+          ].join("\n"),
+        )
+      }
+
+      // Surface queued web re-tests to the live agent. The queue is advisory and
+      // remains pending until an explicit replay/validation action consumes it.
+      const pendingRetests = WebRetest.getPending(sessionID).slice(0, 20)
+      if (pendingRetests.length > 0) {
+        system.push(
+          [
+            "# Pending Web Re-tests",
+            "Previously captured requests were queued for re-testing because the session discovered a new role, object value, or credential.",
+            "Use http_replay with the listed request_id when relevant; preserve the trigger context and validate the response before treating anything as a finding.",
+            ...pendingRetests.map((item) =>
+              `- request_id=${item.request_id} | trigger=${item.trigger_type} | priority=${item.priority} | source=${item.trigger_source}`,
+            ),
+          ].join("\n"),
+        )
       }
 
       // Pre-flight token check — trigger compaction before wasting an API call
