@@ -25,6 +25,8 @@ export interface AgentTask {
   resolvedSkills?: string[]
   resolvedSkillPaths?: string[]
   recommendedAgent?: string
+  referenceIds?: string[]
+  referenceUrls?: string[]
 }
 
 export interface AgentExecutionSelection {
