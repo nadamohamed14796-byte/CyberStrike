@@ -21,7 +21,7 @@ export interface FalsePositiveRecord extends FalsePositiveContext {
 }
 
 function normalize(value: string | undefined): string {
-  return (value ?? "").trim().toLowerCase().replace(/\\/+$/g, "").replace(/\\s+/g, " ")
+  return (value ?? "").trim().toLowerCase().replace(/\/+$/g, "").replace(/\s+/g, " ")
 }
 
 export function falsePositiveFingerprint(input: Pick<FalsePositiveContext, "target"|"signal"|"skill"|"strategy"|"endpoint"|"accountMode">): string {
