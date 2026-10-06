@@ -187,7 +187,6 @@ export async function rememberTargetIntelligence(
     requests: mergeById(current.requests, patch.requests ?? []),
     responses: mergeById(current.responses, patch.responses ?? []),
     functions: mergeById(current.functions, patch.functions ?? []),
-    parameters: mergeParameters(current.parameters ?? [], patch.parameters ?? []),
     edges: dedupeEdges([...current.edges, ...(patch.edges ?? [])]),
     hypotheses: mergeById(current.hypotheses, patch.hypotheses ?? []),
     tags: [...new Set([...current.tags, ...(patch.tags ?? [])])],
