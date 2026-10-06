@@ -6,10 +6,10 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 |---|---|
 | Scope Engine | IMPLEMENTED (host/path/protocol/port/exclusion checks + validation-time re-check) |
 | Target Intelligence | IMPLEMENTED (persistent graph/accounts/parameters + serialized references/writeups) |
-| Coverage Ledgers | PARTIAL |
-| JavaScript Discovery | PARTIAL |
+| Coverage Ledgers | IMPLEMENTED (non-empty coverage gate + task/hypothesis/attempt completion checks) |
+| JavaScript Discovery | IMPLEMENTED (asset/request extraction + persisted JS correlation substrate) |
 | JavaScript Analysis | PARTIAL |
-| JS / Request Correlation | PARTIAL (graph + persistence implemented; automatic live JS/function enrichment remains) |
+| JS / Request Correlation | IMPLEMENTED for observed/intake paths (persistent graph + function/asset links; richer live browser enrichment remains) |
 | Request / Response Correlation | IMPLEMENTED (hunting graph + CyberStrike session-ingest bridge) |
 | Function-Centric Model | PARTIAL (persisted function linkage; broader UI/function discovery remains) |
 | Account Context | IMPLEMENTED (persisted observed labels + deduplicated per-account observations) |
@@ -33,7 +33,7 @@ This checkpoint is PARTIAL. The core hunting-intelligence foundation and several
 | Learning Engine | IMPLEMENTED (persistent observations + FP feedback + bounded strategy ranking + writeup strategy hints) |
 | Writeup Ingestion | IMPLEMENTED (local bounded ingestion + global reference catalog + signal/strategy hints) |
 | Report Pipeline | IMPLEMENTED (validated promotion + idempotent ready/submitted/reviewed lifecycle + root-cause/reproduction sections) |
-| Persistent Target Memory | IMPLEMENTED for target graph/accounts/attempts/evidence/findings; broader research/context enrichment remains |
+| Persistent Target Memory | IMPLEMENTED for graph/accounts/parameters/API sources/attempts/evidence/findings/references; broader research/context enrichment remains |
 | Mission Resume Reconstruction | PARTIAL (dispatch recovery wired; generic resume recovery still limited) |
 | Context Budget | IMPLEMENTED |
 | JS-derived Wordlists | IMPLEMENTED |
@@ -93,3 +93,23 @@ Implemented and integrated:
 11. Stronger evidence reconciliation for edge cases where the subagent reports only partial correlation metadata.
 
 No completion claim should be made until the remaining runtime integrations are implemented and the test suite/CI is actually executed.
+
+
+## Latest hardening completed
+- Target-state mutation serialization across intelligence, attempts, hypotheses, chains, findings, evidence, learning, false-positive records, and mission events.
+- Correlated validation now carries attempt/request/response/account metadata into the gate and promotion path.
+- Required-signal routing enforces each signal's confidence threshold.
+- Agent task IDs are stable across replanning for safe resume/deduplication.
+- Core skill metadata can configure the specialized agent used for execution.
+- Reference catalog is indexed into the hunting runtime and exposed to task context as methodology-only material.
+- Session intake can trigger guarded native hunting automatically only when `HUNTING_AUTO_EXECUTE=true`.
+- Native execution parses structured subagent results instead of collapsing every clean run into a generic executed state.
+- API documentation differential extraction and routing signals are implemented in the hunting layer.
+- Parameter discovery fallback parser is implemented; its connection to the session intake body parser is still pending.
+
+## Important unverified items
+- GitHub Actions checks have been observed in `queued` state only on the latest changes; no pass/fail result has been claimed.
+- The generic `resumeHuntingContext()` API still exposes stale claimed/running tasks until callers explicitly invoke recovery.
+- The persisted false-positive intelligence auto-load inside finding promotion remains pending because the attempted write was blocked by tooling safety.
+- The legacy `target-intelligence.ts` path-template regex still contains one escaping defect; the new fallback parser avoids it where it is used.
+- Full native end-to-end execution against a real CyberStrike session has not been executed in this environment.
