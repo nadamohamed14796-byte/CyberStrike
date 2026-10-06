@@ -73,7 +73,7 @@ export namespace Tool {
     return { target, endpoint }
   }
 
-  async function verifyExecutionScope(args: unknown): Promise<boolean | undefined> {
+  async async function verifyExecutionScope(args: unknown): Promise<boolean | undefined> {
     if (!args || typeof args !== "object" || Array.isArray(args)) return undefined
     const value = args as Record<string, unknown>
     const items = Array.isArray(value.scope_items) ? value.scope_items.filter((x): x is string => typeof x === "string") : []
