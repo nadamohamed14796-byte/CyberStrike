@@ -23,12 +23,7 @@ import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
-import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
-import { markReferencesUsed } from "./reference-store"
-import { indexSkillReferences, referencesForSkills } from "./reference-store"
-import { ledgers } from "./ledger"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
-import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
