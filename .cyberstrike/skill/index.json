@@ -7839,7 +7839,47 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "crypto-sec",
+      "description": "Signal-driven cryptography security orchestration for weak algorithms, implementation flaws, key/nonce misuse, hashes, RSA, symmetric ciphers, and Web3 cryptographic attack surfaces.",
+      "category": "cryptography",
+      "verified": "official",
+      "tags": [
+        "crypto",
+        "cryptography",
+        "hashes",
+        "rsa",
+        "symmetric",
+        "web3",
+        "signal-driven"
+      ],
+      "tech_stack": [
+        "cryptography",
+        "web3",
+        "blockchain"
+      ],
+      "cwe_ids": [
+        "CWE-327",
+        "CWE-328",
+        "CWE-330",
+        "CWE-347"
+      ],
+      "chains_with": [
+        "offensive-crypto-attacks",
+        "hash-attack-techniques",
+        "rsa-attack-techniques",
+        "symmetric-cipher-attacks",
+        "classical-cipher-analysis",
+        "lattice-crypto-attacks",
+        "defi-attack-patterns",
+        "smart-contract-vulnerabilities",
+        "meme-coin-audit"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 407
+  "skill_count": 408
 }
