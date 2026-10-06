@@ -1,34 +1,35 @@
 # Final Implementation Status
 
-This checkpoint is intentionally **PARTIAL**. The foundation is implemented; the full acceptance criteria are not yet complete.
+This checkpoint is PARTIAL. The core hunting-intelligence foundation and several runtime hardening steps are implemented, but the full end-to-end acceptance criteria are not yet complete.
 
 | Component | Status |
 |---|---|
-| Scope Engine | IMPLEMENTED |
+| Scope Engine | IMPLEMENTED (host/path/protocol/port/exclusion checks + validation-time re-check) |
 | Target Intelligence | PARTIAL |
 | Coverage Ledgers | PARTIAL |
 | JavaScript Discovery | PARTIAL |
 | JavaScript Analysis | PARTIAL |
 | JS / Request Correlation | PARTIAL |
-| Request / Response Correlation | IMPLEMENTED (hunting graph; runtime ingestion adapter still pending) |
+| Request / Response Correlation | IMPLEMENTED in the hunting graph/intake adapter; direct CyberStrike traffic wiring still pending |
 | Function-Centric Model | PARTIAL |
+| Account Context | PARTIAL (persisted for observed request labels) |
 | Browser Session Correlation | PARTIAL |
 | Finding Lifecycle | PARTIAL |
-| Validation Gate | IMPLEMENTED |
-| Adaptive Attempt Ledger | IMPLEMENTED (bounded ledger + variant dedupe) |
+| Validation Gate | IMPLEMENTED (10 gates + bounded minimum validation budget) |
+| Adaptive Attempt Ledger | IMPLEMENTED (20-attempt ceiling + variant dedupe) |
 | Evidence Provenance | PARTIAL |
 | False-Positive Store | PARTIAL |
 | Deduplication | IMPLEMENTED |
 | Severity Gate | PARTIAL |
 | Variant Ledger | PARTIAL |
-| Chain Board | MISSING |
+| Chain Board | IMPLEMENTED |
 | OOB Tracking | MISSING |
 | Signal Engine | IMPLEMENTED |
 | Skill Registry | PARTIAL |
 | Runtime Preflight | PARTIAL |
 | Runtime Registry | IMPLEMENTED |
-| Multi-Agent Orchestration | PARTIAL (dispatch foundation implemented; runtime wiring pending) |
-| Proxy Intake / Correlator | MISSING |
+| Multi-Agent Orchestration | PARTIAL (native persisted dispatch loop implemented; specialized runtime wiring remains) |
+| Proxy Intake / Correlator | PARTIAL (hunting intake exists; live CyberStrike proxy wiring pending) |
 | Learning Engine | PARTIAL |
 | Writeup Ingestion | MISSING |
 | Report Pipeline | PARTIAL |
@@ -36,49 +37,49 @@ This checkpoint is intentionally **PARTIAL**. The foundation is implemented; the
 | Mission Resume Reconstruction | PARTIAL |
 | Context Budget | IMPLEMENTED |
 | JS-derived Wordlists | IMPLEMENTED |
-| Testing | PARTIAL (unit fixtures added; CI verification pending) |
+| Testing | PARTIAL (foundation tests exist; runtime integration/CI execution not verified here) |
 | Documentation | PARTIAL |
 
-## Current checkpoint
+## Current implementation checkpoint
 
 Implemented and integrated:
-- repository audit baseline
-- isolated `hunting-new/` architecture
-- constitution and prioritization rules
+- isolated hunting-layer architecture
 - explicit scope gate
-- persistent mission/target files
-- eight coverage ledgers
-- signal-driven skill selection
-- bounded 20-attempt validation engine
-- ten-question verification gate
-- JS discovery and structured request intelligence
+- protocol/port/exclusion enforcement
+- validation-time independent scope re-check
+- persistent mission/target intelligence
+- persisted account labels from observed requests
+- request/response correlation graph and intake persistence
+- persisted JS assets, functions and correlation edges
+- signal-driven skill selection foundation
+- bounded 20-attempt validation ledger
+- 10-question validation gate
+- structured execution-result normalization
+- evidence-ID verification against persisted evidence
 - finding fingerprint/deduplication
-- provenance/evidence schema
-- runtime and CyberStrike adapters
-- CI workflow and foundation tests
+- false-positive persistence
+- learning persistence and feedback foundation
+- task persistence, claiming, recovery and completion
+- native CyberStrike execution bridge
+- continuous persisted native dispatch across task batches
+- WAF signals from blocked/filtering response patterns
+- runtime registry, configuration and foundation tests
 
-Not yet complete:
-- bidirectional JS/request/response graph
-- browser/network ingestion adapter
-- complete proxy correlator
-- executable validation adapter tied to observed requests
-- full function/UI discovery
-- API documentation differential
-- cross-host graph and independent scope re-check integration
-- full source ingestion/learning feedback loop
-- chain/OOB systems
-- full orchestrator planner/dispatcher/aggregator/verifier/reporter integration
-- full end-to-end test fixture and coverage dashboard
+## Verified gaps still remaining
 
-No completion claim should be made until these are implemented and CI proves them.
+1. Direct wiring from CyberStrike live browser/proxy/session traffic into the hunting intake path.
+2. Full bidirectional JS/function/request/response correlation from live runtime observations.
+3. Complete signal-to-skill configuration unification between config/skills.yaml and the CyberStrike registry.
+4. Full imported-skill audit/integration for OpenHunterAI, recon-skills and yaklang/hack-skills.
+5. Automatic role/skill-to-specialized-agent resolution.
+6. Automatic finding promotion and report generation from the runtime validation lifecycle.
+7. OOB/callback tracking.
+8. Continuous research/writeup ingestion and bounded learning extraction.
+9. Cross-host relationship graph with explicit scope state per relationship.
+10. API documentation/source differential integrated into signals and planning.
+11. Elimination/unification of the legacy parallel validation models.
+12. End-to-end runtime fixtures and actual CI verification.
+13. Completion-state integration so mission completion is driven by all relevant task/ledger states.
+14. Stronger evidence reconciliation so request/response/JS/function/account references are consistently carried into promoted findings.
 
-
-## Latest implementation checkpoint
-
-Added:
-- bidirectional-ready request/response correlation graph with provenance edges
-- bounded adaptive attempt ledger with a 20-attempt default ceiling and variant deduplication
-- mission dispatch foundation with explicit scope gating and strategy-class rotation
-- unit tests for correlation and adaptive-attempt invariants
-
-These components are intentionally runtime-neutral until they are wired into CyberStrike's existing request/session/browser paths.
+No completion claim should be made until the remaining runtime integrations are implemented and the test suite/CI is actually executed.
