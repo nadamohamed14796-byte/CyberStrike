@@ -166,7 +166,7 @@ export namespace Request {
       // provenance graph does not depend on a later background pass.
       if (remembered.response_content_type && /(javascript|ecmascript)/i.test(remembered.response_content_type)) {
         TargetMemory.correlateJavascript(input.sessionID)
-        TargetMemory.extractJavascriptIntel(input.sessionID)
+        TargetMemory.extractJavascriptIntel(input.sessionID, remembered.id)
       }
     }
 
