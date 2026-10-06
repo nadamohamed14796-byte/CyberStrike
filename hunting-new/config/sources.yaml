@@ -1,36 +1,121 @@
 sources:
   - name: PortSwigger Research
     type: RSS
+    url: https://portswigger.net/research/rss
     enabled: true
     frequency: weekly
     trust_level: high
   - name: ProjectDiscovery Research
     type: RSS
+    url: https://projectdiscovery.io/rss.xml
     enabled: true
     frequency: weekly
     trust_level: high
-  - name: GitHub Security Advisories
-    type: API
-    enabled: true
-    frequency: weekly
-    trust_level: high
-  - name: HackerOne Public Disclosures
-    type: HTML
-    enabled: true
-    frequency: weekly
-    trust_level: medium
-  - name: Bugcrowd Disclosures
-    type: HTML
-    enabled: true
-    frequency: weekly
-    trust_level: medium
-  - name: Researcher Blogs
+  - name: Medium Bug Bounty
     type: RSS
+    url: https://medium.com/feed/tag/bug-bounty
     enabled: true
     frequency: weekly
     trust_level: medium
-  - name: Medium Security Research
+  - name: Include Security
+    type: RSS
+    url: https://blog.includesecurity.com/feed/
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: ToxSec
+    type: RSS
+    url: https://www.toxsec.com/feed
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Socket Security
+    type: RSS
+    url: https://socket.dev/api/blog/feed.atom
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: CISA Alerts & Advisories
+    type: RSS
+    url: https://www.cisa.gov/cybersecurity-advisories/all.xml
+    enabled: true
+    frequency: weekly
+    trust_level: high
+  - name: CISA News
+    type: RSS
+    url: https://www.cisa.gov/news.xml
+    enabled: true
+    frequency: weekly
+    trust_level: high
+  - name: CISA Blog
+    type: RSS
+    url: https://www.cisa.gov/cisa/blog.xml
+    enabled: true
+    frequency: weekly
+    trust_level: high
+  - name: Scott Helme
+    type: RSS
+    url: https://scotthelme.co.uk/rss/
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: HN Security
+    type: RSS
+    url: https://hnsecurity.it/feed/
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Xint
+    type: RSS
+    url: https://xint.io/blog/rss
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Hacktron
+    type: RSS
+    url: https://www.hacktron.ai/rss.xml
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: mez0
+    type: RSS
+    url: https://mez0.cc/rss.xml
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Yunus Aydın
+    type: RSS
+    url: https://aydinnyunus.github.io/feed.xml
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Ali Yazdani
+    type: RSS
+    url: https://asecurityengineer.com/rss.xml
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: XBOW
+    type: RSS
+    url: https://xbow.com/blog/feed.xml
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: ndevtk Writeups
+    type: RSS
+    url: https://ndevtk.github.io/writeups/feed.xml
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Simon Koeck
+    type: RSS
+    url: https://simonkoeck.com/rss.xml
+    enabled: true
+    frequency: weekly
+    trust_level: medium
+  - name: Intigriti Researchers
     type: HTML
+    url: https://www.intigriti.com/researchers/blog
     enabled: true
     frequency: weekly
-    trust_level: medium
+    trust_level: high
