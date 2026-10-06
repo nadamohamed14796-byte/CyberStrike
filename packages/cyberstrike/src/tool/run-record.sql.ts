@@ -1,4 +1,5 @@
-import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core"
+import { sqliteTable, text, integer, index, uniqueIndex } from "drizzle-orm/sqlite-core"
+import { sql } from "drizzle-orm"
 import { Timestamps } from "@/storage/schema.sql"
 
 /**
@@ -66,6 +67,7 @@ export const ToolRunRecordTable = sqliteTable(
     // Indexed by session/run identity; each execution attempt gets its own row
     index("tool_run_session_idx").on(table.session_id),
     index("tool_run_key_idx").on(table.session_id, table.run_key),
+    uniqueIndex("tool_run_active_unique_idx").on(table.session_id, table.run_key).where(sql.raw("status IN ('pending','running')")),
     index("tool_run_status_idx").on(table.session_id, table.status),
     index("tool_run_tool_idx").on(table.tool_id, table.status),
     index("tool_run_target_idx").on(table.target),
