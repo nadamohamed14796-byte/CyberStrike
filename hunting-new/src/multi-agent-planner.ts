@@ -23,6 +23,7 @@ export interface AgentTask {
   maxParallelTasks: number
   strategyHints: string[]
   resolvedSkills?: string[]
+  resolvedSkillPaths?: string[]
 }
 
 export interface AgentExecutionSelection {
