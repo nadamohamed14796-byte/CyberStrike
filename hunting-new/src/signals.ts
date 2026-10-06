@@ -112,27 +112,31 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
       })
     }
 
-    if (response && (response.status === 401 || response.status === 403)) {
-      emit({
-        signal: "access_control_blocked",
-        source: "correlation:response",
-        confidence: 0.72,
-        target: input.target,
-        endpoint,
-        metadata: { requestId: request.id, responseId: response.id, status: response.status },
-      })
+    if (response) {
+      if (response.status === 401 || response.status === 403) {
+        emit({
+          signal: "access_control_blocked",
+          source: "correlation:response",
+          confidence: 0.72,
+          target: input.target,
+          endpoint,
+          metadata: { requestId: request.id, responseId: response.id, status: response.status },
+        })
+      }
 
       const headerText = Object.entries(response.headers)
         .map(([key, value]) => key + ": " + value)
         .join("\\n")
-      if (/cloudflare|cf-ray|cloudfront|awswaf|akamai|imperva|incapsula|sucuri|f5|barracuda|fortiweb|wallarm/i.test(headerText)) {
+      const wafHeader = /cloudflare|cf-ray|cloudfront|awswaf|akamai|imperva|incapsula|sucuri|f5|barracuda|fortiweb|wallarm/i.test(headerText)
+      const wafStatus = response.status === 403 || response.status === 406 || response.status === 429
+      if (wafHeader || wafStatus) {
         emit({
           signal: "waf_signal_detected",
           source: "correlation:response",
-          confidence: 0.86,
+          confidence: wafHeader ? 0.86 : 0.68,
           target: input.target,
           endpoint,
-          metadata: { requestId: request.id, responseId: response.id, status: response.status },
+          metadata: { requestId: request.id, responseId: response.id, status: response.status, wafHeader },
         })
       }
     }
