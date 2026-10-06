@@ -42,10 +42,9 @@ export interface FindingInput {
 
 const unique=(v:string[])=>[...new Set(v.filter(Boolean))]
 
-export function findingFingerprint(input:Pick<FindingInput,"target"|"title"|"hypothesisId"|"chainId">):string {
+export function findingFingerprint(input:Pick<FindingInput,"target"|"hypothesisId"|"chainId">):string {
   return crypto.createHash("sha256").update([
     input.target.trim().toLowerCase(),
-    input.title.trim().toLowerCase(),
     input.hypothesisId,
     input.chainId??"",
   ].join("|")).digest("hex")
