@@ -825,3 +825,29 @@ for test in test_cases:
 Source: https://github.com/SnailSploit/Claude-Red
 License: MIT
 Adapted for CyberStrike skill runtime. Imported as SKILL.md only.
+
+## CyberStrike signal and evidence gate
+
+Activate only when a concrete upload/import boundary or downstream file-processing
+signal is observed. The generic words "upload", "file", "attachment", or "avatar"
+are not sufficient.
+
+Establish the Accept, Store, Process, and Serve boundary involved, plus target,
+endpoint, identity/tenant, file metadata, processing technology, authorization
+scope, and provenance before deep testing.
+
+Use:
+signal -> upload-observed -> boundary-confirmed -> controlled-impact-reproduced ->
+impact-proven -> finding
+
+A rejected/accepted extension, MIME mismatch, reflection, accessible URL, scanner
+label, or parser error alone is not a confirmed vulnerability. Preserve negative
+results and exact reproduction.
+
+Use harmless synthetic files, test identities, reversible validation, and controlled
+test infrastructure. Do not deploy persistence, access unrelated files, overwrite
+production data, or cause destructive processing.
+
+Deduplicate by target + endpoint + identity/tenant + upload-policy + processing-path
++ impact-class. Prefer the smallest evidence-driven variant set and preserve
+evidence across specialist handoffs.
