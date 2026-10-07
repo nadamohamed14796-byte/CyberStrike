@@ -5,7 +5,7 @@ import { SessionTable } from "./session.sql"
 import { Identifier } from "../id/id"
 
 export namespace TargetMemory {
-  export type Kind = "endpoint" | "javascript" | "asset" | "technology" | "parameter" | "finding" | "rejected-finding" | "technique"
+  export type Kind = "endpoint" | "javascript" | "asset" | "technology" | "parameter" | "finding" | "rejected-finding" | "technique" | "application-model"
 
   export interface Info {
     id: string
@@ -241,6 +241,43 @@ export namespace TargetMemory {
       time_created: now,
       time_updated: now,
     }).onConflictDoNothing().run())
+  }
+
+  export function rememberApplicationModel(sessionID: string, model: {
+    purpose?: string
+    authentication?: unknown
+    roles?: unknown
+    workflows?: unknown
+    sensitiveObjects?: unknown
+    endpoints?: unknown
+    trustBoundaries?: unknown
+    technologies?: unknown
+    observations?: unknown
+    confidence?: number
+    source?: string
+  }): void {
+    const projectID = projectIDForSession(sessionID)
+    if (!projectID) return
+    const asset = typeof model.purpose === "string" && model.purpose.trim() ? model.purpose.trim() : "application"
+    rememberKnowledge(sessionID, {
+      kind: "application-model",
+      asset,
+      url: "memory://application-model/" + encodeURIComponent(asset.toLowerCase()),
+      confidence: model.confidence ?? 70,
+      metadata: {
+        source: model.source ?? "understand-agent",
+        session_id: sessionID,
+        purpose: model.purpose ?? null,
+        authentication: model.authentication ?? null,
+        roles: model.roles ?? null,
+        workflows: model.workflows ?? null,
+        sensitive_objects: model.sensitiveObjects ?? null,
+        endpoints: model.endpoints ?? null,
+        trust_boundaries: model.trustBoundaries ?? null,
+        technologies: model.technologies ?? null,
+        observations: model.observations ?? null,
+      },
+    })
   }
 
   /** Promote conservative endpoint/parameter references found in stored JavaScript. */

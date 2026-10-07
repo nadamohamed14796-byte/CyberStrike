@@ -11,6 +11,7 @@ import { Session } from "../session"
 import { Vulnerability } from "../session/vulnerability"
 import { TargetMemory } from "../session/target-memory"
 import { Instance } from "../project/instance"
+import { ContextBudgetManager } from "../methodology/context-budget"
 
 const description = `Get the bounded web-application context for this session — scoped to the endpoint you are testing, so it stays small no matter how large the session grows.
 
@@ -184,10 +185,19 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
       }
     }
 
+    const bounded = ContextBudgetManager.prioritize(
+      Object.entries(context).map(([id, value]) => ({ id, text: JSON.stringify(value), score: id === "recent" ? 100 : id === "observations" ? 90 : 50 })),
+      "hunting",
+    )
+    const boundedContext: Record<string, unknown> = {}
+    for (const item of bounded.selected) {
+      try { boundedContext[item.id] = JSON.parse(item.text) } catch { boundedContext[item.id] = item.text }
+    }
+    boundedContext.context_budget = { phase: bounded.phase, estimated_tokens: bounded.estimatedTokens, dropped_sections: bounded.dropped }
     return {
       title: "Web Session Context",
-      output: JSON.stringify(context, null, 2),
-      metadata: { context },
+      output: JSON.stringify(boundedContext, null, 2),
+      metadata: { context: boundedContext, context_budget: bounded.budget, dropped_sections: bounded.dropped },
     }
   },
 })
