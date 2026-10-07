@@ -35,3 +35,30 @@ Use only on authorized targets. Prefer test accounts and synthetic data; avoid d
 ## Provenance
 Adapted from **elementalsouls/Claude-BugHunter** under **CC BY 4.0**. This is an adapted CyberStrike skill, not a verbatim copy.
 Source: https://github.com/elementalsouls/Claude-BugHunter
+
+
+## CyberStrike signal and evidence gate
+
+Activate only when a concrete upload/import boundary or downstream file-processing
+signal is observed. The generic words "upload", "file", "attachment", or "avatar"
+are not sufficient.
+
+Establish the Accept, Store, Process, and Serve boundary involved, plus target,
+endpoint, identity/tenant, file metadata, processing technology, authorization
+scope, and provenance before deep testing.
+
+Use:
+signal -> upload-observed -> boundary-confirmed -> controlled-impact-reproduced ->
+impact-proven -> finding
+
+A rejected/accepted extension, MIME mismatch, reflection, accessible URL, scanner
+label, or parser error alone is not a confirmed vulnerability. Preserve negative
+results and exact reproduction.
+
+Use harmless synthetic files, test identities, reversible validation, and controlled
+test infrastructure. Do not deploy persistence, access unrelated files, overwrite
+production data, or cause destructive processing.
+
+Deduplicate by target + endpoint + identity/tenant + upload-policy + processing-path
++ impact-class. Prefer the smallest evidence-driven variant set and preserve
+evidence across specialist handoffs.
