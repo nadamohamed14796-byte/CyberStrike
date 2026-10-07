@@ -3339,6 +3339,11 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "file-upload-sec",
+        "offensive-file-upload",
+        "upload-insecure-files"
       ]
     },
     {
@@ -7284,6 +7289,17 @@
       "cwe_ids": [],
       "files": [
         "SKILL.md"
+      ],
+      "chains_with": [
+        "file-upload-sec",
+        "hunt-file-upload",
+        "offensive-file-upload",
+        "path-traversal-lfi",
+        "xss-cross-site-scripting",
+        "xxe-xml-external-entity",
+        "command-injection-sec",
+        "deserialization-sec",
+        "business-logic-vuln"
       ]
     },
     {
@@ -8199,7 +8215,64 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "file-upload-sec",
+      "description": "Signal-driven file-upload security orchestration for validation, storage, processing, serving, parser, archive, overwrite, and upload-to-impact chains.",
+      "category": "input-validation",
+      "verified": "official",
+      "tags": [
+        "file-upload",
+        "upload",
+        "validation",
+        "storage",
+        "processing",
+        "archive",
+        "signal-driven"
+      ],
+      "tech_stack": [
+        "web",
+        "http",
+        "php",
+        "java",
+        "dotnet",
+        "nodejs",
+        "python",
+        "nginx",
+        "apache",
+        "iis"
+      ],
+      "cwe_ids": [
+        "CWE-434",
+        "CWE-22",
+        "CWE-79",
+        "CWE-611",
+        "CWE-94"
+      ],
+      "chains_with": [
+        "hunt-file-upload",
+        "offensive-file-upload",
+        "upload-insecure-files",
+        "path-traversal-lfi",
+        "xss-cross-site-scripting",
+        "xxe-xml-external-entity",
+        "command-injection-sec",
+        "deserialization-sec",
+        "business-logic-vuln",
+        "api-sec"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "offensive-file-upload",
+      "chains_with": [
+        "file-upload-sec",
+        "hunt-file-upload",
+        "upload-insecure-files"
+      ]
     }
   ],
-  "skill_count": 417
+  "skill_count": 419
 }
