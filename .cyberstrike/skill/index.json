@@ -8272,7 +8272,1099 @@
         "hunt-file-upload",
         "upload-insecure-files"
       ]
+    },
+    {
+      "name": "fuzzing-sec",
+      "description": "Signal-driven fuzzing security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "fuzzing",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "offensive-fuzzing",
+        "offensive-fuzzing-course"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "graphql-sec",
+      "description": "Signal-driven graphql security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "graphql",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-graphql",
+        "graphql-and-hidden-parameters",
+        "hunt-graphql",
+        "offensive-graphql"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "host-header-sec",
+      "description": "Signal-driven host-header security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "host-header",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-host-header",
+        "http-host-header-attacks",
+        "hunt-host-header"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "http-sec",
+      "description": "Signal-driven http security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "http",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "crlf-injection",
+        "email-header-injection",
+        "http2-specific-attacks"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "idor-sec",
+      "description": "Signal-driven idor security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "idor",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "api-authorization-and-bola",
+        "attack-idor-automation",
+        "hunt-idor",
+        "idor-broken-object-authorization",
+        "offensive-idor"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "infra-sec",
+      "description": "Signal-driven infra security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "infra",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "docker-privesc"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "jwt-sec",
+      "description": "Signal-driven jwt security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "jwt",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "RECON",
+        "api-auth-and-jwt-abuse",
+        "attack-jwt",
+        "hunt-jwt-crypto",
+        "jwt-oauth-token-attacks",
+        "offensive-jwt"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "linux-sec",
+      "description": "Signal-driven linux security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "linux",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "linux-lateral-movement",
+        "linux-postexploit",
+        "linux-privilege-escalation",
+        "offensive-linux-privesc"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "macos-sec",
+      "description": "Signal-driven macos security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "macos",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "macos-postexploit",
+        "macos-process-injection"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "meta-sec",
+      "description": "Signal-driven meta security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "meta",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-patterns-reference",
+        "cross-wave-delta-analysis",
+        "google-dorks-catalog",
+        "pentest-playbook",
+        "recon-playbook",
+        "sector-recon-methodology"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "methodology-sec",
+      "description": "Signal-driven methodology security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "methodology",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "bb-methodology",
+        "bug-bounty",
+        "security-arsenal"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "mobile-sec",
+      "description": "Signal-driven mobile security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "mobile",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "android-pentesting-tricks",
+        "apk-redteam-pipeline",
+        "ios-pentesting-tricks",
+        "ios-redteam-pipeline",
+        "mobile-ssl-pinning-bypass",
+        "offensive-mobile"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "network-sec",
+      "description": "Signal-driven network security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "network",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "enterprise-vpn-attack",
+        "hunt-tls-network",
+        "network-protocol-attacks",
+        "offensive-network-attacks",
+        "offensive-tls-attacks",
+        "traffic-analysis-pcap",
+        "tunneling-and-pivoting"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "nosql-sec",
+      "description": "Signal-driven nosql security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "nosql",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "hunt-nosqli"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "oauth-sec",
+      "description": "Signal-driven oauth security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "oauth",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "hunt-oauth",
+        "jwt-oauth-token-attacks",
+        "oauth-oidc-misconfiguration",
+        "offensive-oauth"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "open-redirect-sec",
+      "description": "Signal-driven open-redirect security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "open-redirect",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-open-redirect",
+        "hunt-open-redirect",
+        "offensive-open-redirect"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "other-sec",
+      "description": "Signal-driven other security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "other",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "bb-local-toolkit",
+        "binary-protection-bypass",
+        "csv-formula-injection",
+        "dns-rebinding-attacks",
+        "expression-language-injection",
+        "file-access-vuln",
+        "format-string-exploitation",
+        "gcp-postexploit",
+        "ghost-bits-cast-attack",
+        "hack",
+        "hunt-aspnet",
+        "hunt-dispatch",
+        "hunt-grpc",
+        "hunt-laravel",
+        "hunt-ldap",
+        "hunt-misc",
+        "hunt-nextjs",
+        "hunt-nodejs",
+        "hunt-sharepoint",
+        "hunt-springboot",
+        "injection-checking",
+        "memory-forensics-volatility",
+        "mid-engagement-ir-detection",
+        "offensive-advanced-redteam",
+        "offensive-ai-security",
+        "offensive-basic-exploitation",
+        "offensive-bug-identification",
+        "offensive-c2-frameworks",
+        "offensive-crash-analysis",
+        "offensive-data-exfiltration",
+        "offensive-fast-checking",
+        "offensive-initial-access",
+        "offensive-iot",
+        "offensive-keylogger-arch",
+        "offensive-lateral-movement",
+        "offensive-mitigations",
+        "offensive-persistence",
+        "offensive-phishing",
+        "offensive-social-engineering",
+        "offensive-vuln-classes",
+        "okta-attack",
+        "open-redirect",
+        "prototype-pollution",
+        "race-condition",
+        "redteam-mindset",
+        "reference-learning",
+        "request-smuggling",
+        "vm-and-bytecode-reverse",
+        "xslt-injection"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "parameter-pollution-sec",
+      "description": "Signal-driven parameter-pollution security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "parameter-pollution",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "http-parameter-pollution",
+        "offensive-parameter-pollution"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "path-traversal-sec",
+      "description": "Signal-driven path-traversal security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "path-traversal",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "hunt-lfi",
+        "path-traversal-lfi"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "prototype-pollution-sec",
+      "description": "Signal-driven prototype-pollution security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "prototype-pollution",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "REDTEAM",
+        "attack-prototype-pollution",
+        "prototype-pollution-advanced"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "race-condition-sec",
+      "description": "Signal-driven race-condition security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "race-condition",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-race-condition",
+        "hunt-race-condition",
+        "offensive-race-condition",
+        "offensive-toctou"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "rate-limit-sec",
+      "description": "Signal-driven rate-limit security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "rate-limit",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-rate-limit-bypass"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "rce-sec",
+      "description": "Signal-driven rce security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "rce",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "arbitrary-write-to-rce",
+        "hunt-brute-force",
+        "hunt-rce",
+        "hunt-source-leak",
+        "insecure-source-code-management",
+        "offensive-rce",
+        "offensive-shellcode",
+        "reverse-shell-techniques"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "recon-sec",
+      "description": "Signal-driven recon security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "recon",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "api-noauth-hunt",
+        "asn-infrastructure-mapping",
+        "attack-subdomain-takeover",
+        "attack-surface-mapping",
+        "cache-attack",
+        "cms-detection",
+        "deep-invade",
+        "email-security",
+        "error-log-mining",
+        "exchange-owa-attack",
+        "firebase-supabase-attack",
+        "flask-werkzeug-attack",
+        "github-secret-hunting",
+        "gitlab-public-recon",
+        "hardcoded-credential-hunt",
+        "http2-header-impersonation",
+        "humanize-automation",
+        "hunt-subdomain",
+        "iot-camera-recon",
+        "js-secrets-extraction",
+        "offensive-osint",
+        "offensive-osint-methodology",
+        "openhunter",
+        "origin-ip-discovery",
+        "osint-methodology",
+        "phpinfo-to-rce",
+        "port-mass-scan",
+        "port-service-discovery",
+        "recon-and-methodology",
+        "recon-for-sec",
+        "recon-methodology",
+        "recon-scope-triage",
+        "recon-toolchain",
+        "scada-hikvision-isapi",
+        "source-leak-hunt",
+        "staging-subdomain-hunt",
+        "stealth-browser-launch",
+        "subdomain-enumeration",
+        "subdomain-takeover",
+        "subdomain-takeover-hunt",
+        "tls-fingerprint-impersonation",
+        "unauth-api-flow-hijack",
+        "vhost-enumeration",
+        "visual-recon",
+        "web-enumeration",
+        "web2-recon",
+        "wordpress-plugin-hunt",
+        "wp-mass-recon",
+        "wp-plugin-rest-auth-bypass",
+        "xmlrpc-exploitation",
+        "zimbra-attack"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "redteam-sec",
+      "description": "Signal-driven redteam security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "redteam",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "hunt-broken-function-level-auth",
+        "hunt-django",
+        "hunt-fastapi",
+        "hunt-firebase",
+        "hunt-information-disclosure",
+        "hunt-mass-assignment",
+        "hunt-mcp-security",
+        "hunt-metrics-exposure",
+        "hunt-nestjs",
+        "hunt-schema-enumeration",
+        "hunt-supabase",
+        "hunt-wordpress",
+        "hunt-write-gap",
+        "llm-prompt-injection",
+        "ops-proxyns",
+        "password-spray-methodology",
+        "recon-sector",
+        "recon-sector-expansion",
+        "wp-plugin-automation",
+        "wp-plugin-cve-hunt",
+        "wstg-web-pentest"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "reporting-sec",
+      "description": "Signal-driven reporting security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "reporting",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "bugcrowd-reporting",
+        "evidence-hygiene",
+        "offensive-reporting",
+        "redteam-report-template",
+        "report-writing",
+        "triage-validation"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "request-smuggling-sec",
+      "description": "Signal-driven request-smuggling security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "request-smuggling",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-request-smuggling",
+        "hunt-http-smuggling",
+        "offensive-request-smuggling"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "saml-sec",
+      "description": "Signal-driven saml security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "saml",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "AUTH",
+        "NIST",
+        "hunt-saml",
+        "saml-sso-assertion-attacks"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "sqli-sec",
+      "description": "Signal-driven sqli security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "sqli",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "hunt-sqli",
+        "nosql",
+        "offensive-sqli",
+        "sqli-sql-injection"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ssrf-sec",
+      "description": "Signal-driven ssrf security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "ssrf",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-ssrf",
+        "hunt-ssrf",
+        "offensive-ssrf",
+        "ssrf-server-side-request-forgery"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ssti-sec",
+      "description": "Signal-driven ssti security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "ssti",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-ssti",
+        "hunt-ssti",
+        "offensive-ssti",
+        "ssti-server-side-template-injection"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "steganography-sec",
+      "description": "Signal-driven steganography security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "steganography",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "steganography-techniques"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "supply-chain-sec",
+      "description": "Signal-driven supply-chain security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "supply-chain",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "ci-assessment",
+        "cicd-attacks",
+        "dependency-confusion",
+        "hunt-cicd",
+        "offensive-cicd-pipeline",
+        "offensive-cicd-secrets",
+        "offensive-dependency-confusion",
+        "offensive-supply-chain",
+        "supply-chain-attack-recon"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "web-sec",
+      "description": "Signal-driven web security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "web",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "OWASP_WSTG_4.2"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "web-cache-sec",
+      "description": "Signal-driven web-cache security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "web-cache",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-cache-poison",
+        "hunt-cache-poison",
+        "mitre_attack",
+        "web-cache-deception"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "web3-sec",
+      "description": "Signal-driven web3 security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "web3",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "web3-audit"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "websocket-sec",
+      "description": "Signal-driven websocket security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "websocket",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-websocket",
+        "hunt-websocket",
+        "websocket-security"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "windows-sec",
+      "description": "Signal-driven windows security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "windows",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "offensive-windows-boundaries",
+        "offensive-windows-mitigations",
+        "offensive-windows-privesc",
+        "windows-lateral-movement",
+        "windows-postexploit",
+        "windows-privilege-escalation"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "xss-sec",
+      "description": "Signal-driven xss security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "xss",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "RECON",
+        "WEB",
+        "csp-bypass-advanced",
+        "dangling-markup-injection",
+        "hunt-dom",
+        "hunt-html-injection",
+        "hunt-xss",
+        "waf-bypass",
+        "xss-cross-site-scripting"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "xxe-sec",
+      "description": "Signal-driven xxe security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "xxe",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "attack-xxe",
+        "hunt-xxe",
+        "xxe-xml-external-entity"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "cis-benchmarks-sec",
+      "description": "Signal-driven CIS_benchmarks security orchestration and evidence routing.",
+      "category": "reference",
+      "verified": "official",
+      "tags": [
+        "cis-benchmarks",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "Cloud_Providers",
+        "Operating_Systems",
+        "Server_Software"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "nist-sec",
+      "description": "Signal-driven NIST security orchestration and evidence routing.",
+      "category": "reference",
+      "verified": "official",
+      "tags": [
+        "nist",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "CSF_v2.0",
+        "SP800-171_rev3",
+        "SP800-218_SSDF",
+        "SP800-53_rev5"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "legacy-web-sec",
+      "description": "Signal-driven WEB security orchestration and evidence routing.",
+      "category": "reference",
+      "verified": "official",
+      "tags": [
+        "web",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "waf-xss-bypass"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "mitre-attack-sec",
+      "description": "Signal-driven mitre_attack security orchestration and evidence routing.",
+      "category": "reference",
+      "verified": "official",
+      "tags": [
+        "mitre-attack",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "TA0001_initial-access",
+        "TA0002_execution",
+        "TA0003_persistence",
+        "TA0004_privilege-escalation",
+        "TA0005_defense-evasion",
+        "TA0006_credential-access",
+        "TA0007_discovery",
+        "TA0008_lateral-movement",
+        "TA0009_collection",
+        "TA0010_exfiltration",
+        "TA0011_command-and-control",
+        "TA0040_impact",
+        "TA0042_resource-development",
+        "TA0043_reconnaissance",
+        "__pycache__"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "mitre-attack-ics-sec",
+      "description": "Signal-driven mitre_attack_ics security orchestration and evidence routing.",
+      "category": "reference",
+      "verified": "official",
+      "tags": [
+        "mitre-attack-ics",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "TA0100_collection",
+        "TA0101_command-and-control",
+        "TA0102_discovery",
+        "TA0103_evasion",
+        "TA0104_execution",
+        "TA0105_impact",
+        "TA0106_impair-process-control",
+        "TA0107_inhibit-response-function",
+        "TA0108_initial-access",
+        "TA0109_lateral-movement",
+        "TA0110_persistence",
+        "TA0111_privilege-escalation"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "mitre-attack-mobile-sec",
+      "description": "Signal-driven mitre_attack_mobile security orchestration and evidence routing.",
+      "category": "reference",
+      "verified": "official",
+      "tags": [
+        "mitre-attack-mobile",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "TA0027_initial-access",
+        "TA0028_persistence",
+        "TA0029_privilege-escalation",
+        "TA0030_defense-evasion",
+        "TA0031_credential-access",
+        "TA0032_discovery",
+        "TA0033_lateral-movement",
+        "TA0034_impact",
+        "TA0035_collection",
+        "TA0036_exfiltration",
+        "TA0037_command-and-control",
+        "TA0041_execution"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 419
+  "skill_count": 465
 }
