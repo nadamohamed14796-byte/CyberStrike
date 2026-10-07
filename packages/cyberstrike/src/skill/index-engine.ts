@@ -43,8 +43,9 @@ export namespace SkillIndex {
 
   function indexEntry(entry: Entry) {
     for (const tag of entry.tags) {
-      if (!tagIndex.has(tag)) tagIndex.set(tag, new Set())
-      tagIndex.get(tag)!.add(entry.name)
+      const key = tag.toLowerCase()
+      if (!tagIndex.has(key)) tagIndex.set(key, new Set())
+      tagIndex.get(key)!.add(entry.name)
     }
     for (const tech of entry.tech_stack) {
       const key = tech.toLowerCase()
