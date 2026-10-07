@@ -9364,7 +9364,65 @@
       "files": [
         "SKILL.md"
       ]
+    },
+    {
+      "name": "adaptive-testing-sec",
+      "description": "Signal-driven adaptive-testing orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "adaptive-testing",
+        "signal-driven",
+        "evidence",
+        "routing"
+      ],
+      "chains_with": [
+        "failure-analysis",
+        "mutation-policy",
+        "response-differential",
+        "technique-matcher",
+        "transformation-analysis"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "ai-security-sec",
+      "description": "Signal-driven AI/ML security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "ai-security",
+        "ai-ml",
+        "signal-driven",
+        "evidence"
+      ],
+      "chains_with": [
+        "ai-ml-security"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
+    },
+    {
+      "name": "clickjacking-sec",
+      "description": "Signal-driven clickjacking security orchestration and evidence routing.",
+      "category": "security-orchestration",
+      "verified": "official",
+      "tags": [
+        "clickjacking",
+        "signal-driven",
+        "evidence"
+      ],
+      "chains_with": [
+        "clickjacking",
+        "hunt-clickjacking"
+      ],
+      "files": [
+        "SKILL.md"
+      ]
     }
   ],
-  "skill_count": 465
+  "skill_count": 468
 }
