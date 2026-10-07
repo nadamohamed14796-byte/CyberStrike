@@ -79,3 +79,6 @@ Prefer synthetic keys, test accounts, test contracts, and non-destructive proofs
 ## Non-Duplication
 
 Existing crypto and Web3 specialists remain authoritative. This router provides activation, routing, evidence, correlation, and deduplication policy only.
+
+## CyberStrike signal and evidence gate
+Activate only on concrete cryptographic behavior, primitive, protocol misuse, implementation evidence, or security-relevant data flow. Generic words such as crypto, hash, RSA, AES, token, or encryption are not sufficient. Establish algorithm/context, input control, implementation/version, baseline behavior, authorization, and reproducible impact. Use signal -> context-confirmed -> primitive-observed -> controlled-reproduction -> impact-proven -> finding. Preserve provenance and negative results, deduplicate by target+primitive+context, and use minimal reversible tests in authorized environments.
