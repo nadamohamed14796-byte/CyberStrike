@@ -4,6 +4,8 @@ import { WebFunction } from "../session/web/web-function"
 import { WebRole } from "../session/web/web-role"
 import { WebObject } from "../session/web/web-object"
 import { Session } from "../session"
+import { Request } from "../session/request"
+import { persistBusinessFunctionWalk } from "../methodology/business-function-walk"
 
 const description = `Record an application function (endpoint purpose) discovered during analysis.
 
@@ -57,6 +59,10 @@ export const WebWriteFunctionTool = Tool.define("web_write_function", {
       objects: objectIDs,
     })
 
+    const request = Request.get(sessionID).find((item) => item.id === params.request_id)
+    const target = request?.origin ?? (request?.host ? `${request.scheme ?? "https"}://${request.host}` : `session://${sessionID}`)
+    const walkFile = await persistBusinessFunctionWalk({ target, sessionID })
+
     const output = {
       function: {
         id: func.id,
@@ -66,12 +72,16 @@ export const WebWriteFunctionTool = Tool.define("web_write_function", {
         role_id: func.role_id,
         objects: func.objects,
       },
+      business_surface: {
+        artifact: walkFile,
+        evidence_state: "observed",
+      },
     }
 
     return {
       title: `Function: ${params.name} (${params.action_type})`,
       output: JSON.stringify(output, null, 2),
-      metadata: { function: func },
+      metadata: { function: func, businessSurfaceArtifact: walkFile },
     }
   },
 })
