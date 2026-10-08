@@ -4,7 +4,7 @@ import { readdirSync, statSync } from "node:fs"
 
 export type SkillInventoryItem = {
   path: string
-  relativePath: string
+  relativePath?: string
   name: string
   description: string
   chains_with: string[]
@@ -101,7 +101,8 @@ export function validateSkillSet(
     bucket.push(item)
     byName.set(item.name, bucket)
 
-    const parts = item.relativePath.split("/")
+    const relativePath = item.relativePath ?? path.basename(path.dirname(item.path))
+    const parts = relativePath.split("/")
     if (parts.length > 1) aliases.add(parts[parts.length - 2])
   }
 
@@ -112,7 +113,7 @@ export function validateSkillSet(
     .sort()
 
   const invalidSkills = items.filter((item) => !item.name).map((item) => item.path).sort()
-  const missingDescriptions = items.filter((item) => !item.description).map((item) => item.relativePath).sort()
+  const missingDescriptions = items.filter((item) => !item.description).map((item) => item.relativePath ?? item.path).sort()
 
   const brokenChains: ValidationReport["brokenChains"] = []
   const brokenSeverityBoosts: ValidationReport["brokenSeverityBoosts"] = []
@@ -158,7 +159,7 @@ export function validateSkillSet(
     if (entry.path && skillRoot) {
       const safePath = safeRelative(entry.path)
       const rootResolved = path.resolve(skillRoot)
-      const candidate = safePath === undefined ? undefined : path.resolve(rootResolved, safePath)
+      const candidate: string | undefined = safePath === undefined ? undefined : path.resolve(rootResolved, safePath)
 
       if (
         !candidate ||
