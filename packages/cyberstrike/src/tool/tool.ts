@@ -116,12 +116,14 @@ export namespace Tool {
           const runToolID = id === "external_tool_runner" && typeof args === "object" && args && typeof (args as Record<string, unknown>).tool_id === "string"
             ? String((args as Record<string, unknown>).tool_id)
             : id
+          const durableExecution = Boolean(ctx.sessionID && ctx.extra?.model)
           let scopeVerified: boolean | undefined
           let run: ReturnType<typeof ToolRunRecord.begin> | undefined
 
           try {
             scopeVerified = await verifyExecutionScope(args)
-            run = ToolRunRecord.begin({
+            if (durableExecution) {
+              run = ToolRunRecord.begin({
               sessionID: ctx.sessionID,
               toolID: runToolID,
               toolName: runToolID,
@@ -131,18 +133,18 @@ export namespace Tool {
               callID: ctx.callID,
               scopeVerified,
               agent: ctx.agent,
-              metadata: { messageID: ctx.messageID },
-            })
+                metadata: { messageID: ctx.messageID },
+              })
+            }
 
-            if (run.deduplicated) {
+            if (run?.deduplicated) {
               return {
                 title: `Skipped duplicate execution: ${id}`,
                 output: `An equivalent ${id} execution is already running (run ${run.id}).`,
                 metadata: {
                   truncated: false,
                   deduplicated: true,
-                  runID: run.id,
-                  runKey: run.runKey,
+                  ...(run ? { runID: run.id, runKey: run.runKey } : {}),
                   scopeVerified,
                 } as unknown as Result,
               }
@@ -156,15 +158,17 @@ export namespace Tool {
               resultMetadata.timeout === true ||
               (typeof resultMetadata.output === "string" && /terminated .*timeout/i.test(resultMetadata.output))
 
-            ToolRunRecord.finish({
-              id: run.id,
-              status: aborted ? "cancelled" : timedOut ? "timed_out" : "completed",
+            if (run) {
+              ToolRunRecord.finish({
+                id: run.id,
+                status: aborted ? "cancelled" : timedOut ? "timed_out" : "completed",
               exitCode: typeof resultMetadata.exit === "number" ? resultMetadata.exit : undefined,
               stdout: typeof resultMetadata.stdout === "string" ? resultMetadata.stdout : undefined,
               stderr: typeof resultMetadata.stderr === "string" ? resultMetadata.stderr : undefined,
               resultSummary: result.output,
-              metadata: { ...resultMetadata, scopeVerified },
-            })
+                metadata: { ...resultMetadata, scopeVerified },
+              })
+            }
 
             try {
               if (ctx.sessionID && identity.target) {
@@ -186,8 +190,7 @@ export namespace Tool {
                 output: result.output,
                 signal: `tool:${id}:${aborted ? "cancelled" : timedOut ? "timed_out" : "completed"}`,
                 metadata: {
-                  runID: run.id,
-                  runKey: run.runKey,
+                  ...(run ? { runID: run.id, runKey: run.runKey } : {}),
                   scopeVerified,
                   agent: ctx.agent,
                   ...(typeof result.metadata.target_workspace === "string" ? { target_workspace: result.metadata.target_workspace } : {}),
@@ -204,8 +207,7 @@ export namespace Tool {
                 outcome: aborted ? "cancelled" : timedOut ? "timed_out" : "completed",
                 metadata: {
                   source_tool: runToolID,
-                  tool_run_id: run.id,
-                  tool_run_key: run.runKey,
+                  ...(run ? { tool_run_id: run.id, tool_run_key: run.runKey } : {}),
                   authorized_active_testing: (args as Record<string, unknown>).authorized_active_testing === true,
                 },
               })
@@ -227,8 +229,7 @@ export namespace Tool {
                 ...result,
                 metadata: {
                   ...result.metadata,
-                  runID: run.id,
-                  runKey: run.runKey,
+                  ...(run ? { runID: run.id, runKey: run.runKey } : {}),
                   scopeVerified,
                 },
               }
@@ -241,8 +242,7 @@ export namespace Tool {
                 ...result.metadata,
                 truncated: truncated.truncated,
                 ...(truncated.truncated && { outputPath: truncated.outputPath }),
-                runID: run.id,
-                runKey: run.runKey,
+                ...(run ? { runID: run.id, runKey: run.runKey } : {}),
                 scopeVerified,
               },
             }
