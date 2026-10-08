@@ -297,9 +297,7 @@ export namespace TargetMemory {
   export function extractJavascriptIntel(sessionID: string, requestID?: string): number {
     const projectID = projectIDForSession(sessionID)
     if (!projectID) return 0
-    const scripts = requestID
-      ? byRequest(sessionID, requestID, "javascript")
-      : listAll(projectID, "javascript")
+    const scripts = requestID ? byRequest(sessionID, requestID, "javascript") : listAll(projectID, "javascript")
     let stored = 0
     const absolute = /https?:\/\/[^"'\s<>]+/gi
     const relative = /["'`]((?:\/api\/|\/v1\/|\/v2\/|\/graphql(?:\?|$)|\/rest\/)[A-Za-z0-9_./?=&:%{}$-]{1,240})["'`]/gi
