@@ -1,6 +1,6 @@
 ---
 name: hunt-ntlm-info
-description: Hunt NTLM/Negotiate information disclosure on internet-reachable IIS/SharePoint/Exchange. Anonymous NTLM Type-2 challenge capture leaks NetBIOS domain, internal DNS forest, computer name, AD timestamp via AV_PAIRS structure. Default Windows-installer hostnames (WIN-XXXXXXXXXXX pattern) signal lazy provisioning. Use when target advertises `WWW-Authenticate: NTLM` or `Negotiate` headers anonymously.
+description: "Hunt NTLM/Negotiate information disclosure on internet-reachable IIS/SharePoint/Exchange. Anonymous NTLM Type-2 challenge capture leaks NetBIOS domain, internal DNS forest, computer name, AD timestamp via AV_PAIRS structure. Default Windows-installer hostnames (WIN-XXXXXXXXXXX pattern) signal lazy provisioning. Use when target advertises `WWW-Authenticate: NTLM` or `Negotiate` headers anonymously."
 tags: [bug-bounty, security-testing, hunt, ntlm, info]
 version: "1.0-adapted"
 source: "Claude-BugHunter"
