@@ -859,9 +859,14 @@ export namespace SessionPrompt {
       // Persistent target lessons survive session boundaries. They are advisory
       // memory only, never proof, and any instruction-like text is untrusted.
       try {
+        const learnedTarget = Learning.recent({ sessionID, limit: 20 })
+          .map((signal) => TargetWorkspace.targetFrom(signal.target))
+          .find(Boolean)
         const endpointMemory = TargetMemory.listForSession(sessionID, "endpoint", 20)[0]
         const target =
-          TargetWorkspace.targetFrom(endpointMemory?.url) ?? TargetWorkspace.targetFrom(endpointMemory?.asset)
+          learnedTarget ??
+          TargetWorkspace.targetFrom(endpointMemory?.url) ??
+          TargetWorkspace.targetFrom(endpointMemory?.asset)
         if (target) {
           const lessons = await TargetWorkspace.recentLessons(target, 8)
           if (lessons.length > 0) {
