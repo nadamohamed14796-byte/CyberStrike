@@ -51,6 +51,7 @@ import { Token } from "@/util/token"
 import { MethodologyContext } from "@/methodology/context"
 import { Learning } from "../learning"
 import { TargetMemory } from "./target-memory"
+import { TargetWorkspace } from "../tool/target-workspace"
 import { ToolArtifact } from "../tool/artifact"
 import { SignalQueue } from "../tool/signal-queue"
 import { WebRetest } from "./web/web-retest"
@@ -854,6 +855,28 @@ export namespace SessionPrompt {
       // (non-tester) gets the full routing view.
       const methodologyCtx = MethodologyContext.generate(Session.root(sessionID), testerClass(lastUser.agent))
       if (methodologyCtx) system.push(methodologyCtx)
+
+      // Persistent target lessons are injected automatically after target memory exists.
+      try {
+        const rememberedEndpoints = TargetMemory.listForSession(sessionID, "endpoint", 200)
+        const targetHost = rememberedEndpoints.find((item) => item.asset)?.asset
+        if (targetHost) {
+          const lessons = await TargetWorkspace.recentLessons(`https://${targetHost}`, 12)
+          if (lessons.length > 0) {
+            system.push([
+              "# Persistent Target Lessons",
+              "These are target-specific lessons from earlier sessions. Treat them as context, not proof of a new vulnerability.",
+              ...lessons.map(
+                (lesson) =>
+                  `- [${lesson.kind}] ${lesson.summary}${lesson.details ? ` — ${lesson.details}` : ""}`,
+              ),
+            ].join("\n"))
+          }
+        }
+      } catch (error) {
+        // Lesson loading is best-effort and must never stop the agent.
+        log.warn("failed to load target lessons", { sessionID, error })
+      }
 
       // Inject MCP tool availability info so the LLM knows to use tool_search
       const mcpLazyStats = LazyToolRegistry.stats()
