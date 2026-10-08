@@ -116,24 +116,24 @@ export const TaskTool = Tool.define("task", async (ctx) => {
           // treat it as a global session selector that can resume a sibling
           // or an unrelated session.
           const history = await Session.messages({ sessionID: found.id, limit: 50 }).catch(() => [])
-            const owner = history.find((item) => item.info.role === "user")?.info.agent
-            if (
-              !isResumableTaskSession({
-                session: found,
-                parentSessionID: ctx.sessionID,
-                requestedAgent: params.subagent_type,
-                configuredAgent: agent.name,
-                owner,
-              })
-            ) {
-              throw new Error(
-                owner
-                  ? `Cannot resume task ${params.task_id}: it does not belong to this parent/specialist.`
-                  : `Cannot resume task ${params.task_id}: it is not a child of the current parent session.`,
-              )
-            }
-            return found
+          const owner = history.find((item) => item.info.role === "user")?.info.agent
+          if (
+            !isResumableTaskSession({
+              session: found,
+              parentSessionID: ctx.sessionID,
+              requestedAgent: params.subagent_type,
+              configuredAgent: agent.name,
+              owner,
+            })
+          ) {
+            throw new Error(
+              owner
+                ? `Cannot resume task ${params.task_id}: it does not belong to this parent/specialist.`
+                : `Cannot resume task ${params.task_id}: it is not a child of the current parent session.`,
+            )
           }
+          return found
+        }
         }
 
         return await Session.create({
