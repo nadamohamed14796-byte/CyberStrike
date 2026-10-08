@@ -153,7 +153,6 @@ export const TaskTool = Tool.define("task", async (ctx) => {
           }
           return found
         }
-        }
 
         return await Session.create({
           parentID: ctx.sessionID,
