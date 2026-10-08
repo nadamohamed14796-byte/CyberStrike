@@ -82,7 +82,7 @@ function lessonOf(text: string, vulnerabilityClass?: string) {
   return useful?.slice(0, 700) ?? (vulnerabilityClass ? "Research pattern for " + vulnerabilityClass + ": validate prerequisites and impact independently." : undefined)
 }
 
-function candidateScore(url: string, source: ResearchSource) {
+export function candidateScore(url: string, source: ResearchSource) {
   const path = new URL(url).pathname.toLowerCase()
   let score = 0
   if (/\/reports?\b|\/hacktivity\/|\/writeups?\b|\/research\b|\/blog\/|\/articles?\b|\/labs?\b/.test(path)) score += 60
