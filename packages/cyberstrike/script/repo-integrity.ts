@@ -30,45 +30,53 @@ async function glob(rootDir: string, pattern: string) {
 async function checkPackages() {
   const packageFiles = await glob(root, "**/package.json")
   const packages = new Map<string, string>()
+  const parsed: Array<{ file: string; pkg: any }> = []
 
   for (const file of packageFiles) {
     try {
       const pkg = JSON.parse(await Bun.file(file).text())
-      if (typeof pkg.name === "string") packages.set(pkg.name, path.dirname(file))
-
-      const deps = Object.assign(
-        {},
-        pkg.dependencies || {},
-        pkg.devDependencies || {},
-        pkg.optionalDependencies || {},
-        pkg.peerDependencies || {},
-      )
-      for (const [name, version] of Object.entries(deps)) {
-        if (version === "workspace:*" && !packages.has(name)) {
-          fail("package-dependency", "workspace dependency does not resolve: " + name, file)
-        }
-      }
-
-      if (pkg.bin && typeof pkg.bin === "object") {
-        for (const target of Object.values(pkg.bin)) {
-          if (typeof target !== "string" || target.includes("*")) continue
-          if (!(await exists(path.resolve(path.dirname(file), target)))) {
-            fail("package-bin", "missing bin target: " + target, file)
-          }
-        }
-      }
-
-      const exportsValue = pkg.exports
-      if (exportsValue && typeof exportsValue === "object") {
-        for (const target of Object.values(exportsValue)) {
-          if (typeof target !== "string" || target.includes("*") || target.startsWith("http")) continue
-          if (!(await exists(path.resolve(path.dirname(file), target)))) {
-            fail("package-export", "missing export target: " + target, file)
-          }
-        }
+      parsed.push({ file, pkg })
+      if (typeof pkg.name === "string") {
+        if (packages.has(pkg.name)) fail("package-layout", "duplicate package name: " + pkg.name, file)
+        packages.set(pkg.name, path.dirname(file))
       }
     } catch (error) {
       fail("package-json", "invalid JSON: " + String(error), file)
+    }
+  }
+
+  for (const { file, pkg } of parsed) {
+    const deps = Object.assign({}, pkg.dependencies || {}, pkg.devDependencies || {}, pkg.optionalDependencies || {}, pkg.peerDependencies || {})
+    for (const [name, version] of Object.entries(deps)) {
+      if (version === "workspace:*" && !packages.has(name)) {
+        fail("package-dependency", "workspace dependency does not resolve: " + name, file)
+      }
+    }
+
+    if (pkg.bin && typeof pkg.bin === "object") {
+      for (const target of Object.values(pkg.bin)) {
+        if (typeof target !== "string" || target.includes("*")) continue
+        if (!(await exists(path.resolve(path.dirname(file), target)))) {
+          fail("package-bin", "missing bin target: " + target, file)
+        }
+      }
+    }
+
+    const exportsValue = pkg.exports
+    if (exportsValue && typeof exportsValue === "object") {
+      const targets: string[] = []
+      const collect = (value: unknown) => {
+        if (typeof value === "string") targets.push(value)
+        else if (value && typeof value === "object")
+          for (const nested of Object.values(value as Record<string, unknown>)) collect(nested)
+      }
+      collect(exportsValue)
+      for (const target of targets) {
+        if (target.includes("*") || target.startsWith("http")) continue
+        if (!(await exists(path.resolve(path.dirname(file), target)))) {
+          fail("package-export", "missing export target: " + target, file)
+        }
+      }
     }
   }
 }
