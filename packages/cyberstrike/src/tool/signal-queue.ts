@@ -45,7 +45,7 @@ export namespace SignalQueue {
     const now = Date.now()
     Database.use((db) => db.insert(SignalQueueTable).values({
       id,
-      session_id: input.sessionID,
+      session_id: input.sessionID ?? null,
       parent_id: input.parentID,
       signal: normalized.signal,
       target: input.target,
