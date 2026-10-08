@@ -10,6 +10,7 @@ import { ingestParameterDiscovery } from "../methodology/parameter-ingest"
 import { Log } from "../util/log"
 
 const log = Log.create({ service: "tool" })
+const wrappedToolInfos = new WeakSet<object>()
 
 export namespace Tool {
   interface Metadata {
@@ -98,8 +99,10 @@ export namespace Tool {
       id,
       init: async (initCtx) => {
         const toolInfo = init instanceof Function ? await init(initCtx) : init
+        if (wrappedToolInfos.has(toolInfo)) return toolInfo
+
         const execute = toolInfo.execute
-        toolInfo.execute = async (args, ctx) => {
+        const wrappedExecute = async (args: any, ctx: Context) => {
           try {
             toolInfo.parameters.parse(args)
           } catch (error) {
@@ -262,6 +265,8 @@ export namespace Tool {
             throw error
           }
         }
+        toolInfo.execute = wrappedExecute
+        wrappedToolInfos.add(toolInfo)
         return toolInfo
       },
     }
