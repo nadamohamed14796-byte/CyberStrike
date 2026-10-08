@@ -68,18 +68,18 @@ export namespace SkillIndex {
     }
     for (const tech of entry.tech_stack) {
       const key = tech.toLowerCase()
-      if (!state().techIndex.has(key)) state().techIndex.set(key, new Set())
-      state().techIndex.get(key)!.add(entry.name)
+      if (!state.techIndex.has(key)) state.techIndex.set(key, new Set())
+      state.techIndex.get(key)!.add(entry.name)
     }
     for (const cwe of entry.cwe_ids) {
       const key = cwe.toUpperCase()
-      if (!state().cweIndex.has(key)) state().cweIndex.set(key, new Set())
-      state().cweIndex.get(key)!.add(entry.name)
+      if (!state.cweIndex.has(key)) state.cweIndex.set(key, new Set())
+      state.cweIndex.get(key)!.add(entry.name)
     }
     if (entry.category) {
       const key = entry.category.toLowerCase()
-      if (!state().categoryIndex.has(key)) state().categoryIndex.set(key, new Set())
-      state().categoryIndex.get(key)!.add(entry.name)
+      if (!state.categoryIndex.has(key)) state.categoryIndex.set(key, new Set())
+      state.categoryIndex.get(key)!.add(entry.name)
     }
   }
 
