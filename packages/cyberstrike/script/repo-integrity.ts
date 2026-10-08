@@ -30,18 +30,30 @@ async function glob(rootDir: string, pattern: string) {
 }
 
 async function checkPackages() {
-  const packageFiles = await glob(root, "**/package.json")
+  const allPackageFiles = await glob(root, "**/package.json")
+  const rootPackage = path.join(root, "package.json")
+  const packageFiles = new Set<string>([rootPackage])
+  try {
+    const rootPkg = JSON.parse(await Bun.file(rootPackage).text())
+    const workspacePatterns = Array.isArray(rootPkg.workspaces?.packages) ? rootPkg.workspaces.packages : []
+    const workspaceFiles = await Promise.all(
+      workspacePatterns.map((pattern: string) => glob(root, path.posix.join(pattern, "package.json"))),
+    )
+    for (const file of workspaceFiles.flat()) packageFiles.add(file)
+  } catch (error) {
+    fail("package-json", "invalid root package JSON while resolving workspaces: " + String(error), rootPackage)
+  }
+
   const packages = new Map<string, string>()
   const parsed: Array<{ file: string; pkg: any }> = []
-  const rootPackage = path.join(root, "package.json")
 
-  for (const file of packageFiles) {
+  for (const file of allPackageFiles) {
     if (file.includes("/node_modules/") || file.includes("/.git/")) continue
     try {
       const pkg = JSON.parse(await Bun.file(file).text())
       parsed.push({ file, pkg })
-      if (typeof pkg.name === "string" && file !== rootPackage) {
-        if (packages.has(pkg.name)) fail("package-layout", "duplicate package name: " + pkg.name, file)
+      if (packageFiles.has(file) && typeof pkg.name === "string" && file !== rootPackage) {
+        if (packages.has(pkg.name)) fail("package-layout", "duplicate workspace package name: " + pkg.name, file)
         packages.set(pkg.name, path.dirname(file))
       }
     } catch (error) {
@@ -50,16 +62,19 @@ async function checkPackages() {
   }
 
   for (const { file, pkg } of parsed) {
-    const deps = Object.assign(
-      {},
-      pkg.dependencies || {},
-      pkg.devDependencies || {},
-      pkg.optionalDependencies || {},
-      pkg.peerDependencies || {},
-    )
-    for (const [name, version] of Object.entries(deps)) {
-      if (version === "workspace:*" && !packages.has(name)) {
-        fail("package-dependency", "workspace dependency does not resolve: " + name, file)
+    const isWorkspacePackage = packageFiles.has(file)
+    if (isWorkspacePackage) {
+      const deps = Object.assign(
+        {},
+        pkg.dependencies || {},
+        pkg.devDependencies || {},
+        pkg.optionalDependencies || {},
+        pkg.peerDependencies || {},
+      )
+      for (const [name, version] of Object.entries(deps)) {
+        if (version === "workspace:*" && !packages.has(name)) {
+          fail("package-dependency", "workspace dependency does not resolve: " + name, file)
+        }
       }
     }
 
@@ -129,7 +144,15 @@ async function checkRelativeImports() {
       if (!(spec.startsWith(".") || spec.startsWith("@/"))) continue
       if (/\.(css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)$/i.test(spec)) continue
       const resolved = await Promise.all(candidatesFor(spec, file).map(exists))
-      if (!resolved.some(Boolean)) fail("import-resolution", "unresolved import: " + spec, path.relative(root, file))
+      if (!resolved.some(Boolean)) {
+        const generatedSnapshot =
+          spec === "./models-snapshot" &&
+          path.relative(pkgRoot, file) === path.join("src", "provider", "models.ts") &&
+          (await exists(path.join(pkgRoot, "script", "build.ts")))
+        if (!generatedSnapshot) {
+          fail("import-resolution", "unresolved import: " + spec, path.relative(root, file))
+        }
+      }
     }
   }
 }
