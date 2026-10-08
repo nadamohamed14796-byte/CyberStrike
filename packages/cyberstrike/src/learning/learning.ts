@@ -270,30 +270,50 @@ export namespace Learning {
    * so the live hunt must hydrate its own advisory cache from persisted
    * knowledge instead of waiting for a later learning signal.
    */
-  export function primeResearch(sessionID: string, limit = 6) {
+  export function primeResearch(
+    sessionID: string,
+    limit = 6,
+    input?: { query?: string; vulnerabilityClass?: string; cweID?: string },
+  ) {
     try {
       const latest = recent({ sessionID, limit: 1 })[0]
       const researchClass = latest?.signal ? /^research:([a-z0-9-]+)$/i.exec(latest.signal)?.[1] : undefined
       const recommendations = ReportKnowledge.recommendations({
-        signal: latest?.signal,
-        vulnerabilityClass: latest?.category ?? researchClass,
-        cweID: undefined,
+        signal: input?.query ?? latest?.signal,
+        vulnerabilityClass: input?.vulnerabilityClass ?? latest?.category ?? researchClass,
+        cweID: input?.cweID ?? latest?.cwe_id,
         limit,
       })
+
+      // Keep research explicitly activated by /update available to the next
+      // prompt even when prompt-time hydration runs again with a different
+      // runtime signal. New recommendations are placed first and de-duplicated.
+      const existing = sessionResearch.get(sessionID) ?? []
+      const merged = [
+        ...recommendations,
+        ...existing.filter((row) => !recommendations.some((item) => item.id === row.id)),
+      ].slice(0, Math.max(1, Math.min(limit, 50)))
+
       sessionResearch.delete(sessionID)
-      sessionResearch.set(sessionID, recommendations)
+      sessionResearch.set(sessionID, merged)
       while (sessionResearch.size > MAX_SESSION_CACHE) {
         const oldest = sessionResearch.keys().next().value
         if (!oldest) break
         sessionResearch.delete(oldest)
       }
-      return recommendations
+      return merged
     } catch (error) {
       log.warn("research session hydration failed", { error: String(error), sessionID })
       return []
     }
   }
 
+  export function activateResearch(
+    sessionID: string,
+    input: { query?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {},
+  ) {
+    return primeResearch(sessionID, input.limit ?? 6, input)
+  }
   export function recent(input?: { sessionID?: string; hook?: LearningHook; limit?: number }) {
     const limit = input?.limit ?? 50
     return Database.use((db) => {
