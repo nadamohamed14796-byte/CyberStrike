@@ -211,7 +211,7 @@ export namespace SkillIndex {
   }
 
   export function chainsFrom(skillName: string): Array<{ target: string; boost?: string }> {
-    const entry = entries.get(skillName)
+    const entry = get(skillName)
     if (!entry) return []
     return entry.chains_with.map((target) => ({
       target,
@@ -220,7 +220,7 @@ export namespace SkillIndex {
   }
 
   export function prerequisitesFor(skillName: string): string[] {
-    const entry = entries.get(skillName)
+    const entry = get(skillName)
     if (!entry) return []
     return entry.prerequisites
   }
