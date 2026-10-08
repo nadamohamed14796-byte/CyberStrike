@@ -4,7 +4,6 @@ export const ResearchQueueTable = sqliteTable(
   "research_queue",
   {
     sequence: integer().primaryKey({ autoIncrement: true }),
-    public_id: text().notNull().unique(),
     source_id: text().notNull(),
     source_url: text().notNull(),
     title: text(),
