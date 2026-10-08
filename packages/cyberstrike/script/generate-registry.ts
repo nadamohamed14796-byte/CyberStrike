@@ -32,9 +32,7 @@ function walkFiles(dir: string): string[] {
 }
 
 function asStringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
-    : []
+  return Array.isArray(value) ? value.filter((x): x is string => typeof x === "string" && x.trim().length > 0) : []
 }
 
 function fallbackDescription(name: string, content: string): string {
@@ -45,14 +43,16 @@ function fallbackDescription(name: string, content: string): string {
 
 async function main() {
   const glob = new Bun.Glob("**/SKILL.md")
-  const files = (await Array.fromAsync(
-    glob.scan({
-      cwd: skillDir,
-      absolute: true,
-      onlyFiles: true,
-      followSymlinks: true,
-    }),
-  )).sort()
+  const files = (
+    await Array.fromAsync(
+      glob.scan({
+        cwd: skillDir,
+        absolute: true,
+        onlyFiles: true,
+        followSymlinks: true,
+      }),
+    )
+  ).sort()
 
   const entries: RegistryEntry[] = []
   const seen = new Map<string, string>()
@@ -63,9 +63,7 @@ async function main() {
     const relativeFile = path.relative(skillDir, file).split(path.sep).join("/")
     const relativeDir = path.posix.dirname(relativeFile)
     const name =
-      typeof raw.name === "string" && raw.name.trim().length > 0
-        ? raw.name.trim()
-        : path.posix.basename(relativeDir)
+      typeof raw.name === "string" && raw.name.trim().length > 0 ? raw.name.trim() : path.posix.basename(relativeDir)
 
     if (!name) throw new Error("Skill has no usable name: " + relativeFile)
     const previous = seen.get(name)
@@ -89,11 +87,7 @@ async function main() {
       category: typeof raw.category === "string" ? raw.category : undefined,
       owasp_id: typeof raw.owasp_id === "string" ? raw.owasp_id : undefined,
       verified:
-        typeof raw.signed_by === "string"
-          ? "official"
-          : typeof raw.verified === "string"
-            ? raw.verified
-            : "unverified",
+        typeof raw.signed_by === "string" ? "official" : typeof raw.verified === "string" ? raw.verified : "unverified",
       tags: asStringArray(raw.tags),
       tech_stack: asStringArray(raw.tech_stack),
       cwe_ids: asStringArray(raw.cwe_ids),

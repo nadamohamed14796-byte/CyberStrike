@@ -119,7 +119,10 @@ export namespace SkillContext {
         limit: 3,
       })
       const reportReason = reportLessons.length
-        ? `report knowledge: ${reportLessons.map((row) => row.lesson || row.title).slice(0, 2).join(" | ")}`
+        ? `report knowledge: ${reportLessons
+            .map((row) => row.lesson || row.title)
+            .slice(0, 2)
+            .join(" | ")}`
         : ""
       for (const route of learnedRoutes) {
         const priority: Suggestion["priority"] = route.score >= 80 ? "high" : route.score >= 40 ? "medium" : "low"

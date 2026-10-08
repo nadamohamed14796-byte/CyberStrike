@@ -8,7 +8,9 @@ export namespace MissionClaims {
     const now = Date.now()
     const expires = now + Math.max(5_000, Math.min(input.ttlMs ?? 120_000, 3_600_000))
     return Database.transaction((db) => {
-      const existing = db.select().from(MissionClaimTable)
+      const existing = db
+        .select()
+        .from(MissionClaimTable)
         .where(and(eq(MissionClaimTable.session_id, input.sessionID), eq(MissionClaimTable.cell_key, input.cellKey)))
         .get()
 
@@ -19,18 +21,34 @@ export namespace MissionClaims {
       const id = existing?.id ?? Identifier.ascending("mission_claim")
       try {
         if (existing) {
-          db.update(MissionClaimTable).set({
-            agent: input.agent, status: "active", expires_at: expires, time_updated: now,
-          }).where(eq(MissionClaimTable.id, existing.id)).run()
+          db.update(MissionClaimTable)
+            .set({
+              agent: input.agent,
+              status: "active",
+              expires_at: expires,
+              time_updated: now,
+            })
+            .where(eq(MissionClaimTable.id, existing.id))
+            .run()
         } else {
-          db.insert(MissionClaimTable).values({
-            id, session_id: input.sessionID, cell_key: input.cellKey, agent: input.agent,
-            status: "active", expires_at: expires, time_created: now, time_updated: now,
-          }).run()
+          db.insert(MissionClaimTable)
+            .values({
+              id,
+              session_id: input.sessionID,
+              cell_key: input.cellKey,
+              agent: input.agent,
+              status: "active",
+              expires_at: expires,
+              time_created: now,
+              time_updated: now,
+            })
+            .run()
         }
         return { claimed: true, owner: input.agent, expiresAt: expires }
       } catch {
-        const winner = db.select().from(MissionClaimTable)
+        const winner = db
+          .select()
+          .from(MissionClaimTable)
           .where(and(eq(MissionClaimTable.session_id, input.sessionID), eq(MissionClaimTable.cell_key, input.cellKey)))
           .get()
         if (winner && winner.status === "active" && winner.expires_at > now && winner.agent !== input.agent) {
@@ -42,19 +60,39 @@ export namespace MissionClaims {
   }
 
   export function release(sessionID: string, cellKey: string, agent: string, resultFingerprint?: string) {
-    Database.use((db) => db.update(MissionClaimTable).set({
-      status: "completed", result_fingerprint: resultFingerprint ?? null, time_updated: Date.now(),
-    }).where(and(
-      eq(MissionClaimTable.session_id, sessionID),
-      eq(MissionClaimTable.cell_key, cellKey),
-      eq(MissionClaimTable.agent, agent),
-    )).run())
+    Database.use((db) =>
+      db
+        .update(MissionClaimTable)
+        .set({
+          status: "completed",
+          result_fingerprint: resultFingerprint ?? null,
+          time_updated: Date.now(),
+        })
+        .where(
+          and(
+            eq(MissionClaimTable.session_id, sessionID),
+            eq(MissionClaimTable.cell_key, cellKey),
+            eq(MissionClaimTable.agent, agent),
+          ),
+        )
+        .run(),
+    )
   }
 
   export function active(sessionID: string) {
     const now = Date.now()
-    return Database.use((db) => db.select().from(MissionClaimTable)
-      .where(and(eq(MissionClaimTable.session_id, sessionID), eq(MissionClaimTable.status, "active"), gt(MissionClaimTable.expires_at, now)))
-      .all())
+    return Database.use((db) =>
+      db
+        .select()
+        .from(MissionClaimTable)
+        .where(
+          and(
+            eq(MissionClaimTable.session_id, sessionID),
+            eq(MissionClaimTable.status, "active"),
+            gt(MissionClaimTable.expires_at, now),
+          ),
+        )
+        .all(),
+    )
   }
 }

@@ -11365,41 +11365,6 @@
         },
         "required": ["type", "properties"]
       },
-      "Event.file.watcher.updated": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "file.watcher.updated"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "file": {
-                "type": "string"
-              },
-              "event": {
-                "anyOf": [
-                  {
-                    "type": "string",
-                    "const": "add"
-                  },
-                  {
-                    "type": "string",
-                    "const": "change"
-                  },
-                  {
-                    "type": "string",
-                    "const": "unlink"
-                  }
-                ]
-              }
-            },
-            "required": ["file", "event"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
       "Request": {
         "type": "object",
         "properties": {
@@ -11552,6 +11517,130 @@
               }
             },
             "required": ["sessionID", "requests"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.intel.updated": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "intel.updated"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "sessionID": {
+                "type": "string"
+              },
+              "entryCount": {
+                "type": "number"
+              }
+            },
+            "required": ["sessionID", "entryCount"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "Event.file.watcher.updated": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "file.watcher.updated"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "event": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "add"
+                  },
+                  {
+                    "type": "string",
+                    "const": "change"
+                  },
+                  {
+                    "type": "string",
+                    "const": "unlink"
+                  }
+                ]
+              }
+            },
+            "required": ["file", "event"]
+          }
+        },
+        "required": ["type", "properties"]
+      },
+      "WebRetest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "session_id": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "trigger_type": {
+            "type": "string",
+            "enum": ["new_role", "new_object_value", "new_credential"]
+          },
+          "trigger_source": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed"]
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["high", "medium", "low"]
+          },
+          "time": {
+            "type": "object",
+            "properties": {
+              "created": {
+                "type": "number"
+              },
+              "updated": {
+                "type": "number"
+              }
+            },
+            "required": ["created", "updated"]
+          }
+        },
+        "required": ["id", "session_id", "request_id", "trigger_type", "trigger_source", "status", "priority", "time"]
+      },
+      "Event.web_retest.updated": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "web_retest.updated"
+          },
+          "properties": {
+            "type": "object",
+            "properties": {
+              "sessionID": {
+                "type": "string"
+              },
+              "queue": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WebRetest"
+                }
+              }
+            },
+            "required": ["sessionID", "queue"]
           }
         },
         "required": ["type", "properties"]
@@ -12231,69 +12320,94 @@
         },
         "required": ["type", "properties"]
       },
-      "WebRetest": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "session_id": {
-            "type": "string"
-          },
-          "request_id": {
-            "type": "string"
-          },
-          "trigger_type": {
-            "type": "string",
-            "enum": ["new_role", "new_object_value", "new_credential"]
-          },
-          "trigger_source": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["pending", "processing", "completed"]
-          },
-          "priority": {
-            "type": "string",
-            "enum": ["high", "medium", "low"]
-          },
-          "time": {
-            "type": "object",
-            "properties": {
-              "created": {
-                "type": "number"
-              },
-              "updated": {
-                "type": "number"
-              }
-            },
-            "required": ["created", "updated"]
-          }
-        },
-        "required": ["id", "session_id", "request_id", "trigger_type", "trigger_source", "status", "priority", "time"]
-      },
-      "Event.web_retest.updated": {
+      "Event.learning.signal": {
         "type": "object",
         "properties": {
           "type": {
             "type": "string",
-            "const": "web_retest.updated"
+            "const": "learning.signal"
           },
           "properties": {
             "type": "object",
             "properties": {
-              "sessionID": {
-                "type": "string"
+              "signal": {
+                "type": "object",
+                "properties": {
+                  "sessionID": {
+                    "type": "string"
+                  },
+                  "hook": {
+                    "type": "string"
+                  },
+                  "signal": {
+                    "type": "string"
+                  },
+                  "skill_name": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "string"
+                  },
+                  "agent": {
+                    "type": "string"
+                  },
+                  "outcome": {
+                    "type": "string"
+                  },
+                  "cwe_id": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "tech_stack": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "evidence": {
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  }
+                },
+                "required": ["hook", "signal"]
               },
-              "queue": {
+              "routes": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/WebRetest"
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "score": {
+                      "type": "number"
+                    },
+                    "reasons": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": ["name", "score", "reasons"]
                 }
               }
             },
-            "required": ["sessionID", "queue"]
+            "required": ["signal", "routes"]
           }
         },
         "required": ["type", "properties"]
@@ -12450,28 +12564,6 @@
               }
             },
             "required": ["mcpName", "url"]
-          }
-        },
-        "required": ["type", "properties"]
-      },
-      "Event.intel.updated": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "const": "intel.updated"
-          },
-          "properties": {
-            "type": "object",
-            "properties": {
-              "sessionID": {
-                "type": "string"
-              },
-              "entryCount": {
-                "type": "number"
-              }
-            },
-            "required": ["sessionID", "entryCount"]
           }
         },
         "required": ["type", "properties"]
@@ -12995,10 +13087,16 @@
             "$ref": "#/components/schemas/Event.session.compacted"
           },
           {
+            "$ref": "#/components/schemas/Event.request.updated"
+          },
+          {
+            "$ref": "#/components/schemas/Event.intel.updated"
+          },
+          {
             "$ref": "#/components/schemas/Event.file.watcher.updated"
           },
           {
-            "$ref": "#/components/schemas/Event.request.updated"
+            "$ref": "#/components/schemas/Event.web_retest.updated"
           },
           {
             "$ref": "#/components/schemas/Event.web_credential.updated"
@@ -13031,7 +13129,7 @@
             "$ref": "#/components/schemas/Event.web_role.updated"
           },
           {
-            "$ref": "#/components/schemas/Event.web_retest.updated"
+            "$ref": "#/components/schemas/Event.learning.signal"
           },
           {
             "$ref": "#/components/schemas/Event.tui.prompt.append"
@@ -13050,9 +13148,6 @@
           },
           {
             "$ref": "#/components/schemas/Event.mcp.browser.open.failed"
-          },
-          {
-            "$ref": "#/components/schemas/Event.intel.updated"
           },
           {
             "$ref": "#/components/schemas/Event.command.executed"

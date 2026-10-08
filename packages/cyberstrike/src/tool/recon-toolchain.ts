@@ -11,11 +11,17 @@ export const ReconToolchainTool = Tool.define("recon_toolchain", {
   description:
     "Choose the next reconnaissance/security tool from a signal. Returns a safe, ordered execution plan; it does not execute commands. Always perform scope_check before active testing. High-impact tools require explicit authorization.",
   parameters: z.object({
-    signal: z.string().min(1).describe("Observed signal, such as 'live HTTP', 'GraphQL', 'JWT', or 'SQL-like behavior'"),
+    signal: z
+      .string()
+      .min(1)
+      .describe("Observed signal, such as 'live HTTP', 'GraphQL', 'JWT', or 'SQL-like behavior'"),
     target: z.string().min(1).describe("In-scope target or input artifact"),
     phase: z.string().optional().describe("Current phase, if known"),
     max_tools: z.number().int().min(1).max(8).default(3),
-    authorized_active_testing: z.boolean().default(false).describe("Explicit authorization for active/high-impact testing"),
+    authorized_active_testing: z
+      .boolean()
+      .default(false)
+      .describe("Explicit authorization for active/high-impact testing"),
   }),
   async execute(params) {
     const ordered = planReconTools(params)
@@ -27,7 +33,9 @@ export const ReconToolchainTool = Tool.define("recon_toolchain", {
       "active_authorization: " + (params.authorized_active_testing ? "granted" : "not-granted"),
       "",
       "NEXT TOOLS",
-      ...ordered.map((tool, i) => (i + 1) + ". " + tool.id + " | phase=" + tool.phase + " | risk=" + tool.risk + " | " + tool.command),
+      ...ordered.map(
+        (tool, i) => i + 1 + ". " + tool.id + " | phase=" + tool.phase + " | risk=" + tool.risk + " | " + tool.command,
+      ),
       "",
       "RULES",
       "- Run scope_check before touching a new target.",
@@ -36,6 +44,10 @@ export const ReconToolchainTool = Tool.define("recon_toolchain", {
       "- Preserve command/input/output provenance.",
       "- Do not auto-run high-impact tools without explicit authorization.",
     ]
-    return { title: "Recon plan: " + params.signal, output: lines.join("\\n"), metadata: { tools: ordered.map((x) => x.id), target: params.target } }
+    return {
+      title: "Recon plan: " + params.signal,
+      output: lines.join("\\n"),
+      metadata: { tools: ordered.map((x) => x.id), target: params.target },
+    }
   },
 })

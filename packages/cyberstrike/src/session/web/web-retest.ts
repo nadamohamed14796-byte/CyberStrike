@@ -161,7 +161,9 @@ export namespace WebRetest {
     if (rows.length === 0) return undefined
 
     rows.sort((a, b) => {
-      const priority = priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder]
+      const priority =
+        priorityOrder[a.priority as keyof typeof priorityOrder] -
+        priorityOrder[b.priority as keyof typeof priorityOrder]
       return priority || a.time_created - b.time_created
     })
     const row = rows[0]

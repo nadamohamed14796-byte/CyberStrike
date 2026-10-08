@@ -3,13 +3,17 @@ import { Tool } from "./tool"
 
 import { EXTERNAL_TOOLS } from "./external-tool-registry"
 
-const TOOL_INSTALL_MAP = Object.fromEntries(EXTERNAL_TOOLS.map((spec) => [spec.id, {
-  check: spec.check,
-  install: spec.install ?? "",
-  description: spec.phase,
-  version: spec.version,
-}])) as Record<string, { check: string; install: string; description: string; version?: string[] }>
-
+const TOOL_INSTALL_MAP = Object.fromEntries(
+  EXTERNAL_TOOLS.map((spec) => [
+    spec.id,
+    {
+      check: spec.check,
+      install: spec.install ?? "",
+      description: spec.phase,
+      version: spec.version,
+    },
+  ]),
+) as Record<string, { check: string; install: string; description: string; version?: string[] }>
 
 export const EnsureToolsTool = Tool.define("ensure_tools", {
   description:
@@ -34,7 +38,10 @@ export const EnsureToolsTool = Tool.define("ensure_tools", {
       if (check.exitCode === 0) {
         const versionCommand = spec.version ?? [spec.check, "--version"]
         const version = Bun.spawnSync(versionCommand, { timeout: 10_000 })
-        const versionText = (version.stdout.toString() || version.stderr.toString()).trim().split("\\n")[0].slice(0, 160)
+        const versionText = (version.stdout.toString() || version.stderr.toString())
+          .trim()
+          .split("\\n")[0]
+          .slice(0, 160)
         results.push({
           tool: name,
           installed: true,

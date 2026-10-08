@@ -35,14 +35,10 @@ export namespace ReconDispatch {
       const k = key(artifact.tool, artifact.target, artifact.signal ?? "")
       attempts.set(k, (attempts.get(k) ?? 0) + 1)
     }
-    const seen = new Set(
-      artifacts.map((item) => key(item.tool, item.target, item.signal ?? "")),
-    )
+    const seen = new Set(artifacts.map((item) => key(item.tool, item.target, item.signal ?? "")))
 
     const target = input.target
-    const scope = target && input.scope_items?.length
-      ? ScopeGuard.check(target, input.scope_items)
-      : undefined
+    const scope = target && input.scope_items?.length ? ScopeGuard.check(target, input.scope_items) : undefined
 
     const scopeAllowed = scope?.inScope === true
     if (target && input.scope_items?.length && scope?.inScope === false) return []
@@ -59,25 +55,22 @@ export namespace ReconDispatch {
       return true
     })
 
-    const ranked = ToolLearning.rank(
-      fresh,
-      input.signal,
-      input.sessionID,
-    )
+    const ranked = ToolLearning.rank(fresh, input.signal, input.sessionID)
     const claimed = input.agent
-      ? ranked.filter((tool) => MissionClaims.claim({
-          sessionID: input.sessionID,
-          cellKey: key(tool.id, target, input.signal),
-          agent: input.agent!,
-        }).claimed)
+      ? ranked.filter(
+          (tool) =>
+            MissionClaims.claim({
+              sessionID: input.sessionID,
+              cellKey: key(tool.id, target, input.signal),
+              agent: input.agent!,
+            }).claimed,
+        )
       : ranked
     return claimed.map((tool) => ({
       ...tool,
       scope_verified: scopeAllowed,
       authorization_verified:
-        tool.risk !== "active-test" &&
-        tool.risk !== "high-impact" ||
-        input.authorized_active_testing === true,
+        (tool.risk !== "active-test" && tool.risk !== "high-impact") || input.authorized_active_testing === true,
     }))
   }
 }

@@ -18,13 +18,15 @@ describe("SkillIndex", () => {
   })
 })
 
-
 test("resolves nested skill directory aliases", async () => {
   await using tmp = await tmpdir({
     git: true,
     init: async (dir) => {
       const skillDir = path.join(dir, ".cyberstrike", "skill", "category", "directory-skill")
-      await Bun.write(path.join(skillDir, "SKILL.md"), "---\nname: canonical-skill\ndescription: Canonical skill.\n---\n\n# Canonical Skill\n")
+      await Bun.write(
+        path.join(skillDir, "SKILL.md"),
+        "---\nname: canonical-skill\ndescription: Canonical skill.\n---\n\n# Canonical Skill\n",
+      )
     },
   })
   await Instance.provide({

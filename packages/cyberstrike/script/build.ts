@@ -117,26 +117,27 @@ const allTargets: {
 // CI-only: build just one OS when set (windows/linux/darwin). Empty or "all" = every platform.
 const buildOSRaw = process.env.CYBERSTRIKE_BUILD_OS?.trim()
 const buildOS = buildOSRaw && buildOSRaw !== "all" ? buildOSRaw : undefined
-const targets = (singleFlag
-  ? allTargets.filter((item) => {
-      if (item.os !== process.platform || item.arch !== process.arch) {
-        return false
-      }
+const targets = (
+  singleFlag
+    ? allTargets.filter((item) => {
+        if (item.os !== process.platform || item.arch !== process.arch) {
+          return false
+        }
 
-      // When building for the current platform, prefer a single native binary by default.
-      // Baseline binaries require additional Bun artifacts and can be flaky to download.
-      if (item.avx2 === false) {
-        return baselineFlag
-      }
+        // When building for the current platform, prefer a single native binary by default.
+        // Baseline binaries require additional Bun artifacts and can be flaky to download.
+        if (item.avx2 === false) {
+          return baselineFlag
+        }
 
-      // also skip abi-specific builds for the same reason
-      if (item.abi !== undefined) {
-        return false
-      }
+        // also skip abi-specific builds for the same reason
+        if (item.abi !== undefined) {
+          return false
+        }
 
-      return true
-    })
-  : allTargets
+        return true
+      })
+    : allTargets
 ).filter((item) => {
   if (!buildOS) return true
   const os = item.os === "win32" ? "windows" : item.os

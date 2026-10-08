@@ -27,10 +27,14 @@ function stable(value: unknown): string {
   if (value === undefined) return "null"
   if (value === null || typeof value !== "object") return JSON.stringify(value)
   if (Array.isArray(value)) return "[" + value.map(stable).join(",") + "]"
-  return "{" + Object.keys(value as Record<string, unknown>)
-    .sort()
-    .map((key) => JSON.stringify(key) + ":" + stable((value as Record<string, unknown>)[key]))
-    .join(",") + "}"
+  return (
+    "{" +
+    Object.keys(value as Record<string, unknown>)
+      .sort()
+      .map((key) => JSON.stringify(key) + ":" + stable((value as Record<string, unknown>)[key]))
+      .join(",") +
+    "}"
+  )
 }
 
 export function normalizeTarget(value?: string): string {
@@ -40,7 +44,8 @@ export function normalizeTarget(value?: string): string {
     const url = new URL(raw)
     url.hash = ""
     url.hostname = url.hostname.toLowerCase()
-    if ((url.protocol === "http:" && url.port === "80") || (url.protocol === "https:" && url.port === "443")) url.port = ""
+    if ((url.protocol === "http:" && url.port === "80") || (url.protocol === "https:" && url.port === "443"))
+      url.port = ""
     url.pathname = url.pathname || "/"
     return url.toString()
   } catch {
@@ -55,7 +60,8 @@ export function normalizeEndpoint(value?: string): string {
     const url = new URL(raw)
     url.hash = ""
     url.hostname = url.hostname.toLowerCase()
-    if ((url.protocol === "http:" && url.port === "80") || (url.protocol === "https:" && url.port === "443")) url.port = ""
+    if ((url.protocol === "http:" && url.port === "80") || (url.protocol === "https:" && url.port === "443"))
+      url.port = ""
     return url.toString()
   } catch {
     return raw.replace(/\s+/g, " ").toLowerCase()
@@ -97,7 +103,8 @@ export namespace ToolRunRecord {
     })
 
     return Database.transaction((db) => {
-      const existing = db.select()
+      const existing = db
+        .select()
         .from(ToolRunRecordTable)
         .where(and(eq(ToolRunRecordTable.session_id, input.sessionID), eq(ToolRunRecordTable.run_key, runKey)))
         .orderBy(desc(ToolRunRecordTable.time_created))
@@ -110,30 +117,32 @@ export namespace ToolRunRecord {
 
       const attempt = (existing?.attempt ?? 0) + 1
       const id = Identifier.ascending("tool_run")
-      db.insert(ToolRunRecordTable).values({
-        id,
-        run_key: runKey,
-        session_id: input.sessionID,
-        parent_task_id: input.parentTaskID,
-        signal_queue_id: input.signalQueueID,
-        call_id: input.callID,
-        tool_id: input.toolID,
-        tool_name: input.toolName,
-        target: input.target ? normalizeTarget(input.target) : undefined,
-        endpoint: input.endpoint ? normalizeEndpoint(input.endpoint) : undefined,
-        parameters: input.parameters,
-        status: "running",
-        attempt,
-        max_attempts: Math.max(1, input.maxAttempts ?? 1),
-        timeout_ms: input.timeoutMs,
-        time_pending: now,
-        time_started: now,
-        scope_verified: input.scopeVerified === undefined ? undefined : input.scopeVerified ? 1 : 0,
-        agent: input.agent,
-        metadata: input.metadata,
-        time_created: now,
-        time_updated: now,
-      }).run()
+      db.insert(ToolRunRecordTable)
+        .values({
+          id,
+          run_key: runKey,
+          session_id: input.sessionID,
+          parent_task_id: input.parentTaskID,
+          signal_queue_id: input.signalQueueID,
+          call_id: input.callID,
+          tool_id: input.toolID,
+          tool_name: input.toolName,
+          target: input.target ? normalizeTarget(input.target) : undefined,
+          endpoint: input.endpoint ? normalizeEndpoint(input.endpoint) : undefined,
+          parameters: input.parameters,
+          status: "running",
+          attempt,
+          max_attempts: Math.max(1, input.maxAttempts ?? 1),
+          timeout_ms: input.timeoutMs,
+          time_pending: now,
+          time_started: now,
+          scope_verified: input.scopeVerified === undefined ? undefined : input.scopeVerified ? 1 : 0,
+          agent: input.agent,
+          metadata: input.metadata,
+          time_created: now,
+          time_updated: now,
+        })
+        .run()
       return { id, runKey, attempt, deduplicated: false }
     })
   }
@@ -150,10 +159,11 @@ export namespace ToolRunRecord {
   }) {
     const ended = Date.now()
     Database.use((db) => {
-      const row = db.select({
-        started: ToolRunRecordTable.time_started,
-        metadata: ToolRunRecordTable.metadata,
-      })
+      const row = db
+        .select({
+          started: ToolRunRecordTable.time_started,
+          metadata: ToolRunRecordTable.metadata,
+        })
         .from(ToolRunRecordTable)
         .where(eq(ToolRunRecordTable.id, input.id))
         .limit(1)
@@ -192,23 +202,33 @@ export namespace ToolRunRecord {
   }
 
   export function get(id: string) {
-    return Database.use((db) => db.select().from(ToolRunRecordTable).where(eq(ToolRunRecordTable.id, id)).limit(1).get())
+    return Database.use((db) =>
+      db.select().from(ToolRunRecordTable).where(eq(ToolRunRecordTable.id, id)).limit(1).get(),
+    )
   }
 
   export function recent(sessionID: string, limit = 50) {
-    return Database.use((db) => db.select().from(ToolRunRecordTable)
-      .where(eq(ToolRunRecordTable.session_id, sessionID))
-      .orderBy(desc(ToolRunRecordTable.time_created))
-      .limit(limit).all())
+    return Database.use((db) =>
+      db
+        .select()
+        .from(ToolRunRecordTable)
+        .where(eq(ToolRunRecordTable.session_id, sessionID))
+        .orderBy(desc(ToolRunRecordTable.time_created))
+        .limit(limit)
+        .all(),
+    )
   }
 
   export function unfinished(sessionID: string) {
-    return Database.use((db) => db.select().from(ToolRunRecordTable)
-      .where(and(
-        eq(ToolRunRecordTable.session_id, sessionID),
-        inArray(ToolRunRecordTable.status, ["pending", "running"]),
-      ))
-      .orderBy(desc(ToolRunRecordTable.time_created))
-      .all())
+    return Database.use((db) =>
+      db
+        .select()
+        .from(ToolRunRecordTable)
+        .where(
+          and(eq(ToolRunRecordTable.session_id, sessionID), inArray(ToolRunRecordTable.status, ["pending", "running"])),
+        )
+        .orderBy(desc(ToolRunRecordTable.time_created))
+        .all(),
+    )
   }
 }

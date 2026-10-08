@@ -31,7 +31,12 @@ describe("ReportKnowledge", () => {
       outcome: "observed",
     })
     expect(id).toBeTruthy()
-    ReportKnowledge.recordOutcome({ reportID: id!, outcome: "rejected", signal: "false_positive", evidence: "No credentialed cross-origin read" })
+    ReportKnowledge.recordOutcome({
+      reportID: id!,
+      outcome: "rejected",
+      signal: "false_positive",
+      evidence: "No credentialed cross-origin read",
+    })
     const rows = ReportKnowledge.search({ vulnerabilityClass: "cors", limit: 10 })
     const row = rows.find((item) => item.id === id)
     expect(row?.status).toBe("rejected")

@@ -174,11 +174,7 @@ export function renderAccessContextLines(accessContext: AccessContextInput): str
 // with any capture-time label. This is the Firefox fix: Firefox traffic has no
 // page_visited_by at capture time, but request_observation carries per-credential
 // reachability for both paths. Merged, distinct, label-resolved.
-export function getVisitedByForKeyHash(
-  sessionID: string,
-  keyHash: string,
-  captureVisitedBy?: string[],
-): string[] {
+export function getVisitedByForKeyHash(sessionID: string, keyHash: string, captureVisitedBy?: string[]): string[] {
   const obs = Observation.listByKeyHash(sessionID, keyHash)
   const ids = [...new Set(obs.map((o) => o.credential_id).filter((id): id is string => !!id))]
   const labels = ids.map((id) => WebCredential.getById(id)?.label ?? id)

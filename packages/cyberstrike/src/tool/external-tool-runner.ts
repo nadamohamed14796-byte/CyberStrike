@@ -26,9 +26,11 @@ export function buildArgv(specCommand: string, input: { target: string; paramete
   const argv: string[] = []
 
   for (const token of tokens) {
-    const unquoted = token.length >= 2 && ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'")))
-      ? token.slice(1, -1)
-      : token
+    const unquoted =
+      token.length >= 2 &&
+      ((token.startsWith('"') && token.endsWith('"')) || (token.startsWith("'") && token.endsWith("'")))
+        ? token.slice(1, -1)
+        : token
     const expanded = unquoted.replace(/<([a-zA-Z_][a-zA-Z0-9_]*)>/g, (_, name: string) => {
       const value = replacementFor(name, { target: input.target, parameters })
       if (value === undefined) throw new Error(`Missing parameter <${name}> for external tool command`)
@@ -68,13 +70,20 @@ export const ExternalToolRunnerTool = Tool.define("external_tool_runner", {
   description:
     "Execute one registered external security tool through the canonical registry. Commands are argv-based (never shell-evaluated), active tools require programmatic scope, and active-test/high-impact tools also require explicit authorization.",
   parameters: z.object({
-    tool_id: z.string().describe(`Registered external tool ID. Available: ${EXTERNAL_TOOLS.map((x) => x.id).join(", ")}`),
+    tool_id: z
+      .string()
+      .describe(`Registered external tool ID. Available: ${EXTERNAL_TOOLS.map((x) => x.id).join(", ")}`),
     target: z.string().describe("In-scope target for the tool"),
     endpoint: z.string().optional().describe("Optional endpoint identity for run tracking"),
     scope_items: z.array(z.string()).describe("Programmatic in-scope hosts/URLs/CIDRs"),
     authorized_active_testing: z.boolean().default(false).describe("Explicit authorization for active testing"),
     parameters: z.record(z.string(), z.unknown()).optional(),
-    timeout_ms: z.number().int().positive().max(15 * 60 * 1000).default(120_000),
+    timeout_ms: z
+      .number()
+      .int()
+      .positive()
+      .max(15 * 60 * 1000)
+      .default(120_000),
   }),
   async execute(params, ctx) {
     const spec = externalTool(params.tool_id)
@@ -101,7 +110,9 @@ export const ExternalToolRunnerTool = Tool.define("external_tool_runner", {
     let timedOut = false
     let aborted = false
     const kill = () => {
-      try { proc.kill("SIGTERM") } catch {}
+      try {
+        proc.kill("SIGTERM")
+      } catch {}
     }
     const abortHandler = () => {
       aborted = true

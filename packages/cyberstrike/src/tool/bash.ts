@@ -22,7 +22,16 @@ import { ScopeGuard } from "./scope-check"
 import { TargetWorkspace } from "./target-workspace"
 
 const MAX_METADATA_LENGTH = 30_000
-const NETWORK_COMMANDS = new Set([...EXTERNAL_TOOLS.map((tool) => tool.check), "curl", "wget", "nmap", "masscan", "nc", "netcat", "sqlmap"])
+const NETWORK_COMMANDS = new Set([
+  ...EXTERNAL_TOOLS.map((tool) => tool.check),
+  "curl",
+  "wget",
+  "nmap",
+  "masscan",
+  "nc",
+  "netcat",
+  "sqlmap",
+])
 
 // Detect binary content in a buffer by checking for high density of
 // non-printable bytes. Printable = ASCII 0x20-0x7E, tab, newline, CR, ESC
@@ -83,9 +92,15 @@ export const BashTool = Tool.define("bash", async () => {
       .replaceAll("${maxBytes}", String(Truncate.MAX_BYTES)),
     parameters: z.object({
       command: z.string().describe("The command to execute"),
-      target: z.string().optional().describe("Optional target identity. When set, run inside that target/session workspace."),
+      target: z
+        .string()
+        .optional()
+        .describe("Optional target identity. When set, run inside that target/session workspace."),
       scope_items: z.array(z.string()).optional().describe("Programmatic scope for network/security commands"),
-      authorized_active_testing: z.boolean().optional().describe("Explicit authorization for active network/security commands"),
+      authorized_active_testing: z
+        .boolean()
+        .optional()
+        .describe("Explicit authorization for active network/security commands"),
       timeout: z.number().describe("Optional timeout in milliseconds").optional(),
       workdir: z
         .string()
@@ -120,25 +135,39 @@ export const BashTool = Tool.define("bash", async () => {
         for (let i = 0; i < node.childCount; i++) {
           const child = node.child(i)
           if (!child) continue
-          if (child.type === "command_name" || child.type === "word" || child.type === "string" || child.type === "raw_string" || child.type === "concatenation") {
+          if (
+            child.type === "command_name" ||
+            child.type === "word" ||
+            child.type === "string" ||
+            child.type === "raw_string" ||
+            child.type === "concatenation"
+          ) {
             words.push(child.text)
           }
         }
         const commandName = words[0]?.split("/").pop()?.toLowerCase()
         if (!commandName || !NETWORK_COMMANDS.has(commandName)) continue
         const spec = externalTool(commandName)
-        const target = words.find((value) =>
-          /^https?:\/\//i.test(value) ||
-          /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}(?::\d+)?(?:\/[^\s]*)?$/i.test(value) ||
-          /^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$/.test(value),
+        const target = words.find(
+          (value) =>
+            /^https?:\/\//i.test(value) ||
+            /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}(?::\d+)?(?:\/[^\s]*)?$/i.test(value) ||
+            /^\d{1,3}(?:\.\d{1,3}){3}(?::\d+)?$/.test(value),
         )
-        if (!target) throw new Error(`Network/security command "${commandName}" requires an explicit target; use external_tool_runner for stdin-driven execution.`)
+        if (!target)
+          throw new Error(
+            `Network/security command "${commandName}" requires an explicit target; use external_tool_runner for stdin-driven execution.`,
+          )
         securityTargets.push({ command: commandName, target, risk: spec?.risk ?? "active-test" })
       }
       for (const item of securityTargets) {
         if (item.risk !== "passive") {
-          if (!params.scope_items?.length) throw new Error(`Active command "${item.command}" requires scope_items; use external_tool_runner for canonical scoped execution.`)
-          if (params.authorized_active_testing !== true) throw new Error(`Active command "${item.command}" requires authorized_active_testing=true.`)
+          if (!params.scope_items?.length)
+            throw new Error(
+              `Active command "${item.command}" requires scope_items; use external_tool_runner for canonical scoped execution.`,
+            )
+          if (params.authorized_active_testing !== true)
+            throw new Error(`Active command "${item.command}" requires authorized_active_testing=true.`)
           const decision = ScopeGuard.check(item.target, params.scope_items)
           if (!decision.inScope) throw new Error(`Out-of-scope shell execution refused for "${item.target}".`)
         }

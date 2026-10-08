@@ -17,11 +17,7 @@ function skill(name: string, overrides: Partial<SkillInventoryItem> = {}): Skill
 describe("skill registry validator", () => {
   test("finds duplicate and missing chain references", () => {
     const report = validateSkillSet(
-      [
-        skill("router", { chains_with: ["specialist", "missing"] }),
-        skill("router"),
-        skill("specialist"),
-      ],
+      [skill("router", { chains_with: ["specialist", "missing"] }), skill("router"), skill("specialist")],
       [{ name: "router" }],
     )
     expect(report.duplicateNames).toEqual(["router"])
@@ -31,18 +27,12 @@ describe("skill registry validator", () => {
   })
 
   test("distinguishes known skill prerequisites from external identifiers", () => {
-    const report = validateSkillSet(
-      [skill("router", { prerequisites: ["specialist", "T1634"] })],
-      [],
-    )
+    const report = validateSkillSet([skill("router", { prerequisites: ["specialist", "T1634"] })], [])
     expect(report.unknownPrerequisites).toEqual([{ skill: "router", prerequisite: "specialist" }])
   })
 
   test("detects orphan registry entries and duplicate registry names", () => {
-    const report = validateSkillSet(
-      [skill("router")],
-      [{ name: "router" }, { name: "router" }, { name: "missing" }],
-    )
+    const report = validateSkillSet([skill("router")], [{ name: "router" }, { name: "router" }, { name: "missing" }])
     expect(report.registryDuplicates).toEqual(["router"])
     expect(report.orphanRegistryEntries).toEqual(["missing"])
   })

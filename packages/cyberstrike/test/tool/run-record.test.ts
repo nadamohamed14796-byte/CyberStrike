@@ -3,26 +3,66 @@ import { normalizeEndpoint, normalizeTarget, toolRunKey } from "../../src/tool/r
 
 describe("ToolRunRecord identity", () => {
   test("includes endpoint identity", () => {
-    const a = toolRunKey({ toolID: "httpx", target: "https://example.com", endpoint: "/api/users", parameters: { method: "GET" } })
-    const b = toolRunKey({ toolID: "httpx", target: "https://example.com", endpoint: "/api/admin", parameters: { method: "GET" } })
+    const a = toolRunKey({
+      toolID: "httpx",
+      target: "https://example.com",
+      endpoint: "/api/users",
+      parameters: { method: "GET" },
+    })
+    const b = toolRunKey({
+      toolID: "httpx",
+      target: "https://example.com",
+      endpoint: "/api/admin",
+      parameters: { method: "GET" },
+    })
     expect(a).not.toBe(b)
   })
 
   test("same normalized identity produces the same key", () => {
-    const a = toolRunKey({ toolID: "httpx", target: "HTTPS://EXAMPLE.COM:443/", endpoint: "GET /api/x", parameters: { b: 2, a: 1 } })
-    const b = toolRunKey({ toolID: "HTTPX", target: "https://example.com", endpoint: "get /api/x", parameters: { a: 1, b: 2 } })
+    const a = toolRunKey({
+      toolID: "httpx",
+      target: "HTTPS://EXAMPLE.COM:443/",
+      endpoint: "GET /api/x",
+      parameters: { b: 2, a: 1 },
+    })
+    const b = toolRunKey({
+      toolID: "HTTPX",
+      target: "https://example.com",
+      endpoint: "get /api/x",
+      parameters: { a: 1, b: 2 },
+    })
     expect(a).toBe(b)
   })
 
   test("different parameters cannot collapse", () => {
-    const a = toolRunKey({ toolID: "ffuf", target: "https://example.com", endpoint: "/FUZZ", parameters: { wordlist: "small.txt" } })
-    const b = toolRunKey({ toolID: "ffuf", target: "https://example.com", endpoint: "/FUZZ", parameters: { wordlist: "large.txt" } })
+    const a = toolRunKey({
+      toolID: "ffuf",
+      target: "https://example.com",
+      endpoint: "/FUZZ",
+      parameters: { wordlist: "small.txt" },
+    })
+    const b = toolRunKey({
+      toolID: "ffuf",
+      target: "https://example.com",
+      endpoint: "/FUZZ",
+      parameters: { wordlist: "large.txt" },
+    })
     expect(a).not.toBe(b)
   })
 
   test("relevant execution context is part of the identity", () => {
-    const a = toolRunKey({ toolID: "nuclei", target: "https://example.com", endpoint: "/api", context: { agent: "recon" } })
-    const b = toolRunKey({ toolID: "nuclei", target: "https://example.com", endpoint: "/api", context: { agent: "validator" } })
+    const a = toolRunKey({
+      toolID: "nuclei",
+      target: "https://example.com",
+      endpoint: "/api",
+      context: { agent: "recon" },
+    })
+    const b = toolRunKey({
+      toolID: "nuclei",
+      target: "https://example.com",
+      endpoint: "/api",
+      context: { agent: "validator" },
+    })
     expect(a).not.toBe(b)
   })
 

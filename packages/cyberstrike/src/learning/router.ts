@@ -1,12 +1,7 @@
 import { ReferenceLearning } from "./reference"
 import { SkillIndex } from "../skill/index-engine"
 
-export type LearningHook =
-  | "before_recon"
-  | "during_testing"
-  | "after_finding"
-  | "after_triage"
-  | "before_summary"
+export type LearningHook = "before_recon" | "during_testing" | "after_finding" | "after_triage" | "before_summary"
 
 export type LearningSignal = {
   hook: LearningHook

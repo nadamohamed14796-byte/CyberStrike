@@ -10,8 +10,22 @@ describe("ReconDispatch", () => {
       directory: path.join(__dirname, "../.."),
       fn: async () => {
         const session = await Session.create({})
-        expect(ReconDispatch.next({ sessionID: session.id, signal: "live HTTP", target: "example.com", scope_verified: true })).toEqual([])
-        expect(ReconDispatch.next({ sessionID: session.id, signal: "live HTTP", target: "example.com", scope_items: ["example.com"] }).some((tool) => tool.id === "httpx")).toBe(true)
+        expect(
+          ReconDispatch.next({
+            sessionID: session.id,
+            signal: "live HTTP",
+            target: "example.com",
+            scope_verified: true,
+          }),
+        ).toEqual([])
+        expect(
+          ReconDispatch.next({
+            sessionID: session.id,
+            signal: "live HTTP",
+            target: "example.com",
+            scope_items: ["example.com"],
+          }).some((tool) => tool.id === "httpx"),
+        ).toBe(true)
         await Session.remove(session.id)
       },
     })

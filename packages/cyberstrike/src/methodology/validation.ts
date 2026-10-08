@@ -299,14 +299,21 @@ export namespace Validation {
         const evidence = c.evidence as Record<string, unknown> | undefined
         const attempts = Number(evidence?.attemptCount ?? 0)
         if (attempts >= 20) return []
-        return [{
-          gate: "iterative_depth",
-          severity: "blocking" as const,
-          message: 'Clean result "' + c.category + '" has only ' + attempts + ' distinct validation attempts (need >=20 unless the test is safely inapplicable).',
-          field: "attemptCount",
-          expectedValue: ">=20",
-          actualValue: String(attempts),
-        }]
+        return [
+          {
+            gate: "iterative_depth",
+            severity: "blocking" as const,
+            message:
+              'Clean result "' +
+              c.category +
+              '" has only ' +
+              attempts +
+              " distinct validation attempts (need >=20 unless the test is safely inapplicable).",
+            field: "attemptCount",
+            expectedValue: ">=20",
+            actualValue: String(attempts),
+          },
+        ]
       })
 
     const allViolations = [

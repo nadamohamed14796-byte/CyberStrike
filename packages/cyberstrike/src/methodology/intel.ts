@@ -178,7 +178,6 @@ export namespace Intel {
     return { ...entry, duplicate: false, vrtChecksCreated: vrtChecks.length }
   }
 
-
   /** Canonical parameter ingestion point for Arjun/ParamSpider/x8/JS/proxy sources. */
   export function addParameter(input: {
     sessionID: string

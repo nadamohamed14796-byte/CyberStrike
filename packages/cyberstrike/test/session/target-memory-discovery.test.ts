@@ -25,8 +25,9 @@ describe("TargetMemory discovery promotion", () => {
           callID: "call-b",
         })
 
-        const row = TargetMemory.listForSession(session.id, "endpoint", 100)
-          .find((item) => item.url === "https://api.example.com/users")
+        const row = TargetMemory.listForSession(session.id, "endpoint", 100).find(
+          (item) => item.url === "https://api.example.com/users",
+        )
 
         expect(row).toBeDefined()
         expect(row?.metadata?.source_tools).toEqual(["subfinder", "katana"])

@@ -43,12 +43,16 @@ describe("mission claims", () => {
       directory: projectRoot,
       fn: async () => {
         const session = await Session.create({})
-        expect(MissionClaims.claim({ sessionID: session.id, cellKey: "api:/users:idor", agent: "A" }).claimed).toBe(true)
+        expect(MissionClaims.claim({ sessionID: session.id, cellKey: "api:/users:idor", agent: "A" }).claimed).toBe(
+          true,
+        )
         const second = MissionClaims.claim({ sessionID: session.id, cellKey: "api:/users:idor", agent: "B" })
         expect(second.claimed).toBe(false)
         expect(second.owner).toBe("A")
         MissionClaims.release(session.id, "api:/users:idor", "A", "fp1")
-        expect(MissionClaims.claim({ sessionID: session.id, cellKey: "api:/users:idor", agent: "B" }).claimed).toBe(true)
+        expect(MissionClaims.claim({ sessionID: session.id, cellKey: "api:/users:idor", agent: "B" }).claimed).toBe(
+          true,
+        )
         await Session.remove(session.id)
       },
     })

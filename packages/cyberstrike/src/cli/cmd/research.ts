@@ -20,14 +20,22 @@ export const ResearchCommand = cmd({
         command: "sync [source]",
         describe: "fetch public research and learn from it",
         builder: (yargs) =>
-          yargs
-            .positional("source", { type: "string" })
-            .option("limit", { type: "number", default: 10 }),
+          yargs.positional("source", { type: "string" }).option("limit", { type: "number", default: 10 }),
         async handler(args) {
           prompts.intro("CyberStrike Research Learning")
           const results = await syncResearch({ sourceID: args.source, limit: args.limit })
           for (const result of results) {
-            prompts.log.info(result.source + ": fetched=" + result.fetched + " learned=" + result.learned + " skipped=" + result.skipped + " failed=" + result.failed)
+            prompts.log.info(
+              result.source +
+                ": fetched=" +
+                result.fetched +
+                " learned=" +
+                result.learned +
+                " skipped=" +
+                result.skipped +
+                " failed=" +
+                result.failed,
+            )
           }
           prompts.outro("Research sync complete")
         },
@@ -36,10 +44,21 @@ export const ResearchCommand = cmd({
         command: "search <query>",
         describe: "search learned research knowledge",
         builder: (yargs) =>
-          yargs.positional("query", { type: "string", demandOption: true }).option("limit", { type: "number", default: 20 }),
+          yargs
+            .positional("query", { type: "string", demandOption: true })
+            .option("limit", { type: "number", default: 20 }),
         async handler(args) {
           const rows = ReportKnowledge.search({ query: args.query, limit: args.limit })
-          for (const row of rows) console.log(String(row.confidence) + "% " + (row.vulnerability_class ?? "unknown") + " — " + row.title + " — " + (row.source_url ?? "local"))
+          for (const row of rows)
+            console.log(
+              String(row.confidence) +
+                "% " +
+                (row.vulnerability_class ?? "unknown") +
+                " — " +
+                row.title +
+                " — " +
+                (row.source_url ?? "local"),
+            )
         },
       })
       .demandCommand(),

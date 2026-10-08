@@ -199,7 +199,8 @@ export namespace AgentPerformance {
     ]
 
     const learned = ReferenceLearning.top(5)
-    if (learned.length > 0) lines.push(`Learned references: ${learned.map((x) => `${x.skill}=${Math.round(x.usefulness)}%`).join(", ")}`)
+    if (learned.length > 0)
+      lines.push(`Learned references: ${learned.map((x) => `${x.skill}=${Math.round(x.usefulness)}%`).join(", ")}`)
 
     if (stats.missionsCompleted > 0) {
       lines.push(

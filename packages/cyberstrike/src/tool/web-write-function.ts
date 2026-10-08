@@ -60,7 +60,8 @@ export const WebWriteFunctionTool = Tool.define("web_write_function", {
     })
 
     const request = Request.get(sessionID).find((item) => item.id === params.request_id)
-    const target = request?.origin ?? (request?.host ? `${request.scheme ?? "https"}://${request.host}` : `session://${sessionID}`)
+    const target =
+      request?.origin ?? (request?.host ? `${request.scheme ?? "https"}://${request.host}` : `session://${sessionID}`)
     const walkFile = await persistBusinessFunctionWalk({ target, sessionID })
 
     const output = {

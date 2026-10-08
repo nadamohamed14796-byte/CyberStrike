@@ -47,8 +47,8 @@ describe("research source registry", () => {
   })
 })
 
-  test("prioritizes src-hunter repository documents for learning", () => {
-    const source = RESEARCH_SOURCES.find((item) => item.id === "src-hunter-skill")!
-    expect(source.trust).toBe(90)
-    expect(candidateScore("https://github.com/MyuriKanao/src-hunter-skill/blob/main/SKILL.md", source)).toBeGreaterThan(0)
-  })
+test("prioritizes src-hunter repository documents for learning", () => {
+  const source = RESEARCH_SOURCES.find((item) => item.id === "src-hunter-skill")!
+  expect(source.trust).toBe(90)
+  expect(candidateScore("https://github.com/MyuriKanao/src-hunter-skill/blob/main/SKILL.md", source)).toBeGreaterThan(0)
+})

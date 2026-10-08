@@ -1,7 +1,12 @@
 import type { Hooks, PluginInput } from "@cyberstrike-io/plugin"
 import { Installation } from "@/installation"
 import { iife } from "@/util/iife"
-import { exchangeCopilotToken, invalidateCopilotToken, copilotApiBase, copilotHeaders } from "@/provider/copilot-session"
+import {
+  exchangeCopilotToken,
+  invalidateCopilotToken,
+  copilotApiBase,
+  copilotHeaders,
+} from "@/provider/copilot-session"
 
 const CLIENT_ID = "Iv1.b507a08c87ecfe98"
 

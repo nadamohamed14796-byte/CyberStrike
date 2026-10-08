@@ -38,7 +38,9 @@ export const UpdateVrtCheckTool = Tool.define("update_vrt_check", {
           .int()
           .nonnegative()
           .optional()
-          .describe("Number of distinct validation attempts/variants used; clean results require >=20 unless safely inapplicable."),
+          .describe(
+            "Number of distinct validation attempts/variants used; clean results require >=20 unless safely inapplicable.",
+          ),
         findingRef: z.string().optional().describe("Reference to a report_vulnerability call if applicable"),
       })
       .optional()

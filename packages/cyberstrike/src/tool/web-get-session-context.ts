@@ -50,28 +50,28 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
       const allValues = WebObject.getAllValues(sessionID)
       const recentObjects = WebObject.touchedByRequest(sessionID, currentReq.id)
       const pageURL = currentReq.page_url
-    const linkedScripts = pageURL
-      ? allRequests
-          .filter(
-            (r) =>
-              r.id !== currentReq.id &&
-              r.page_url === pageURL &&
-              !!r.response_content_type &&
-              /(javascript|ecmascript)/i.test(r.response_content_type),
-          )
-          .slice(-8)
-          .map((r) => ({
-            request_id: r.id,
-            method: r.method,
-            path: r.normalized_path,
-            url: requestURL(r),
-            content_type: r.response_content_type,
-            response_size: r.response_size,
-            response: r.processed_response?.slice(0, 20000),
-          }))
-      : []
+      const linkedScripts = pageURL
+        ? allRequests
+            .filter(
+              (r) =>
+                r.id !== currentReq.id &&
+                r.page_url === pageURL &&
+                !!r.response_content_type &&
+                /(javascript|ecmascript)/i.test(r.response_content_type),
+            )
+            .slice(-8)
+            .map((r) => ({
+              request_id: r.id,
+              method: r.method,
+              path: r.normalized_path,
+              url: requestURL(r),
+              content_type: r.response_content_type,
+              response_size: r.response_size,
+              response: r.processed_response?.slice(0, 20000),
+            }))
+        : []
 
-    context.recent = {
+      context.recent = {
         request: { id: currentReq.id, method: currentReq.method, path: currentReq.normalized_path },
         linked_scripts: linkedScripts,
         objects: recentObjects.map((o) => ({

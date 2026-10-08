@@ -198,7 +198,8 @@ export namespace SkillIndex {
         if (entry.name.toLowerCase() === q) score += 100
         if (entry.description.toLowerCase().includes(q)) score += 10
       }
-      if (input.tech?.length) score += input.tech.filter((x) => entry.tech_stack.some((t) => t.toLowerCase() === x.toLowerCase())).length * 20
+      if (input.tech?.length)
+        score += input.tech.filter((x) => entry.tech_stack.some((t) => t.toLowerCase() === x.toLowerCase())).length * 20
       if (input.cwe) score += entry.cwe_ids.some((x) => x.toUpperCase() === input.cwe!.toUpperCase()) ? 30 : 0
       if (input.category) score += entry.category?.toLowerCase() === input.category.toLowerCase() ? 20 : 0
       const ready = prerequisitesSatisfied(entry.name, available)

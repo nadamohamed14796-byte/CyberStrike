@@ -77,34 +77,54 @@ const STRUCTURED_OUTPUT_SYSTEM_PROMPT = `IMPORTANT: The user has requested struc
 
 const LEARNING_TEST_TOOLS = new Set(["http_replay", "http_replay_raw", "inject_probe", "hackbrowser"])
 
-
 const RECON_SIGNAL_TOOLS = new Set([
-  "subfinder", "assetfinder", "amass", "tlsx", "puredns", "dnsx", "httpx", "naabu", "nmap",
-  "katana", "gau", "waybackurls", "gospider", "hakrawler", "waymore", "subjs", "arjun",
-  "paramspider", "x8", "ffuf", "dirsearch", "kiterunner", "graphw00f", "nuclei", "dalfox",
-  "kxss", "corsy", "s3scanner", "cloud-enum",
+  "subfinder",
+  "assetfinder",
+  "amass",
+  "tlsx",
+  "puredns",
+  "dnsx",
+  "httpx",
+  "naabu",
+  "nmap",
+  "katana",
+  "gau",
+  "waybackurls",
+  "gospider",
+  "hakrawler",
+  "waymore",
+  "subjs",
+  "arjun",
+  "paramspider",
+  "x8",
+  "ffuf",
+  "dirsearch",
+  "kiterunner",
+  "graphw00f",
+  "nuclei",
+  "dalfox",
+  "kxss",
+  "corsy",
+  "s3scanner",
+  "cloud-enum",
 ])
 
 function reconSignalFromResult(toolID: string, result: unknown): string | undefined {
   if (!RECON_SIGNAL_TOOLS.has(toolID)) return undefined
-  const text = typeof result === "string"
-    ? result
-    : result && typeof result === "object"
-      ? JSON.stringify(result)
-      : ""
+  const text = typeof result === "string" ? result : result && typeof result === "object" ? JSON.stringify(result) : ""
   if (!text) return undefined
   const lower = text.toLowerCase()
   if (toolID === "httpx" && /https?:\/\/|status.?code|title|tech.?detect/.test(lower)) return "live HTTP"
   if (toolID === "subjs" || /source.?map|\\.map\b/.test(lower)) return "JavaScript"
   if (toolID === "graphw00f" || /graphql/.test(lower)) return "GraphQL"
   if (toolID === "kiterunner" || /\/api\/|openapi|swagger/.test(lower)) return "API"
-  if (toolID === "arjun" || toolID === "paramspider" || toolID === "x8" || /parameter|param=/.test(lower)) return "parameter"
+  if (toolID === "arjun" || toolID === "paramspider" || toolID === "x8" || /parameter|param=/.test(lower))
+    return "parameter"
   if (toolID === "naabu" || toolID === "nmap" || /open port|service/.test(lower)) return "open port"
   if (toolID === "dalfox" || toolID === "kxss" || /reflected|xss/.test(lower)) return "reflected parameter"
   if (toolID === "nuclei" && /cve|exposure|vulnerab/.test(lower)) return "technology signal"
   return undefined
 }
-
 
 function learningTarget(args: unknown): string | undefined {
   if (!args || typeof args !== "object") return undefined
@@ -932,7 +952,10 @@ export namespace SessionPrompt {
             "# Public Research Knowledge",
             "These are learned patterns from public security research. They are references/hypotheses only; do not treat them as findings or copy proof blindly.",
             "Use the source lesson to prioritize relevant validation, then verify the target independently and stay within scope.",
-            ...researchRecommendations.map((row) => `- **${row.title}** | class=${row.vulnerability_class ?? "unknown"} | confidence=${row.confidence}% | lesson=${row.lesson ?? "validate the pattern independently"} | source=${row.source_url ?? "local"}`),
+            ...researchRecommendations.map(
+              (row) =>
+                `- **${row.title}** | class=${row.vulnerability_class ?? "unknown"} | confidence=${row.confidence}% | lesson=${row.lesson ?? "validate the pattern independently"} | source=${row.source_url ?? "local"}`,
+            ),
           ].join("\n"),
         )
       }
@@ -944,7 +967,9 @@ export namespace SessionPrompt {
             "# Recon Toolchain Recommendations",
             "These tools were selected deterministically from the latest runtime signal.",
             "Use them as the next-tool plan. Respect scope, rate limits, permissions, and the risk gate; do not treat tool output as a finding.",
-            ...nextReconTools.map((tool) => `- **${tool.id}** | phase=${tool.phase} | risk=${tool.risk} | ${tool.command}`),
+            ...nextReconTools.map(
+              (tool) => `- **${tool.id}** | phase=${tool.phase} | risk=${tool.risk} | ${tool.command}`,
+            ),
           ].join("\n"),
         )
       }
@@ -962,8 +987,9 @@ export namespace SessionPrompt {
             "# Pending Web Re-tests",
             "Previously captured requests were queued for re-testing because the session discovered a new role, object value, or credential.",
             "Use http_replay with the listed request_id when relevant; preserve the trigger context and validate the response before treating anything as a finding.",
-            ...retestQueue.map((item) =>
-              `- request_id=${item.request_id} | trigger=${item.trigger_type} | priority=${item.priority} | source=${item.trigger_source}`,
+            ...retestQueue.map(
+              (item) =>
+                `- request_id=${item.request_id} | trigger=${item.trigger_type} | priority=${item.priority} | source=${item.trigger_source}`,
             ),
           ].join("\n"),
         )
@@ -1267,13 +1293,24 @@ export namespace SessionPrompt {
               toolID: item.id,
               target: queueTarget,
               scope_items:
-                args && typeof args === "object" && !Array.isArray(args) && Array.isArray((args as Record<string, unknown>).scope_items)
-                  ? ((args as Record<string, unknown>).scope_items as unknown[]).filter((x): x is string => typeof x === "string")
+                args &&
+                typeof args === "object" &&
+                !Array.isArray(args) &&
+                Array.isArray((args as Record<string, unknown>).scope_items)
+                  ? ((args as Record<string, unknown>).scope_items as unknown[]).filter(
+                      (x): x is string => typeof x === "string",
+                    )
                   : undefined,
               scope_verified:
-                args && typeof args === "object" && !Array.isArray(args) && (args as Record<string, unknown>).scope_verified === true,
+                args &&
+                typeof args === "object" &&
+                !Array.isArray(args) &&
+                (args as Record<string, unknown>).scope_verified === true,
               authorized_active_testing:
-                args && typeof args === "object" && !Array.isArray(args) && (args as Record<string, unknown>).authorized_active_testing === true,
+                args &&
+                typeof args === "object" &&
+                !Array.isArray(args) &&
+                (args as Record<string, unknown>).authorized_active_testing === true,
             })
           } catch (error) {
             log.warn("failed to claim signal queue item", { error, tool: item.id, callID: ctx.callID })
@@ -1284,7 +1321,10 @@ export namespace SessionPrompt {
             result = await item.execute(args, ctx)
           } catch (error) {
             if (runningQueueID) {
-              try { SignalQueue.fail(runningQueueID); SignalQueue.retry(runningQueueID) } catch {}
+              try {
+                SignalQueue.fail(runningQueueID)
+                SignalQueue.retry(runningQueueID)
+              } catch {}
             }
             throw error
           }
@@ -1307,8 +1347,12 @@ export namespace SessionPrompt {
             ToolArtifact.record({
               sessionID: ctx.sessionID,
               callID: ctx.callID,
-              requestID: typeof args === "object" && args && "request_id" in args ? String((args as any).request_id) : undefined,
-              credentialID: typeof args === "object" && args && "credential_id" in args ? String((args as any).credential_id) : undefined,
+              requestID:
+                typeof args === "object" && args && "request_id" in args ? String((args as any).request_id) : undefined,
+              credentialID:
+                typeof args === "object" && args && "credential_id" in args
+                  ? String((args as any).credential_id)
+                  : undefined,
               tool: item.id,
               target: learningTarget(args),
               input: args,

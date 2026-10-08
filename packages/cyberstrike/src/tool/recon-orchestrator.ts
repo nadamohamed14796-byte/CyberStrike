@@ -35,7 +35,13 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
       return {
         title: "Recon queue: empty",
         output: "No pending signals remain for this session.",
-        metadata: { status: "empty", queue_id: undefined, signal: undefined, target: undefined, tools: [] } as ReconOrchestratorMetadata,
+        metadata: {
+          status: "empty",
+          queue_id: undefined,
+          signal: undefined,
+          target: undefined,
+          tools: [],
+        } as ReconOrchestratorMetadata,
       }
     }
 
@@ -56,12 +62,20 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
         "status=" + planned.queue.status,
         "",
         "ALLOWED NEXT TOOLS",
-        ...planned.tools.map((tool, i) =>
-          (i + 1) + ". " + tool.id +
-          " | phase=" + tool.phase +
-          " | risk=" + tool.risk +
-          " | scope=" + (tool.scope_verified ? "verified" : "not-verified") +
-          " | authorization=" + (tool.authorization_verified ? "verified" : "not-required"),
+        ...planned.tools.map(
+          (tool, i) =>
+            i +
+            1 +
+            ". " +
+            tool.id +
+            " | phase=" +
+            tool.phase +
+            " | risk=" +
+            tool.risk +
+            " | scope=" +
+            (tool.scope_verified ? "verified" : "not-verified") +
+            " | authorization=" +
+            (tool.authorization_verified ? "verified" : "not-required"),
         ),
         "",
         "The orchestrator does not execute these tools. Execute only through the normal tool permission/scope path.",

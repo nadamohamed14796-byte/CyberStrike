@@ -16,7 +16,7 @@ import { Log } from "../util/log"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
 const sessionNextTools = new Map<string, ReturnType<typeof ReconDispatch.next>>()
-const sessionResearch = new Map<string, ReturnType<typeof ReportKnowledge.recommendations>>
+const sessionResearch = new Map<string, ReturnType<typeof ReportKnowledge.recommendations>>()
 const MAX_SESSION_ROUTES = 256
 const log = Log.create({ service: "learning" })
 
@@ -86,9 +86,16 @@ export namespace Learning {
       log.warn("recon dispatch failed", { error: String(error), signal: signal.signal })
     }
 
-    const reportID = typeof signal.metadata?.report_knowledge_id === "string" ? signal.metadata.report_knowledge_id : undefined
+    const reportID =
+      typeof signal.metadata?.report_knowledge_id === "string" ? signal.metadata.report_knowledge_id : undefined
     if (reportID && signal.outcome) {
-      const mapped = /duplicate/i.test(signal.outcome) ? "duplicate" : /rejected|disproven|false/i.test(signal.outcome) ? "rejected" : /confirmed|approved|finding|useful|validated/i.test(signal.outcome) ? "confirmed" : "observed"
+      const mapped = /duplicate/i.test(signal.outcome)
+        ? "duplicate"
+        : /rejected|disproven|false/i.test(signal.outcome)
+          ? "rejected"
+          : /confirmed|approved|finding|useful|validated/i.test(signal.outcome)
+            ? "confirmed"
+            : "observed"
       ReportKnowledge.recordOutcome({
         reportID,
         sessionID: signal.sessionID,
@@ -109,13 +116,26 @@ export namespace Learning {
       limit: 6,
     })
 
-    if (signal.metadata?.source_tool && signal.outcome) ToolLearning.observe({ tool: String(signal.metadata.source_tool), signal: signal.signal, sessionID: signal.sessionID, target: signal.target, outcome: /finding|useful|confirmed|validated/i.test(signal.outcome) ? "useful" : /rejected|disproven|false|duplicate/i.test(signal.outcome) ? "rejected" : "error", evidence: signal.evidence })
+    if (signal.metadata?.source_tool && signal.outcome)
+      ToolLearning.observe({
+        tool: String(signal.metadata.source_tool),
+        signal: signal.signal,
+        sessionID: signal.sessionID,
+        target: signal.target,
+        outcome: /finding|useful|confirmed|validated/i.test(signal.outcome)
+          ? "useful"
+          : /rejected|disproven|false|duplicate/i.test(signal.outcome)
+            ? "rejected"
+            : "error",
+        evidence: signal.evidence,
+      })
 
     if (signal.skill_name && signal.outcome) {
-      const outcome =
-        /finding|useful|confirmed|validated/i.test(signal.outcome) ? "useful" :
-        /rejected|disproven|false|duplicate/i.test(signal.outcome) ? "rejected" :
-        undefined
+      const outcome = /finding|useful|confirmed|validated/i.test(signal.outcome)
+        ? "useful"
+        : /rejected|disproven|false|duplicate/i.test(signal.outcome)
+          ? "rejected"
+          : undefined
       if (outcome) ReferenceLearning.recordOutcome(signal.skill_name, outcome, signal.sessionID, signal.evidence)
     }
 
@@ -124,12 +144,15 @@ export namespace Learning {
       // already covered this exact target/signal are removed from the next plan.
       try {
         const normalized = signal.signal.trim().toLowerCase()
-        nextTools = nextTools.filter((tool) => !SignalQueue.alreadyCovered({
-          sessionID: signal.sessionID!,
-          target: signal.target,
-          signal: normalized,
-          toolID: tool.id,
-        }))
+        nextTools = nextTools.filter(
+          (tool) =>
+            !SignalQueue.alreadyCovered({
+              sessionID: signal.sessionID!,
+              target: signal.target,
+              signal: normalized,
+              toolID: tool.id,
+            }),
+        )
       } catch (error) {
         log.warn("signal coverage check failed", { error: String(error), sessionID: signal.sessionID })
       }
@@ -162,7 +185,18 @@ export namespace Learning {
             target: signal.target,
             category: signal.category,
             outcome: signal.outcome,
-            metadata: { ...(signal.metadata ?? {}), next_tools: nextTools, research_recommendations: researchRecommendations.map((row) => ({ id: row.id, title: row.title, vulnerability_class: row.vulnerability_class, confidence: row.confidence, source_url: row.source_url, lesson: row.lesson })) },
+            metadata: {
+              ...(signal.metadata ?? {}),
+              next_tools: nextTools,
+              research_recommendations: researchRecommendations.map((row) => ({
+                id: row.id,
+                title: row.title,
+                vulnerability_class: row.vulnerability_class,
+                confidence: row.confidence,
+                source_url: row.source_url,
+                lesson: row.lesson,
+              })),
+            },
             time_created: now,
             time_updated: now,
           })

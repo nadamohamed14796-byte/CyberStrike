@@ -37,7 +37,10 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
       .default("load")
       .describe("Action to perform"),
     name: z.string().optional().describe("Skill name (for load/unload/learn)"),
-    outcome: z.enum(["useful", "finding", "rejected", "disproven"]).optional().describe("Learning outcome for learn action"),
+    outcome: z
+      .enum(["useful", "finding", "rejected", "disproven"])
+      .optional()
+      .describe("Learning outcome for learn action"),
     evidence: z.string().optional().describe("Short evidence explaining the learning outcome"),
     query: z.string().optional().describe("Search query (for search action)"),
     tech: z.array(z.string()).optional().describe("Tech stack filter (for search action)"),
@@ -183,7 +186,11 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
         if (!params.name) throw new Error("Skill name required for learn action")
         if (!params.outcome) throw new Error("Outcome required for learn action")
         ReferenceLearning.recordOutcome(params.name, params.outcome, ctx.sessionID, params.evidence)
-        return { title: `Learning recorded: ${params.name}`, output: `Recorded ${params.outcome} for ${params.name}.`, metadata: {} as { name?: string; dir?: string } }
+        return {
+          title: `Learning recorded: ${params.name}`,
+          output: `Recorded ${params.outcome} for ${params.name}.`,
+          metadata: {} as { name?: string; dir?: string },
+        }
       }
 
       if (params.action === "chain") {

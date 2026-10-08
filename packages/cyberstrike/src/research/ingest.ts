@@ -26,7 +26,13 @@ function cleanHtml(html: string) {
 }
 
 function titleOf(html: string, fallback: string) {
-  return html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() || fallback
+  return (
+    html
+      .match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]
+      ?.replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim() || fallback
+  )
 }
 
 function linksOf(html: string, base: URL, source: ResearchSource) {
@@ -78,14 +84,26 @@ function severityOf(text: string) {
 
 function lessonOf(text: string, vulnerabilityClass?: string) {
   const lines = text.split(/(?<=[.!?])\s+/).filter((line) => line.length >= 40)
-  const useful = lines.find((line) => /because|caused by|allows|leads to|impact|bypass|authorization|validation/i.test(line))
-  return useful?.slice(0, 700) ?? (vulnerabilityClass ? "Research pattern for " + vulnerabilityClass + ": validate prerequisites and impact independently." : undefined)
+  const useful = lines.find((line) =>
+    /because|caused by|allows|leads to|impact|bypass|authorization|validation/i.test(line),
+  )
+  return (
+    useful?.slice(0, 700) ??
+    (vulnerabilityClass
+      ? "Research pattern for " + vulnerabilityClass + ": validate prerequisites and impact independently."
+      : undefined)
+  )
 }
 
 export function candidateScore(url: string, source: ResearchSource) {
   const path = new URL(url).pathname.toLowerCase()
   let score = 0
-  if (/\/reports?\b|\/hacktivity\/|\/writeups?\b|\/research\b|\/blog\/|\/articles?\b|\/labs?\b|\/blob\/|\/tree\//.test(path)) score += 60
+  if (
+    /\/reports?\b|\/hacktivity\/|\/writeups?\b|\/research\b|\/blog\/|\/articles?\b|\/labs?\b|\/blob\/|\/tree\//.test(
+      path,
+    )
+  )
+    score += 60
   if (/\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{4}\/\d{1,2}/.test(path)) score += 20
   if (source.kind === "disclosure" && /reports?|hacktivity|disclosure/.test(path)) score += 20
   if (source.kind === "academy" && /lab|academy|web-security/.test(path)) score += 20

@@ -6,7 +6,9 @@ export const TargetMemoryTable = sqliteTable(
   "target_memory",
   {
     id: text().primaryKey(),
-    project_id: text().notNull().references(() => ProjectTable.id, { onDelete: "cascade" }),
+    project_id: text()
+      .notNull()
+      .references(() => ProjectTable.id, { onDelete: "cascade" }),
     kind: text().notNull(), // endpoint | javascript
     asset: text().notNull(),
     method: text(),

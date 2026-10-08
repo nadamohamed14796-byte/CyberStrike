@@ -13,7 +13,16 @@
 
 export type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS"
 
-export type Placeholder = "{id}" | "{uuid}" | "{hash}" | "{email}" | "{token}" | "{slug}" | "{ulid}" | `${string}_{ulid}` | string
+export type Placeholder =
+  | "{id}"
+  | "{uuid}"
+  | "{hash}"
+  | "{email}"
+  | "{token}"
+  | "{slug}"
+  | "{ulid}"
+  | `${string}_{ulid}`
+  | string
 
 export const ALLOWED_PLACEHOLDERS: ReadonlySet<string> = new Set([
   "{id}",

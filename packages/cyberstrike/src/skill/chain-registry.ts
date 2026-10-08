@@ -87,12 +87,11 @@ export namespace ChainRegistry {
     return plans
   }
 
-  export function walk(input: {
-    start: string
-    completed?: Iterable<string>
-    evidence: Evidence
-    maxHops?: number
-  }): { skills: string[]; transitions: Plan[]; stopped: "limit" | "cycle" | "no-eligible-target" | "unknown-start" } {
+  export function walk(input: { start: string; completed?: Iterable<string>; evidence: Evidence; maxHops?: number }): {
+    skills: string[]
+    transitions: Plan[]
+    stopped: "limit" | "cycle" | "no-eligible-target" | "unknown-start"
+  } {
     if (!known(input.start)) return { skills: [], transitions: [], stopped: "unknown-start" }
 
     const skills = [input.start]

@@ -80,14 +80,14 @@ export const VrtCheckTable = sqliteTable(
   ],
 )
 
-
-
 /** Cooperative mission leases prevent agents from concurrently testing the same work cell. */
 export const MissionClaimTable = sqliteTable(
   "mission_claim",
   {
     id: text().primaryKey(),
-    session_id: text().notNull().references(() => SessionTable.id, { onDelete: "cascade" }),
+    session_id: text()
+      .notNull()
+      .references(() => SessionTable.id, { onDelete: "cascade" }),
     cell_key: text().notNull(),
     agent: text().notNull(),
     status: text().notNull(), // active, completed, released
@@ -110,7 +110,9 @@ export const FalsePositiveTable = sqliteTable(
   "false_positive_memory",
   {
     id: text().primaryKey(),
-    session_id: text().notNull().references(() => SessionTable.id, { onDelete: "cascade" }),
+    session_id: text()
+      .notNull()
+      .references(() => SessionTable.id, { onDelete: "cascade" }),
     fingerprint: text().notNull(),
     vuln_class: text().notNull(),
     endpoint_pattern: text(),

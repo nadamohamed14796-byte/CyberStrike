@@ -43,7 +43,8 @@ export function inverseHypotheses(method: string, actionType: string, roles: str
     "Can the same action be replayed after the observed state transition?",
   ]
   if (roles.length) out.push("Can a lower-privileged or different-role identity invoke the same function?")
-  if (/POST|PUT|PATCH|DELETE/i.test(method)) out.push("Can one observed business parameter or object identifier be changed while preserving the request shape?")
+  if (/POST|PUT|PATCH|DELETE/i.test(method))
+    out.push("Can one observed business parameter or object identifier be changed while preserving the request shape?")
   if (/delete|remove|cancel|refund|approve|payout|purchase|checkout/i.test(`${actionType} ${trigger}`)) {
     out.push("Can the terminal transition be repeated or reordered without restoring the required prior state?")
   }
@@ -66,20 +67,21 @@ export async function buildBusinessFunctionWalk(input: {
   sessionID: string
 }): Promise<BusinessAttackSurface> {
   const rows = Database.use((db) =>
-    db.select({
-      functionID: WebFunctionTable.id,
-      actionType: WebFunctionTable.action_type,
-      requestID: WebFunctionTable.request_id,
-      roleID: WebFunctionTable.role_id,
-      objects: WebFunctionTable.objects,
-      method: RequestTable.method,
-      path: RequestTable.normalized_path,
-      status: RequestTable.response_status,
-      trigger: RequestTable.trigger_element,
-      roles: RequestTable.element_roles,
-      credential: RequestTable.credential_id,
-      pageURL: RequestTable.page_url,
-    })
+    db
+      .select({
+        functionID: WebFunctionTable.id,
+        actionType: WebFunctionTable.action_type,
+        requestID: WebFunctionTable.request_id,
+        roleID: WebFunctionTable.role_id,
+        objects: WebFunctionTable.objects,
+        method: RequestTable.method,
+        path: RequestTable.normalized_path,
+        status: RequestTable.response_status,
+        trigger: RequestTable.trigger_element,
+        roles: RequestTable.element_roles,
+        credential: RequestTable.credential_id,
+        pageURL: RequestTable.page_url,
+      })
       .from(WebFunctionTable)
       .innerJoin(RequestTable, eq(WebFunctionTable.request_id, RequestTable.id))
       .where(eq(WebFunctionTable.session_id, input.sessionID))
@@ -103,7 +105,9 @@ export async function buildBusinessFunctionWalk(input: {
         ...(roles.length ? [`available_roles: ${roles.join(", ")}`] : []),
       ],
       normal_action: inferAction(row.method, row.actionType, row.trigger ?? undefined),
-      expected_result: row.status ? `Observed HTTP status ${row.status}; verify the resulting state from subsequent evidence.` : "Observe response and state transition.",
+      expected_result: row.status
+        ? `Observed HTTP status ${row.status}; verify the resulting state from subsequent evidence.`
+        : "Observe response and state transition.",
       side_effects: row.objects ?? [],
       business_invariant: invariant,
       next_valid_states: ["inferred from subsequent requests/state evidence"],
@@ -133,10 +137,7 @@ export async function buildBusinessFunctionWalk(input: {
   }
 }
 
-export async function persistBusinessFunctionWalk(input: {
-  target: string
-  sessionID: string
-}): Promise<string> {
+export async function persistBusinessFunctionWalk(input: { target: string; sessionID: string }): Promise<string> {
   const surface = await buildBusinessFunctionWalk(input)
   const paths = await TargetWorkspace.ensure(input.target, input.sessionID)
   const walkFile = path.join(paths.artifacts, "business-function-walk.json")

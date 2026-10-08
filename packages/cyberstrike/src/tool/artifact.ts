@@ -42,7 +42,11 @@ export namespace ToolArtifact {
 
   function serialize(value: unknown): string {
     if (typeof value === "string") return value
-    try { return JSON.stringify(value) ?? "" } catch { return String(value) }
+    try {
+      return JSON.stringify(value) ?? ""
+    } catch {
+      return String(value)
+    }
   }
 
   function hash(value: string): string {
@@ -54,44 +58,54 @@ export namespace ToolArtifact {
     const id = Identifier.ascending("tool_artifact")
     const now = Date.now()
     Database.use((db) => {
-      db.insert(ToolArtifactTable).values({
-        id,
-        session_id: input.sessionID,
-        call_id: input.callID,
-        request_id: input.requestID,
-        credential_id: input.credentialID,
-        parent_id: input.parentID,
-        tool: input.tool,
-        target: input.target,
-        phase: input.phase,
-        risk: input.risk,
-        scope_decision: input.scopeDecision,
-        input: input.input && typeof input.input === "object" ? redactInput(input.input) as Record<string, unknown> : undefined,
-        output: output.length <= MAX_OUTPUT ? output : undefined,
-        output_preview: output.slice(0, MAX_PREVIEW),
-        output_hash: output ? hash(output) : undefined,
-        result_count: input.resultCount,
-        signal: input.signal,
-        metadata: input.metadata,
-        time_created: now,
-        time_updated: now,
-      }).run()
+      db.insert(ToolArtifactTable)
+        .values({
+          id,
+          session_id: input.sessionID,
+          call_id: input.callID,
+          request_id: input.requestID,
+          credential_id: input.credentialID,
+          parent_id: input.parentID,
+          tool: input.tool,
+          target: input.target,
+          phase: input.phase,
+          risk: input.risk,
+          scope_decision: input.scopeDecision,
+          input:
+            input.input && typeof input.input === "object"
+              ? (redactInput(input.input) as Record<string, unknown>)
+              : undefined,
+          output: output.length <= MAX_OUTPUT ? output : undefined,
+          output_preview: output.slice(0, MAX_PREVIEW),
+          output_hash: output ? hash(output) : undefined,
+          result_count: input.resultCount,
+          signal: input.signal,
+          metadata: input.metadata,
+          time_created: now,
+          time_updated: now,
+        })
+        .run()
     })
     return id
   }
 
   export function list(sessionID: string, limit = 100) {
     return Database.use((db) =>
-      db.select().from(ToolArtifactTable)
+      db
+        .select()
+        .from(ToolArtifactTable)
         .where(eq(ToolArtifactTable.session_id, sessionID))
         .orderBy(desc(ToolArtifactTable.time_created))
-        .limit(limit).all(),
+        .limit(limit)
+        .all(),
     )
   }
 
   export function byRequest(sessionID: string, requestID: string) {
     return Database.use((db) =>
-      db.select().from(ToolArtifactTable)
+      db
+        .select()
+        .from(ToolArtifactTable)
         .where(and(eq(ToolArtifactTable.session_id, sessionID), eq(ToolArtifactTable.request_id, requestID)))
         .orderBy(desc(ToolArtifactTable.time_created))
         .all(),
@@ -100,10 +114,13 @@ export namespace ToolArtifact {
 
   export function byCall(sessionID: string, callID: string) {
     return Database.use((db) =>
-      db.select().from(ToolArtifactTable)
+      db
+        .select()
+        .from(ToolArtifactTable)
         .where(and(eq(ToolArtifactTable.session_id, sessionID), eq(ToolArtifactTable.call_id, callID)))
         .orderBy(desc(ToolArtifactTable.time_created))
-        .limit(1).get(),
+        .limit(1)
+        .get(),
     )
   }
 }

@@ -45,17 +45,25 @@ export namespace TargetWorkspace {
     const root = path.join(ROOT, slug(target))
     const session = path.join(root, "sessions", sessionID ? safeSegment(sessionID, "session id") : "shared")
     return {
-      root, session, recon: path.join(session, "recon"), artifacts: path.join(session, "artifacts"),
-      js: path.join(session, "js"), reports: path.join(session, "reports"), state: path.join(root, "state"),
+      root,
+      session,
+      recon: path.join(session, "recon"),
+      artifacts: path.join(session, "artifacts"),
+      js: path.join(session, "js"),
+      reports: path.join(session, "reports"),
+      state: path.join(root, "state"),
     }
   }
 
   export async function ensure(target: string, sessionID?: string): Promise<Paths> {
     const result = paths(target, sessionID)
     await Promise.all([
-      fs.mkdir(result.root, { recursive: true }), fs.mkdir(result.session, { recursive: true }),
-      fs.mkdir(result.recon, { recursive: true }), fs.mkdir(result.artifacts, { recursive: true }),
-      fs.mkdir(result.js, { recursive: true }), fs.mkdir(result.reports, { recursive: true }),
+      fs.mkdir(result.root, { recursive: true }),
+      fs.mkdir(result.session, { recursive: true }),
+      fs.mkdir(result.recon, { recursive: true }),
+      fs.mkdir(result.artifacts, { recursive: true }),
+      fs.mkdir(result.js, { recursive: true }),
+      fs.mkdir(result.reports, { recursive: true }),
       fs.mkdir(result.state, { recursive: true }),
     ])
     return result

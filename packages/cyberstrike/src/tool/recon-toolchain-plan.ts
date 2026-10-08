@@ -24,12 +24,19 @@ export function planReconTools(input: {
 }): PlannedReconTool[] {
   const signal = normalize(input.signal)
   const max = Math.max(1, Math.min(8, input.max_tools ?? 3))
-  const matches = EXTERNAL_TOOLS
-    .filter((tool) => tool.when.some((x) => {
+  const matches = EXTERNAL_TOOLS.filter((tool) =>
+    tool.when.some((x) => {
       const candidate = normalize(x)
-      return candidate === signal || signal.split(/\s+/).some((term) => term.length >= 4 && candidate.split(/\s+/).includes(term))
-    }))
-    .filter((tool) => input.authorized_active_testing === true || (tool.risk !== "active-test" && tool.risk !== "high-impact"))
+      return (
+        candidate === signal ||
+        signal.split(/\s+/).some((term) => term.length >= 4 && candidate.split(/\s+/).includes(term))
+      )
+    }),
+  )
+    .filter(
+      (tool) =>
+        input.authorized_active_testing === true || (tool.risk !== "active-test" && tool.risk !== "high-impact"),
+    )
     .slice(0, max)
   const ordered = matches.length ? matches : EXTERNAL_TOOLS.filter((tool) => tool.risk === "passive").slice(0, max)
   return ordered.map((tool) => ({ id: tool.id, phase: tool.phase, risk: tool.risk, command: tool.command }))

@@ -387,7 +387,6 @@ description: A skill in the .cyberstrike/skills directory.
   })
 })
 
-
 test("derives missing skill descriptions from the first heading", async () => {
   await using tmp = await tmpdir({
     git: true,

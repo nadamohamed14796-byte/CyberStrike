@@ -65,7 +65,13 @@ Use this to:
     }
 
     const originURL = new URL(origin)
-    const capturedHosts = [...new Set(Request.get(sessionID).map((r) => r.host).filter((h): h is string => Boolean(h)))]
+    const capturedHosts = [
+      ...new Set(
+        Request.get(sessionID)
+          .map((r) => r.host)
+          .filter((h): h is string => Boolean(h)),
+      ),
+    ]
     if (!ScopeGuard.check(originURL.hostname, capturedHosts).inScope) {
       return {
         title: "csrf_extract: refused (out of scope)",

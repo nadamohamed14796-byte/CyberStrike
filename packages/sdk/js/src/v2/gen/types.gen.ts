@@ -688,14 +688,6 @@ export type EventSessionCompacted = {
   }
 }
 
-export type EventFileWatcherUpdated = {
-  type: "file.watcher.updated"
-  properties: {
-    file: string
-    event: "add" | "change" | "unlink"
-  }
-}
-
 export type Request = {
   id: string
   session_id: string
@@ -743,6 +735,44 @@ export type EventRequestUpdated = {
   properties: {
     sessionID: string
     requests: Array<Request>
+  }
+}
+
+export type EventIntelUpdated = {
+  type: "intel.updated"
+  properties: {
+    sessionID: string
+    entryCount: number
+  }
+}
+
+export type EventFileWatcherUpdated = {
+  type: "file.watcher.updated"
+  properties: {
+    file: string
+    event: "add" | "change" | "unlink"
+  }
+}
+
+export type WebRetest = {
+  id: string
+  session_id: string
+  request_id: string
+  trigger_type: "new_role" | "new_object_value" | "new_credential"
+  trigger_source: string
+  status: "pending" | "processing" | "completed"
+  priority: "high" | "medium" | "low"
+  time: {
+    created: number
+    updated: number
+  }
+}
+
+export type EventWebRetestUpdated = {
+  type: "web_retest.updated"
+  properties: {
+    sessionID: string
+    queue: Array<WebRetest>
   }
 }
 
@@ -972,25 +1002,31 @@ export type EventWebRoleUpdated = {
   }
 }
 
-export type WebRetest = {
-  id: string
-  session_id: string
-  request_id: string
-  trigger_type: "new_role" | "new_object_value" | "new_credential"
-  trigger_source: string
-  status: "pending" | "processing" | "completed"
-  priority: "high" | "medium" | "low"
-  time: {
-    created: number
-    updated: number
-  }
-}
-
-export type EventWebRetestUpdated = {
-  type: "web_retest.updated"
+export type EventLearningSignal = {
+  type: "learning.signal"
   properties: {
-    sessionID: string
-    queue: Array<WebRetest>
+    signal: {
+      sessionID?: string
+      hook: string
+      signal: string
+      skill_name?: string
+      target?: string
+      agent?: string
+      outcome?: string
+      cwe_id?: string
+      category?: string
+      tags?: Array<string>
+      tech_stack?: Array<string>
+      evidence?: string
+      metadata?: {
+        [key: string]: unknown
+      }
+    }
+    routes: Array<{
+      name: string
+      score: number
+      reasons: Array<string>
+    }>
   }
 }
 
@@ -1060,14 +1096,6 @@ export type EventMcpBrowserOpenFailed = {
   properties: {
     mcpName: string
     url: string
-  }
-}
-
-export type EventIntelUpdated = {
-  type: "intel.updated"
-  properties: {
-    sessionID: string
-    entryCount: number
   }
 }
 
@@ -1251,8 +1279,10 @@ export type Event =
   | EventQuestionReplied
   | EventQuestionRejected
   | EventSessionCompacted
-  | EventFileWatcherUpdated
   | EventRequestUpdated
+  | EventIntelUpdated
+  | EventFileWatcherUpdated
+  | EventWebRetestUpdated
   | EventWebCredentialUpdated
   | EventSessionQueueStatus
   | EventSessionHackbrowserStatus
@@ -1263,14 +1293,13 @@ export type Event =
   | EventWebObjectUpdated
   | EventWebObjectValueUpdated
   | EventWebRoleUpdated
-  | EventWebRetestUpdated
+  | EventLearningSignal
   | EventTuiPromptAppend
   | EventTuiCommandExecute
   | EventTuiToastShow
   | EventTuiSessionSelect
   | EventMcpToolsChanged
   | EventMcpBrowserOpenFailed
-  | EventIntelUpdated
   | EventCommandExecuted
   | EventSessionCreated
   | EventSessionUpdated

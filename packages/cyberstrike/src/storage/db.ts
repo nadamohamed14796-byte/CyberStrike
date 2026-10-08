@@ -125,7 +125,9 @@ export namespace Database {
       time_created INTEGER NOT NULL,
       time_updated INTEGER NOT NULL
     )`)
-    sqlite.run("CREATE UNIQUE INDEX IF NOT EXISTS tool_learning_session_tool_signal_idx ON tool_learning(session_id, tool, signal)")
+    sqlite.run(
+      "CREATE UNIQUE INDEX IF NOT EXISTS tool_learning_session_tool_signal_idx ON tool_learning(session_id, tool, signal)",
+    )
     sqlite.run("CREATE INDEX IF NOT EXISTS tool_learning_tool_idx ON tool_learning(tool)")
     sqlite.run("CREATE INDEX IF NOT EXISTS tool_learning_signal_idx ON tool_learning(signal)")
     sqlite.run(`CREATE TABLE IF NOT EXISTS tool_learning_event (
@@ -145,22 +147,25 @@ export namespace Database {
   }
 
   function safeMigrationSQL(sqlite: BunDatabase, sql: string) {
-    return sql
-      .split(/-->\s*statement-breakpoint/gi)
-      .map((statement) => statement.trim())
-      .filter(Boolean)
-      .filter((statement) => {
-        const alter = /^ALTER TABLE [`"]?([A-Za-z0-9_]+)[`"]? ADD COLUMN [`"]?([A-Za-z0-9_]+)[`"]?/i.exec(statement)
-        if (!alter) return true
-        const [, table, column] = alter
-        return !tableExists(sqlite, table) || !tableColumns(sqlite, table).has(column)
-      })
-      .map((statement) => statement
-        .replace(/CREATE TABLE `/g, "CREATE TABLE IF NOT EXISTS `")
-        .replace(/CREATE INDEX `/g, "CREATE INDEX IF NOT EXISTS `")
-        .replace(/CREATE UNIQUE INDEX `/g, "CREATE UNIQUE INDEX IF NOT EXISTS `")
-      )
-      .join("\n--> statement-breakpoint\n") || "SELECT 1;"
+    return (
+      sql
+        .split(/-->\s*statement-breakpoint/gi)
+        .map((statement) => statement.trim())
+        .filter(Boolean)
+        .filter((statement) => {
+          const alter = /^ALTER TABLE [`"]?([A-Za-z0-9_]+)[`"]? ADD COLUMN [`"]?([A-Za-z0-9_]+)[`"]?/i.exec(statement)
+          if (!alter) return true
+          const [, table, column] = alter
+          return !tableExists(sqlite, table) || !tableColumns(sqlite, table).has(column)
+        })
+        .map((statement) =>
+          statement
+            .replace(/CREATE TABLE `/g, "CREATE TABLE IF NOT EXISTS `")
+            .replace(/CREATE INDEX `/g, "CREATE INDEX IF NOT EXISTS `")
+            .replace(/CREATE UNIQUE INDEX `/g, "CREATE UNIQUE INDEX IF NOT EXISTS `"),
+        )
+        .join("\n--> statement-breakpoint\n") || "SELECT 1;"
+    )
   }
   function reconcile(sqlite: BunDatabase) {
     ensureSignalQueueTable(sqlite)

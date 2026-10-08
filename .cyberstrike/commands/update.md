@@ -13,16 +13,16 @@ Inspect the actual implementation before making changes.
 
 Review:
 
-* learning engine and persistence
-* skill registry and skill discovery
-* derived skill indexes
-* skill routing and selection logic
-* scope enforcement
-* runtime preflight/guards
-* false-positive and signal handling
-* report/triage hooks
-* relevant configuration and command wiring
-* existing tests and test configuration
+- learning engine and persistence
+- skill registry and skill discovery
+- derived skill indexes
+- skill routing and selection logic
+- scope enforcement
+- runtime preflight/guards
+- false-positive and signal handling
+- report/triage hooks
+- relevant configuration and command wiring
+- existing tests and test configuration
 
 Do not assume that documented behavior is implemented. Verify it against the actual code.
 
@@ -32,10 +32,10 @@ Determine how CyberStrike currently discovers and indexes skills.
 
 If the repository provides a supported command, API, script, or runtime mechanism for rebuilding derived indexes:
 
-* use the supported mechanism
-* verify the generated index matches the current skill set
-* detect missing, stale, duplicate, or unreachable skill entries
-* verify routing metadata is consistent with the discovered skills
+- use the supported mechanism
+- verify the generated index matches the current skill set
+- detect missing, stale, duplicate, or unreachable skill entries
+- verify routing metadata is consistent with the discovered skills
 
 Do not invent unsupported commands or silently create a second indexing mechanism.
 
@@ -59,14 +59,14 @@ Verify that learning state is stored separately from reference skills.
 
 Check:
 
-* SQLite/database location
-* signal persistence
-* learning records
-* false-positive knowledge
-* target/context state where applicable
-* initialization and migration behavior
-* persistence across process/session boundaries
-* handling of missing or corrupted learning data
+- SQLite/database location
+- signal persistence
+- learning records
+- false-positive knowledge
+- target/context state where applicable
+- initialization and migration behavior
+- persistence across process/session boundaries
+- handling of missing or corrupted learning data
 
 Learning must improve future decisions without modifying the source skill definitions.
 
@@ -94,14 +94,14 @@ learning update
 
 Check for:
 
-* unreachable skills
-* incorrect routing
-* duplicate routing
-* missing routing metadata
-* overly broad matching
-* routing without sufficient context
-* learning signals that incorrectly influence routing
-* routing decisions that bypass scope enforcement
+- unreachable skills
+- incorrect routing
+- duplicate routing
+- missing routing metadata
+- overly broad matching
+- routing without sufficient context
+- learning signals that incorrectly influence routing
+- routing decisions that bypass scope enforcement
 
 Fix confirmed implementation problems rather than merely documenting them.
 
@@ -111,14 +111,14 @@ Ensure scope validation occurs before actions that can interact with targets.
 
 Test:
 
-* explicitly allowed targets
-* explicitly excluded targets
-* wildcard scope
-* subdomain scope
-* malformed scope
-* out-of-scope targets
-* redirects/cross-host transitions where applicable
-* tool execution paths that could bypass the normal scope guard
+- explicitly allowed targets
+- explicitly excluded targets
+- wildcard scope
+- subdomain scope
+- malformed scope
+- out-of-scope targets
+- redirects/cross-host transitions where applicable
+- tool execution paths that could bypass the normal scope guard
 
 Any execution path capable of bypassing scope enforcement must be treated as a correctness issue.
 
@@ -128,13 +128,13 @@ Inspect the path from validated evidence to report/triage handling.
 
 Verify that:
 
-* findings are not reported solely from weak signals
-* evidence is preserved
-* duplicate findings can be identified
-* false positives do not automatically become findings
-* scope information is retained
-* relevant target/provenance information is preserved
-* report hooks receive the expected data shape
+- findings are not reported solely from weak signals
+- evidence is preserved
+- duplicate findings can be identified
+- false positives do not automatically become findings
+- scope information is retained
+- relevant target/provenance information is preserved
+- report hooks receive the expected data shape
 
 Do not weaken validation merely to make reporting tests pass.
 
@@ -144,25 +144,25 @@ Run the narrowest relevant tests first, then the broader test suite where practi
 
 At minimum, cover:
 
-* skill discovery
-* skill indexing
-* learning
-* learning persistence
-* routing
-* scope enforcement
-* report/triage hooks
-* relevant integration tests
+- skill discovery
+- skill indexing
+- learning
+- learning persistence
+- routing
+- scope enforcement
+- report/triage hooks
+- relevant integration tests
 
 Do not claim success without actual test output.
 
 Clearly distinguish:
 
-* passed
-* failed
-* skipped
-* unavailable
-* blocked by missing prerequisites
-* blocked by external/network dependencies
+- passed
+- failed
+- skipped
+- unavailable
+- blocked by missing prerequisites
+- blocked by external/network dependencies
 
 ## 9. Repair and Re-Verify
 
@@ -182,14 +182,14 @@ Do not stop after the first successful test run if the repair exposes related fa
 
 Before finishing, verify:
 
-* reference skills remain unchanged
-* learning data remains isolated
-* derived indexes are synchronized
-* routing points to valid skills
-* scope enforcement is active on relevant execution paths
-* report/triage hooks remain connected
-* tests reflect the current implementation
-* no temporary debugging code or generated junk was left behind
+- reference skills remain unchanged
+- learning data remains isolated
+- derived indexes are synchronized
+- routing points to valid skills
+- scope enforcement is active on relevant execution paths
+- report/triage hooks remain connected
+- tests reflect the current implementation
+- no temporary debugging code or generated junk was left behind
 
 ## 11. Final Report
 

@@ -112,8 +112,14 @@ export function validateSkillSet(
     .map(([name]) => name)
     .sort()
 
-  const invalidSkills = items.filter((item) => !item.name).map((item) => item.path).sort()
-  const missingDescriptions = items.filter((item) => !item.description).map((item) => item.relativePath ?? item.path).sort()
+  const invalidSkills = items
+    .filter((item) => !item.name)
+    .map((item) => item.path)
+    .sort()
+  const missingDescriptions = items
+    .filter((item) => !item.description)
+    .map((item) => item.relativePath ?? item.path)
+    .sort()
 
   const brokenChains: ValidationReport["brokenChains"] = []
   const brokenSeverityBoosts: ValidationReport["brokenSeverityBoosts"] = []
@@ -134,12 +140,7 @@ export function validateSkillSet(
 
     for (const prerequisite of item.prerequisites) {
       const normalized = prerequisite.trim()
-      if (
-        normalized &&
-        !names.has(normalized) &&
-        !aliases.has(normalized) &&
-        !isExternalReference(normalized)
-      ) {
+      if (normalized && !names.has(normalized) && !aliases.has(normalized) && !isExternalReference(normalized)) {
         unknownPrerequisites.push({ skill: item.name, prerequisite: normalized })
       }
     }
@@ -161,10 +162,7 @@ export function validateSkillSet(
       const rootResolved = path.resolve(skillRoot)
       const candidate: string | undefined = safePath === undefined ? undefined : path.resolve(rootResolved, safePath)
 
-      if (
-        !candidate ||
-        (candidate !== rootResolved && !candidate.startsWith(rootResolved + path.sep))
-      ) {
+      if (!candidate || (candidate !== rootResolved && !candidate.startsWith(rootResolved + path.sep))) {
         registryPathMismatches.push({ skill: entry.name, path: entry.path })
         continue
       }
@@ -295,19 +293,28 @@ async function main() {
   if (warnings) {
     console.warn(
       "WARN skill metadata: " +
-        "duplicates=" + report.duplicateNames.length +
-        " brokenChains=" + report.brokenChains.length +
-        " brokenSeverity=" + report.brokenSeverityBoosts.length +
-        " unknownPrerequisites=" + report.unknownPrerequisites.length +
-        " orphanRegistry=" + report.orphanRegistryEntries.length,
+        "duplicates=" +
+        report.duplicateNames.length +
+        " brokenChains=" +
+        report.brokenChains.length +
+        " brokenSeverity=" +
+        report.brokenSeverityBoosts.length +
+        " unknownPrerequisites=" +
+        report.unknownPrerequisites.length +
+        " orphanRegistry=" +
+        report.orphanRegistryEntries.length,
     )
   }
 
   console.log(
-    "skills=" + report.skillFiles +
-      " unique_names=" + report.uniqueNames +
-      " registry_entries=" + report.registryEntries +
-      " unindexed_names=" + report.unindexedSkillNames.length,
+    "skills=" +
+      report.skillFiles +
+      " unique_names=" +
+      report.uniqueNames +
+      " registry_entries=" +
+      report.registryEntries +
+      " unindexed_names=" +
+      report.unindexedSkillNames.length,
   )
 
   if (hardErrors) process.exit(1)

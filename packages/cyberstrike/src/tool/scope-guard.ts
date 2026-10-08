@@ -86,7 +86,7 @@ function ipInCIDR(ip: string, cidr: string): boolean {
   const [range, bitsRaw] = cidr.split("/")
   const bits = Number(bitsRaw)
   if (!Number.isInteger(bits) || bits < 0 || bits > 32) return false
-  const mask = bits === 0 ? 0 : (~((1 << (32 - bits)) - 1) >>> 0)
+  const mask = bits === 0 ? 0 : ~((1 << (32 - bits)) - 1) >>> 0
   const ipNum = ipToNum(ip)
   const rangeNum = ipToNum(range)
   if (ipNum === undefined || rangeNum === undefined) return false
@@ -100,7 +100,10 @@ function ipToNum(ip: string): number | undefined {
 }
 
 export namespace ScopeGuard {
-  export function check(target: string, scopeItems: string[]): {
+  export function check(
+    target: string,
+    scopeItems: string[],
+  ): {
     inScope: boolean
     results: Array<{ scope: string; matches: boolean; reason: string }>
   } {

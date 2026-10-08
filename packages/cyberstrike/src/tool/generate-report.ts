@@ -94,7 +94,12 @@ export const GenerateReportTool = Tool.define("generate_report", {
 
     if (params.format === "json") {
       const payload = {
-        session: { id: rootSession, title: session.title, created: session.time.created, updated: session.time.updated },
+        session: {
+          id: rootSession,
+          title: session.title,
+          created: session.time.created,
+          updated: session.time.updated,
+        },
         findings: vulns,
         coverage,
         assetCoverage,
@@ -107,7 +112,15 @@ export const GenerateReportTool = Tool.define("generate_report", {
       return {
         title: `Report JSON: ${vulns.length} findings`,
         output: JSON.stringify(payload, null, 2),
-        metadata: { format: params.format, findingCount: vulns.length, criticalCount: breakdown.critical, highCount: breakdown.high, coveragePercent: coverage.coveragePercent, methodologyPercent: state.completionPercent, activeChains: chains.filter((c) => c.status !== "disproven").length },
+        metadata: {
+          format: params.format,
+          findingCount: vulns.length,
+          criticalCount: breakdown.critical,
+          highCount: breakdown.high,
+          coveragePercent: coverage.coveragePercent,
+          methodologyPercent: state.completionPercent,
+          activeChains: chains.filter((c) => c.status !== "disproven").length,
+        },
       }
     }
 

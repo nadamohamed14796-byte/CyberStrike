@@ -5,7 +5,15 @@ import { SessionTable } from "./session.sql"
 import { Identifier } from "../id/id"
 
 export namespace TargetMemory {
-  export type Kind = "endpoint" | "javascript" | "asset" | "technology" | "parameter" | "finding" | "rejected-finding" | "technique"
+  export type Kind =
+    | "endpoint"
+    | "javascript"
+    | "asset"
+    | "technology"
+    | "parameter"
+    | "finding"
+    | "rejected-finding"
+    | "technique"
 
   export interface Info {
     id: string
@@ -25,7 +33,16 @@ export namespace TargetMemory {
 
   function mergeProvenance(previous: Record<string, unknown> | null | undefined, next: Record<string, unknown>) {
     const merged = { ...(previous ?? {}), ...next }
-    for (const key of ["credential_ids", "request_ids", "source_request_ids", "source_memory_ids", "source_tools", "source_call_ids", "source_finding_ids", "extracted_urls"]) {
+    for (const key of [
+      "credential_ids",
+      "request_ids",
+      "source_request_ids",
+      "source_memory_ids",
+      "source_tools",
+      "source_call_ids",
+      "source_finding_ids",
+      "extracted_urls",
+    ]) {
       const values = [
         ...(Array.isArray(previous?.[key]) ? previous[key].filter((x) => typeof x === "string") : []),
         ...(Array.isArray(next[key]) ? next[key].filter((x) => typeof x === "string") : []),
@@ -44,42 +61,56 @@ export namespace TargetMemory {
     metadata: Record<string, unknown>
   }) {
     return Database.use((db) => {
-      const existing = db.select().from(TargetMemoryTable).where(and(
-        eq(TargetMemoryTable.project_id, input.projectID),
-        eq(TargetMemoryTable.kind, input.kind),
-        input.method === null ? isNull(TargetMemoryTable.method) : eq(TargetMemoryTable.method, input.method),
-        eq(TargetMemoryTable.url, input.url),
-      )).get()
+      const existing = db
+        .select()
+        .from(TargetMemoryTable)
+        .where(
+          and(
+            eq(TargetMemoryTable.project_id, input.projectID),
+            eq(TargetMemoryTable.kind, input.kind),
+            input.method === null ? isNull(TargetMemoryTable.method) : eq(TargetMemoryTable.method, input.method),
+            eq(TargetMemoryTable.url, input.url),
+          ),
+        )
+        .get()
       if (existing) {
-        db.update(TargetMemoryTable).set({
-          request_id: existing.request_id ?? (typeof input.metadata.source_request_id === "string" ? input.metadata.source_request_id : null),
-          metadata: mergeProvenance(existing.metadata, input.metadata),
-          time_updated: Date.now(),
-        }).where(eq(TargetMemoryTable.id, existing.id)).run()
+        db.update(TargetMemoryTable)
+          .set({
+            request_id:
+              existing.request_id ??
+              (typeof input.metadata.source_request_id === "string" ? input.metadata.source_request_id : null),
+            metadata: mergeProvenance(existing.metadata, input.metadata),
+            time_updated: Date.now(),
+          })
+          .where(eq(TargetMemoryTable.id, existing.id))
+          .run()
         return false
       }
-      db.insert(TargetMemoryTable).values({
-        id: Identifier.ascending("target_memory"),
-        project_id: input.projectID,
-        kind: input.kind,
-        asset: input.asset,
-        method: input.method,
-        url: input.url,
-        metadata: input.metadata,
-        time_created: Date.now(),
-        time_updated: Date.now(),
-      }).run()
+      db.insert(TargetMemoryTable)
+        .values({
+          id: Identifier.ascending("target_memory"),
+          project_id: input.projectID,
+          kind: input.kind,
+          asset: input.asset,
+          method: input.method,
+          url: input.url,
+          metadata: input.metadata,
+          time_created: Date.now(),
+          time_updated: Date.now(),
+        })
+        .run()
       return true
     })
   }
 
   function projectIDForSession(sessionID: string): string | undefined {
-    return Database.use((db) =>
-      db
-        .select({ project_id: SessionTable.project_id })
-        .from(SessionTable)
-        .where(eq(SessionTable.id, sessionID))
-        .get()?.project_id,
+    return Database.use(
+      (db) =>
+        db
+          .select({ project_id: SessionTable.project_id })
+          .from(SessionTable)
+          .where(eq(SessionTable.id, sessionID))
+          .get()?.project_id,
     )
   }
 
@@ -91,9 +122,10 @@ export namespace TargetMemory {
     const port = request.port ? `:${request.port}` : ""
     const path = request.canonical_path || request.normalized_path || "/"
     const url = `${scheme}://${request.host}${port}${path.startsWith("/") ? path : "/" + path}`
-    const kind: Kind = request.response_content_type && /(javascript|ecmascript)/i.test(request.response_content_type)
-      ? "javascript"
-      : "endpoint"
+    const kind: Kind =
+      request.response_content_type && /(javascript|ecmascript)/i.test(request.response_content_type)
+        ? "javascript"
+        : "endpoint"
 
     const id = Identifier.ascending("target_memory")
     const now = Date.now()
@@ -101,21 +133,24 @@ export namespace TargetMemory {
       const existing = db
         .select()
         .from(TargetMemoryTable)
-        .where(and(
-          eq(TargetMemoryTable.project_id, projectID),
-          eq(TargetMemoryTable.kind, kind),
-          eq(TargetMemoryTable.method, request.method),
-          eq(TargetMemoryTable.url, url),
-        ))
+        .where(
+          and(
+            eq(TargetMemoryTable.project_id, projectID),
+            eq(TargetMemoryTable.kind, kind),
+            eq(TargetMemoryTable.method, request.method),
+            eq(TargetMemoryTable.url, url),
+          ),
+        )
         .get()
 
       const previous = (existing?.metadata as Record<string, unknown> | null) ?? {}
       const previousCredentialIDs = Array.isArray(previous.credential_ids)
         ? previous.credential_ids.filter((value): value is string => typeof value === "string")
         : []
-      const credentialIDs = request.credential_id && !previousCredentialIDs.includes(request.credential_id)
-        ? [...previousCredentialIDs, request.credential_id]
-        : previousCredentialIDs
+      const credentialIDs =
+        request.credential_id && !previousCredentialIDs.includes(request.credential_id)
+          ? [...previousCredentialIDs, request.credential_id]
+          : previousCredentialIDs
 
       if (existing) {
         db.update(TargetMemoryTable)
@@ -130,10 +165,14 @@ export namespace TargetMemory {
               template_id: request.template_id ?? previous.template_id ?? null,
               credential_id: request.credential_id ?? previous.credential_id ?? null,
               credential_ids: credentialIDs,
-              request_ids: Array.from(new Set([
-                ...(Array.isArray(previous.request_ids) ? previous.request_ids.filter((value): value is string => typeof value === "string") : []),
-                request.id,
-              ])),
+              request_ids: Array.from(
+                new Set([
+                  ...(Array.isArray(previous.request_ids)
+                    ? previous.request_ids.filter((value): value is string => typeof value === "string")
+                    : []),
+                  request.id,
+                ]),
+              ),
             },
             time_updated: now,
           })
@@ -176,9 +215,12 @@ export namespace TargetMemory {
   ): number {
     const projectID = projectIDForSession(sessionID)
     if (!projectID) return 0
-    const raw = typeof input.output === "string"
-      ? input.output
-      : input.output && typeof input.output === "object" ? JSON.stringify(input.output) : ""
+    const raw =
+      typeof input.output === "string"
+        ? input.output
+        : input.output && typeof input.output === "object"
+          ? JSON.stringify(input.output)
+          : ""
     if (!raw) return 0
 
     const urls = new Set<string>()
@@ -219,28 +261,36 @@ export namespace TargetMemory {
     return stored
   }
 
-
-  export function rememberKnowledge(sessionID: string, input: {
-    kind: Exclude<Kind, "endpoint" | "javascript">
-    asset: string
-    url?: string
-    metadata?: Record<string, unknown>
-    confidence?: number
-  }): void {
+  export function rememberKnowledge(
+    sessionID: string,
+    input: {
+      kind: Exclude<Kind, "endpoint" | "javascript">
+      asset: string
+      url?: string
+      metadata?: Record<string, unknown>
+      confidence?: number
+    },
+  ): void {
     const projectID = projectIDForSession(sessionID)
     if (!projectID || !input.asset.trim()) return
     const now = Date.now()
     const url = input.url ?? (input.kind === "asset" ? input.asset : "memory://" + input.kind + "/" + input.asset)
-    Database.use((db) => db.insert(TargetMemoryTable).values({
-      id: Identifier.ascending("target_memory"),
-      project_id: projectID,
-      kind: input.kind,
-      asset: input.asset.trim().toLowerCase(),
-      url,
-      metadata: { ...(input.metadata ?? {}), confidence: input.confidence ?? 50 },
-      time_created: now,
-      time_updated: now,
-    }).onConflictDoNothing().run())
+    Database.use((db) =>
+      db
+        .insert(TargetMemoryTable)
+        .values({
+          id: Identifier.ascending("target_memory"),
+          project_id: projectID,
+          kind: input.kind,
+          asset: input.asset.trim().toLowerCase(),
+          url,
+          metadata: { ...(input.metadata ?? {}), confidence: input.confidence ?? 50 },
+          time_created: now,
+          time_updated: now,
+        })
+        .onConflictDoNothing()
+        .run(),
+    )
   }
 
   /** Promote conservative endpoint/parameter references found in stored JavaScript. */
@@ -262,7 +312,11 @@ export namespace TargetMemory {
       for (const m of content.matchAll(relative)) refs.add(m[1])
       for (const ref of refs) {
         let url: URL
-        try { url = new URL(ref, js.url) } catch { continue }
+        try {
+          url = new URL(ref, js.url)
+        } catch {
+          continue
+        }
         if (url.protocol !== "http:" && url.protocol !== "https:") continue
         try {
           upsertDiscovery({
@@ -322,7 +376,11 @@ export namespace TargetMemory {
     for (const js of javascript) {
       if (js.request_id) continue
       let parsed: URL
-      try { parsed = new URL(js.url) } catch { continue }
+      try {
+        parsed = new URL(js.url)
+      } catch {
+        continue
+      }
       const match = requests.find((request) => {
         if (!request.host || request.host.toLowerCase() !== parsed.host.toLowerCase()) return false
         const requestPath = request.canonical_path || request.normalized_path
@@ -332,34 +390,49 @@ export namespace TargetMemory {
           : /\.m?js$/i.test(parsed.pathname)
       })
       if (!match) continue
-      Database.use((db) => db.update(TargetMemoryTable)
-        .set({
-          request_id: match.id,
-          page_url: match.page_url ?? null,
-          content_type: match.response_content_type ?? js.content_type ?? null,
-          content: match.processed_response ?? js.content ?? null,
-          metadata: {
-            ...(js.metadata ?? {}),
+      Database.use((db) =>
+        db
+          .update(TargetMemoryTable)
+          .set({
             request_id: match.id,
-            request_ids: Array.from(new Set([
-              ...(Array.isArray(js.metadata?.request_ids) ? js.metadata.request_ids.filter((value) => typeof value === "string") : []),
-              match.id,
-            ])),
-            source_request_ids: Array.from(new Set([
-              ...(Array.isArray(js.metadata?.source_request_ids) ? js.metadata.source_request_ids.filter((value) => typeof value === "string") : []),
-              match.id,
-            ])),
-            credential_id: match.credential_id ?? null,
-            credential_ids: Array.from(new Set([
-              ...(Array.isArray(js.metadata?.credential_ids) ? js.metadata.credential_ids.filter((value) => typeof value === "string") : []),
-              ...(match.credential_id ? [match.credential_id] : []),
-            ])),
-            correlated: true,
-          },
-          time_updated: Date.now(),
-        })
-        .where(and(eq(TargetMemoryTable.id, js.id), eq(TargetMemoryTable.project_id, projectID)))
-        .run())
+            page_url: match.page_url ?? null,
+            content_type: match.response_content_type ?? js.content_type ?? null,
+            content: match.processed_response ?? js.content ?? null,
+            metadata: {
+              ...(js.metadata ?? {}),
+              request_id: match.id,
+              request_ids: Array.from(
+                new Set([
+                  ...(Array.isArray(js.metadata?.request_ids)
+                    ? js.metadata.request_ids.filter((value) => typeof value === "string")
+                    : []),
+                  match.id,
+                ]),
+              ),
+              source_request_ids: Array.from(
+                new Set([
+                  ...(Array.isArray(js.metadata?.source_request_ids)
+                    ? js.metadata.source_request_ids.filter((value) => typeof value === "string")
+                    : []),
+                  match.id,
+                ]),
+              ),
+              credential_id: match.credential_id ?? null,
+              credential_ids: Array.from(
+                new Set([
+                  ...(Array.isArray(js.metadata?.credential_ids)
+                    ? js.metadata.credential_ids.filter((value) => typeof value === "string")
+                    : []),
+                  ...(match.credential_id ? [match.credential_id] : []),
+                ]),
+              ),
+              correlated: true,
+            },
+            time_updated: Date.now(),
+          })
+          .where(and(eq(TargetMemoryTable.id, js.id), eq(TargetMemoryTable.project_id, projectID)))
+          .run(),
+      )
       linked++
     }
     return linked
@@ -376,11 +449,14 @@ export namespace TargetMemory {
 
   export function list(projectID: string, kind?: Kind, limit = 200): Info[] {
     const rows = Database.use((db) => {
-      const query = db.select().from(TargetMemoryTable).where(
-        kind
-          ? and(eq(TargetMemoryTable.project_id, projectID), eq(TargetMemoryTable.kind, kind))
-          : eq(TargetMemoryTable.project_id, projectID),
-      )
+      const query = db
+        .select()
+        .from(TargetMemoryTable)
+        .where(
+          kind
+            ? and(eq(TargetMemoryTable.project_id, projectID), eq(TargetMemoryTable.kind, kind))
+            : eq(TargetMemoryTable.project_id, projectID),
+        )
       return query.orderBy(desc(TargetMemoryTable.time_updated)).limit(limit).all()
     })
     return rows.map((r) => ({
@@ -395,7 +471,10 @@ export namespace TargetMemory {
       content_type: r.content_type ?? undefined,
       content: r.content ?? undefined,
       metadata: (r.metadata as Record<string, unknown>) ?? undefined,
-      confidence: typeof (r.metadata as Record<string, unknown> | null)?.confidence === "number" ? (r.metadata as Record<string, unknown>).confidence as number : undefined,
+      confidence:
+        typeof (r.metadata as Record<string, unknown> | null)?.confidence === "number"
+          ? ((r.metadata as Record<string, unknown>).confidence as number)
+          : undefined,
       time: { created: r.time_created, updated: r.time_updated },
     }))
   }

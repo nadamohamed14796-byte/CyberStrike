@@ -59,7 +59,9 @@ export namespace Tool {
     const target =
       typeof value.target === "string"
         ? value.target
-        : value.target && typeof value.target === "object" && typeof (value.target as Record<string, unknown>).url === "string"
+        : value.target &&
+            typeof value.target === "object" &&
+            typeof (value.target as Record<string, unknown>).url === "string"
           ? String((value.target as Record<string, unknown>).url)
           : typeof value.url === "string"
             ? value.url
@@ -76,12 +78,16 @@ export namespace Tool {
   async function verifyExecutionScope(args: unknown, requireExplicitScope = false): Promise<boolean | undefined> {
     if (!args || typeof args !== "object" || Array.isArray(args)) return undefined
     const value = args as Record<string, unknown>
-    const items = Array.isArray(value.scope_items) ? value.scope_items.filter((x): x is string => typeof x === "string") : []
+    const items = Array.isArray(value.scope_items)
+      ? value.scope_items.filter((x): x is string => typeof x === "string")
+      : []
     const identity = executionIdentity(args)
     if (!identity.target) return typeof value.scope_verified === "boolean" ? value.scope_verified : undefined
     if (!items.length) {
       if (requireExplicitScope && value.authorized_active_testing === true) {
-        throw new Error("Active testing requires explicit scope_items; scope_verified cannot substitute for the programmatic scope check.")
+        throw new Error(
+          "Active testing requires explicit scope_items; scope_verified cannot substitute for the programmatic scope check.",
+        )
       }
       return undefined
     }
@@ -116,9 +122,13 @@ export namespace Tool {
           }
 
           const identity = executionIdentity(args)
-          const runToolID = id === "external_tool_runner" && typeof args === "object" && args && typeof (args as Record<string, unknown>).tool_id === "string"
-            ? String((args as Record<string, unknown>).tool_id)
-            : id
+          const runToolID =
+            id === "external_tool_runner" &&
+            typeof args === "object" &&
+            args &&
+            typeof (args as Record<string, unknown>).tool_id === "string"
+              ? String((args as Record<string, unknown>).tool_id)
+              : id
           const durableExecution = Boolean(ctx.sessionID && ctx.extra?.model)
           let scopeVerified: boolean | undefined
           let run: ReturnType<typeof ToolRunRecord.begin> | undefined
@@ -127,15 +137,15 @@ export namespace Tool {
             scopeVerified = await verifyExecutionScope(args, id === "external_tool_runner")
             if (durableExecution) {
               run = ToolRunRecord.begin({
-              sessionID: ctx.sessionID,
-              toolID: runToolID,
-              toolName: runToolID,
-              target: identity.target,
-              endpoint: identity.endpoint,
-              parameters: args as Record<string, unknown>,
-              callID: ctx.callID,
-              scopeVerified,
-              agent: ctx.agent,
+                sessionID: ctx.sessionID,
+                toolID: runToolID,
+                toolName: runToolID,
+                target: identity.target,
+                endpoint: identity.endpoint,
+                parameters: args as Record<string, unknown>,
+                callID: ctx.callID,
+                scopeVerified,
+                agent: ctx.agent,
                 metadata: { messageID: ctx.messageID },
               })
             }
@@ -165,10 +175,10 @@ export namespace Tool {
               ToolRunRecord.finish({
                 id: run.id,
                 status: aborted ? "cancelled" : timedOut ? "timed_out" : "completed",
-              exitCode: typeof resultMetadata.exit === "number" ? resultMetadata.exit : undefined,
-              stdout: typeof resultMetadata.stdout === "string" ? resultMetadata.stdout : undefined,
-              stderr: typeof resultMetadata.stderr === "string" ? resultMetadata.stderr : undefined,
-              resultSummary: result.output,
+                exitCode: typeof resultMetadata.exit === "number" ? resultMetadata.exit : undefined,
+                stdout: typeof resultMetadata.stdout === "string" ? resultMetadata.stdout : undefined,
+                stderr: typeof resultMetadata.stderr === "string" ? resultMetadata.stderr : undefined,
+                resultSummary: result.output,
                 metadata: { ...resultMetadata, scopeVerified },
               })
             }
@@ -185,8 +195,14 @@ export namespace Tool {
               ToolArtifact.record({
                 sessionID: ctx.sessionID,
                 callID: ctx.callID,
-                requestID: typeof args === "object" && args && "request_id" in args ? String((args as any).request_id) : undefined,
-                credentialID: typeof args === "object" && args && "credential_id" in args ? String((args as any).credential_id) : undefined,
+                requestID:
+                  typeof args === "object" && args && "request_id" in args
+                    ? String((args as any).request_id)
+                    : undefined,
+                credentialID:
+                  typeof args === "object" && args && "credential_id" in args
+                    ? String((args as any).credential_id)
+                    : undefined,
                 tool: runToolID,
                 target: identity.target,
                 input: args,
@@ -196,8 +212,12 @@ export namespace Tool {
                   ...(run ? { runID: run.id, runKey: run.runKey } : {}),
                   scopeVerified,
                   agent: ctx.agent,
-                  ...(typeof result.metadata.target_workspace === "string" ? { target_workspace: result.metadata.target_workspace } : {}),
-                  ...(typeof result.metadata.session_workspace === "string" ? { session_workspace: result.metadata.session_workspace } : {}),
+                  ...(typeof result.metadata.target_workspace === "string"
+                    ? { target_workspace: result.metadata.target_workspace }
+                    : {}),
+                  ...(typeof result.metadata.session_workspace === "string"
+                    ? { session_workspace: result.metadata.session_workspace }
+                    : {}),
                 },
               })
               const { Learning } = await import("../learning/learning")
@@ -259,7 +279,11 @@ export namespace Tool {
                   metadata: { scopeVerified },
                 })
               } catch (finishError) {
-                log.error("failed to persist terminal tool-run state", { tool: id, runID: run.id, error: String(finishError) })
+                log.error("failed to persist terminal tool-run state", {
+                  tool: id,
+                  runID: run.id,
+                  error: String(finishError),
+                })
               }
             }
             throw error
