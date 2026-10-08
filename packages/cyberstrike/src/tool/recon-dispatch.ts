@@ -28,14 +28,7 @@ export namespace ReconDispatch {
    */
   export function next(input: Input) {
     const planned = planReconTools(input)
-    const artifacts = ToolArtifact.list(input.sessionID, 500)
     const maxAttempts = Math.max(1, Math.min(20, input.max_attempts ?? 1))
-    const attempts = new Map<string, number>()
-    for (const artifact of artifacts) {
-      const k = key(artifact.tool, artifact.target, artifact.signal ?? "")
-      attempts.set(k, (attempts.get(k) ?? 0) + 1)
-    }
-    const seen = new Set(artifacts.map((item) => key(item.tool, item.target, item.signal ?? "")))
 
     const target = input.target
     const scope = target && input.scope_items?.length ? ScopeGuard.check(target, input.scope_items) : undefined
@@ -43,9 +36,10 @@ export namespace ReconDispatch {
     const scopeAllowed = scope?.inScope === true
     if (target && input.scope_items?.length && scope?.inScope === false) return []
     const fresh = planned.filter((tool) => {
-      const k = key(tool.id, target, input.signal)
-      if (seen.has(k) && !input.retry) return false
-      if ((attempts.get(k) ?? 0) >= maxAttempts) return false
+      const artifacts = ToolArtifact.byExecutionKey(input.sessionID, tool.id, target, input.signal.trim().toLowerCase())
+      const attempts = artifacts.length
+      if (attempts > 0 && !input.retry) return false
+      if (attempts >= maxAttempts) return false
 
       const active = tool.risk !== "passive"
       const authorizationRequired = tool.risk === "active-test" || tool.risk === "high-impact"
