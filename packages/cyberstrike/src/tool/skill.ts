@@ -44,7 +44,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
     cwe: z.string().optional().describe("CWE ID filter (for search action)"),
     category: z.string().optional().describe("Category filter (for search action)"),
     loaded: z.boolean().optional().describe("For list action: only show currently loaded skills"),
-    limit: z.number().int().min(1).max(200).default(100).describe("Maximum skills/suggestions to return"),
+    limit: z.number().int().min(1).max(200).optional().describe("Maximum skills/suggestions to return (default 100)"),
     findings: z
       .array(
         z.object({
@@ -65,6 +65,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
       await SkillIndex.ensureBuilt()
 
       const agentKey = `${ctx.sessionID}:${ctx.agent ?? ""}`
+      const resultLimit = Math.min(params.limit ?? 100, 200)
       if (!accessibleCache.has(agentKey)) {
         const skills = await Skill.all()
         const agentInfo = await Agent.get(ctx.agent)
@@ -101,7 +102,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
           }
         }
         const all = [...accessibleSkills].sort((a, b) => a.name.localeCompare(b.name))
-        const shown = all.slice(0, params.limit)
+        const shown = all.slice(0, resultLimit)
         return {
           title: `${all.length} skills available${shown.length < all.length ? ` (showing ${shown.length})` : ""}`,
           output: [
@@ -193,7 +194,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
 
       if (params.action === "suggest") {
         if (!params.findings?.length) throw new Error("Findings required for suggestions")
-        const suggestions = SkillContext.suggest(params.findings, ctx.sessionID, params.limit)
+        const suggestions = SkillContext.suggest(params.findings, ctx.sessionID, resultLimit)
         if (suggestions.length === 0)
           return {
             title: "No suggestions",
