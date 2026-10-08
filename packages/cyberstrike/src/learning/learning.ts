@@ -7,7 +7,6 @@ import { BusEvent } from "../bus/bus-event"
 import { LearningSignalTable } from "./learning.sql"
 import { LearningRouter, type LearningHook, type LearningSignal, type RoutedSkill } from "./router"
 import { SkillIndex } from "../skill/index-engine"
-import { planReconTools } from "../tool/recon-toolchain"
 import { ReconDispatch } from "../tool/recon-dispatch"
 import { ReferenceLearning } from "./reference"
 import { SignalQueue } from "../tool/signal-queue"
@@ -15,7 +14,7 @@ import { ToolLearning } from "./tool-learning"
 import { Log } from "../util/log"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
-const sessionNextTools = new Map<string, ReturnType<typeof planReconTools>>()
+const sessionNextTools = new Map<string, ReturnType<typeof ReconDispatch.next>>()
 const MAX_SESSION_ROUTES = 256
 const log = Log.create({ service: "learning" })
 
@@ -32,6 +31,12 @@ export namespace Learning {
           target: z.string().optional(),
           agent: z.string().optional(),
           outcome: z.string().optional(),
+          cwe_id: z.string().optional(),
+          category: z.string().optional(),
+          tags: z.array(z.string()).optional(),
+          tech_stack: z.array(z.string()).optional(),
+          evidence: z.string().optional(),
+          metadata: z.record(z.string(), z.unknown()).optional(),
         }),
         routes: z.array(
           z.object({
@@ -56,7 +61,7 @@ export namespace Learning {
 
   export async function emit(signal: LearningSignal): Promise<RoutedSkill[]> {
     let routes: RoutedSkill[] = []
-    let nextTools: ReturnType<typeof planReconTools> = []
+    let nextTools: ReturnType<typeof ReconDispatch.next> = []
 
     try {
       await SkillIndex.ensureBuilt()
@@ -66,12 +71,15 @@ export namespace Learning {
     }
 
     try {
-      const activeAuthorized = signal.metadata?.authorized_active_testing === true
-      nextTools = ReconDispatch.next({
-        signal: signal.signal,
-        target: signal.target,
-        authorized_active_testing: activeAuthorized,
-      })
+      if (signal.sessionID) {
+        const activeAuthorized = signal.metadata?.authorized_active_testing === true
+        nextTools = ReconDispatch.next({
+          sessionID: signal.sessionID,
+          signal: signal.signal,
+          target: signal.target,
+          authorized_active_testing: activeAuthorized,
+        })
+      }
     } catch (error) {
       log.warn("recon dispatch failed", { error: String(error), signal: signal.signal })
     }
