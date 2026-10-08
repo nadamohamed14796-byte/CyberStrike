@@ -7,7 +7,7 @@ export const ResearchQueueTable = sqliteTable(
     source_id: text().notNull(),
     source_url: text().notNull(),
     title: text(),
-    payload: text({ mode: "json" }).$type<Record<string, unknown>>().notNull().default({}),
+    payload: text({ mode: "json" }).$type<Record<string, unknown>>().notNull().default("{}"),
     status: text().notNull().default("queued"),
     attempts: integer().notNull().default(0),
     last_error: text(),
