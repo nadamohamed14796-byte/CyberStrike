@@ -3,6 +3,7 @@ import { Skill } from "./skill"
 import { SkillIndex } from "./index-engine"
 import { ReferenceLearning } from "../learning/reference"
 import { LearningRouter } from "../learning/router"
+import { ReportKnowledge } from "../learning/report-knowledge"
 
 export namespace SkillContext {
   const log = Log.create({ service: "skill-context" })
@@ -112,9 +113,17 @@ export namespace SkillContext {
         tech_stack: finding.tech_stack,
       })
 
+      const reportLessons = ReportKnowledge.recommendations({
+        cweID: finding.cwe_id,
+        signal: finding.skill_id,
+        limit: 3,
+      })
+      const reportReason = reportLessons.length
+        ? `report knowledge: ${reportLessons.map((row) => row.lesson || row.title).slice(0, 2).join(" | ")}`
+        : ""
       for (const route of learnedRoutes) {
         const priority: Suggestion["priority"] = route.score >= 80 ? "high" : route.score >= 40 ? "medium" : "low"
-        add(route.name, priority, route.reasons.join("; "))
+        add(route.name, priority, [route.reasons.join("; "), reportReason].filter(Boolean).join(" | "))
       }
 
       const chains = SkillIndex.chainsFrom(finding.skill_id)
