@@ -21,6 +21,12 @@ describe("ReportKnowledge", () => {
     expect(rows.some((row) => row.id === id)).toBe(true)
     const recommendations = ReportKnowledge.recommendations({ signal: "ownership" })
     expect(recommendations.some((row) => row.id === id)).toBe(true)
+
+    const multiWordSearch = ReportKnowledge.search({ query: "IDOR authorization", limit: 10 })
+    expect(multiWordSearch.some((row) => row.id === id)).toBe(true)
+
+    const multiWordRecommendations = ReportKnowledge.recommendations({ signal: "IDOR user authorization", limit: 10 })
+    expect(multiWordRecommendations.some((row) => row.id === id)).toBe(true)
   })
 
   test("primes a fresh hunt session with persisted public research", () => {
