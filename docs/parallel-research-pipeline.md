@@ -16,7 +16,7 @@ bun run dev research queue-pending --limit 50
 To keep the discovery worker polling for new sources, run in terminal 1:
 
 ```bash
-bun run dev research discover --pages 100 --depth 2 --watch --interval 60
+bun run dev research discover --pages 10 --depth 2 --watch --interval 300
 ```
 
 To keep the study worker consuming queued reports, run in terminal 2:
