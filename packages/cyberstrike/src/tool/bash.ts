@@ -33,6 +33,27 @@ const NETWORK_COMMANDS = new Set([
   "sqlmap",
 ])
 
+// Shell interpreters can perform network I/O without appearing as a registered
+// network command. When they contain recognizable network APIs, route them through
+// the canonical external-tool path instead of pretending bash is a scope sandbox.
+const NETWORK_CAPABLE_INTERPRETERS = new Set([
+  "bash",
+  "sh",
+  "zsh",
+  "python",
+  "python3",
+  "node",
+  "bun",
+  "deno",
+  "ruby",
+  "perl",
+  "php",
+  "pwsh",
+  "powershell",
+])
+
+const NETWORK_INTENT = /\b(?:curl|wget|nmap|masscan|nc|netcat|sqlmap|requests|httpx|aiohttp|urllib(?:3)?|socket|fetch|axios|http\.request|https\.request|net\.connect|invoke-webrequest|invoke-restmethod)\b/i
+
 // Detect binary content in a buffer by checking for high density of
 // non-printable bytes. Printable = ASCII 0x20-0x7E, tab, newline, CR, ESC
 // (for ANSI colors). If >30% of bytes are non-printable, treat as binary.
@@ -146,7 +167,17 @@ export const BashTool = Tool.define("bash", async () => {
           }
         }
         const commandName = words[0]?.split("/").pop()?.toLowerCase()
-        if (!commandName || !NETWORK_COMMANDS.has(commandName)) continue
+        if (!commandName) continue
+
+        const interpreterWithNetworkIntent =
+          NETWORK_CAPABLE_INTERPRETERS.has(commandName) && NETWORK_INTENT.test(node.text)
+        if (interpreterWithNetworkIntent) {
+          throw new Error(
+            `Network-capable interpreter "${commandName}" detected in bash. Use external_tool_runner for scoped network execution; bash is not a network scope sandbox.`,
+          )
+        }
+
+        if (!NETWORK_COMMANDS.has(commandName)) continue
         const spec = externalTool(commandName)
         const target = words.find(
           (value) =>
