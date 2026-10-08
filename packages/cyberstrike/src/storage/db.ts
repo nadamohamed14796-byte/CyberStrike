@@ -144,38 +144,6 @@ export namespace Database {
     sqlite.run("CREATE INDEX IF NOT EXISTS tool_learning_event_session_idx ON tool_learning_event(session_id)")
   }
 
-  function ensureToolArtifactTable(sqlite: BunDatabase) {
-    sqlite.run(`CREATE TABLE IF NOT EXISTS tool_artifact (
-      id TEXT PRIMARY KEY,
-      session_id TEXT REFERENCES session(id) ON DELETE CASCADE,
-      call_id TEXT,
-      request_id TEXT,
-      credential_id TEXT,
-      parent_id TEXT,
-      tool TEXT NOT NULL,
-      target TEXT,
-      phase TEXT,
-      risk TEXT,
-      scope_decision TEXT,
-      input TEXT,
-      output TEXT,
-      output_preview TEXT,
-      output_hash TEXT,
-      result_count INTEGER,
-      signal TEXT,
-      metadata TEXT,
-      time_created INTEGER NOT NULL,
-      time_updated INTEGER NOT NULL
-    )`)
-    sqlite.run("CREATE INDEX IF NOT EXISTS tool_artifact_session_idx ON tool_artifact(session_id)")
-    sqlite.run("CREATE INDEX IF NOT EXISTS tool_artifact_call_idx ON tool_artifact(call_id)")
-    sqlite.run("CREATE INDEX IF NOT EXISTS tool_artifact_request_idx ON tool_artifact(session_id, request_id)")
-    sqlite.run("CREATE INDEX IF NOT EXISTS tool_artifact_credential_idx ON tool_artifact(session_id, credential_id)")
-    sqlite.run("CREATE INDEX IF NOT EXISTS tool_artifact_target_idx ON tool_artifact(target)")
-    sqlite.run("CREATE INDEX IF NOT EXISTS tool_artifact_tool_idx ON tool_artifact(tool)")
-    sqlite.run("CREATE INDEX IF NOT EXISTS tool_artifact_signal_idx ON tool_artifact(signal)")
-  }
-
   function safeMigrationSQL(sqlite: BunDatabase, sql: string) {
     return sql
       .split(/-->\s*statement-breakpoint/gi)
@@ -266,10 +234,6 @@ export namespace Database {
     sqlite.run("PRAGMA wal_checkpoint(PASSIVE)")
 
     const db = drizzle({ client: sqlite, schema })
-
-    // tool_artifact predates its provenance migration in some installations/builds.
-    // Bootstrap the final table shape so that missing migration journals remain replay-safe.
-    ensureToolArtifactTable(sqlite)
 
     // Apply schema migrations
     const entries =
