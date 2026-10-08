@@ -92,6 +92,7 @@ export namespace TargetWorkspace {
 
   const MAX_LESSON_FILE_BYTES = 8 * 1024 * 1024
   const MAX_RECENT_LESSON_BYTES = 512 * 1024
+  const lessonLocks = new Map<string, Promise<void>>()
 
   function lessonKey(lesson: Pick<Lesson, "kind" | "summary" | "tags">) {
     return [
@@ -134,23 +135,42 @@ export namespace TargetWorkspace {
     }
   }
 
+  async function withLessonLock<T>(target: string, fn: () => Promise<T>): Promise<T> {
+    const key = path.resolve(paths(target).lessonsFile)
+    const previous = lessonLocks.get(key)
+    let release!: () => void
+    const current = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    lessonLocks.set(key, current)
+    if (previous) await previous
+    try {
+      return await fn()
+    } finally {
+      release()
+      if (lessonLocks.get(key) === current) lessonLocks.delete(key)
+    }
+  }
+
   /** Persist a compact target-specific lesson once. Equivalent observations are deduplicated. */
   export async function addLesson(target: string, lesson: Omit<Lesson, "id" | "createdAt">): Promise<Lesson> {
-    const paths = await ensure(target, lesson.sessionID)
-    const normalized = normalizeLesson(lesson)
-    if (!normalized.summary) throw new Error("Target lesson requires a non-empty summary")
+    return withLessonLock(target, async () => {
+      const paths = await ensure(target, lesson.sessionID)
+      const normalized = normalizeLesson(lesson)
+      if (!normalized.summary) throw new Error("Target lesson requires a non-empty summary")
 
-    const existing = await readLessons(target)
-    const duplicate = existing.find((item) => lessonKey(item) === lessonKey(normalized))
-    if (duplicate) return duplicate
+      const existing = await readLessons(target)
+      const duplicate = existing.find((item) => lessonKey(item) === lessonKey(normalized))
+      if (duplicate) return duplicate
 
-    const record: Lesson = {
-      ...normalized,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-    }
-    await fs.appendFile(paths.lessonsFile, JSON.stringify(record) + "\n", "utf8")
-    return record
+      const record: Lesson = {
+        ...normalized,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+      }
+      await fs.appendFile(paths.lessonsFile, JSON.stringify(record) + "\n", "utf8")
+      return record
+    })
   }
 
   export async function readLessons(target: string): Promise<Lesson[]> {
