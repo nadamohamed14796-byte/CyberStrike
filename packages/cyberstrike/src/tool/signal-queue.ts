@@ -3,7 +3,7 @@ import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { SignalQueueTable } from "./signal-queue.sql"
 import { ReconDispatch } from "./recon-dispatch"
-import { normalizeSignal, SignalPhase } from "./signal-normalizer"
+import { normalizeSignal, type SignalPhase } from "./signal-normalizer"
 import { ToolArtifact } from "./artifact"
 
 export namespace SignalQueue {
@@ -131,6 +131,27 @@ export namespace SignalQueue {
     return (uncovered[0] ?? rows[0])
   }
 
+  export function planNext(input: {
+    sessionID: string
+    scope_items?: string[]
+    scope_verified?: boolean
+    authorized_active_testing?: boolean
+    max_tools?: number
+  }) {
+    const queue = next(input.sessionID)
+    if (!queue) return undefined
+    const tools = ReconDispatch.next({
+      sessionID: input.sessionID,
+      signal: queue.signal,
+      target: queue.target ?? undefined,
+      scope_items: input.scope_items,
+      scope_verified: input.scope_verified,
+      authorized_active_testing: input.authorized_active_testing,
+      max_tools: input.max_tools,
+    })
+    return { queue, tools }
+  }
+
   export function claimForTool(input: {
     sessionID: string
     toolID: string
@@ -155,10 +176,14 @@ export namespace SignalQueue {
     return markRunning(item.id) ? item.id : undefined
   }
 
-  export function markRunning(id: string) {
+  export function markRunning(id: string): boolean {
     return Database.use((db) => db.update(SignalQueueTable)
       .set({ status: "running", attempts: sql`attempts + 1`, time_updated: Date.now() })
-      .where(and(eq(SignalQueueTable.id, id), eq(SignalQueueTable.status, "pending"))).run())
+      .where(and(
+        eq(SignalQueueTable.id, id),
+        eq(SignalQueueTable.status, "pending"),
+        sql`attempts < max_attempts`,
+      )).run().changes > 0)
   }
 
   export function complete(id: string) {
