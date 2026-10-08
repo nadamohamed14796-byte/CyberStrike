@@ -4,6 +4,8 @@ import { Request } from "../session/request"
 import { Observation } from "../session/observation"
 import { Session } from "../session"
 import { resolveVisitedBy } from "../server/routes/session"
+import { RequestCorrelation } from "../session/request-correlation"
+import { WebCredential } from "../session/web/web-credential"
 
 const description = `Get detailed information for a specific HTTP request by ID.
 
@@ -81,6 +83,37 @@ export const WebGetRequestDetailTool = Tool.define("web_get_request_detail", {
       const tree = Observation.endpointTree(sessionID, request.key_hash)
       if (tree.params.length > 0) {
         detail.observed_values = { credentials: tree.credentials, params: tree.params }
+      }
+    }
+
+    // Provenance graph: connect this request to the JavaScript bundle that delivered it
+    // and to tool artifacts produced from the same captured request. Keep this compact
+    // so request detail remains usable even when a session has many artifacts.
+    const correlation = RequestCorrelation.forRequest(sessionID, request.id)
+    if (correlation) {
+      const credentials = new Map(WebCredential.get(sessionID).map((credential) => [credential.id, credential.label]))
+      detail.provenance = {
+        javascript: correlation.javascript.map((item) => ({
+          id: item.id,
+          url: item.url,
+          request_id: item.request_id ?? null,
+          credential_id:
+            typeof item.metadata?.credential_id === "string" ? item.metadata.credential_id : request.credential_id ?? null,
+          account_label:
+            typeof item.metadata?.credential_id === "string"
+              ? (credentials.get(item.metadata.credential_id) ?? null)
+              : request.credential_id
+                ? (credentials.get(request.credential_id) ?? null)
+                : null,
+        })),
+        artifacts: correlation.artifacts.map((item) => ({
+          id: item.id,
+          tool: item.tool,
+          signal: item.signal ?? null,
+          call_id: item.call_id ?? null,
+          credential_id: item.credential_id ?? null,
+          account_label: item.credential_id ? (credentials.get(item.credential_id) ?? null) : null,
+        })),
       }
     }
 
