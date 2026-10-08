@@ -27,6 +27,7 @@ import { Global } from "@/global"
 import type { LanguageModelV2Usage } from "@ai-sdk/provider"
 import { iife } from "@/util/iife"
 import { ToolRunRecord } from "../tool/run-record"
+import { SignalQueue } from "../tool/signal-queue"
 
 export namespace Session {
   const log = Log.create({ service: "session" })
@@ -315,7 +316,8 @@ export namespace Session {
 
   export const recoverRuntime = fn(Identifier.schema("session"), async (sessionID) => {
     const runs = ToolRunRecord.recover(sessionID, "session resume/recovery")
-    return { sessionID, recoveredRuns: runs }
+    const signalQueue = SignalQueue.recover(sessionID, 60_000)
+    return { sessionID, recoveredRuns: runs, recoveredSignalQueue: signalQueue }
   })
 
   export const get = fn(Identifier.schema("session"), async (id) => {
