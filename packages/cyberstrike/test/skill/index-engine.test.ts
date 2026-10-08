@@ -6,15 +6,20 @@ import { tmpdir } from "../fixture/fixture"
 
 describe("SkillIndex", () => {
   test("tag lookup is case-insensitive", async () => {
-    await SkillIndex.ensureBuilt()
-    const entries = SkillIndex.all()
-    expect(entries.length).toBeGreaterThan(0)
+    await Instance.provide({
+      directory: path.join(__dirname, "../.."),
+      fn: async () => {
+        await SkillIndex.ensureBuilt()
+        const entries = SkillIndex.all()
+        expect(entries.length).toBeGreaterThan(0)
 
-    for (const entry of entries.slice(0, 100)) {
-      for (const tag of entry.tags) {
-        expect(SkillIndex.byTag(tag.toUpperCase()).some((skill) => skill.name === entry.name)).toBe(true)
-      }
-    }
+        for (const entry of entries.slice(0, 100)) {
+          for (const tag of entry.tags) {
+            expect(SkillIndex.byTag(tag.toUpperCase()).some((skill) => skill.name === entry.name)).toBe(true)
+          }
+        }
+      },
+    })
   })
 })
 
