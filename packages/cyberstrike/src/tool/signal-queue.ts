@@ -34,9 +34,10 @@ export namespace SignalQueue {
     const normalized = normalizeSignal(input.signal)
     const normalizedInput = { ...input, signal: normalized.signal }
     const key = dedupKey(normalizedInput)
-    const existing = input.sessionID
+    const sessionID = input.sessionID
+    const existing = sessionID
       ? Database.use((db) => db.select().from(SignalQueueTable)
-          .where(and(eq(SignalQueueTable.session_id, input.sessionID), eq(SignalQueueTable.dedup_key, key)))
+          .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.dedup_key, key)))
           .limit(1).get())
       : undefined
     if (existing) return existing.id
