@@ -98,6 +98,64 @@ export const useSessionCommands = (input: SessionCommandContext) => {
       slash: "sessions",
       onSelect: () => input.dialog.show(() => <DialogSelectSession />),
     }),
+    sessionCommand({
+      id: "research.update",
+      title: "Update security research",
+      description: "Fetch new public security research, study it, and activate relevant lessons for the current hunt.",
+      slash: "update",
+      disabled: !input.params.id,
+      onSelect: async () => {
+        const sessionID = input.params.id
+        if (!sessionID) return
+
+        try {
+          const response = await input.sdk.fetch(`/session/${encodeURIComponent(sessionID)}/research/update`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: "{}",
+          })
+          const payload = (await response.json().catch(() => undefined)) as
+            | {
+                learned?: number
+                fetched?: number
+                sources?: number
+                failed?: number
+                recommendations?: Array<{ title: string }>
+              }
+            | undefined
+
+          if (!response.ok) {
+            throw new Error(
+              typeof payload === "object" && payload && "message" in payload
+                ? String((payload as { message?: unknown }).message)
+                : `Research update failed (HTTP ${response.status})`,
+            )
+          }
+
+          const learned = payload?.learned ?? 0
+          const fetched = payload?.fetched ?? 0
+          const sources = payload?.sources ?? 0
+          const failed = payload?.failed ?? 0
+          const recommendationCount = payload?.recommendations?.length ?? 0
+
+          showToast({
+            title: "Security research updated",
+            description:
+              `${learned} new lessons from ${sources} sources (${fetched} pages fetched), ${recommendationCount} hunt recommendations activated` +
+              (failed ? `; ${failed} fetches failed` : ""),
+            variant: failed ? "warning" : "success",
+          })
+        } catch (error) {
+          showToast({
+            title: "Security research update failed",
+            description: error instanceof Error ? error.message : String(error),
+            variant: "error",
+          })
+        }
+      },
+    }),
   ])
 
   const fileCommands = createMemo(() => [
