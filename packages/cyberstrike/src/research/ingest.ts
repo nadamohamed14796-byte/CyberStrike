@@ -114,10 +114,10 @@ function sourceRelevance(url: string, title: string, text: string, source: Resea
 function isIndexLikeResearchUrl(url: string) {
   try {
     const parsed = new URL(url)
-    const path = parsed.pathname.toLowerCase().replace(/\\/+$/, "") || "/"
-    if (/[?&](page|p|offset|start|pageindex)=\\d+/i.test(parsed.search)) return true
-    if (/\\/(category|categories|topic|topics|tag|tags|archives?|search|help|docs|documentation)(\\/|$)/i.test(path)) return true
-    if (/\\/(blog|research|hacktivity|writeups?|articles?|news|resources)(\\/)?$/.test(path)) return true
+    const path = parsed.pathname.toLowerCase().replace(/\/+$/, "") || "/"
+    if (/[?&](page|p|offset|start|pageindex)=\d+/i.test(parsed.search)) return true
+    if (/\/(category|categories|topic|topics|tag|tags|archives?|search|help|docs|documentation)(\/|$)/i.test(path)) return true
+    if (/\/(blog|research|hacktivity|writeups?|articles?|news|resources)(\/)?$/.test(path)) return true
     return false
   } catch {
     return true
