@@ -89,12 +89,13 @@ function ipInCIDR(ip: string, cidr: string): boolean {
   const mask = bits === 0 ? 0 : (~((1 << (32 - bits)) - 1) >>> 0)
   const ipNum = ipToNum(ip)
   const rangeNum = ipToNum(range)
+  if (ipNum === undefined || rangeNum === undefined) return false
   return (ipNum & mask) === (rangeNum & mask)
 }
 
-function ipToNum(ip: string): number {
+function ipToNum(ip: string): number | undefined {
   const octets = ip.split(".")
-  if (octets.length !== 4 || octets.some((x) => !/^\d+$/.test(x) || Number(x) > 255)) return 0
+  if (octets.length !== 4 || octets.some((x) => !/^\d+$/.test(x) || Number(x) > 255)) return undefined
   return octets.reduce((acc, octet) => (acc << 8) + Number(octet), 0) >>> 0
 }
 
