@@ -43,10 +43,9 @@ export namespace RequestCorrelation {
       (request) => Boolean(explicitRequestID && request.id === explicitRequestID) || sameDelivery(request, javascript),
     )
 
-    const ids = new Set(correlated.map((request) => request.id))
-    const artifacts = ToolArtifact.list(sessionID, 500).filter(
-      (artifact) => artifact.request_id != null && ids.has(artifact.request_id),
-    )
+    const artifacts = correlated
+      .flatMap((request) => ToolArtifact.byRequest(sessionID, request.id))
+      .filter((artifact, index, all) => all.findIndex((item) => item.id === artifact.id) === index)
 
     return { javascript, requests: correlated, artifacts }
   }
