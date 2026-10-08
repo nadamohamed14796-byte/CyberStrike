@@ -88,7 +88,7 @@ export namespace Skill {
 
       // Warn on duplicate skill names
       if (skills[parsed.data.name]) {
-        log.debug("duplicate skill name", {
+        log.warn("duplicate skill name; later source wins for compatibility", {
           name: parsed.data.name,
           existing: skills[parsed.data.name].location,
           duplicate: match,
