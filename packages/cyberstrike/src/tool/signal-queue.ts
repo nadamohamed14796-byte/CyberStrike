@@ -49,8 +49,7 @@ export namespace SignalQueue {
       const id = Identifier.ascending("signal_queue")
       const now = Date.now()
       try {
-        db
-          .insert(SignalQueueTable)
+        db.insert(SignalQueueTable)
           .values({
             id,
             session_id: input.sessionID ?? null,
