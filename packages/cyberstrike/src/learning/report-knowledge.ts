@@ -10,8 +10,8 @@ export namespace ReportKnowledge {
     return value?.trim().toLowerCase().replace(/\s+/g, " ") || ""
   }
 
-  function fingerprint(input: { title: string; vulnerabilityClass?: string; cweID?: string; endpoint?: string }) {
-    return [input.vulnerabilityClass, input.cweID, input.endpoint, input.title].map(normalize).filter(Boolean).join("|")
+  function fingerprint(input: { title: string; vulnerabilityClass?: string; cweID?: string; endpoint?: string; sourceURL?: string }) {
+    return [input.sourceURL, input.vulnerabilityClass, input.cweID, input.endpoint, input.title].map(normalize).filter(Boolean).join("|")
   }
 
   function confidence(row: typeof ReportKnowledgeTable.$inferSelect, outcome?: Outcome) {
