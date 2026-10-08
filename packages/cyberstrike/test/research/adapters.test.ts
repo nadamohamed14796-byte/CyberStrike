@@ -8,6 +8,7 @@ describe("research discovery adapters", () => {
     const seeds = discoverySeeds(source, 4)
     expect(seeds).toContain("https://hackerone.com/hacktivity?page=2")
     expect(seeds).toContain("https://hackerone.com/hacktivity?page=4")
+    expect(seeds.some((url) => url.includes("pageIndex=3") && url.includes("disclosed%3Atrue"))).toBe(true)
   })
 
   test("keeps Medium focused on bug-bounty surfaces", () => {
