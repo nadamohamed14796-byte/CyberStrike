@@ -1,13 +1,17 @@
 import { beforeAll, describe, expect, spyOn, test } from "bun:test"
 import { LearningRouter, type LearningSignal } from "../../src/learning/router"
 import { SkillIndex } from "../../src/skill/index-engine"
+import { Instance } from "../../src/project/instance"
+import path from "path"
 
 describe("LearningRouter.route", () => {
-  beforeAll(async () => {
-    await SkillIndex.ensureBuilt()
-  })
+  const projectRoot = path.resolve(import.meta.dir, "../../../..")
+  async function withIndex<T>(fn: () => T | Promise<T>) {
+    return Instance.provide({ directory: projectRoot, fn: async () => { await SkillIndex.ensureBuilt(); return fn() } })
+  }
 
-  test("explicit skill signals are always routed first", () => {
+  test("explicit skill signals are always routed first", async () => {
+    return withIndex(async () => {
     const explicit = {
       name: "explicit-test-skill",
       description: "Explicit test skill",
@@ -52,9 +56,11 @@ describe("LearningRouter.route", () => {
       tagSpy.mockRestore()
       searchSpy.mockRestore()
     }
+    })
   })
 
-  test("does not route stale skill names that are absent from the index", () => {
+  test("does not route stale skill names that are absent from the index", async () => {
+    return withIndex(() => {
     const result = LearningRouter.route({
       hook: "during_testing",
       signal: "skill_loaded",
@@ -62,9 +68,11 @@ describe("LearningRouter.route", () => {
     })
 
     expect(result.some((entry) => entry.name === "__missing_skill_for_regression__")).toBe(false)
+    })
   })
 
-  test("routing is deterministic for the same signal", () => {
+  test("routing is deterministic for the same signal", async () => {
+    return withIndex(() => {
     const signal: LearningSignal = {
       hook: "after_finding",
       signal: "finding_recorded",
@@ -72,6 +80,7 @@ describe("LearningRouter.route", () => {
     }
 
     expect(LearningRouter.route(signal)).toEqual(LearningRouter.route(signal))
+    })
   })
 })
 
