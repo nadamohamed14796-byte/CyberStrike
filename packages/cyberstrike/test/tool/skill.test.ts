@@ -103,6 +103,11 @@ Use this skill.
           expect(result.output).toContain(`<skill_content name="tool-skill" verified="unverified">`)
           expect(result.output).toContain(`Base directory for this skill: ${pathToFileURL(dir).href}`)
           expect(result.output).toContain(`<file>${file}</file>`)
+
+          const unloaded = await tool.execute({ action: "unload", name: "tool-skill" }, ctx)
+          expect(unloaded.output).toContain(`Skill "tool-skill" removed from context.`)
+          const loadedList = await tool.execute({ action: "list", loaded: true }, ctx)
+          expect(loadedList.output).toContain("No skills are currently loaded")
         },
       })
     } finally {
