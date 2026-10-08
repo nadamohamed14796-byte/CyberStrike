@@ -267,15 +267,29 @@ export namespace ReportKnowledge {
         if (input.targetPattern)
           conditions.push(eq(ReportKnowledgeTable.target_pattern, normalize(input.targetPattern)))
         if (input.query) {
-          const q = `%${normalize(input.query)}%`
-          conditions.push(
-            or(
-              like(ReportKnowledgeTable.title, q),
-              like(ReportKnowledgeTable.lesson, q),
-              like(ReportKnowledgeTable.attack_vector, q),
-              like(ReportKnowledgeTable.impact, q),
+          const tokens = Array.from(
+            new Set(
+              normalize(input.query)
+                .split(/\s+/)
+                .map((token) => token.trim())
+                .filter((token) => token.length >= 2),
             ),
           )
+          if (tokens.length) {
+            conditions.push(
+              or(
+                ...tokens.flatMap((token) => {
+                  const q = "%" + token + "%"
+                  return [
+                    like(ReportKnowledgeTable.title, q),
+                    like(ReportKnowledgeTable.lesson, q),
+                    like(ReportKnowledgeTable.attack_vector, q),
+                    like(ReportKnowledgeTable.impact, q),
+                  ]
+                }),
+              ),
+            )
+          }
         }
         const query = db.select().from(ReportKnowledgeTable)
         return (conditions.length ? query.where(and(...conditions)) : query)
