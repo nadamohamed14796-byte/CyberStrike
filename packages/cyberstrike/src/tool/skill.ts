@@ -44,6 +44,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
     cwe: z.string().optional().describe("CWE ID filter (for search action)"),
     category: z.string().optional().describe("Category filter (for search action)"),
     loaded: z.boolean().optional().describe("For list action: only show currently loaded skills"),
+    limit: z.number().int().min(1).max(200).default(100).describe("Maximum skills/suggestions to return"),
     findings: z
       .array(
         z.object({
@@ -63,7 +64,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
     async execute(params: z.infer<typeof parameters>, ctx) {
       await SkillIndex.ensureBuilt()
 
-      const agentKey = ctx.agent ?? ""
+      const agentKey = `${ctx.sessionID}:${ctx.agent ?? ""}`
       if (!accessibleCache.has(agentKey)) {
         const skills = await Skill.all()
         const agentInfo = await Agent.get(ctx.agent)
@@ -81,8 +82,8 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
 
       if (params.action === "list") {
         if (params.loaded) {
-          const active = SkillContext.active()
-          const tokens = SkillContext.tokenCount()
+          const active = SkillContext.active(ctx.sessionID)
+          const tokens = SkillContext.tokenCount(ctx.sessionID)
           if (active.length === 0)
             return {
               title: "No skills loaded",
@@ -99,13 +100,14 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
             metadata: {} as { name?: string; dir?: string },
           }
         }
-        const all = accessibleSkills
+        const all = [...accessibleSkills].sort((a, b) => a.name.localeCompare(b.name))
+        const shown = all.slice(0, params.limit)
         return {
-          title: `${all.length} skills available`,
+          title: `${all.length} skills available${shown.length < all.length ? ` (showing ${shown.length})` : ""}`,
           output: [
-            `## Available Skills (${all.length})`,
+            `## Available Skills (${all.length}${shown.length < all.length ? `; showing ${shown.length}` : ""})`,
             "",
-            ...all.map(
+            ...shown.map(
               (s) =>
                 `- **${s.name}** [${s.verified ?? "unverified"}] — ${s.description}` +
                 (s.category ? ` (${s.category})` : "") +
@@ -122,7 +124,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
         return {
           title: removed ? `Unloaded: ${params.name}` : `Not loaded: ${params.name}`,
           output: removed
-            ? `Skill "${params.name}" removed from context. Active tokens: ${SkillContext.tokenCount()}`
+            ? `Skill "${params.name}" removed from context. Active tokens: ${SkillContext.tokenCount(ctx.sessionID)}`
             : `Skill "${params.name}" was not in context.`,
           metadata: {} as { name?: string; dir?: string },
         }
@@ -191,7 +193,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
 
       if (params.action === "suggest") {
         if (!params.findings?.length) throw new Error("Findings required for suggestions")
-        const suggestions = SkillContext.suggest(params.findings)
+        const suggestions = SkillContext.suggest(params.findings, ctx.sessionID, params.limit)
         if (suggestions.length === 0)
           return {
             title: "No suggestions",
@@ -225,7 +227,8 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
         metadata: {} as { name?: string; dir?: string },
       })
 
-      SkillContext.load(params.name)
+      const loadedContent = await SkillContext.load(params.name, ctx.sessionID)
+      if (!loadedContent) throw new Error(`Skill "${params.name}" could not be loaded.`)
       ReferenceLearning.observeSkill(skill, ctx.sessionID)
 
       const dir = path.dirname(skill.location)
