@@ -31,6 +31,14 @@ export namespace Identifier {
     skill_learning: "slr",
     skill_learning_event: "sle",
     learning_signal: "lsn",
+    target_memory: "tmem",
+    tool_artifact: "tart",
+    tool_run: "trun",
+    false_positive: "fpm",
+    mission_claim: "mcl",
+    signal_queue: "sigq",
+    tool_learning: "tlyn",
+    tool_learning_event: "tle",
   } as const
 
   export function schema(prefix: keyof typeof prefixes) {
