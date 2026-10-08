@@ -1,0 +1,37 @@
+export type ResearchSourceKind = "disclosure" | "academy" | "writeup" | "blog" | "reference" | "research"
+
+export type ResearchSource = {
+  id: string
+  name: string
+  kind: ResearchSourceKind
+  seedUrls: string[]
+  hosts: string[]
+  trust: number
+}
+
+export const RESEARCH_SOURCES: ResearchSource[] = [
+  { id: "hackerone-hacktivity", name: "HackerOne Hacktivity", kind: "disclosure", seedUrls: ["https://hackerone.com/hacktivity"], hosts: ["hackerone.com"], trust: 95 },
+  { id: "bugcrowd-crowdstream", name: "Bugcrowd CrowdStream", kind: "disclosure", seedUrls: ["https://bugcrowd.com/crowdstream"], hosts: ["bugcrowd.com"], trust: 95 },
+  { id: "intigriti", name: "Intigriti", kind: "writeup", seedUrls: ["https://www.intigriti.com/researchers/blog"], hosts: ["intigriti.com"], trust: 90 },
+  { id: "yeswehack", name: "YesWeHack", kind: "disclosure", seedUrls: ["https://blog.yeswehack.com/"], hosts: ["yeswehack.com"], trust: 90 },
+  { id: "portswigger", name: "PortSwigger Web Security Academy", kind: "academy", seedUrls: ["https://portswigger.net/web-security/all-labs"], hosts: ["portswigger.net"], trust: 100 },
+  { id: "pentesterland", name: "PentesterLand", kind: "writeup", seedUrls: ["https://pentester.land/"], hosts: ["pentester.land"], trust: 90 },
+  { id: "medium", name: "Medium", kind: "writeup", seedUrls: ["https://medium.com/tag/bug-bounty"], hosts: ["medium.com"], trust: 75 },
+  { id: "infosec-writeups", name: "InfoSec Write-ups", kind: "writeup", seedUrls: ["https://infosecwriteups.com/"], hosts: ["infosecwriteups.com"], trust: 85 },
+  { id: "hackerone-blog", name: "HackerOne Blog", kind: "blog", seedUrls: ["https://www.hackerone.com/blog"], hosts: ["hackerone.com"], trust: 90 },
+  { id: "bugcrowd-blog", name: "Bugcrowd Blog", kind: "blog", seedUrls: ["https://www.bugcrowd.com/blog/"], hosts: ["bugcrowd.com"], trust: 90 },
+  { id: "nahamsec", name: "NahamSec Blog", kind: "writeup", seedUrls: ["https://nahamsec.com/"], hosts: ["nahamsec.com"], trust: 90 },
+  { id: "assetnote", name: "Assetnote", kind: "research", seedUrls: ["https://blog.assetnote.io/"], hosts: ["blog.assetnote.io", "assetnote.io"], trust: 95 },
+  { id: "projectdiscovery", name: "ProjectDiscovery Blog", kind: "research", seedUrls: ["https://projectdiscovery.io/blog"], hosts: ["projectdiscovery.io"], trust: 95 },
+  { id: "trickster0", name: "Trickster0", kind: "writeup", seedUrls: ["https://trickster0.medium.com/"], hosts: ["medium.com"], trust: 90 },
+  { id: "edoverflow", name: "EdOverflow", kind: "writeup", seedUrls: ["https://edoverflow.com/"], hosts: ["edoverflow.com"], trust: 95 },
+  { id: "devcore", name: "DEVCORE / Orange Tsai", kind: "research", seedUrls: ["https://devco.re/en/"], hosts: ["devco.re"], trust: 100 },
+  { id: "liveoverflow", name: "LiveOverflow", kind: "writeup", seedUrls: ["https://liveoverflow.com/"], hosts: ["liveoverflow.com"], trust: 90 },
+  { id: "hacktricks", name: "HackTricks", kind: "reference", seedUrls: ["https://book.hacktricks.xyz/"], hosts: ["book.hacktricks.xyz", "hacktricks.xyz"], trust: 90 },
+  { id: "payloadsallthethings", name: "PayloadsAllTheThings", kind: "reference", seedUrls: ["https://github.com/swisskyrepo/PayloadsAllTheThings"], hosts: ["github.com"], trust: 90 },
+  { id: "github", name: "GitHub security writeups", kind: "writeup", seedUrls: ["https://github.com/search?q=bug+bounty+writeup&type=repositories"], hosts: ["github.com"], trust: 80 },
+]
+
+export function getResearchSource(id: string) {
+  return RESEARCH_SOURCES.find((source) => source.id === id)
+}
