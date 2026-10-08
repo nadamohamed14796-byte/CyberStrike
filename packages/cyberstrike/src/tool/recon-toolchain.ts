@@ -1,10 +1,11 @@
 import z from "zod"
 import { Tool } from "./tool"
 
-import { type ExternalToolRisk, type ExternalToolSpec } from "./external-tool-registry"
 import { planReconTools } from "./recon-toolchain-plan"
 
-export type { ExternalToolRisk, ExternalToolSpec, PlannedReconTool } from "./recon-toolchain-plan"
+export type { ExternalToolRisk, ExternalToolSpec } from "./external-tool-registry"
+export { planReconTools } from "./recon-toolchain-plan"
+export type { PlannedReconTool } from "./recon-toolchain-plan"
 
 export const ReconToolchainTool = Tool.define("recon_toolchain", {
   description:
