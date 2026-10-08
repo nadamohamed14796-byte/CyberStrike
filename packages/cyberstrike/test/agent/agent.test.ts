@@ -277,6 +277,25 @@ test("agent name can be overridden", async () => {
   })
 })
 
+test("configured agent name is resolvable as a subagent selector", async () => {
+  await using tmp = await tmpdir({
+    config: {
+      agent: {
+        explore: { name: "ExplorerAlias" },
+      },
+    },
+  })
+  await Instance.provide({
+    directory: tmp.path,
+    fn: async () => {
+      const explore = await Agent.get("ExplorerAlias")
+      expect(explore?.name).toBe("ExplorerAlias")
+      expect(explore?.mode).toBe("subagent")
+    },
+  })
+})
+
+
 test("agent prompt can be set from config", async () => {
   await using tmp = await tmpdir({
     config: {
