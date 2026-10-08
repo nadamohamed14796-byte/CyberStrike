@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import crypto from "node:crypto"
 import { TargetWorkspace } from "../../src/tool/target-workspace"
 
 describe("TargetWorkspace", () => {
