@@ -925,6 +925,18 @@ export namespace SessionPrompt {
         )
       }
 
+      const researchRecommendations = Learning.researchFor(sessionID, 6)
+      if (researchRecommendations.length > 0) {
+        system.push(
+          [
+            "# Public Research Knowledge",
+            "These are learned patterns from public security research. They are references/hypotheses only; do not treat them as findings or copy proof blindly.",
+            "Use the source lesson to prioritize relevant validation, then verify the target independently and stay within scope.",
+            ...researchRecommendations.map((row) => `- **${row.title}** | class=${row.vulnerability_class ?? "unknown"} | confidence=${row.confidence}% | lesson=${row.lesson ?? "validate the pattern independently"} | source=${row.source_url ?? "local"}`),
+          ].join("\n"),
+        )
+      }
+
       const nextReconTools = Learning.nextToolsFor(sessionID, 8)
       if (nextReconTools.length > 0) {
         system.push(
