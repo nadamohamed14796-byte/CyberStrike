@@ -124,6 +124,65 @@ export namespace ReportKnowledge {
     }
   }
 
+  export type IngestExternalResult = { id: string; created: boolean }
+
+  export function ingestExternalDetailed(input: {
+    title: string
+    severity: string
+    vulnerabilityClass?: string
+    cweID?: string
+    sourceURL: string
+    program?: string
+    targetPattern?: string
+    endpoint?: string
+    attackVector?: string
+    impact?: string
+    reproduction?: string
+    poc?: string
+    lesson?: string
+    tags?: string[]
+    metadata?: Record<string, unknown>
+    sourceTrust?: number
+  }) {
+    try {
+      const now = Date.now()
+      const key = fingerprint(input)
+      if (!key) return null
+      return Database.use((db) => {
+        const existing = db.select().from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.fingerprint, key)).get()
+        if (existing) {
+          db.update(ReportKnowledgeTable)
+            .set({
+              times_seen: existing.times_seen + 1,
+              lesson: input.lesson ?? existing.lesson,
+              impact: input.impact ?? existing.impact,
+              attack_vector: input.attackVector ?? existing.attack_vector,
+              endpoint: input.endpoint ?? existing.endpoint,
+              reproduction: input.reproduction ?? existing.reproduction,
+              poc: input.poc ?? existing.poc,
+              tags: input.tags?.length ? Array.from(new Set([...(existing.tags ?? []), ...input.tags])) : existing.tags,
+              metadata: { ...(existing.metadata ?? {}), ...(input.metadata ?? {}) },
+              time_updated: now,
+            })
+            .where(eq(ReportKnowledgeTable.id, existing.id))
+            .run()
+          return { id: existing.id, created: false } satisfies IngestExternalResult
+        }
+
+        const id = ingest({
+          ...input,
+          sourceKind: "external_report",
+          outcome: "observed",
+          sourceTrust: input.sourceTrust,
+        })
+        return id ? ({ id, created: true } satisfies IngestExternalResult) : null
+      })
+    } catch (error) {
+      console.warn("[cyberstrike] external report knowledge persistence failed:", error)
+      return null
+    }
+  }
+
   export function ingestExternal(input: {
     title: string
     severity: string
@@ -142,12 +201,7 @@ export namespace ReportKnowledge {
     metadata?: Record<string, unknown>
     sourceTrust?: number
   }) {
-    return ingest({
-      ...input,
-      sourceKind: "external_report",
-      outcome: "observed",
-      sourceTrust: input.sourceTrust,
-    })
+    return ingestExternalDetailed(input)?.id ?? null
   }
 
   export function recordOutcome(input: {
@@ -275,11 +329,19 @@ export namespace ReportKnowledge {
   export function recommendations(
     input: { signal?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {},
   ) {
-    return search({
+    const rows = search({
       query: input.signal,
       vulnerabilityClass: input.vulnerabilityClass,
       cweID: input.cweID,
-      limit: input.limit ?? 8,
-    }).filter((row) => row.confidence >= 50)
+      limit: Math.min((input.limit ?? 8) * 3, 100),
+    })
+    return rows
+      .filter((row) => row.confidence >= 50)
+      .sort((a, b) => {
+        const aScore = a.confidence + Math.min(a.times_useful * 3, 15) + (a.source_kind === "external_report" ? 5 : 0)
+        const bScore = b.confidence + Math.min(b.times_useful * 3, 15) + (b.source_kind === "external_report" ? 5 : 0)
+        return bScore - aScore
+      })
+      .slice(0, Math.max(1, Math.min(input.limit ?? 8, 50)))
   }
 }
