@@ -127,7 +127,10 @@ export namespace TargetWorkspace {
       summary: input.summary.trim().slice(0, 500),
       details: input.details?.trim().slice(0, 4000),
       source: input.source?.trim().slice(0, 300),
-      tags: input.tags?.map((tag) => tag.trim().toLowerCase()).filter(Boolean).slice(0, 20),
+      tags: input.tags
+        ?.map((tag) => tag.trim().toLowerCase())
+        .filter(Boolean)
+        .slice(0, 20),
     }
   }
 
