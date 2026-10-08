@@ -52,8 +52,9 @@ export namespace ReconDispatch {
       if ((attempts.get(k) ?? 0) >= maxAttempts) return false
 
       const active = tool.risk !== "passive"
+      const authorizationRequired = tool.risk === "active-test" || tool.risk === "high-impact"
       if (active && !scopeAllowed) return false
-      if (active && input.authorized_active_testing !== true) return false
+      if (authorizationRequired && input.authorized_active_testing !== true) return false
 
       return true
     })
