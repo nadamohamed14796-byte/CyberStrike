@@ -17,6 +17,7 @@ import { Observation } from "../session/observation"
 import { renderAccessContextLines, resolveVisitedBy } from "../server/routes/session"
 import { Truncate } from "./truncation"
 import { dispatchScopeViolation, dispatchOffLaneMessage } from "./vuln-scope"
+import { isResumableTaskSession } from "./task-session"
 
 // Per-field byte cap for raw request/response prepended into a subagent prompt.
 // Raised 16KB→48KB: validation showed weak models (o4-mini) do NOT follow the
@@ -27,19 +28,6 @@ import { dispatchScopeViolation, dispatchOffLaneMessage } from "./vuln-scope"
 // makes the extra tokens cheap. The full content stays retrievable via
 // web_get_request_detail for the rare response that still exceeds this.
 const MAX_PREPEND_BYTES = 48 * 1024
-
-/** @internal Validate that a task resume token belongs to the current parent and specialist. */
-export function isResumableTaskSession(input: {
-  session: Session.Info
-  parentSessionID: string
-  requestedAgent: string
-  configuredAgent: string
-  owner?: string
-}): boolean {
-  if (input.session.parentID !== input.parentSessionID) return false
-  if (!input.owner) return true
-  return input.owner === input.requestedAgent || input.owner === input.configuredAgent
-}
 
 const parameters = z.object({
   description: z.string().describe("A short (3-5 words) description of the task"),
