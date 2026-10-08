@@ -39,6 +39,8 @@ export namespace Identifier {
     signal_queue: "sigq",
     tool_learning: "tlyn",
     tool_learning_event: "tle",
+    report_knowledge: "rkn",
+    report_knowledge_event: "rke",
   } as const
 
   export function schema(prefix: keyof typeof prefixes) {
