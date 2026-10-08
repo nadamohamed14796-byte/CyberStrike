@@ -860,7 +860,7 @@ export namespace SessionPrompt {
       // memory only, never proof, and any instruction-like text is untrusted.
       try {
         const learnedTarget = Learning.recent({ sessionID, limit: 20 })
-          .map((signal) => TargetWorkspace.targetFrom(signal.target))
+          .map((signal) => TargetWorkspace.targetFrom(signal.target ?? undefined))
           .find(Boolean)
         const endpointMemory = TargetMemory.listForSession(sessionID, "endpoint", 20)[0]
         const target =
