@@ -130,7 +130,6 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
       "productivity",
       "crypto trading",
       "marketing",
-      "business",
       "ai news",
       "prompt engineering",
       "general programming",
