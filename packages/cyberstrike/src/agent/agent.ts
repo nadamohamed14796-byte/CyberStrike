@@ -907,7 +907,7 @@ export namespace Agent {
   })
 
   export async function get(agent: string) {
-    return state().then((x) => x[agent])
+    return state().then((agents) => agents[agent] ?? Object.values(agents).find((item) => item.name === agent))
   }
 
   export async function list() {
