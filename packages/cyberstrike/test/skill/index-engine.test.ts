@@ -18,6 +18,47 @@ describe("SkillIndex", () => {
   })
 })
 
+test("does not leak skills between project instances", async () => {
+  await using first = await tmpdir({
+    git: true,
+    init: async (dir) => {
+      const skillDir = path.join(dir, ".cyberstrike", "skill", "isolated-first")
+      await Bun.write(
+        path.join(skillDir, "SKILL.md"),
+        "---\nname: isolated-first\ndescription: First instance skill.\n---\n\n# First Instance Skill\n",
+      )
+    },
+  })
+  await using second = await tmpdir({
+    git: true,
+    init: async (dir) => {
+      const skillDir = path.join(dir, ".cyberstrike", "skill", "isolated-second")
+      await Bun.write(
+        path.join(skillDir, "SKILL.md"),
+        "---\nname: isolated-second\ndescription: Second instance skill.\n---\n\n# Second Instance Skill\n",
+      )
+    },
+  })
+
+  await Instance.provide({
+    directory: first.path,
+    fn: async () => {
+      await SkillIndex.rebuild()
+      expect(SkillIndex.get("isolated-first")?.name).toBe("isolated-first")
+      expect(SkillIndex.get("isolated-second")).toBeUndefined()
+    },
+  })
+
+  await Instance.provide({
+    directory: second.path,
+    fn: async () => {
+      await SkillIndex.ensureBuilt()
+      expect(SkillIndex.get("isolated-second")?.name).toBe("isolated-second")
+      expect(SkillIndex.get("isolated-first")).toBeUndefined()
+    },
+  })
+})
+
 test("resolves nested skill directory aliases", async () => {
   await using tmp = await tmpdir({
     git: true,
