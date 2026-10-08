@@ -291,6 +291,7 @@ test("configured agent name is resolvable as a subagent selector", async () => {
       const explore = await Agent.get("ExplorerAlias")
       expect(explore?.name).toBe("ExplorerAlias")
       expect(explore?.mode).toBe("subagent")
+      expect(await Agent.key("ExplorerAlias")).toBe("explore")
     },
   })
 })
