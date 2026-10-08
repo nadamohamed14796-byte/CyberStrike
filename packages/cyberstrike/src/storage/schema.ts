@@ -31,6 +31,7 @@ export {
 
 export { SkillLearningTable, SkillLearningEventTable, LearningSignalTable } from "../learning/learning.sql"
 export { ToolLearningTable, ToolLearningEventTable } from "../learning/tool-learning.sql"
+export { ReportKnowledgeTable, ReportKnowledgeEventTable } from "../learning/report-knowledge.sql"
 
 export { ToolArtifactTable } from "../tool/artifact.sql"
 export { SignalQueueTable } from "../tool/signal-queue.sql"
