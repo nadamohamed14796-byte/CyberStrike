@@ -9,7 +9,7 @@ import * as schema from "../src/storage/schema"
 
 type Problem = { category: string; path?: string; message: string }
 const problems: Problem[] = []
-const root = path.resolve(import.meta.dir, "../..")
+const root = path.resolve(import.meta.dir, "../../..")
 const pkgRoot = path.join(root, "packages", "cyberstrike")
 
 function fail(category: string, message: string, file?: string) {
