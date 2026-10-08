@@ -258,7 +258,8 @@ async function main() {
       items.push({
         path: file,
         relativePath,
-        name: directoryName,
+        // Parse failures must be hard validation errors, not warnings.
+        name: "",
         description: "",
         chains_with: [],
         prerequisites: [],
