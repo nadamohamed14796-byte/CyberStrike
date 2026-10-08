@@ -178,6 +178,8 @@ import type {
   SessionQueueStatusResponses,
   SessionRequestErrors,
   SessionRequestResponses,
+  SessionResearchUpdateErrors,
+  SessionResearchUpdateResponses,
   SessionRevertErrors,
   SessionRevertResponses,
   SessionShareErrors,
@@ -2408,6 +2410,51 @@ export class Session extends HeyApiClient {
     )
     return (options?.client ?? this.client).post<SessionPromptAsyncResponses, SessionPromptAsyncErrors, ThrowOnError>({
       url: "/session/{sessionID}/prompt_async",
+      ...options,
+      ...params,
+      headers: {
+        "Content-Type": "application/json",
+        ...options?.headers,
+        ...params.headers,
+      },
+    })
+  }
+
+  /**
+   * Refresh public security research for the active hunt
+   *
+   * Fetches all configured public security-research sources using bounded incremental crawling, extracts lessons and vulnerability patterns into the persistent research knowledge base, and activates the most relevant learned research for the current hunt session.
+   */
+  public researchUpdate<ThrowOnError extends boolean = false>(
+    parameters: {
+      sessionID: string
+      directory?: string
+      limit?: number
+      pages?: number
+      depth?: number
+    },
+    options?: Options<never, ThrowOnError>,
+  ) {
+    const params = buildClientParams(
+      [parameters],
+      [
+        {
+          args: [
+            { in: "path", key: "sessionID" },
+            { in: "query", key: "directory" },
+            { in: "body", key: "limit" },
+            { in: "body", key: "pages" },
+            { in: "body", key: "depth" },
+          ],
+        },
+      ],
+    )
+    return (options?.client ?? this.client).post<
+      SessionResearchUpdateResponses,
+      SessionResearchUpdateErrors,
+      ThrowOnError
+    >({
+      url: "/session/{sessionID}/research/update",
       ...options,
       ...params,
       headers: {

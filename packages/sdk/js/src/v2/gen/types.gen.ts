@@ -4925,6 +4925,61 @@ export type SessionPromptAsyncResponses = {
 
 export type SessionPromptAsyncResponse = SessionPromptAsyncResponses[keyof SessionPromptAsyncResponses]
 
+export type SessionResearchUpdateData = {
+  body?: {
+    limit?: number
+    pages?: number
+    depth?: number
+  }
+  path: {
+    sessionID: string
+  }
+  query?: {
+    directory?: string
+  }
+  url: "/session/{sessionID}/research/update"
+}
+
+export type SessionResearchUpdateErrors = {
+  /**
+   * Bad request
+   */
+  400: BadRequestError
+  /**
+   * Not found
+   */
+  404: NotFoundError
+}
+
+export type SessionResearchUpdateError = SessionResearchUpdateErrors[keyof SessionResearchUpdateErrors]
+
+export type SessionResearchUpdateResponses = {
+  /**
+   * Research refreshed and activated for the session
+   */
+  200: {
+    sessionID: string
+    query?: string
+    sources: number
+    fetched: number
+    learned: number
+    skipped: number
+    failed: number
+    pages_crawled: number
+    recommendations: Array<{
+      id: string
+      title: string
+      vulnerability_class?: string | null
+      confidence: number
+      lesson?: string | null
+      source_url?: string | null
+    }>
+    error_samples: Array<string>
+  }
+}
+
+export type SessionResearchUpdateResponse = SessionResearchUpdateResponses[keyof SessionResearchUpdateResponses]
+
 export type SessionCommandData = {
   body?: {
     messageID?: string
