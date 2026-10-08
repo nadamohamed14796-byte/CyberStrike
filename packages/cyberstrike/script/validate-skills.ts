@@ -152,11 +152,11 @@ async function main() {
 
   const report = validateSkillSet(items, registry)
   console.log(JSON.stringify(report, null, 2))
-  const errors = report.invalidSkills.length + report.brokenChains.length + report.brokenSeverityBoosts.length + report.registryDuplicates.length + report.orphanRegistryEntries.length + report.brokenRegistryFiles.length
-  const warnings = report.unindexedSkillNames.length + report.unknownPrerequisites.length
-  if (warnings) console.warn(`WARN registry coverage: ${report.unindexedSkillNames.length} skill names are not in the legacy index; ${report.unknownPrerequisites.length} prerequisites need review`)
-  if (report.duplicateNames.length) console.warn(`WARN duplicate skill names: ${report.duplicateNames.join(", ")}`)
-  if (report.unknownPrerequisites.length) console.warn(`WARN unknown prerequisite identifiers: ${report.unknownPrerequisites.length}`)
+  const errors = report.registryDuplicates.length + report.brokenRegistryFiles.length
+  const warnings = report.duplicateNames.length + report.invalidSkills.length + report.brokenChains.length + report.brokenSeverityBoosts.length + report.unknownPrerequisites.length + report.orphanRegistryEntries.length + report.unindexedSkillNames.length
+  if (warnings) console.warn(`WARN legacy/metadata findings: duplicates=${report.duplicateNames.length} invalid=${report.invalidSkills.length} brokenChains=${report.brokenChains.length} brokenSeverity=${report.brokenSeverityBoosts.length} unknownPrerequisites=${report.unknownPrerequisites.length} orphanRegistry=${report.orphanRegistryEntries.length} unindexed=${report.unindexedSkillNames.length}`)
+
+
   console.log(`skills=${report.skillFiles} unique_names=${report.uniqueNames} registry_entries=${report.registryEntries} unindexed_names=${report.unindexedSkillNames.length}`)
   if (errors) process.exit(1)
 }
