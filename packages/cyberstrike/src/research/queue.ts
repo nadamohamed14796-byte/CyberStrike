@@ -4,7 +4,6 @@ import { ResearchQueueTable } from "./queue.sql"
 
 export type ResearchQueueStatus = "discovered" | "queued" | "studying" | "learned" | "retry" | "rejected"
 
-const ACTIVE_STATUSES: ResearchQueueStatus[] = ["queued", "retry", "studying"]
 const LEASE_MS = 5 * 60_000
 
 function publicID(sequence: number) {
@@ -39,9 +38,17 @@ export namespace ResearchQueue {
           discovered_at: now,
           updated_at: now,
         })
+        .onConflictDoNothing()
         .returning()
         .get()
-      return { id: publicID(row.sequence), sequence: row.sequence, created: true }
+      if (row) return { id: publicID(row.sequence), sequence: row.sequence, created: true }
+      const raced = db
+        .select()
+        .from(ResearchQueueTable)
+        .where(and(eq(ResearchQueueTable.source_id, input.sourceID), eq(ResearchQueueTable.source_url, input.sourceURL)))
+        .get()
+      if (!raced) throw new Error("research queue insert conflicted but the row could not be reloaded")
+      return { id: publicID(raced.sequence), sequence: raced.sequence, created: false }
     })
   }
 
