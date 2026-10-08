@@ -143,6 +143,7 @@ export async function syncResearchSource(source: ResearchSource, limit = 10): Pr
         vulnerabilityClass,
         sourceURL: url,
         lesson,
+        sourceTrust: source.trust,
         tags: [source.id, source.kind].concat(vulnerabilityClass ? [vulnerabilityClass] : []),
         metadata: {
           research_source: source.id,
@@ -162,7 +163,7 @@ export async function syncResearchSource(source: ResearchSource, limit = 10): Pr
       await Learning.emit({
         hook: "after_finding",
         signal: vulnerabilityClass ? "research:" + vulnerabilityClass : "research:" + source.id,
-        outcome: "confirmed",
+        outcome: "observed",
         evidence: "Public research source: " + url,
         metadata: {
           report_knowledge_id: id,
