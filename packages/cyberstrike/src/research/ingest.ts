@@ -116,7 +116,11 @@ function isResearchCandidate(url: string, source: ResearchSource) {
   const path = parsed.pathname.toLowerCase()
   if (source.id === "medium") {
     const segments = path.split("/").filter(Boolean)
-    if (path.startsWith("/@") || (segments.length >= 2 && !/^(tag|me|membership|about|help|search|plans|topics|media|home|latest)$/i.test(segments[0]))) {
+    if (
+      path.startsWith("/@") ||
+      (segments.length >= 2 &&
+        !/^(tag|me|membership|about|help|search|plans|topics|media|home|latest)$/i.test(segments[0]))
+    ) {
       return true
     }
   }
