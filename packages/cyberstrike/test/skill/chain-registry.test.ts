@@ -26,4 +26,14 @@ describe("ChainRegistry", () => {
     expect(result.transitions.length).toBeLessThanOrEqual(ChainRegistry.LIMITS.maxHops)
     expect(result.skills.length).toBeLessThanOrEqual(ChainRegistry.LIMITS.maxUniqueSkills)
   })
+
+  test("rejects chain expansion from an unpromoted signal state", async () => {
+    await SkillIndex.ensureBuilt()
+    const result = ChainRegistry.next({
+      from: "auth-sec",
+      completed: ["auth-sec"],
+      evidence: { state: "signal", key: "raw-signal" },
+    })
+    expect(result).toEqual([])
+  })
 })
