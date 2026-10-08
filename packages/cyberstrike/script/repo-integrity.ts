@@ -97,12 +97,26 @@ async function checkRelativeImports() {
     const base = spec.startsWith("@/")
       ? path.join(pkgRoot, "src", spec.slice(2))
       : path.resolve(path.dirname(file), spec)
+    const sourceExts = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]
     const out = [base]
-    if (!path.extname(base)) {
-      for (const ext of [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json"]) out.push(base + ext)
-      for (const ext of [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]) out.push(path.join(base, "index" + ext))
+
+    // TypeScript/Bun commonly resolves these specifier forms to source files
+    // with a different on-disk suffix:
+    //   "./module.js"  -> "./module.ts"
+    //   "./module.sql" -> "./module.sql.ts"
+    //   "./module"     -> "./module.ts"
+    const ext = path.extname(base)
+    if (!ext) {
+      for (const sourceExt of [...sourceExts, ".json"]) out.push(base + sourceExt)
+      for (const sourceExt of sourceExts) out.push(path.join(base, "index" + sourceExt))
+    } else if (ext === ".sql") {
+      for (const sourceExt of sourceExts) out.push(base + sourceExt)
+    } else if (sourceExts.includes(ext)) {
+      const stem = base.slice(0, -ext.length)
+      for (const sourceExt of sourceExts) out.push(stem + sourceExt)
     }
-    return out
+
+    return [...new Set(out)]
   }
 
   for (const file of sourceFiles) {
