@@ -298,16 +298,16 @@ test("configured agent name is resolvable as a subagent selector", async () => {
 test("default_agent accepts the configured agent name alias", async () => {
   await using tmp = await tmpdir({
     config: {
-      default_agent: "ExplorerAlias",
+      default_agent: "Striker",
       agent: {
-        explore: { name: "ExplorerAlias", mode: "primary" },
+        cyberstrike: { name: "Striker" },
       },
     },
   })
   await Instance.provide({
     directory: tmp.path,
     fn: async () => {
-      expect(await Agent.defaultAgent()).toBe("ExplorerAlias")
+      expect(await Agent.defaultAgent()).toBe("Striker")
     },
   })
 })
