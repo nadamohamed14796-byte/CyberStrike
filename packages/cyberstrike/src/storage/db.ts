@@ -167,9 +167,33 @@ export namespace Database {
         .join("\n--> statement-breakpoint\n") || "SELECT 1;"
     )
   }
+  function ensureResearchQueueTable(sqlite: BunDatabase) {
+    sqlite.run(`CREATE TABLE IF NOT EXISTS research_queue (
+      sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+      source_id TEXT NOT NULL,
+      source_url TEXT NOT NULL,
+      title TEXT,
+      payload TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'discovered',
+      attempts INTEGER NOT NULL DEFAULT 0,
+      last_error TEXT,
+      discovered_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      claimed_at INTEGER,
+      completed_at INTEGER,
+      lease_owner TEXT,
+      lease_until INTEGER
+    )`)
+    sqlite.run("CREATE UNIQUE INDEX IF NOT EXISTS research_queue_source_url_idx ON research_queue(source_id, source_url)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS research_queue_status_idx ON research_queue(status)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS research_queue_lease_idx ON research_queue(lease_until)")
+    sqlite.run("CREATE INDEX IF NOT EXISTS research_queue_sequence_idx ON research_queue(sequence)")
+  }
+
   function reconcile(sqlite: BunDatabase) {
     ensureSignalQueueTable(sqlite)
     ensureToolLearningTables(sqlite)
+    ensureResearchQueueTable(sqlite)
 
     // Phase 1: Structural repairs (table reshaping that can't be handled by ADD COLUMN)
     // web_credential: old schema had type/value columns → new schema uses headers JSON
