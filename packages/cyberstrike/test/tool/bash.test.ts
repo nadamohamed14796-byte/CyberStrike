@@ -40,6 +40,28 @@ describe("tool.bash", () => {
 })
 
 describe("tool.bash permissions", () => {
+  test("blocks recognizable network I/O through an interpreter", async () => {
+    await using tmp = await tmpdir({ git: true })
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const bash = await BashTool.init()
+        await expect(
+          bash.execute(
+            {
+              command: "python3 -c \"import requests; requests.get('https://evil.example')\"",
+              target: "https://example.com",
+              scope_items: ["example.com"],
+              authorized_active_testing: true,
+              description: "Run network Python code",
+            },
+            ctx,
+          ),
+        ).rejects.toThrow("Network-capable interpreter")
+      },
+    })
+  })
+
   test("asks for bash permission with correct pattern", async () => {
     await using tmp = await tmpdir({ git: true })
     await Instance.provide({
