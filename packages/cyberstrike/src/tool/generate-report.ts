@@ -72,7 +72,7 @@ export const GenerateReportTool = Tool.define("generate_report", {
     })
     const session = await Session.get(rootSession)
 
-    const vulns = Vulnerability.confirmed(rootSession)
+    const vulns = Vulnerability.reportable(rootSession)
     const intel = Intel.get(rootSession)
     const coverage = Intel.computeCoverage(rootSession)
     const assetCoverage = Intel.computePerAssetCoverage(rootSession)
