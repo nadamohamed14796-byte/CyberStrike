@@ -11,6 +11,7 @@ import { Session } from "../session"
 import { Vulnerability } from "../session/vulnerability"
 import { TargetMemory } from "../session/target-memory"
 import { Instance } from "../project/instance"
+import { TargetWorkspace } from "./target-workspace"
 
 const description = `Get the bounded web-application context for this session — scoped to the endpoint you are testing, so it stays small no matter how large the session grows.
 
@@ -117,6 +118,25 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
         content: m.content,
         last_seen: m.time.updated,
       })),
+    }
+
+    // Persistent target lessons are advisory, bounded memory from earlier sessions.
+    const target = TargetWorkspace.targetFrom(requestURL(currentReq)) ?? TargetWorkspace.targetFrom(currentReq?.host)
+    if (target) {
+      try {
+        context.target_lessons = (await TargetWorkspace.recentLessons(target, 8)).map((lesson) => ({
+          kind: lesson.kind,
+          summary: lesson.summary,
+          details: lesson.details,
+          confidence: lesson.confidence,
+          tags: lesson.tags,
+          created_at: lesson.createdAt,
+        }))
+      } catch {
+        context.target_lessons = []
+      }
+    } else {
+      context.target_lessons = []
     }
 
     // 3. credentials — strip 3rd-party tracking-cookie noise (keep auth/session).
