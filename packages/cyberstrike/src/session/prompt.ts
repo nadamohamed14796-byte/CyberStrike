@@ -904,9 +904,9 @@ export namespace SessionPrompt {
           lines.push("", "Recommended skills for this agent (load these first):")
           for (const name of agent.skills) lines.push(`- ${name}`)
         }
-        const loaded = SkillContext.active()
+        const loaded = SkillContext.active(input.session.id)
         if (loaded.length > 0) {
-          lines.push("", `Currently loaded: ${loaded.join(", ")} (${SkillContext.tokenCount()} tokens)`)
+          lines.push("", `Currently loaded: ${loaded.join(", ")} (${SkillContext.tokenCount(input.session.id)} tokens)`)
         }
         system.push(lines.join("\n"))
       }
@@ -1271,7 +1271,7 @@ export namespace SessionPrompt {
 
           if (runningQueueID) {
             try {
-              if (ctx.signal.aborted) SignalQueue.fail(runningQueueID)
+              if (ctx.abort.aborted) SignalQueue.fail(runningQueueID)
               else SignalQueue.complete(runningQueueID)
             } catch (error) {
               log.warn("failed to finalize recon queue item", { queueID: runningQueueID, error: String(error) })
