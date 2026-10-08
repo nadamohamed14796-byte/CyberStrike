@@ -1,3 +1,11 @@
+type ReconOrchestratorMetadata = {
+  status: "empty" | "planned"
+  queue_id?: string
+  signal?: string
+  target?: string
+  tools: string[]
+}
+
 import z from "zod"
 import { Tool } from "./tool"
 import { SignalQueue } from "./signal-queue"
@@ -25,7 +33,7 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
       return {
         title: "Recon queue: empty",
         output: "No pending signals remain for this session.",
-        metadata: { status: "empty", tools: [] },
+        metadata: { status: "empty", queue_id: undefined, signal: undefined, target: undefined, tools: [] } as ReconOrchestratorMetadata,
       }
     }
 
@@ -62,7 +70,7 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
         signal: planned.queue.signal,
         target: planned.queue.target,
         tools: planned.tools.map((tool) => tool.id),
-      },
+      } as ReconOrchestratorMetadata,
     }
   },
 })
