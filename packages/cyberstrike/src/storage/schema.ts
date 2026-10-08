@@ -12,6 +12,8 @@ export {
   WebObjectTable,
   WebObjectValueTable,
   WebFunctionTable,
+  RequestObservationTable,
+  CoverageNoteTable,
   WebRetestQueueTable,
   EndpointTemplateTable,
 } from "../session/session.sql"
