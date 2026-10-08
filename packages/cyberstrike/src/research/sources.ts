@@ -19,7 +19,10 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
     id: "hackerone-hacktivity",
     name: "HackerOne Hacktivity",
     kind: "disclosure",
-    seedUrls: ["https://hackerone.com/hacktivity"],
+    seedUrls: [
+      "https://hackerone.com/hacktivity",
+      "https://hackerone.com/hacktivity/overview?pageIndex=0&queryString=disclosed%3Atrue&sortDirection=DESC&sortField=latest_disclosable_activity_at",
+    ],
     hosts: ["hackerone.com"],
     trust: 95,
   },
@@ -69,6 +72,8 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
     kind: "writeup",
     seedUrls: [
       "https://medium.com/tag/bug-bounty/archive",
+      "https://medium.com/tag/bug-bounty-writeup/archive",
+      "https://medium.com/tag/bug-bounty-hunter/archive",
       "https://medium.com/tag/penetration-testing/archive",
       "https://medium.com/tag/web-security/archive",
       "https://medium.com/bug-bounty-hunting",
