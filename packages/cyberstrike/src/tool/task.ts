@@ -108,11 +108,14 @@ export const TaskTool = Tool.define("task", async (ctx) => {
       const session = await iife(async () => {
         if (params.task_id) {
           const found = await Session.get(params.task_id).catch(() => {})
-          if (found) {
-            // A task id is scoped to the child created by this parent. Never
-            // treat it as a global session selector that can resume a sibling
-            // or an unrelated session.
-            const history = await Session.messages({ sessionID: found.id, limit: 50 }).catch(() => [])
+          if (!found) {
+            throw new Error(`Cannot resume task ${params.task_id}: task session was not found.`)
+          }
+
+          // A task id is scoped to the child created by this parent. Never
+          // treat it as a global session selector that can resume a sibling
+          // or an unrelated session.
+          const history = await Session.messages({ sessionID: found.id, limit: 50 }).catch(() => [])
             const owner = history.find((item) => item.info.role === "user")?.info.agent
             if (
               !isResumableTaskSession({
