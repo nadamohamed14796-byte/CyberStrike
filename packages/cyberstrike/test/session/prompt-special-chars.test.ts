@@ -46,6 +46,7 @@ describe("session.prompt special characters", () => {
 
         // Verify the file content was read correctly
         const textParts = stored.parts.filter((part) => part.type === "text")
+        console.log("DEBUG_STORED_PARTS", JSON.stringify(stored.parts))
         const hasContent = textParts.some((part) => part.text.includes("special content"))
         expect(hasContent).toBe(true)
 
