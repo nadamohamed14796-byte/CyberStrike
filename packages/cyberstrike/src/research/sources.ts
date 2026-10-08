@@ -7,6 +7,11 @@ export type ResearchSource = {
   seedUrls: string[]
   hosts: string[]
   trust: number
+  /** Source-specific discovery/relevance policy. */
+  includeTerms?: string[]
+  excludeTerms?: string[]
+  includePaths?: string[]
+  excludePaths?: string[]
 }
 
 export const RESEARCH_SOURCES: ResearchSource[] = [
@@ -62,9 +67,29 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
     id: "medium",
     name: "Medium",
     kind: "writeup",
-    seedUrls: ["https://medium.com/tag/bug-bounty"],
+    seedUrls: [
+      "https://medium.com/tag/bug-bounty/archive",
+      "https://medium.com/tag/penetration-testing/archive",
+      "https://medium.com/tag/web-security/archive",
+      "https://medium.com/bug-bounty-hunting",
+    ],
     hosts: ["medium.com"],
     trust: 75,
+    includeTerms: [
+      "bug bounty", "bugbounty", "vulnerability", "vulnerabilities", "security flaw",
+      "idor", "xss", "ssrf", "csrf", "sqli", "sql injection", "ssti", "xxe",
+      "race condition", "request smuggling", "prototype pollution", "deserialization",
+      "authorization", "access control", "account takeover", "privilege escalation",
+      "oauth", "jwt", "graphql", "file upload", "path traversal", "open redirect",
+      "subdomain takeover", "web security", "api security", "penetration testing",
+      "pentesting", "security research", "writeup", "responsible disclosure", "cve",
+    ],
+    excludeTerms: [
+      "career", "salary", "interview", "resume", "job", "course", "certification",
+      "motivation", "productivity", "crypto trading", "marketing", "business",
+      "ai news", "prompt engineering", "general programming", "linux commands",
+    ],
+    includePaths: ["/tag/bug-bounty", "/tag/penetration-testing", "/tag/web-security", "/bug-bounty-hunting"],
   },
   {
     id: "infosec-writeups",
