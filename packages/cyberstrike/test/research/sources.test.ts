@@ -7,6 +7,8 @@ describe("research source registry", () => {
     expect(getResearchSource("hackerone-hacktivity")?.trust).toBe(95)
     expect(getResearchSource("portswigger")?.kind).toBe("academy")
     expect(getResearchSource("payloadsallthethings")?.hosts).toContain("github.com")
+    expect(getResearchSource("src-hunter-skill")?.trust).toBe(90)
+    expect(getResearchSource("src-hunter-skill")?.seedUrls.some((url) => url.endsWith("/SKILL.md"))).toBe(true)
   })
 
   test("every source has HTTPS seeds and host allowlists", () => {
