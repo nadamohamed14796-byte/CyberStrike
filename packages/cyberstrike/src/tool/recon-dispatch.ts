@@ -18,7 +18,7 @@ export namespace ReconDispatch {
     agent?: string
   }
 
-  function key(tool: string, target: string | undefined, signal: string) {
+  function key(tool: string, target: string | null | undefined, signal: string) {
     return tool + "::" + (target ?? "*").trim().toLowerCase() + "::" + signal.trim().toLowerCase()
   }
 
