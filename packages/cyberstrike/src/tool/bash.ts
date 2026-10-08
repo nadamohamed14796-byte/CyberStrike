@@ -115,6 +115,7 @@ export const BashTool = Tool.define("bash", async () => {
       }
       const securityTargets: Array<{ command: string; target: string; risk: string }> = []
       for (const node of tree.rootNode.descendantsOfType("command")) {
+        if (!node) continue
         const words = []
         for (let i = 0; i < node.childCount; i++) {
           const child = node.child(i)
