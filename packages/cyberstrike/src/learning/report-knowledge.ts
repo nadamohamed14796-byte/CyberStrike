@@ -255,6 +255,45 @@ export namespace ReportKnowledge {
     }
   }
 
+  function queryTokens(query?: string) {
+    return Array.from(
+      new Set(
+        normalize(query)
+          .split(/\s+/)
+          .map((token) => token.trim())
+          .filter((token) => token.length >= 2),
+      ),
+    )
+  }
+
+  function relevanceScore(
+    row: typeof ReportKnowledgeTable.$inferSelect,
+    tokens: string[],
+  ) {
+    if (!tokens.length) return 0
+    const title = normalize(row.title)
+    const lesson = normalize(row.lesson)
+    const attackVector = normalize(row.attack_vector)
+    const impact = normalize(row.impact)
+    const haystack = [title, lesson, attackVector, impact].filter(Boolean).join(" ")
+    let score = 0
+
+    for (const token of tokens) {
+      const escaped = token.replace(/[\\^$.*+?()[\]{}|]/g, "\\\\$&")
+      const exact = new RegExp("(^|[^\\p{L}\\p{N}_])" + escaped + "([^\\p{L}\\p{N}_]|$)", "iu")
+      if (exact.test(title)) score += 45
+      else if (exact.test(lesson)) score += 25
+      else if (exact.test(attackVector) || exact.test(impact)) score += 18
+      else if (haystack.includes(token)) score += 8
+    }
+
+    if (row.vulnerability_class && tokens.includes(normalize(row.vulnerability_class))) score += 70
+    if (row.cwe_id && tokens.includes(normalize(row.cwe_id))) score += 70
+    if (row.source_kind === "external_report") score += 5
+    score += Math.min(row.times_useful * 4, 20)
+    return score
+  }
+
   export function search(
     input: { query?: string; vulnerabilityClass?: string; cweID?: string; targetPattern?: string; limit?: number } = {},
   ) {
@@ -266,46 +305,49 @@ export namespace ReportKnowledge {
         if (input.cweID) conditions.push(eq(ReportKnowledgeTable.cwe_id, input.cweID))
         if (input.targetPattern)
           conditions.push(eq(ReportKnowledgeTable.target_pattern, normalize(input.targetPattern)))
-        if (input.query) {
-          const tokens = Array.from(
-            new Set(
-              normalize(input.query)
-                .split(/\s+/)
-                .map((token) => token.trim())
-                .filter((token) => token.length >= 2),
+
+        const tokens = queryTokens(input.query)
+        if (tokens.length) {
+          conditions.push(
+            or(
+              ...tokens.flatMap((token) => {
+                const q = "%" + token + "%"
+                return [
+                  like(ReportKnowledgeTable.title, q),
+                  like(ReportKnowledgeTable.lesson, q),
+                  like(ReportKnowledgeTable.attack_vector, q),
+                  like(ReportKnowledgeTable.impact, q),
+                  like(ReportKnowledgeTable.vulnerability_class, q),
+                  like(ReportKnowledgeTable.cwe_id, q),
+                ]
+              }),
             ),
           )
-          if (tokens.length) {
-            conditions.push(
-              or(
-                ...tokens.flatMap((token) => {
-                  const q = "%" + token + "%"
-                  return [
-                    like(ReportKnowledgeTable.title, q),
-                    like(ReportKnowledgeTable.lesson, q),
-                    like(ReportKnowledgeTable.attack_vector, q),
-                    like(ReportKnowledgeTable.impact, q),
-                  ]
-                }),
-              ),
-            )
-          }
         }
+
         const query = db.select().from(ReportKnowledgeTable)
-        return (conditions.length ? query.where(and(...conditions)) : query)
-          .orderBy(
-            desc(ReportKnowledgeTable.confidence),
-            desc(ReportKnowledgeTable.times_useful),
-            desc(ReportKnowledgeTable.time_updated),
-          )
-          .limit(Math.min(input.limit ?? 20, 100))
+        const rows = (conditions.length ? query.where(and(...conditions)) : query)
+          .orderBy(desc(ReportKnowledgeTable.time_updated))
+          .limit(Math.min(tokens.length ? 300 : input.limit ?? 20, 300))
           .all()
+
+        return rows
+          .map((row) => ({ row, score: relevanceScore(row, tokens) }))
+          .filter(({ score }) => !tokens.length || score >= 20)
+          .sort(
+            (a, b) =>
+              b.score - a.score ||
+              b.row.confidence - a.row.confidence ||
+              b.row.times_useful - a.row.times_useful ||
+              b.row.time_updated - a.row.time_updated,
+          )
+          .slice(0, Math.min(input.limit ?? 20, 100))
+          .map(({ row }) => row)
       })
     } catch {
       return []
     }
   }
-
   export function stats() {
     try {
       return Database.use((db) => {
