@@ -112,7 +112,6 @@ export namespace ToolArtifact {
     )
   }
 
-
   /** Return artifacts for an exact execution key without a recency limit. */
   export function byExecutionKey(sessionID: string, tool: string, target: string | null | undefined, signal: string) {
     return Database.use((db) =>
