@@ -52,7 +52,8 @@ const NETWORK_CAPABLE_INTERPRETERS = new Set([
   "powershell",
 ])
 
-const NETWORK_INTENT = /\b(?:curl|wget|nmap|masscan|nc|netcat|sqlmap|requests|httpx|aiohttp|urllib(?:3)?|socket|fetch|axios|http\.request|https\.request|net\.connect|invoke-webrequest|invoke-restmethod)\b/i
+const NETWORK_INTENT =
+  /\b(?:curl|wget|nmap|masscan|nc|netcat|sqlmap|requests|httpx|aiohttp|urllib(?:3)?|socket|fetch|axios|http\.request|https\.request|net\.connect|invoke-webrequest|invoke-restmethod)\b/i
 
 // Detect binary content in a buffer by checking for high density of
 // non-printable bytes. Printable = ASCII 0x20-0x7E, tab, newline, CR, ESC
