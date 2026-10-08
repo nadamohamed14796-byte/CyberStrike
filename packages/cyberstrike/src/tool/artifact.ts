@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto"
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, isNull } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { ToolArtifactTable } from "./artifact.sql"
@@ -123,7 +123,7 @@ export namespace ToolArtifact {
           and(
             eq(ToolArtifactTable.session_id, sessionID),
             eq(ToolArtifactTable.tool, tool),
-            target == null ? eq(ToolArtifactTable.target, null as never) : eq(ToolArtifactTable.target, target),
+            target == null ? isNull(ToolArtifactTable.target) : eq(ToolArtifactTable.target, target),
             eq(ToolArtifactTable.signal, signal),
           ),
         )
