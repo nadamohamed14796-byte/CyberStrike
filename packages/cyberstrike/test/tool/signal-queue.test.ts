@@ -5,6 +5,33 @@ import { Instance } from "../../src/project/instance"
 import { Session } from "../../src/session"
 import { SignalQueue } from "../../src/tool/signal-queue"
 
+describe("SignalQueue concurrency", () => {
+  test("deduplicates concurrent enqueue calls without surfacing unique races", async () => {
+    await Instance.provide({
+      directory: path.join(__dirname, "../.."),
+      fn: async () => {
+        const session = await Session.create({})
+        const signal = `concurrent-enqueue-${crypto.randomUUID()}`
+        const ids = await Promise.all(
+          Array.from({ length: 20 }, () =>
+            Promise.resolve(
+              SignalQueue.enqueue({
+                sessionID: session.id,
+                signal,
+                target: "race.example",
+              }),
+            ),
+          ),
+        )
+
+        expect(new Set(ids).size).toBe(1)
+        expect(SignalQueue.list(session.id).filter((x) => x.dedup_key.endsWith("race.example")).length).toBe(1)
+        await Session.remove(session.id)
+      },
+    })
+  })
+})
+
 describe("SignalQueue recovery", () => {
   test("requeues stale work when another attempt remains", async () => {
     await Instance.provide({
