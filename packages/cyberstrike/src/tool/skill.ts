@@ -12,6 +12,7 @@ import { iife } from "@/util/iife"
 import { Agent } from "../agent/agent"
 import { ReferenceLearning } from "../learning/reference"
 
+const MAX_ACCESSIBLE_CACHE = 256
 const accessibleCache = new Map<string, Skill.Info[]>()
 
 export const SkillTool = Tool.define("skill", async (ctx) => {
@@ -72,6 +73,11 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
       if (!accessibleCache.has(agentKey)) {
         const skills = await Skill.all()
         const agentInfo = await Agent.get(ctx.agent)
+        while (accessibleCache.size >= MAX_ACCESSIBLE_CACHE) {
+          const oldest = accessibleCache.keys().next().value
+          if (!oldest) break
+          accessibleCache.delete(oldest)
+        }
         accessibleCache.set(
           agentKey,
           agentInfo?.permission
