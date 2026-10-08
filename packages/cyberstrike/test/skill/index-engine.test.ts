@@ -25,6 +25,52 @@ describe("SkillIndex", () => {
   })
 })
 
+  test("lookup limits are deterministic for tag, category, and tech stack", async () => {
+    await Instance.provide({
+      directory: path.join(__dirname, "../.."),
+      fn: async () => {
+        await SkillIndex.ensureBuilt()
+        const entries = SkillIndex.all()
+
+        const tag = [...new Set(entries.flatMap((entry) => entry.tags))].find(
+          (candidate) => entries.filter((entry) => entry.tags.includes(candidate)).length > 50,
+        )
+        if (tag) {
+          const expected = entries
+            .filter((entry) => entry.tags.includes(tag))
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .slice(0, 50)
+            .map((entry) => entry.name)
+          expect(SkillIndex.byTag(tag).map((entry) => entry.name)).toEqual(expected)
+        }
+
+        const category = [...new Set(entries.map((entry) => entry.category).filter(Boolean))].find(
+          (candidate) => entries.filter((entry) => entry.category === candidate).length > 50,
+        )
+        if (category) {
+          const expected = entries
+            .filter((entry) => entry.category === category)
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .slice(0, 50)
+            .map((entry) => entry.name)
+          expect(SkillIndex.byCategory(category).map((entry) => entry.name)).toEqual(expected)
+        }
+
+        const tech = [...new Set(entries.flatMap((entry) => entry.tech_stack))].find(
+          (candidate) => entries.filter((entry) => entry.tech_stack.includes(candidate)).length > 50,
+        )
+        if (tech) {
+          const expected = entries
+            .filter((entry) => entry.tech_stack.includes(tech))
+            .sort((a, b) => a.name.localeCompare(b.name))
+            .slice(0, 50)
+            .map((entry) => entry.name)
+          expect(SkillIndex.byTechStack([tech]).map((entry) => entry.name)).toEqual(expected)
+        }
+      },
+    })
+  })
+
 test("does not leak skills between project instances", async () => {
   await using first = await tmpdir({
     git: true,
