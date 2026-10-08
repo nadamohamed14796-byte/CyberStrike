@@ -16,6 +16,7 @@ import { Log } from "../util/log"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
 const sessionNextTools = new Map<string, ReturnType<typeof ReconDispatch.next>>()
+const sessionResearch = new Map<string, ReturnType<typeof ReportKnowledge.recommendations>>
 const MAX_SESSION_ROUTES = 256
 const log = Log.create({ service: "learning" })
 
@@ -137,6 +138,8 @@ export namespace Learning {
       sessionRoutes.set(signal.sessionID, routes)
       sessionNextTools.delete(signal.sessionID)
       sessionNextTools.set(signal.sessionID, nextTools)
+      sessionResearch.delete(signal.sessionID)
+      sessionResearch.set(signal.sessionID, researchRecommendations)
       while (sessionRoutes.size > MAX_SESSION_ROUTES) {
         const oldest = sessionRoutes.keys().next().value
         if (!oldest) break
@@ -196,6 +199,10 @@ export namespace Learning {
 
   export function routesFor(sessionID: string, limit = 8): RoutedSkill[] {
     return (sessionRoutes.get(sessionID) ?? []).slice(0, limit)
+  }
+
+  export function researchFor(sessionID: string, limit = 6) {
+    return (sessionResearch.get(sessionID) ?? []).slice(0, limit)
   }
 
   export function recent(input?: { sessionID?: string; hook?: LearningHook; limit?: number }) {
