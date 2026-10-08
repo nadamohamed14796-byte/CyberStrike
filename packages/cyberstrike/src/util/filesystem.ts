@@ -1,4 +1,4 @@
-import { realpathSync } from "fs"
+import { realpath, realpathSync } from "node:fs"
 import { dirname, join, relative } from "path"
 
 export namespace Filesystem {
