@@ -266,10 +266,7 @@ export namespace ReportKnowledge {
     )
   }
 
-  function relevanceScore(
-    row: typeof ReportKnowledgeTable.$inferSelect,
-    tokens: string[],
-  ) {
+  function relevanceScore(row: typeof ReportKnowledgeTable.$inferSelect, tokens: string[]) {
     if (!tokens.length) return 0
     const title = normalize(row.title)
     const lesson = normalize(row.lesson)
@@ -328,7 +325,7 @@ export namespace ReportKnowledge {
         const query = db.select().from(ReportKnowledgeTable)
         const rows = (conditions.length ? query.where(and(...conditions)) : query)
           .orderBy(desc(ReportKnowledgeTable.time_updated))
-          .limit(Math.min(tokens.length ? 300 : input.limit ?? 20, 300))
+          .limit(Math.min(tokens.length ? 300 : (input.limit ?? 20), 300))
           .all()
 
         return rows
