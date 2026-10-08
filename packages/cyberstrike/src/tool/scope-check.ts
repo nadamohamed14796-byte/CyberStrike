@@ -2,7 +2,7 @@ import z from "zod"
 import { Tool } from "./tool"
 import { ScopeGuard } from "./scope-guard"
 
-export { ScopeGuard } from "./scope-guard"
+export { ScopeGuard, type ScopeMatch } from "./scope-guard"
 
 export const ScopeCheckTool = Tool.define("scope_check", {
   description:
@@ -11,7 +11,9 @@ export const ScopeCheckTool = Tool.define("scope_check", {
     target: z.string().describe("The target to check (domain, IP, or URL)"),
     scope_items: z
       .array(z.string())
-      .describe("List of in-scope items (domains, wildcards like *.example.com, URL paths/ports, CIDRs like 10.0.0.0/24)"),
+      .describe(
+        "List of in-scope items (domains, wildcards like *.example.com, URL paths/ports, CIDRs like 10.0.0.0/24)",
+      ),
   }),
   async execute(params) {
     const target = params.target.toLowerCase().trim()
@@ -37,72 +39,3 @@ export const ScopeCheckTool = Tool.define("scope_check", {
     }
   },
 })
-
-function checkMatch(target: string, scope: string): ScopeMatch {
-  const scopeValue = scope.trim().toLowerCase()
-
-  if (/^\d+\.\d+\.\d+\.\d+\/(?:\d|[12]\d|3[0-2])$/.test(scopeValue)) {
-    const targetIP = extractIP(target)
-    if (!targetIP) return { matches: false, reason: "target is not an IPv4 address" }
-    const inRange = ipInCIDR(targetIP, scopeValue)
-    return inRange
-      ? { matches: true, reason: `IP ${targetIP} is within CIDR ${scopeValue}` }
-      : { matches: false, reason: `IP ${targetIP} is outside CIDR ${scopeValue}` }
-  }
-
-  const parsedTarget = parseTarget(target)
-  if (!parsedTarget) return { matches: false, reason: "target could not be normalized" }
-
-  const wildcard = scopeValue.startsWith("*.")
-  const parsedScope = parseTarget(wildcard ? scopeValue.slice(2) : scopeValue)
-  if (!parsedScope) return { matches: false, reason: "scope item could not be normalized" }
-
-  if (parsedScope.protocol && parsedTarget.protocol && parsedTarget.protocol !== parsedScope.protocol) {
-    return { matches: false, reason: "scheme mismatch" }
-  }
-
-  const hostMatches = wildcard
-    ? parsedTarget.host === parsedScope.host || parsedTarget.host.endsWith("." + parsedScope.host)
-    : parsedTarget.host === parsedScope.host
-  if (!hostMatches) {
-    return { matches: false, reason: wildcard ? `does not match wildcard ${scopeValue}` : "host mismatch" }
-  }
-
-  if (parsedTarget.port !== parsedScope.port) {
-    return { matches: false, reason: `port mismatch (${parsedTarget.port} vs ${parsedScope.port})` }
-  }
-
-  if (!pathMatches(parsedTarget.path, parsedScope.path)) {
-    return { matches: false, reason: `path ${parsedTarget.path} is outside ${parsedScope.path}` }
-  }
-
-  return {
-    matches: true,
-    reason: wildcard
-      ? parsedTarget.host === parsedScope.host
-        ? `host matches wildcard root ${scopeValue}`
-        : `subdomain matches wildcard ${scopeValue}`
-      : "exact host/path/port match",
-  }
-}
-
-function extractIP(input: string): string | null {
-  const match = /(?:^|[^\d])(\d+\.\d+\.\d+\.\d+)(?:$|[^\d])/.exec(input)
-  return match ? match[1] : null
-}
-
-function ipInCIDR(ip: string, cidr: string): boolean {
-  const [range, bitsRaw] = cidr.split("/")
-  const bits = Number(bitsRaw)
-  if (!Number.isInteger(bits) || bits < 0 || bits > 32) return false
-  const mask = bits === 0 ? 0 : (~((1 << (32 - bits)) - 1) >>> 0)
-  const ipNum = ipToNum(ip)
-  const rangeNum = ipToNum(range)
-  return (ipNum & mask) === (rangeNum & mask)
-}
-
-function ipToNum(ip: string): number {
-  const octets = ip.split(".")
-  if (octets.length !== 4 || octets.some((x) => !/^\d+$/.test(x) || Number(x) > 255)) return 0
-  return octets.reduce((acc, octet) => (acc << 8) + Number(octet), 0) >>> 0
-}
