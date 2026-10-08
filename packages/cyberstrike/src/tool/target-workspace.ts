@@ -17,6 +17,8 @@ export namespace TargetWorkspace {
     js: string
     reports: string
     state: string
+    lessons: string
+    lessonsFile: string
   }
 
   function slug(target: string) {
@@ -52,6 +54,8 @@ export namespace TargetWorkspace {
       js: path.join(session, "js"),
       reports: path.join(session, "reports"),
       state: path.join(root, "state"),
+      lessons: path.join(root, "lessons"),
+      lessonsFile: path.join(root, "lessons", "lessons.ndjson"),
     }
   }
 
@@ -65,8 +69,58 @@ export namespace TargetWorkspace {
       fs.mkdir(result.js, { recursive: true }),
       fs.mkdir(result.reports, { recursive: true }),
       fs.mkdir(result.state, { recursive: true }),
+      fs.mkdir(result.lessons, { recursive: true }),
+      ensureLessonsFile(result.lessonsFile),
     ])
     return result
+  }
+
+  export type LessonKind = "observation" | "mistake" | "pattern" | "finding" | "technique" | "note"
+
+  export type Lesson = {
+    id: string
+    createdAt: string
+    kind: LessonKind
+    summary: string
+    details?: string
+    source?: string
+    confidence?: "low" | "medium" | "high"
+    sessionID?: string
+    tags?: string[]
+  }
+
+  async function ensureLessonsFile(file: string) {
+    try {
+      await fs.access(file)
+    } catch {
+      await fs.writeFile(file, "", "utf8")
+    }
+  }
+
+  export async function addLesson(target: string, lesson: Omit<Lesson, "id" | "createdAt">): Promise<Lesson> {
+    const paths = await ensure(target, lesson.sessionID)
+    const record: Lesson = {
+      ...lesson,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    }
+    await fs.appendFile(paths.lessonsFile, JSON.stringify(record) + "\n", "utf8")
+    return record
+  }
+
+  export async function readLessons(target: string): Promise<Lesson[]> {
+    const paths = await ensure(target)
+    const content = await fs.readFile(paths.lessonsFile, "utf8")
+    const lessons: Lesson[] = []
+    for (const [index, line] of content.split("\n").entries()) {
+      if (!line.trim()) continue
+      try {
+        lessons.push(JSON.parse(line) as Lesson)
+      } catch {
+        throw new Error(`Invalid lesson record at line ${index + 1} for target workspace`)
+      }
+    }
+    return lessons
   }
 
   export function contains(target: string, candidate: string, sessionID?: string) {
