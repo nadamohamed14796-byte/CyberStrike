@@ -11,7 +11,8 @@ export namespace ReportKnowledge {
   }
 
   function fingerprint(input: { title: string; vulnerabilityClass?: string; cweID?: string; endpoint?: string; sourceURL?: string }) {
-    if (input.sourceURL) return "url:" + normalize(input.sourceURL)\n    return [input.vulnerabilityClass, input.cweID, input.endpoint, input.title].map(normalize).filter(Boolean).join("|")
+    if (input.sourceURL) return "url:" + normalize(input.sourceURL)
+    return [input.vulnerabilityClass, input.cweID, input.endpoint, input.title].map(normalize).filter(Boolean).join("|")
   }
 
   function confidence(row: typeof ReportKnowledgeTable.$inferSelect, outcome?: Outcome) {
@@ -162,7 +163,21 @@ export namespace ReportKnowledge {
     } catch { return [] }
   }
 
-  export function stats() {\n    try {\n      return Database.use((db) => {\n        const total = Number(db.select({ count: count() }).from(ReportKnowledgeTable).get()?.count ?? 0)\n        const external = Number(db.select({ count: count() }).from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.source_kind, "external_report")).get()?.count ?? 0)\n        const useful = Number(db.select({ count: count() }).from(ReportKnowledgeTable).where(or(eq(ReportKnowledgeTable.status, "useful"), eq(ReportKnowledgeTable.status, "confirmed"))).get()?.count ?? 0)\n        const rejected = Number(db.select({ count: count() }).from(ReportKnowledgeTable).where(or(eq(ReportKnowledgeTable.status, "rejected"), eq(ReportKnowledgeTable.status, "disproven"), eq(ReportKnowledgeTable.status, "duplicate"))).get()?.count ?? 0)\n        return { total, external, useful, rejected }\n      })\n    } catch {\n      return { total: 0, external: 0, useful: 0, rejected: 0 }\n    }\n  }\n\n  export function recommendations(input: { signal?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {}) {
+  export function stats() {
+    try {
+      return Database.use((db) => {
+        const total = Number(db.select({ count: count() }).from(ReportKnowledgeTable).get()?.count ?? 0)
+        const external = Number(db.select({ count: count() }).from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.source_kind, "external_report")).get()?.count ?? 0)
+        const useful = Number(db.select({ count: count() }).from(ReportKnowledgeTable).where(or(eq(ReportKnowledgeTable.status, "useful"), eq(ReportKnowledgeTable.status, "confirmed"))).get()?.count ?? 0)
+        const rejected = Number(db.select({ count: count() }).from(ReportKnowledgeTable).where(or(eq(ReportKnowledgeTable.status, "rejected"), eq(ReportKnowledgeTable.status, "disproven"), eq(ReportKnowledgeTable.status, "duplicate"))).get()?.count ?? 0)
+        return { total, external, useful, rejected }
+      })
+    } catch {
+      return { total: 0, external: 0, useful: 0, rejected: 0 }
+    }
+  }
+
+  export function recommendations(input: { signal?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {}) {
     return search({ query: input.signal, vulnerabilityClass: input.vulnerabilityClass, cweID: input.cweID, limit: input.limit ?? 8 })
       .filter((row) => row.confidence >= 50)
   }
