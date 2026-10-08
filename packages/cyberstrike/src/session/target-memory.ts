@@ -298,8 +298,8 @@ export namespace TargetMemory {
     const projectID = projectIDForSession(sessionID)
     if (!projectID) return 0
     const scripts = requestID
-      ? list(projectID, "javascript", 1000).filter((script) => script.request_id === requestID)
-      : list(projectID, "javascript", 1000)
+      ? byRequest(sessionID, requestID, "javascript")
+      : listAll(projectID, "javascript")
     let stored = 0
     const absolute = /https?:\/\/[^"'\s<>]+/gi
     const relative = /["'`]((?:\/api\/|\/v1\/|\/v2\/|\/graphql(?:\?|$)|\/rest\/)[A-Za-z0-9_./?=&:%{}$-]{1,240})["'`]/gi
@@ -442,9 +442,47 @@ export namespace TargetMemory {
     return projectIDForSession(sessionID)
   }
 
+  export function byRequest(sessionID: string, requestID: string, kind?: Kind): Info[] {
+    const projectID = projectIDForSession(sessionID)
+    if (!projectID) return []
+    return list(projectID, kind).filter((item) => item.request_id === requestID)
+  }
+
   export function listForSession(sessionID: string, kind?: Kind, limit = 200): Info[] {
     const projectID = projectIDForSession(sessionID)
     return projectID ? list(projectID, kind, limit) : []
+  }
+
+  export function listAll(projectID: string, kind?: Kind): Info[] {
+    const rows = Database.use((db) => {
+      const query = db
+        .select()
+        .from(TargetMemoryTable)
+        .where(
+          kind
+            ? and(eq(TargetMemoryTable.project_id, projectID), eq(TargetMemoryTable.kind, kind))
+            : eq(TargetMemoryTable.project_id, projectID),
+        )
+      return query.orderBy(desc(TargetMemoryTable.time_updated)).all()
+    })
+    return rows.map((r) => ({
+      id: r.id,
+      project_id: r.project_id,
+      kind: r.kind as Kind,
+      asset: r.asset,
+      method: r.method ?? undefined,
+      url: r.url,
+      request_id: r.request_id ?? undefined,
+      page_url: r.page_url ?? undefined,
+      content_type: r.content_type ?? undefined,
+      content: r.content ?? undefined,
+      metadata: (r.metadata as Record<string, unknown>) ?? undefined,
+      confidence:
+        typeof (r.metadata as Record<string, unknown> | null)?.confidence === "number"
+          ? ((r.metadata as Record<string, unknown>).confidence as number)
+          : undefined,
+      time: { created: r.time_created, updated: r.time_updated },
+    }))
   }
 
   export function list(projectID: string, kind?: Kind, limit = 200): Info[] {
