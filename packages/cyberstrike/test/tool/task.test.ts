@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { isResumableTaskSession } from "../../src/tool/task"
+import { isResumableTaskSession } from "../../src/tool/task-session"
 
 describe("subagent task resume", () => {
   const session = (parentID: string | undefined): Parameters<typeof isResumableTaskSession>[0]["session"] =>
