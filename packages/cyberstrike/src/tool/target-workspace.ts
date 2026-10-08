@@ -71,8 +71,8 @@ export namespace TargetWorkspace {
       fs.mkdir(result.reports, { recursive: true }),
       fs.mkdir(result.state, { recursive: true }),
       fs.mkdir(result.lessons, { recursive: true }),
-      ensureLessonsFile(result.lessonsFile),
     ])
+    await ensureLessonsFile(result.lessonsFile)
     return result
   }
 
