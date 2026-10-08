@@ -1,6 +1,6 @@
 import matter from "gray-matter"
 import path from "node:path"
-import { readdirSync } from "node:fs"
+import { readdirSync, statSync } from "node:fs"
 
 export type SkillInventoryItem = {
   path: string
@@ -48,6 +48,14 @@ function walk(dir: string): string[] {
   return out
 }
 
+function statSafe(file: string): boolean {
+  try {
+    return statSync(file).isFile()
+  } catch {
+    return false
+  }
+}
+
 function looksLikeSkillID(value: string) {
   return /^[a-z0-9][a-z0-9._-]*$/.test(value.trim())
 }
@@ -90,7 +98,7 @@ export function validateSkillSet(items: SkillInventoryItem[], registry: Registry
     const rootDir = path.dirname(root.path)
     for (const rel of entry.files) {
       const candidate = path.resolve(rootDir, rel)
-      if (!candidate.startsWith(rootDir + path.sep) || !Bun.file(candidate).size && !Bun.file(candidate).exists()) {
+      if (!candidate.startsWith(rootDir + path.sep) || !statSafe(candidate)) {
         brokenRegistryFiles.push({ skill: entry.name, file: rel })
       }
     }
