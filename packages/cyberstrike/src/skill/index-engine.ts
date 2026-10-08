@@ -43,6 +43,18 @@ export namespace SkillIndex {
   }
 
   const state = Instance.state(createState)
+  const standaloneState = createState()
+
+  // Read-only helpers remain safe for small standalone callers (for example,
+  // kill-chain validation before a project is initialized). Building the index
+  // still requires an Instance because Skill.state is project-scoped.
+  function currentState(): State {
+    try {
+      return state()
+    } catch {
+      return standaloneState
+    }
+  }
 
   function toEntry(skill: Skill.Info): Entry {
     return {
@@ -84,7 +96,7 @@ export namespace SkillIndex {
   }
 
   export async function ensureBuilt() {
-    if (state().initialized) return
+    if (currentState().initialized) return
     await rebuild()
   }
 
@@ -119,17 +131,17 @@ export namespace SkillIndex {
   }
 
   export function get(name: string): Entry | undefined {
-    return state().entries.get(name) ?? state().entries.get(state().aliasIndex.get(name) ?? "")
+    return currentState().entries.get(name) ?? currentState().entries.get(currentState().aliasIndex.get(name) ?? "")
   }
 
   export function all(): Entry[] {
-    return Array.from(state().entries.values())
+    return Array.from(currentState().entries.values())
   }
 
   export function search(query: string, limit = 50): Entry[] {
     const q = query.toLowerCase()
     const scored: Array<{ entry: Entry; score: number }> = []
-    for (const entry of state().entries.values()) {
+    for (const entry of currentState().entries.values()) {
       let score = 0
       if (entry.name.toLowerCase() === q) score += 100
       else if (entry.name.toLowerCase().startsWith(q)) score += 50
@@ -150,39 +162,39 @@ export namespace SkillIndex {
   export function byTechStack(stack: string[], limit = 50): Entry[] {
     const names = new Set<string>()
     for (const tech of stack) {
-      const set = state().techIndex.get(tech.toLowerCase())
+      const set = currentState().techIndex.get(tech.toLowerCase())
       if (set) for (const name of set) names.add(name)
     }
     const results = Array.from(names)
-      .map((n) => state().entries.get(n)!)
+      .map((n) => currentState().entries.get(n)!)
       .filter(Boolean)
     return results.slice(0, limit)
   }
 
   export function byCWE(cweId: string, limit = 50): Entry[] {
-    const set = state().cweIndex.get(cweId.toUpperCase())
+    const set = currentState().cweIndex.get(cweId.toUpperCase())
     if (!set) return []
     return Array.from(set)
       .slice(0, limit)
-      .map((n) => state().entries.get(n)!)
+      .map((n) => currentState().entries.get(n)!)
       .filter(Boolean)
   }
 
   export function byCategory(cat: string, limit = 50): Entry[] {
-    const set = state().categoryIndex.get(cat.toLowerCase())
+    const set = currentState().categoryIndex.get(cat.toLowerCase())
     if (!set) return []
     return Array.from(set)
       .slice(0, limit)
-      .map((n) => state().entries.get(n)!)
+      .map((n) => currentState().entries.get(n)!)
       .filter(Boolean)
   }
 
   export function byTag(tag: string, limit = 50): Entry[] {
-    const set = state().tagIndex.get(tag.toLowerCase())
+    const set = currentState().tagIndex.get(tag.toLowerCase())
     if (!set) return []
     return Array.from(set)
       .slice(0, limit)
-      .map((n) => state().entries.get(n)!)
+      .map((n) => currentState().entries.get(n)!)
       .filter(Boolean)
   }
 
