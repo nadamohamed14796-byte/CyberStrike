@@ -1,3 +1,4 @@
 export * from "./learning"
 export * from "./reference"
 export * from "./router"
+export * from "./report-knowledge"
