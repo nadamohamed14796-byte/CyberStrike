@@ -977,6 +977,10 @@ export namespace SessionPrompt {
         )
       }
 
+      // Research sync is global/persistent, while the live research cache is
+      // session-scoped. Hydrate it at prompt time so a fresh hunt receives
+      // public research knowledge even before its first learning signal.
+      Learning.primeResearch(sessionID, 6)
       const researchRecommendations = Learning.researchFor(sessionID, 6)
       if (researchRecommendations.length > 0) {
         system.push(
