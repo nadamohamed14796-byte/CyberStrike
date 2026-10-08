@@ -445,7 +445,7 @@ export namespace TargetMemory {
   export function byRequest(sessionID: string, requestID: string, kind?: Kind): Info[] {
     const projectID = projectIDForSession(sessionID)
     if (!projectID) return []
-    return list(projectID, kind).filter((item) => item.request_id === requestID)
+    return listAll(projectID, kind).filter((item) => item.request_id === requestID)
   }
 
   export function listForSession(sessionID: string, kind?: Kind, limit = 200): Info[] {
