@@ -3,6 +3,7 @@ import { cmd } from "./cmd"
 import { ReportKnowledge } from "../../learning/report-knowledge"
 import { RESEARCH_SOURCES } from "../../research/sources"
 import { syncResearch } from "../../research/ingest"
+import { ResearchQueue } from "../../research/queue"
 
 export const ResearchCommand = cmd({
   command: "research",
@@ -77,6 +78,26 @@ export const ResearchCommand = cmd({
             for (const error of result.error_samples) prompts.log.warn(error)
           }
           prompts.outro(exhaustive ? "Exhaustive research sync complete" : "Research sync complete")
+        },
+      })
+      .command({
+        command: "queue-stats",
+        describe: "show persistent research queue counts by status",
+        async handler() {
+          const stats = ResearchQueue.stats()
+          for (const [status, count] of Object.entries(stats)) console.log(status + "=" + count)
+        },
+      })
+      .command({
+        command: "queue-pending",
+        describe: "list pending research queue items with stable report IDs",
+        builder: (yargs) => yargs.option("limit", { type: "number", default: 50 }),
+        async handler(args) {
+          const rows = ResearchQueue.pending(args.limit)
+          for (const row of rows) {
+            console.log(row.public_id + " [" + row.status + "] " + row.source_id + " — " + (row.title ?? row.source_url))
+          }
+          console.log("pending=" + rows.length)
         },
       })
       .command({
