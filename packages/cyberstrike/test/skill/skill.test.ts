@@ -386,3 +386,22 @@ description: A skill in the .cyberstrike/skills directory.
     },
   })
 })
+
+
+test("derives missing skill descriptions from the first heading", async () => {
+  await using tmp = await tmpdir({
+    git: true,
+    init: async (dir) => {
+      const skillDir = path.join(dir, ".cyberstrike", "skill", "derived-description")
+      await Bun.write(path.join(skillDir, "SKILL.md"), "---\nname: derived-description\n---\n\n# Derived Description\n")
+    },
+  })
+  await Instance.provide({
+    directory: tmp.path,
+    fn: async () => {
+      const skill = (await Skill.all()).find((s) => s.name === "derived-description")
+      expect(skill).toBeDefined()
+      expect(skill!.description).toBe("Derived Description")
+    },
+  })
+})

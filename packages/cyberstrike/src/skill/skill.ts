@@ -61,6 +61,12 @@ export namespace Skill {
 
   // External skill directories to search for (project-level and global)
   // These follow the directory layout used by Claude Code and other agents.
+  function fallbackDescription(name: string, content: string) {
+    const heading = content.match(/^#{1,2}\s+(.+)$/m)?.[1]?.trim()
+    if (heading) return heading.replace(/^SKILL:\s*/i, "").trim()
+    return name.replace(/[-_]+/g, " ").trim()
+  }
+
   const EXTERNAL_DIRS = [".claude", ".agents"]
   const EXTERNAL_SKILL_GLOB = new Bun.Glob("skills/**/SKILL.md")
 
@@ -83,7 +89,16 @@ export namespace Skill {
 
       if (!md) return
 
-      const parsed = Info.pick({ name: true, description: true }).safeParse(md.data)
+      const raw = md.data as Record<string, unknown>
+      const name =
+        typeof raw.name === "string" && raw.name.trim().length > 0
+          ? raw.name.trim()
+          : path.basename(path.dirname(match))
+      const description =
+        typeof raw.description === "string" && raw.description.trim().length > 0
+          ? raw.description.trim()
+          : fallbackDescription(name, md.content)
+      const parsed = Info.pick({ name: true, description: true }).safeParse({ name, description })
       if (!parsed.success) return
 
       // Warn on duplicate skill names
@@ -97,7 +112,6 @@ export namespace Skill {
 
       dirs.add(path.dirname(match))
 
-      const raw = md.data as Record<string, unknown>
       const fileContent = await Bun.file(match).text()
       const verified = await SkillSigning.verify({
         content: fileContent,

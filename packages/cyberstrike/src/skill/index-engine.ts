@@ -1,3 +1,4 @@
+import path from "path"
 import { Log } from "../util/log"
 import { Skill } from "./skill"
 
@@ -23,6 +24,7 @@ export namespace SkillIndex {
   let techIndex = new Map<string, Set<string>>()
   let cweIndex = new Map<string, Set<string>>()
   let categoryIndex = new Map<string, Set<string>>()
+  let aliasIndex = new Map<string, string>()
   let initialized = false
 
   function toEntry(skill: Skill.Info): Entry {
@@ -76,19 +78,30 @@ export namespace SkillIndex {
     techIndex = new Map()
     cweIndex = new Map()
     categoryIndex = new Map()
+    aliasIndex = new Map()
 
     const skills = await Skill.all()
     for (const skill of skills) {
       const entry = toEntry(skill)
       entries.set(entry.name, entry)
       indexEntry(entry)
+
+      const directoryName = path.basename(path.dirname(skill.location))
+      if (directoryName && directoryName !== entry.name && /^[a-z0-9][a-z0-9._-]*$/i.test(directoryName)) {
+        const existing = aliasIndex.get(directoryName)
+        if (existing && existing !== entry.name) {
+          aliasIndex.delete(directoryName)
+        } else if (!existing && !entries.has(directoryName)) {
+          aliasIndex.set(directoryName, entry.name)
+        }
+      }
     }
     log.info("skill index built", { count: entries.size })
     initialized = true
   }
 
   export function get(name: string): Entry | undefined {
-    return entries.get(name)
+    return entries.get(name) ?? entries.get(aliasIndex.get(name) ?? "")
   }
 
   export function all(): Entry[] {

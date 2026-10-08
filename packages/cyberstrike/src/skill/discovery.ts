@@ -9,7 +9,23 @@ export namespace Discovery {
   type IndexSkill = {
     name: string
     description: string
+    path?: string
   } & ({ files: string[] } | { type: "skill-md" | "archive"; url: string; digest?: string })
+
+  function safeRelative(value: string): string | undefined {
+    const normalizedInput = value.replaceAll("\\", "/")
+    if (normalizedInput.startsWith("/") || /^[A-Za-z]:\//.test(normalizedInput)) return undefined
+    const normalized = path.posix.normalize(normalizedInput)
+    if (normalized === ".." || normalized.startsWith("../")) return undefined
+    return normalized === "." ? "" : normalized
+  }
+
+  function resolveUnder(root: string, relative: string): string | undefined {
+    const base = path.resolve(root)
+    const candidate = path.resolve(base, relative)
+    if (candidate !== base && !candidate.startsWith(base + path.sep)) return undefined
+    return candidate
+  }
 
   type Index = {
     skills: IndexSkill[]
@@ -84,14 +100,34 @@ export namespace Discovery {
 
     await Promise.all(
       list.map(async (skill) => {
-        const root = path.join(cache, skill.name)
+        const skillRelative = safeRelative(skill.path ?? skill.name)
+        if (skillRelative === undefined || !skill.name.trim()) {
+          log.warn("invalid skill path", { name: skill.name, path: skill.path })
+          return
+        }
+
+        const root = resolveUnder(cache, skillRelative)
+        if (!root) {
+          log.warn("unsafe skill path", { name: skill.name, path: skill.path })
+          return
+        }
 
         if ("files" in skill && Array.isArray(skill.files)) {
           // Legacy format: array of individual files
           await Promise.all(
             skill.files.map(async (file) => {
-              const link = new URL(file, `${host}/${skill.name}/`).href
-              const dest = path.join(root, file)
+              const safeFile = safeRelative(file)
+              if (safeFile === undefined || !safeFile) {
+                log.warn("unsafe skill file path", { name: skill.name, file })
+                return
+              }
+              const basePath = skillRelative ? skillRelative + "/" : ""
+              const link = new URL(safeFile, host + "/" + basePath).href
+              const dest = resolveUnder(root, safeFile)
+              if (!dest) {
+                log.warn("unsafe skill destination", { name: skill.name, file })
+                return
+              }
               await mkdir(path.dirname(dest), { recursive: true })
               await get(link, dest)
             }),
@@ -100,7 +136,7 @@ export namespace Discovery {
           const link = new URL(skill.url, base).href
           if ("type" in skill && skill.type === "archive") {
             // Archive format: download tar.gz and extract
-            const archive = path.join(root, `${skill.name}.tar.gz`)
+            const archive = path.join(root, `${path.basename(skill.name)}.tar.gz`)
             await mkdir(root, { recursive: true })
             if (await get(link, archive)) {
               await Bun.$`tar xzf ${archive} -C ${root} 2>/dev/null`.quiet().nothrow()

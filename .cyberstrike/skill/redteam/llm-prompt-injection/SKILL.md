@@ -1,5 +1,5 @@
 ---
-name: llm-prompt-injection
+name: redteam-llm-prompt-injection
 description: Use when testing an authorized LLM application for prompt injection, system-prompt exposure, unsafe tool use, or RAG data-boundary failures.
 version: 2.0.0
 revision_date: 2026-07-25

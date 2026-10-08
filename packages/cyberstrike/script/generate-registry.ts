@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
-// Generate index.json for the skill registry
-// Usage: bun run packages/cyberstrike/script/generate-registry.ts
-// Output: .cyberstrike/skill/index.json (for publishing to skills.cyberstrike.io)
+// Generate the skill registry from every SKILL.md under .cyberstrike/skill.
+// Entries include their relative directory path so nested skills are addressable.
 import path from "path"
-import { readdirSync, statSync } from "fs"
+import { readdirSync } from "fs"
+import matter from "gray-matter"
 
 const root = path.resolve(import.meta.dir, "../../..")
 const skillDir = path.join(root, ".cyberstrike", "skill")
@@ -11,6 +11,7 @@ const skillDir = path.join(root, ".cyberstrike", "skill")
 type RegistryEntry = {
   name: string
   description: string
+  path: string
   category?: string
   owasp_id?: string
   verified?: string
@@ -20,65 +21,92 @@ type RegistryEntry = {
   files: string[]
 }
 
+function walkFiles(dir: string): string[] {
+  const out: string[] = []
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const absolute = path.join(dir, entry.name)
+    if (entry.isDirectory()) out.push(...walkFiles(absolute))
+    else if (entry.isFile()) out.push(absolute)
+  }
+  return out
+}
+
+function asStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((x): x is string => typeof x === "string" && x.trim().length > 0)
+    : []
+}
+
+function fallbackDescription(name: string, content: string): string {
+  const heading = content.match(/^#{1,2}\s+(.+)$/m)?.[1]?.trim()
+  if (heading) return heading.replace(/^SKILL:\s*/i, "").trim()
+  return name.replace(/[-_]+/g, " ").trim()
+}
+
 async function main() {
+  const glob = new Bun.Glob("**/SKILL.md")
+  const files = (await Array.fromAsync(
+    glob.scan({
+      cwd: skillDir,
+      absolute: true,
+      onlyFiles: true,
+      followSymlinks: true,
+    }),
+  )).sort()
+
   const entries: RegistryEntry[] = []
+  const seen = new Map<string, string>()
 
-  const dirs = readdirSync(skillDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name)
-    .sort()
+  for (const file of files) {
+    const parsed = matter(await Bun.file(file).text())
+    const raw = parsed.data as Record<string, unknown>
+    const relativeFile = path.relative(skillDir, file).split(path.sep).join("/")
+    const relativeDir = path.posix.dirname(relativeFile)
+    const name =
+      typeof raw.name === "string" && raw.name.trim().length > 0
+        ? raw.name.trim()
+        : path.posix.basename(relativeDir)
 
-  for (const name of dirs) {
-    const skillPath = path.join(skillDir, name, "SKILL.md")
-    const file = Bun.file(skillPath)
-    if (!(await file.exists())) continue
+    if (!name) throw new Error("Skill has no usable name: " + relativeFile)
+    const previous = seen.get(name)
+    if (previous) throw new Error('Duplicate skill name "' + name + '": ' + previous + " and " + relativeFile)
+    seen.set(name, relativeFile)
 
-    const content = await file.text()
-    const fmMatch = content.match(/^---\n([\s\S]*?)\n---/)
-    if (!fmMatch) continue
+    const description =
+      typeof raw.description === "string" && raw.description.trim().length > 0
+        ? raw.description.trim()
+        : fallbackDescription(name, parsed.content)
 
-    const fm = fmMatch[1]
-    const get = (key: string) => fm.match(new RegExp(`^${key}:\\s*"?(.+?)"?$`, "m"))?.[1]
-    const getArray = (key: string) => {
-      const m = fm.match(new RegExp(`^${key}:\\s*\\[(.*)\\]`, "m"))
-      if (!m) return []
-      return m[1]
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
-    }
-
-    // Collect all files in this skill directory
-    const dir = path.join(skillDir, name)
-    const files: string[] = []
-    const walk = (d: string, prefix: string) => {
-      for (const entry of readdirSync(d, { withFileTypes: true })) {
-        const rel = prefix ? `${prefix}/${entry.name}` : entry.name
-        if (entry.isDirectory()) walk(path.join(d, entry.name), rel)
-        else files.push(rel)
-      }
-    }
-    walk(dir, "")
+    const dir = path.dirname(file)
+    const filesInSkill = walkFiles(dir)
+      .map((candidate) => path.relative(dir, candidate).split(path.sep).join("/"))
+      .sort()
 
     entries.push({
       name,
-      description: get("description") ?? "",
-      category: get("category"),
-      owasp_id: get("owasp_id"),
-      verified: get("signed_by") ? "official" : "unverified",
-      tags: getArray("tags"),
-      tech_stack: getArray("tech_stack"),
-      cwe_ids: getArray("cwe_ids"),
-      files,
+      description,
+      path: relativeDir === "." ? "" : relativeDir,
+      category: typeof raw.category === "string" ? raw.category : undefined,
+      owasp_id: typeof raw.owasp_id === "string" ? raw.owasp_id : undefined,
+      verified:
+        typeof raw.signed_by === "string"
+          ? "official"
+          : typeof raw.verified === "string"
+            ? raw.verified
+            : "unverified",
+      tags: asStringArray(raw.tags),
+      tech_stack: asStringArray(raw.tech_stack),
+      cwe_ids: asStringArray(raw.cwe_ids),
+      files: filesInSkill,
     })
   }
 
-  const index = { version: "1.0", skills: entries }
+  entries.sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path))
   const output = path.join(skillDir, "index.json")
-  await Bun.write(output, JSON.stringify(index, null, 2) + "\n")
+  await Bun.write(output, JSON.stringify({ version: "2.0", skills: entries }, null, 2) + "\n")
 
-  console.log(`Generated ${output}`)
-  console.log(`  ${entries.length} skills indexed`)
+  console.log("Generated " + output)
+  console.log("  " + entries.length + " skills indexed")
 }
 
 main().catch((e) => {
