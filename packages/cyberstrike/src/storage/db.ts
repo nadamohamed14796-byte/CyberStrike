@@ -160,7 +160,7 @@ export namespace Database {
         .replace(/CREATE INDEX `/g, "CREATE INDEX IF NOT EXISTS `")
         .replace(/CREATE UNIQUE INDEX `/g, "CREATE UNIQUE INDEX IF NOT EXISTS `")
       )
-      .join(";\n")
+      .join(";\n--> statement-breakpoint\n")
   }
   function reconcile(sqlite: BunDatabase) {
     ensureSignalQueueTable(sqlite)
