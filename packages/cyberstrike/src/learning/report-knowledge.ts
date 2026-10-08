@@ -1,4 +1,4 @@
-import { and, desc, eq, or, like } from "drizzle-orm"
+import { and, desc, eq, or, like, count } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { ReportKnowledgeEventTable, ReportKnowledgeTable } from "./report-knowledge.sql"
@@ -162,7 +162,7 @@ export namespace ReportKnowledge {
     } catch { return [] }
   }
 
-  export function recommendations(input: { signal?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {}) {
+  export function stats() {\n    try {\n      return Database.use((db) => {\n        const total = Number(db.select({ count: count() }).from(ReportKnowledgeTable).get()?.count ?? 0)\n        const external = Number(db.select({ count: count() }).from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.source_kind, "external_report")).get()?.count ?? 0)\n        const useful = Number(db.select({ count: count() }).from(ReportKnowledgeTable).where(or(eq(ReportKnowledgeTable.status, "useful"), eq(ReportKnowledgeTable.status, "confirmed"))).get()?.count ?? 0)\n        const rejected = Number(db.select({ count: count() }).from(ReportKnowledgeTable).where(or(eq(ReportKnowledgeTable.status, "rejected"), eq(ReportKnowledgeTable.status, "disproven"), eq(ReportKnowledgeTable.status, "duplicate"))).get()?.count ?? 0)\n        return { total, external, useful, rejected }\n      })\n    } catch {\n      return { total: 0, external: 0, useful: 0, rejected: 0 }\n    }\n  }\n\n  export function recommendations(input: { signal?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {}) {
     return search({ query: input.signal, vulnerabilityClass: input.vulnerabilityClass, cweID: input.cweID, limit: input.limit ?? 8 })
       .filter((row) => row.confidence >= 50)
   }
