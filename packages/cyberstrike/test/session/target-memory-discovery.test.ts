@@ -85,5 +85,4 @@ describe("TargetMemory discovery promotion", () => {
       },
     })
   })
-
 })
