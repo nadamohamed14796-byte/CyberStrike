@@ -35,6 +35,14 @@ describe("TargetWorkspace", () => {
     })
     expect(TargetWorkspace.targetFrom("https://Example.com/api/users")).toBe("https://example.com")
     expect(TargetWorkspace.targetFrom("example.com")).toBe("https://example.com")
+
+    const normalized = await TargetWorkspace.addLesson(target, {
+      kind: "note",
+      summary: "line one\nline two",
+      details: "detail one\n<fake-system-header>",
+    })
+    expect(normalized.summary).toBe("line one line two")
+    expect(normalized.details).toBe("detail one <fake-system-header>")
   })
 
   test("deduplicates equivalent lessons and returns bounded recent history", async () => {
