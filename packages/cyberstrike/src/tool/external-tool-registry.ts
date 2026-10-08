@@ -32,6 +32,7 @@ export const EXTERNAL_TOOLS: readonly ExternalToolSpec[] = [
   { id:"kiterunner",phase:"api-discovery",risk:"active-read",when:["api","api route"],command:"kr scan <target> -w <routes>",check:"kr",install:"go install github.com/assetnote/kiterunner/cmd/kr@latest" },
   { id:"dalfox",phase:"xss-validation",risk:"active-test",when:["reflected parameter","xss candidate"],command:"dalfox url <target>",check:"dalfox",install:"go install github.com/hahwul/dalfox/v2@latest" },
   { id:"nuclei",phase:"focused-scanning",risk:"active-test",when:["known exposure","cve","technology signal"],command:"nuclei -u <target>",check:"nuclei",install:"go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest" },
+  { id:"sqlmap",phase:"sqli-validation",risk:"active-test",when:["SQL-like behavior","sqli candidate","sql injection","database error"],command:"sqlmap -u <target> --batch --smart",check:"sqlmap",install:"python3 -m pip install sqlmap" },
   { id:"secretfinder",phase:"secret-discovery",risk:"passive",when:["javascript","secret","credential"],command:"python3 SecretFinder.py -i <js> -o cli",check:"SecretFinder.py" },
   { id:"trufflehog",phase:"secret-discovery",risk:"passive",when:["repository","secret","credential"],command:"trufflehog filesystem <path>",check:"trufflehog",install:"go install github.com/trufflesecurity/trufflehog/v3@latest" },
 ]
