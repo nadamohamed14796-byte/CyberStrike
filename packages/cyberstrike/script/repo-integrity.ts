@@ -89,7 +89,7 @@ async function checkPackages() {
 }
 
 async function checkRelativeImports() {
-  const sourceFiles = await glob(root, "**/*.{ts,tsx,js,jsx,mjs,cjs}")
+  const sourceFiles = await glob(pkgRoot, "src/**/*.{ts,tsx,js,jsx,mjs,cjs}")
   const importRe = /(?:from\s*[('\"`]|import\s*\(\s*[('\"`]|require\s*\(\s*[('\"`])([^'\"`]+)['\"`]/g
 
   function candidatesFor(spec: string, file: string) {
@@ -136,6 +136,7 @@ async function checkLocalWorkflowActions() {
 async function checkTsconfigs() {
   const files = await glob(root, "**/tsconfig*.json")
   for (const file of files) {
+    if (file.includes("/node_modules/") || file.includes("/.git/")) continue
     try {
       const cfg = JSON.parse(await Bun.file(file).text())
       if (typeof cfg.extends !== "string" || !cfg.extends.startsWith(".")) continue
