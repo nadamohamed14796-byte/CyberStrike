@@ -36,6 +36,20 @@ export namespace Filesystem {
     return !relative(parent, child).startsWith("..")
   }
 
+  /**
+   * Canonical containment check for filesystem paths that will actually be opened.
+   * Unlike contains(), this resolves symlinks and prevents a lexical in-project path
+   * from escaping through a symlink.
+   */
+  export async function containsReal(parent: string, child: string) {
+    try {
+      const [realParent, realChild] = await Promise.all([realpath(parent), realpath(child)])
+      return contains(realParent, realChild)
+    } catch {
+      return false
+    }
+  }
+
   export async function findUp(target: string, start: string, stop?: string) {
     let current = start
     const result = []
