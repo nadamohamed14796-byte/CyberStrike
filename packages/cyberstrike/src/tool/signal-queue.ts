@@ -211,6 +211,46 @@ export namespace SignalQueue {
     return markRunning(item.id) ? item.id : undefined
   }
 
+  /**
+   * Recover queue work left in "running" state after a process/session crash.
+   * Fresh work is left alone; stale work is re-queued only when another attempt
+   * is still available, otherwise it becomes terminally failed.
+   */
+  export function recover(sessionID: string, staleMs = 60_000) {
+    const cutoff = Date.now() - Math.max(0, staleMs)
+    return Database.transaction((db) => {
+      const stale = db
+        .select({
+          id: SignalQueueTable.id,
+          attempts: SignalQueueTable.attempts,
+          max_attempts: SignalQueueTable.max_attempts,
+        })
+        .from(SignalQueueTable)
+        .where(
+          and(
+            eq(SignalQueueTable.session_id, sessionID),
+            eq(SignalQueueTable.status, "running"),
+            sql`time_updated <= ${cutoff}`,
+          ),
+        )
+        .all()
+
+      let requeued = 0
+      let failed = 0
+      for (const row of stale) {
+        const nextStatus = row.attempts < row.max_attempts ? "pending" : "failed"
+        db
+          .update(SignalQueueTable)
+          .set({ status: nextStatus, time_updated: Date.now() })
+          .where(and(eq(SignalQueueTable.id, row.id), eq(SignalQueueTable.status, "running")))
+          .run()
+        if (nextStatus === "pending") requeued++
+        else failed++
+      }
+      return { recovered: stale.length, requeued, failed }
+    })
+  }
+
   export function markRunning(id: string): boolean {
     return Database.use((db) => {
       const row = db
