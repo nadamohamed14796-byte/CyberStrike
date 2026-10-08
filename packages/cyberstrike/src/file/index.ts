@@ -426,8 +426,7 @@ export namespace File {
       throw new Error(`Access denied: path escapes project directory`)
     }
     const inDirectory = await Filesystem.containsReal(Instance.directory, full)
-    const inWorktree =
-      Instance.worktree !== "/" && (await Filesystem.containsReal(Instance.worktree, full))
+    const inWorktree = Instance.worktree !== "/" && (await Filesystem.containsReal(Instance.worktree, full))
     if (!inDirectory && !inWorktree) {
       throw new Error(`Access denied: path escapes project directory`)
     }
@@ -510,8 +509,7 @@ export namespace File {
       throw new Error(`Access denied: path escapes project directory`)
     }
     const inDirectory = await Filesystem.containsReal(Instance.directory, resolved)
-    const inWorktree =
-      Instance.worktree !== "/" && (await Filesystem.containsReal(Instance.worktree, resolved))
+    const inWorktree = Instance.worktree !== "/" && (await Filesystem.containsReal(Instance.worktree, resolved))
     if (!inDirectory && !inWorktree) {
       throw new Error(`Access denied: path escapes project directory`)
     }
