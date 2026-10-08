@@ -1,29 +1,10 @@
 import z from "zod"
 import { Tool } from "./tool"
 
-import { EXTERNAL_TOOLS, type ExternalToolRisk, type ExternalToolSpec } from "./external-tool-registry"
+import { type ExternalToolRisk, type ExternalToolSpec } from "./external-tool-registry"
+import { planReconTools } from "./recon-toolchain-plan"
 
-export type { ExternalToolRisk, ExternalToolSpec }
-const TOOLS = EXTERNAL_TOOLS
-function normalize(value: string) {
-  return value.trim().toLowerCase().replace(/_/g, "-")
-}
-
-export function planReconTools(input: { signal: string; target?: string; authorized_active_testing?: boolean; max_tools?: number }) {
-  const signal = normalize(input.signal)
-  const max = Math.max(1, Math.min(8, input.max_tools ?? 3))
-  const matches = TOOLS
-    .filter((tool) => tool.when.some((x) => normalize(x).includes(signal) || signal.includes(normalize(x))))
-    .filter((tool) => input.authorized_active_testing === true || (tool.risk !== "active-test" && tool.risk !== "high-impact"))
-    .slice(0, max)
-  const ordered = matches.length ? matches : TOOLS.filter((tool) => tool.risk === "passive").slice(0, max)
-  return ordered.map((tool) => ({
-    id: tool.id,
-    phase: tool.phase,
-    risk: tool.risk,
-    command: tool.command,
-  }))
-}
+export type { ExternalToolRisk, ExternalToolSpec, PlannedReconTool } from "./recon-toolchain-plan"
 
 export const ReconToolchainTool = Tool.define("recon_toolchain", {
   description:
