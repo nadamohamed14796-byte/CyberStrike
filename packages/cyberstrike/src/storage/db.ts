@@ -144,6 +144,24 @@ export namespace Database {
     sqlite.run("CREATE INDEX IF NOT EXISTS tool_learning_event_session_idx ON tool_learning_event(session_id)")
   }
 
+  function safeMigrationSQL(sqlite: BunDatabase, sql: string) {
+    return sql
+      .split(/-->\s*statement-breakpoint/gi)
+      .map((statement) => statement.trim())
+      .filter(Boolean)
+      .filter((statement) => {
+        const alter = /^ALTER TABLE [`"]?([A-Za-z0-9_]+)[`"]? ADD COLUMN [`"]?([A-Za-z0-9_]+)[`"]?/i.exec(statement)
+        if (!alter) return true
+        const [, table, column] = alter
+        return !tableExists(sqlite, table) || !tableColumns(sqlite, table).has(column)
+      })
+      .map((statement) => statement
+        .replace(/CREATE TABLE `/g, "CREATE TABLE IF NOT EXISTS `")
+        .replace(/CREATE INDEX `/g, "CREATE INDEX IF NOT EXISTS `")
+        .replace(/CREATE UNIQUE INDEX `/g, "CREATE UNIQUE INDEX IF NOT EXISTS `")
+      )
+      .join(";\n")
+  }
   function reconcile(sqlite: BunDatabase) {
     ensureSignalQueueTable(sqlite)
     ensureToolLearningTables(sqlite)
@@ -227,17 +245,7 @@ export namespace Database {
         count: entries.length,
         mode: typeof CYBERSTRIKE_MIGRATIONS !== "undefined" ? "bundled" : "dev",
       })
-      // Make CREATE statements idempotent so migrations survive re-install over an
-      // existing database (e.g. `cyberstrike uninstall` removes the binary but leaves
-      // the SQLite DB — the migration journal is gone but the tables remain).
-      const safe = entries.map((e) => ({
-        ...e,
-        sql: e.sql
-          .replace(/CREATE TABLE `/g, "CREATE TABLE IF NOT EXISTS `")
-          .replace(/CREATE INDEX `/g, "CREATE INDEX IF NOT EXISTS `")
-          .replace(/CREATE UNIQUE INDEX `/g, "CREATE UNIQUE INDEX IF NOT EXISTS `"),
-      }))
-      migrate(db, safe)
+      // Make migration statements idempotent when the journal is missing but the DB survives.\n      // SQLite does not support ALTER TABLE ADD COLUMN IF NOT EXISTS, so skip already-present columns.\n      const safe = entries.map((e) => ({ ...e, sql: safeMigrationSQL(sqlite, e.sql) }))\n      migrate(db, safe)
     }
 
     // Reconcile schema: ensures all tables have all expected columns.
