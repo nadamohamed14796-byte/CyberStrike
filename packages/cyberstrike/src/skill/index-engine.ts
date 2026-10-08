@@ -1,6 +1,7 @@
 import path from "path"
 import { Log } from "../util/log"
 import { Skill } from "./skill"
+import { Instance } from "../project/instance"
 
 export namespace SkillIndex {
   const log = Log.create({ service: "skill-index" })
@@ -19,13 +20,29 @@ export namespace SkillIndex {
     verified?: string
   }
 
-  let entries = new Map<string, Entry>()
-  let tagIndex = new Map<string, Set<string>>()
-  let techIndex = new Map<string, Set<string>>()
-  let cweIndex = new Map<string, Set<string>>()
-  let categoryIndex = new Map<string, Set<string>>()
-  let aliasIndex = new Map<string, string>()
-  let initialized = false
+  type State = {
+    entries: Map<string, Entry>
+    tagIndex: Map<string, Set<string>>
+    techIndex: Map<string, Set<string>>
+    cweIndex: Map<string, Set<string>>
+    categoryIndex: Map<string, Set<string>>
+    aliasIndex: Map<string, string>
+    initialized: boolean
+  }
+
+  function createState(): State {
+    return {
+      entries: new Map(),
+      tagIndex: new Map(),
+      techIndex: new Map(),
+      cweIndex: new Map(),
+      categoryIndex: new Map(),
+      aliasIndex: new Map(),
+      initialized: false,
+    }
+  }
+
+  const state = Instance.state(createState)
 
   function toEntry(skill: Skill.Info): Entry {
     return {
@@ -43,75 +60,76 @@ export namespace SkillIndex {
     }
   }
 
-  function indexEntry(entry: Entry) {
+  function indexEntry(state: State, entry: Entry) {
     for (const tag of entry.tags) {
       const key = tag.toLowerCase()
-      if (!tagIndex.has(key)) tagIndex.set(key, new Set())
-      tagIndex.get(key)!.add(entry.name)
+      if (!state.state().tagIndex.has(key)) state.state().tagIndex.set(key, new Set())
+      state.state().tagIndex.get(key)!.add(entry.name)
     }
     for (const tech of entry.tech_stack) {
       const key = tech.toLowerCase()
-      if (!techIndex.has(key)) techIndex.set(key, new Set())
-      techIndex.get(key)!.add(entry.name)
+      if (!state().techIndex.has(key)) state().techIndex.set(key, new Set())
+      state().techIndex.get(key)!.add(entry.name)
     }
     for (const cwe of entry.cwe_ids) {
       const key = cwe.toUpperCase()
-      if (!cweIndex.has(key)) cweIndex.set(key, new Set())
-      cweIndex.get(key)!.add(entry.name)
+      if (!state().cweIndex.has(key)) state().cweIndex.set(key, new Set())
+      state().cweIndex.get(key)!.add(entry.name)
     }
     if (entry.category) {
       const key = entry.category.toLowerCase()
-      if (!categoryIndex.has(key)) categoryIndex.set(key, new Set())
-      categoryIndex.get(key)!.add(entry.name)
+      if (!state().categoryIndex.has(key)) state().categoryIndex.set(key, new Set())
+      state().categoryIndex.get(key)!.add(entry.name)
     }
   }
 
   export async function ensureBuilt() {
-    if (initialized) return
+    if (state().initialized) return
     await rebuild()
   }
 
   export async function rebuild() {
-    initialized = false
-    entries = new Map()
-    tagIndex = new Map()
-    techIndex = new Map()
-    cweIndex = new Map()
-    categoryIndex = new Map()
-    aliasIndex = new Map()
+    const current = state()
+    current.initialized = false
+    current.state().entries.clear()
+    current.state().tagIndex.clear()
+    current.state().techIndex.clear()
+    current.state().cweIndex.clear()
+    current.state().categoryIndex.clear()
+    current.state().aliasIndex.clear()
 
     const skills = await Skill.all()
     for (const skill of skills) {
       const entry = toEntry(skill)
-      entries.set(entry.name, entry)
-      indexEntry(entry)
+      current.state().entries.set(entry.name, entry)
+      indexEntry(current, entry)
 
       const directoryName = path.basename(path.dirname(skill.location))
       if (directoryName && directoryName !== entry.name && /^[a-z0-9][a-z0-9._-]*$/i.test(directoryName)) {
-        const existing = aliasIndex.get(directoryName)
+        const existing = current.state().aliasIndex.get(directoryName)
         if (existing && existing !== entry.name) {
-          aliasIndex.delete(directoryName)
-        } else if (!existing && !entries.has(directoryName)) {
-          aliasIndex.set(directoryName, entry.name)
+          current.state().aliasIndex.delete(directoryName)
+        } else if (!existing && !current.state().entries.has(directoryName)) {
+          current.state().aliasIndex.set(directoryName, entry.name)
         }
       }
     }
-    log.info("skill index built", { count: entries.size })
-    initialized = true
+    log.info("skill index built", { count: current.state().entries.size, directory: Instance.directory })
+    current.initialized = true
   }
 
   export function get(name: string): Entry | undefined {
-    return entries.get(name) ?? entries.get(aliasIndex.get(name) ?? "")
+    return state().entries.get(name) ?? state().entries.get(state().aliasIndex.get(name) ?? "")
   }
 
   export function all(): Entry[] {
-    return Array.from(entries.values())
+    return Array.from(state().entries.values())
   }
 
   export function search(query: string, limit = 50): Entry[] {
     const q = query.toLowerCase()
     const scored: Array<{ entry: Entry; score: number }> = []
-    for (const entry of entries.values()) {
+    for (const entry of state().entries.values()) {
       let score = 0
       if (entry.name.toLowerCase() === q) score += 100
       else if (entry.name.toLowerCase().startsWith(q)) score += 50
@@ -132,39 +150,39 @@ export namespace SkillIndex {
   export function byTechStack(stack: string[], limit = 50): Entry[] {
     const names = new Set<string>()
     for (const tech of stack) {
-      const set = techIndex.get(tech.toLowerCase())
+      const set = state().techIndex.get(tech.toLowerCase())
       if (set) for (const name of set) names.add(name)
     }
     const results = Array.from(names)
-      .map((n) => entries.get(n)!)
+      .map((n) => state().entries.get(n)!)
       .filter(Boolean)
     return results.slice(0, limit)
   }
 
   export function byCWE(cweId: string, limit = 50): Entry[] {
-    const set = cweIndex.get(cweId.toUpperCase())
+    const set = state().cweIndex.get(cweId.toUpperCase())
     if (!set) return []
     return Array.from(set)
       .slice(0, limit)
-      .map((n) => entries.get(n)!)
+      .map((n) => state().entries.get(n)!)
       .filter(Boolean)
   }
 
   export function byCategory(cat: string, limit = 50): Entry[] {
-    const set = categoryIndex.get(cat.toLowerCase())
+    const set = state().categoryIndex.get(cat.toLowerCase())
     if (!set) return []
     return Array.from(set)
       .slice(0, limit)
-      .map((n) => entries.get(n)!)
+      .map((n) => state().entries.get(n)!)
       .filter(Boolean)
   }
 
   export function byTag(tag: string, limit = 50): Entry[] {
-    const set = tagIndex.get(tag.toLowerCase())
+    const set = state().tagIndex.get(tag.toLowerCase())
     if (!set) return []
     return Array.from(set)
       .slice(0, limit)
-      .map((n) => entries.get(n)!)
+      .map((n) => state().entries.get(n)!)
       .filter(Boolean)
   }
 
