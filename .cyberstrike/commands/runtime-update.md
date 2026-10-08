@@ -7,6 +7,18 @@ Perform a complete maintenance, repair, integration, and verification pass for t
 
 The goal is not to produce an audit report only. Discover real problems, repair them when safe, integrate the fixes into the runtime, run verification, and re-check the affected areas.
 
+## 0. Deterministic Numbering and Relationship Audit
+
+Before changing anything, create a deterministic audit sequence without renaming or moving repository files:
+
+1. Enumerate every Git-tracked file in lexical order as `F000001`, `F000002`, and so on until the final file.
+2. Enumerate every discovered repository-internal relationship as `R0000001`, `R0000002`, and so on until the final relationship.
+3. Relationships include source-code imports/exports/dynamic imports/requires, TypeScript path aliases, workspace package dependencies, TypeScript project references, and relative Markdown/MDX links.
+4. Every relationship must resolve to the exact numbered target file or be recorded as a broken relationship with its exact reason.
+5. Never interpret a numbering ID as a filename and never rename files merely to satisfy numbering.
+6. Run `bun run audit:runtime` before the repair pass and again after repairs. The audit writes its numbered indexes under `.git/cyberstrike-audit/` so the working tree is not polluted.
+7. Do not stop after the first failure. Repair the root cause, rerun the affected checks, then rerun the complete numbered audit.
+
 ## 1. Inspect the Current Runtime
 
 Inspect the actual implementation before making changes.
