@@ -113,8 +113,7 @@ async function checkRelativeImports() {
       if (!(spec.startsWith(".") || spec.startsWith("@/"))) continue
       if (/\.(css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)$/i.test(spec)) continue
       const resolved = await Promise.all(candidatesFor(spec, file).map(exists))
-      if (!resolved.some(Boolean))
-        fail("import-resolution", "unresolved import: " + spec, path.relative(root, file))
+      if (!resolved.some(Boolean)) fail("import-resolution", "unresolved import: " + spec, path.relative(root, file))
     }
   }
 }
