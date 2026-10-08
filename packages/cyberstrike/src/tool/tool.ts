@@ -85,7 +85,7 @@ export namespace Tool {
       }
       return undefined
     }
-    const { ScopeGuard } = await import("./scope-check")
+    const { ScopeGuard } = await import("./scope-guard")
     const decision = ScopeGuard.check(identity.target, items)
     if (!decision.inScope) throw new Error(`Out-of-scope execution refused for target "${identity.target}".`)
     return true
