@@ -96,7 +96,7 @@ export namespace ToolLearning {
     } catch { return 50 }
   }
 
-  export function rank(tools: Array<{ id: string; risk: string; phase: string }>, signal: string, sessionID?: string) {
+  export function rank<T extends { id: string; risk: string; phase: string }>(tools: T[], signal: string, sessionID?: string) {
     return tools.map((tool) => ({
       ...tool,
       usefulness: score(tool.id, signal, sessionID),
