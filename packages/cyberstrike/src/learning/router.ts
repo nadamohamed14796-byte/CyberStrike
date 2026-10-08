@@ -95,17 +95,17 @@ export namespace LearningRouter {
       }
     }
 
-    // The raw signal itself is a first-class routing feature. This keeps
-    // tool-derived signals such as "GraphQL", "JWT", "CORS", "reflected
-    // parameter", and "open port" connected to the matching skill family
-    // without requiring every producer to pre-populate tags/categories.
-    const signalTerms = signal.signal
-      .replace(/[^a-zA-Z0-9:_-]+/g, " ")
-      .split(/\s+/)
-      .filter((term) => term.length >= 3)
-    for (const term of signalTerms) {
-      for (const entry of SkillIndex.search(term, 12)) {
-        add(candidates, entry.name, 15, `matches signal term ${term}`)
+    // Raw free-text signals are ambiguous by default. Only use them for routing
+    // when the producer explicitly marks the signal as concrete evidence.
+    if (signal.metadata?.concrete_signal === true) {
+      const signalTerms = signal.signal
+        .replace(/[^a-zA-Z0-9:_-]+/g, " ")
+        .split(/\s+/)
+        .filter((term) => term.length >= 3)
+      for (const term of signalTerms) {
+        for (const entry of SkillIndex.search(term, 12)) {
+          add(candidates, entry.name, 15, `matches concrete signal term ${term}`)
+        }
       }
     }
 
