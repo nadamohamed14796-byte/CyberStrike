@@ -54,9 +54,7 @@ export namespace RequestCorrelation {
     const request = Request.get(sessionID).find((item) => item.id === requestID)
     if (!request) return undefined
     const artifacts = ToolArtifact.byRequest(sessionID, requestID)
-    const javascript = TargetMemory.listForSession(sessionID, "javascript", 500).filter(
-      (item) => item.request_id === requestID,
-    )
+    const javascript = TargetMemory.byRequest(sessionID, requestID, "javascript")
     return { request, javascript, artifacts }
   }
 }
