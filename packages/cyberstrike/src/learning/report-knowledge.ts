@@ -164,9 +164,7 @@ export namespace ReportKnowledge {
               endpoint: input.endpoint ?? existing.endpoint,
               reproduction: input.reproduction ?? existing.reproduction,
               poc: input.poc ?? existing.poc,
-              tags: input.tags?.length
-                ? Array.from(new Set([...(existing.tags ?? []), ...input.tags]))
-                : existing.tags,
+              tags: input.tags?.length ? Array.from(new Set([...(existing.tags ?? []), ...input.tags])) : existing.tags,
               metadata: { ...(existing.metadata ?? {}), ...(input.metadata ?? {}) },
               time_updated: now,
             })
