@@ -99,6 +99,15 @@ export namespace Learning {
       })
     }
 
+    // Public research is advisory knowledge: expose the highest-confidence
+    // matching reports to the live session without turning them into findings.
+    const researchRecommendations = ReportKnowledge.recommendations({
+      signal: signal.signal,
+      vulnerabilityClass: signal.category ?? undefined,
+      cweID: signal.cwe_id ?? undefined,
+      limit: 6,
+    })
+
     if (signal.metadata?.source_tool && signal.outcome) ToolLearning.observe({ tool: String(signal.metadata.source_tool), signal: signal.signal, sessionID: signal.sessionID, target: signal.target, outcome: /finding|useful|confirmed|validated/i.test(signal.outcome) ? "useful" : /rejected|disproven|false|duplicate/i.test(signal.outcome) ? "rejected" : "error", evidence: signal.evidence })
 
     if (signal.skill_name && signal.outcome) {
@@ -150,7 +159,7 @@ export namespace Learning {
             target: signal.target,
             category: signal.category,
             outcome: signal.outcome,
-            metadata: { ...(signal.metadata ?? {}), next_tools: nextTools },
+            metadata: { ...(signal.metadata ?? {}), next_tools: nextTools, research_recommendations: researchRecommendations.map((row) => ({ id: row.id, title: row.title, vulnerability_class: row.vulnerability_class, confidence: row.confidence, source_url: row.source_url, lesson: row.lesson })) },
             time_created: now,
             time_updated: now,
           })
