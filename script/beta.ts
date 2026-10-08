@@ -24,7 +24,18 @@ async function run(command: string, args: string[] = []): Promise<CommandResult>
 }
 
 async function main() {
-  const list = await run("gh", ["pr", "list", "--state", "open", "--label", "beta", "--json", "number,title,author,labels", "--limit", "100"])
+  const list = await run("gh", [
+    "pr",
+    "list",
+    "--state",
+    "open",
+    "--label",
+    "beta",
+    "--json",
+    "number,title,author,labels",
+    "--limit",
+    "100",
+  ])
   if (list.code !== 0) throw new Error("gh pr list failed: " + list.stderr.trim())
 
   const prs: PR[] = JSON.parse(list.stdout).sort((a: PR, b: PR) => a.number - b.number)
