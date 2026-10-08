@@ -101,11 +101,13 @@ export namespace ReportKnowledge {
     lesson?: string
     tags?: string[]
     metadata?: Record<string, unknown>
+    sourceTrust?: number
   }) {
     return ingest({
       ...input,
       sourceKind: "external_report",
-      outcome: "confirmed",
+      outcome: "observed",
+      sourceTrust: input.sourceTrust,
     })
   }
 
