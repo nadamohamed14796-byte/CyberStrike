@@ -2,9 +2,10 @@ import { createHash } from "node:crypto"
 import { ReportKnowledge } from "../learning/report-knowledge"
 import { Learning } from "../learning/learning"
 import { RESEARCH_SOURCES, type ResearchSource } from "./sources"
+import { discoverySeeds, sourceDocumentPriority } from "./adapters"
 
 const MAX_DOCUMENT_BYTES = 1_500_000
-const MAX_LINKS_PER_PAGE = 120
+const MAX_LINKS_PER_PAGE = 160
 const MAX_CANDIDATE_SCORE = 100
 const DEFAULT_LIMIT = 50
 const MAX_LIMIT = 500
@@ -184,6 +185,7 @@ export function candidateScore(url: string, source: ResearchSource) {
   if (source.kind === "disclosure" && /reports?|hacktivity|disclosure/.test(path)) score += 20
   if (source.kind === "academy" && /lab|academy|web-security/.test(path)) score += 20
   if (source.kind === "reference" && /payload|cheat|technique|book|skill/.test(path)) score += 20
+  score += sourceDocumentPriority(source, parsed.toString())
   return Math.min(MAX_CANDIDATE_SCORE, score)
 }
 
@@ -254,12 +256,15 @@ export type ResearchSyncOptions = {
   limit?: number
   pages?: number
   depth?: number
+  /** Exhaust the discovered queue until the page budget is reached. */
+  all?: boolean
 }
 
 export async function syncResearchSource(
   source: ResearchSource,
   options: ResearchSyncOptions = {},
 ): Promise<ResearchIngestResult> {
+  const exhaustive = options.all === true
   const limit = Math.max(1, Math.min(options.limit ?? DEFAULT_LIMIT, MAX_LIMIT))
   const maxPages = Math.max(1, Math.min(options.pages ?? DEFAULT_PAGES, MAX_PAGES))
   const maxDepth = Math.max(0, Math.min(options.depth ?? DEFAULT_DEPTH, MAX_DEPTH))
@@ -291,10 +296,10 @@ export async function syncResearchSource(
     queue.push({ url: normalized, depth, score: candidateScore(normalized, source) })
   }
 
-  for (const seed of source.seedUrls) add(seed, 0)
+  for (const seed of discoverySeeds(source, maxPages)) add(seed, 0)
   for (const sitemapURL of await discoverSitemap(source)) add(sitemapURL, 1)
 
-  while (queue.length && result.pages_crawled < maxPages && result.learned < limit) {
+  while (queue.length && result.pages_crawled < maxPages && (exhaustive || result.learned < limit)) {
     queue.sort((a, b) => b.score - a.score || a.depth - b.depth)
     const current = queue.shift()!
     if (visited.has(current.url)) continue
@@ -331,7 +336,7 @@ export async function syncResearchSource(
 
       const contentFingerprint = createHash("sha256").update(text).digest("hex").slice(0, 40)
       const lesson = lessonOf(text, vulnerabilityClass)
-      const id = ReportKnowledge.ingestExternal({
+      const ingested = ReportKnowledge.ingestExternalDetailed({
         title,
         severity: severityOf(title + " " + text),
         vulnerabilityClass,
@@ -350,19 +355,20 @@ export async function syncResearchSource(
         },
       })
 
-      if (!id) {
+      if (!ingested) {
         result.skipped++
         continue
       }
 
-      result.learned++
+      if (ingested.created) result.learned++
+      if (!ingested.created) continue
       await Learning.emit({
         hook: "after_finding",
         signal: vulnerabilityClass ? "research:" + vulnerabilityClass : "research:" + source.id,
         outcome: "observed",
         evidence: "Public research source: " + current.url,
         metadata: {
-          report_knowledge_id: id,
+          report_knowledge_id: ingested.id,
           source_tool: "research-sync",
           research_source: source.id,
           source_url: current.url,
@@ -392,6 +398,7 @@ export async function syncResearch(
         limit: input.limit,
         pages: input.pages,
         depth: input.depth,
+        all: input.all,
       }),
     )
   }
