@@ -143,6 +143,7 @@ export const GenerateReportTool = Tool.define("generate_report", {
       title: `Report: ${vulns.length} findings | ${coverage.coveragePercent}% coverage`,
       output: parts.join("\n\n"),
       metadata: {
+        format: "markdown",
         findingCount: vulns.length,
         criticalCount: breakdown.critical,
         highCount: breakdown.high,
