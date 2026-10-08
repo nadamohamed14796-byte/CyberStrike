@@ -47,7 +47,13 @@ async function checkPackages() {
   }
 
   for (const { file, pkg } of parsed) {
-    const deps = Object.assign({}, pkg.dependencies || {}, pkg.devDependencies || {}, pkg.optionalDependencies || {}, pkg.peerDependencies || {})
+    const deps = Object.assign(
+      {},
+      pkg.dependencies || {},
+      pkg.devDependencies || {},
+      pkg.optionalDependencies || {},
+      pkg.peerDependencies || {},
+    )
     for (const [name, version] of Object.entries(deps)) {
       if (version === "workspace:*" && !packages.has(name)) {
         fail("package-dependency", "workspace dependency does not resolve: " + name, file)
@@ -87,7 +93,9 @@ async function checkRelativeImports() {
   const importRe = /(?:from\s*[('\"`]|import\s*\(\s*[('\"`]|require\s*\(\s*[('\"`])([^'\"`]+)['\"`]/g
 
   function candidatesFor(spec: string, file: string) {
-    const base = spec.startsWith("@/") ? path.join(pkgRoot, "src", spec.slice(2)) : path.resolve(path.dirname(file), spec)
+    const base = spec.startsWith("@/")
+      ? path.join(pkgRoot, "src", spec.slice(2))
+      : path.resolve(path.dirname(file), spec)
     const out = [base]
     if (!path.extname(base)) {
       for (const ext of [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json"]) out.push(base + ext)
