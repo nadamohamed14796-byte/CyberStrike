@@ -72,14 +72,14 @@ export namespace Tool {
     return { target, endpoint }
   }
 
-  async function verifyExecutionScope(args: unknown): Promise<boolean | undefined> {
+  async function verifyExecutionScope(args: unknown, requireExplicitScope = false): Promise<boolean | undefined> {
     if (!args || typeof args !== "object" || Array.isArray(args)) return undefined
     const value = args as Record<string, unknown>
     const items = Array.isArray(value.scope_items) ? value.scope_items.filter((x): x is string => typeof x === "string") : []
     const identity = executionIdentity(args)
     if (!identity.target) return typeof value.scope_verified === "boolean" ? value.scope_verified : undefined
     if (!items.length) {
-      if (value.authorized_active_testing === true) {
+      if (requireExplicitScope && value.authorized_active_testing === true) {
         throw new Error("Active testing requires explicit scope_items; scope_verified cannot substitute for the programmatic scope check.")
       }
       return undefined
@@ -121,7 +121,7 @@ export namespace Tool {
           let run: ReturnType<typeof ToolRunRecord.begin> | undefined
 
           try {
-            scopeVerified = await verifyExecutionScope(args)
+            scopeVerified = await verifyExecutionScope(args, id === "external_tool_runner")
             if (durableExecution) {
               run = ToolRunRecord.begin({
               sessionID: ctx.sessionID,
@@ -151,7 +151,7 @@ export namespace Tool {
             }
 
             const result = await execute(args, ctx)
-            const aborted = ctx.abort.aborted
+            const aborted = ctx.abort?.aborted === true
             const resultMetadata = result.metadata as Record<string, unknown>
             const timedOut =
               resultMetadata.timed_out === true ||
@@ -251,7 +251,7 @@ export namespace Tool {
               try {
                 ToolRunRecord.finish({
                   id: run.id,
-                  status: ctx.abort.aborted ? "cancelled" : "failed",
+                  status: ctx.abort?.aborted === true ? "cancelled" : "failed",
                   error: error instanceof Error ? error.message : String(error),
                   metadata: { scopeVerified },
                 })
