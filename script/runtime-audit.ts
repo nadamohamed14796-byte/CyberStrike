@@ -8,7 +8,21 @@ const ROOT = path.resolve(import.meta.dir, "..")
 const AUDIT_DIR = path.join(ROOT, ".git", "cyberstrike-audit")
 const SOURCE_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx", ".mts", ".mjs", ".cts", ".cjs"])
 const TEXT_EXTENSIONS = new Set([".md", ".mdx"])
-const RESOLVE_EXTENSIONS = ["", ".ts", ".tsx", ".js", ".jsx", ".mts", ".mjs", ".cts", ".cjs", ".json", ".css", ".svg", ".png"]
+const RESOLVE_EXTENSIONS = [
+  "",
+  ".ts",
+  ".tsx",
+  ".js",
+  ".jsx",
+  ".mts",
+  ".mjs",
+  ".cts",
+  ".cjs",
+  ".json",
+  ".css",
+  ".svg",
+  ".png",
+]
 const CONFIG_FILES = new Set(["package.json", "tsconfig.json"])
 
 type FileEntry = {
@@ -18,7 +32,14 @@ type FileEntry = {
 
 type Relation = {
   id: string
-  kind: "import" | "export" | "dynamic-import" | "require" | "package-dependency" | "tsconfig-reference" | "markdown-link"
+  kind:
+    | "import"
+    | "export"
+    | "dynamic-import"
+    | "require"
+    | "package-dependency"
+    | "tsconfig-reference"
+    | "markdown-link"
   sourceID: string
   sourcePath: string
   targetID?: string
@@ -81,9 +102,7 @@ function tsKind(filePath: string) {
 }
 
 function relativeSpecifier(sourcePath: string, specifier: string) {
-  return normalizeRepoPath(
-    path.posix.join(path.posix.dirname(sourcePath), specifier),
-  )
+  return normalizeRepoPath(path.posix.join(path.posix.dirname(sourcePath), specifier))
 }
 
 function readJson(filePath: string) {
@@ -99,20 +118,22 @@ function collectAliases(tsconfigPath: string) {
   const compilerOptions = (config?.compilerOptions as Record<string, unknown> | undefined) ?? {}
   const paths = (compilerOptions.paths as Record<string, unknown> | undefined) ?? {}
   const baseUrl = typeof compilerOptions.baseUrl === "string" ? compilerOptions.baseUrl : "."
-  return Object.entries(paths)
-    .flatMap(([pattern, values]) => {
-      if (!Array.isArray(values)) return []
-      return values
-        .filter((value): value is string => typeof value === "string")
-        .map((target) => ({
-          pattern,
-          target,
-          base: normalizeRepoPath(path.posix.join(path.posix.dirname(tsconfigPath), baseUrl)),
-        }))
-    })
+  return Object.entries(paths).flatMap(([pattern, values]) => {
+    if (!Array.isArray(values)) return []
+    return values
+      .filter((value): value is string => typeof value === "string")
+      .map((target) => ({
+        pattern,
+        target,
+        base: normalizeRepoPath(path.posix.join(path.posix.dirname(tsconfigPath), baseUrl)),
+      }))
+  })
 }
 
-function nearestAliases(sourcePath: string, tsconfigs: Array<{ path: string; aliases: ReturnType<typeof collectAliases> }>) {
+function nearestAliases(
+  sourcePath: string,
+  tsconfigs: Array<{ path: string; aliases: ReturnType<typeof collectAliases> }>,
+) {
   const sourceDir = path.posix.dirname(sourcePath)
   let best: { depth: number; aliases: ReturnType<typeof collectAliases> } | undefined
   for (const config of tsconfigs) {
@@ -132,9 +153,7 @@ function resolveSpecifier(
 ) {
   if (specifier.startsWith(".") || specifier.startsWith("/")) {
     return resolveExisting(
-      specifier.startsWith("/")
-        ? specifier.replace(/^\/+/, "")
-        : relativeSpecifier(sourcePath, specifier),
+      specifier.startsWith("/") ? specifier.replace(/^\/+/, "") : relativeSpecifier(sourcePath, specifier),
     )
   }
 
@@ -189,7 +208,14 @@ function addRelation(
   relations.push({ ...base, id: "", targetPath: target })
 }
 
-function parseCodeFile(source: FileEntry, text: string, packageNames: Map<string, string>, tsconfigs: Array<{ path: string; aliases: ReturnType<typeof collectAliases> }>, relations: Relation[], broken: BrokenRelation[]) {
+function parseCodeFile(
+  source: FileEntry,
+  text: string,
+  packageNames: Map<string, string>,
+  tsconfigs: Array<{ path: string; aliases: ReturnType<typeof collectAliases> }>,
+  relations: Relation[],
+  broken: BrokenRelation[],
+) {
   const file = ts.createSourceFile(source.path, text, ts.ScriptTarget.Latest, true, tsKind(source.path))
   const visit = (node: ts.Node) => {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
@@ -237,7 +263,13 @@ function parseMarkdown(source: FileEntry, text: string, relations: Relation[], b
   }
 }
 
-function parseConfig(source: FileEntry, packageNames: Map<string, string>, fileIDs: Map<string, FileEntry>, relations: Relation[], broken: BrokenRelation[]) {
+function parseConfig(
+  source: FileEntry,
+  packageNames: Map<string, string>,
+  fileIDs: Map<string, FileEntry>,
+  relations: Relation[],
+  broken: BrokenRelation[],
+) {
   if (path.posix.basename(source.path) === "package.json") {
     const json = readJson(source.path)
     const dependencyGroups = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"]
@@ -265,9 +297,15 @@ function parseConfig(source: FileEntry, packageNames: Map<string, string>, fileI
     for (const ref of refs) {
       if (!ref || typeof ref !== "object" || typeof (ref as { path?: unknown }).path !== "string") continue
       const raw = String((ref as { path: string }).path)
-      addRelation(relations, broken, "tsconfig-reference", source, raw, () =>
-        resolveExisting(path.posix.join(path.posix.dirname(source.path), raw)) ??
-        resolveExisting(path.posix.join(path.posix.dirname(source.path), raw, "tsconfig.json")),
+      addRelation(
+        relations,
+        broken,
+        "tsconfig-reference",
+        source,
+        raw,
+        () =>
+          resolveExisting(path.posix.join(path.posix.dirname(source.path), raw)) ??
+          resolveExisting(path.posix.join(path.posix.dirname(source.path), raw, "tsconfig.json")),
       )
     }
     if (typeof json?.extends === "string" && json.extends.startsWith(".")) {
@@ -326,7 +364,11 @@ function tarjan(relations: Relation[]) {
   return sccs
 }
 
-const gitFiles = git(["ls-files", "-z"]).split("\0").filter(Boolean).map(normalizeRepoPath).sort((a, b) => a.localeCompare(b))
+const gitFiles = git(["ls-files", "-z"])
+  .split("\0")
+  .filter(Boolean)
+  .map(normalizeRepoPath)
+  .sort((a, b) => a.localeCompare(b))
 const files: FileEntry[] = gitFiles.map((filePath, index) => ({
   id: `F${String(index + 1).padStart(6, "0")}`,
   path: filePath,
@@ -381,7 +423,8 @@ for (const relation of broken) {
 
 const indegree = new Map<string, number>()
 for (const file of files) indegree.set(file.id, 0)
-for (const relation of relations) if (relation.targetID) indegree.set(relation.targetID, (indegree.get(relation.targetID) ?? 0) + 1)
+for (const relation of relations)
+  if (relation.targetID) indegree.set(relation.targetID, (indegree.get(relation.targetID) ?? 0) + 1)
 
 const cycles = tarjan(relations)
 const orphanCode = files.filter((file) => {
@@ -400,7 +443,9 @@ fs.writeFileSync(
   path.join(AUDIT_DIR, "relations.tsv"),
   [
     "relation_id\tkind\tsource_id\tsource_path\ttarget_id\ttarget_path\tspecifier",
-    ...relations.map((r) => [r.id, r.kind, r.sourceID, r.sourcePath, r.targetID ?? "", r.targetPath ?? "", r.specifier].join("\t")),
+    ...relations.map((r) =>
+      [r.id, r.kind, r.sourceID, r.sourcePath, r.targetID ?? "", r.targetPath ?? "", r.specifier].join("\t"),
+    ),
   ].join("\n") + "\n",
 )
 fs.writeFileSync(
@@ -413,7 +458,8 @@ fs.writeFileSync(
 fs.writeFileSync(
   path.join(AUDIT_DIR, "cycles.txt"),
   cycles.length
-    ? cycles.map((component, i) => `cycle_${String(i + 1).padStart(4, "0")}: ${component.join(" -> ")}`).join("\n") + "\n"
+    ? cycles.map((component, i) => `cycle_${String(i + 1).padStart(4, "0")}: ${component.join(" -> ")}`).join("\n") +
+        "\n"
     : "",
 )
 fs.writeFileSync(
@@ -421,11 +467,14 @@ fs.writeFileSync(
   ["file_id\tpath", ...orphanCode.map((file) => `${file.id}\t${file.path}`)].join("\n") + "\n",
 )
 
-console.log(`runtime-audit: files=${files.length} relations=${relations.length + broken.length} broken=${broken.length} cycles=${cycles.length} code-orphans=${orphanCode.length}`)
+console.log(
+  `runtime-audit: files=${files.length} relations=${relations.length + broken.length} broken=${broken.length} cycles=${cycles.length} code-orphans=${orphanCode.length}`,
+)
 console.log(`file index: ${path.relative(ROOT, path.join(AUDIT_DIR, "files.tsv"))}`)
 console.log(`relation index: ${path.relative(ROOT, path.join(AUDIT_DIR, "relations.tsv"))}`)
 if (broken.length > 0) {
   console.error("Broken repository-internal relationships detected:")
-  for (const item of broken.slice(0, 100)) console.error(`${item.id} ${item.sourcePath} -> ${item.specifier}: ${item.reason}`)
+  for (const item of broken.slice(0, 100))
+    console.error(`${item.id} ${item.sourcePath} -> ${item.specifier}: ${item.reason}`)
   process.exitCode = 1
 }
