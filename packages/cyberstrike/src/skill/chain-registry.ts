@@ -1,6 +1,8 @@
 import { SkillIndex } from "./index-engine"
+import { Log } from "../util/log"
 
 export namespace ChainRegistry {
+  const log = Log.create({ service: "chain-registry" })
   export type TransitionState = "signal" | "candidate" | "observed" | "validated" | "handoff" | "finding"
 
   export type Evidence = {
@@ -26,16 +28,28 @@ export namespace ChainRegistry {
     return !!SkillIndex.get(name)
   }
 
+  function looksLikeSkillReference(value: string): boolean {
+    return /^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value.trim())
+  }
+
   function skillPrerequisites(name: string): string[] {
-    // Some legacy/NIST skills use human-readable prerequisite prose rather than
-    // skill IDs. Only prerequisites that resolve to known skills can gate routing.
     return SkillIndex.prerequisitesFor(name).filter((required) => known(required))
+  }
+
+  export function invalidReferences(name: string): { chains: string[]; prerequisites: string[] } {
+    const entry = SkillIndex.get(name)
+    if (!entry) return { chains: [], prerequisites: [] }
+    return {
+      chains: entry.chains_with.filter((target) => !known(target)),
+      prerequisites: entry.prerequisites.filter((required) => looksLikeSkillReference(required) && !known(required)),
+    }
   }
 
   export function eligible(from: string, target: string, completed: Iterable<string>): boolean {
     if (!known(from) || !known(target) || from === target) return false
     const completedSet = new Set(completed)
     if (completedSet.has(target)) return false
+    if (invalidReferences(target).prerequisites.length > 0) return false
     return skillPrerequisites(target).every((required) => completedSet.has(required))
   }
 
@@ -47,6 +61,16 @@ export namespace ChainRegistry {
   }): Plan[] {
     const fromEntry = SkillIndex.get(input.from)
     if (!fromEntry) return []
+    if (input.evidence.state === "signal") return []
+
+    const invalid = invalidReferences(input.from)
+    if (invalid.chains.length > 0 || invalid.prerequisites.length > 0) {
+      log.warn("skill chain metadata contains unresolved references", {
+        skill: input.from,
+        chains: invalid.chains,
+        prerequisites: invalid.prerequisites,
+      })
+    }
 
     const completed = new Set(input.completed ?? [])
     const limit = Math.max(0, Math.min(input.max ?? 4, LIMITS.maxUniqueSkills))
@@ -74,6 +98,7 @@ export namespace ChainRegistry {
     const skills = [input.start]
     const transitions: Plan[] = []
     const completed = new Set(input.completed ?? [])
+    completed.add(input.start)
     const visited = new Map<string, number>()
     visited.set(input.start, 1)
     const maxHops = Math.min(input.maxHops ?? LIMITS.maxHops, LIMITS.maxHops)
@@ -84,6 +109,9 @@ export namespace ChainRegistry {
       if (!candidates.length) return { skills, transitions, stopped: "no-eligible-target" }
 
       const transition = candidates[0]
+      if (skills.includes(transition.skill)) {
+        return { skills, transitions, stopped: "cycle" }
+      }
       const count = (visited.get(transition.skill) ?? 0) + 1
       if (count > LIMITS.maxRevisitsPerSkill + 1) return { skills, transitions, stopped: "cycle" }
 
