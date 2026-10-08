@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { ReportKnowledge } from "../../src/learning/report-knowledge"
+import { Learning } from "../../src/learning/learning"
 
 describe("ReportKnowledge", () => {
   test("ingests and retrieves a normalized report knowledge record", () => {
@@ -20,6 +21,24 @@ describe("ReportKnowledge", () => {
     expect(rows.some((row) => row.id === id)).toBe(true)
     const recommendations = ReportKnowledge.recommendations({ signal: "ownership" })
     expect(recommendations.some((row) => row.id === id)).toBe(true)
+  })
+
+  test("primes a fresh hunt session with persisted public research", () => {
+    const id = ReportKnowledge.ingestExternal({
+      title: "Fresh hunt research hydration test",
+      vulnerabilityClass: "idor",
+      severity: "high",
+      sourceURL: "https://example.com/research/fresh-hunt-hydration-test",
+      lesson: "Compare ownership across independent accounts.",
+      sourceTrust: 90,
+    })
+    expect(id).toBeTruthy()
+
+    const sessionID = "session-research-hydration-test"
+    const recommendations = Learning.primeResearch(sessionID, 6)
+
+    expect(recommendations.some((row) => row.id === id)).toBe(true)
+    expect(Learning.researchFor(sessionID, 6).some((row) => row.id === id)).toBe(true)
   })
 
   test("records rejected outcomes without deleting knowledge", () => {
