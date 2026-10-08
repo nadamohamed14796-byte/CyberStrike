@@ -53,6 +53,17 @@ describe("TargetWorkspace", () => {
     expect(second.id).toBe(first.id)
     expect(await TargetWorkspace.readLessons(target)).toHaveLength(1)
 
+    const concurrentTarget = `https://example.com/lesson-concurrent-${crypto.randomUUID()}.test`
+    await Promise.all(
+      Array.from({ length: 10 }, () =>
+        TargetWorkspace.addLesson(concurrentTarget, {
+          kind: "observation",
+          summary: "same concurrent lesson",
+        }),
+      ),
+    )
+    expect(await TargetWorkspace.readLessons(concurrentTarget)).toHaveLength(1)
+
     for (let i = 0; i < 3; i++) {
       await TargetWorkspace.addLesson(target, { kind: "observation", summary: `observation ${i}` })
     }
