@@ -33,7 +33,6 @@ describe("ReconDispatch", () => {
     })
   })
 
-
   test("does not let completed coverage on one target suppress another target", async () => {
     await Instance.provide({
       directory: path.join(__dirname, "../.."),

@@ -151,14 +151,14 @@ export namespace SignalQueue {
           .limit(500)
           .all(),
       ).map(
-        (x) =>
-          `${(x.target ?? "*").trim().toLowerCase()}::${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`,
+        (x) => `${(x.target ?? "*").trim().toLowerCase()}::${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`,
       ),
     )
-    const uncovered = rows.filter((x) =>
-      !completed.has(
-        `${(x.target ?? "*").trim().toLowerCase()}::${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`,
-      ),
+    const uncovered = rows.filter(
+      (x) =>
+        !completed.has(
+          `${(x.target ?? "*").trim().toLowerCase()}::${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`,
+        ),
     )
     // Covered pending rows can exist after legacy/partial state repair.
     // Do not fall back to one of them: that would re-surface work that is already
