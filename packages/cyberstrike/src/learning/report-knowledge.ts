@@ -279,7 +279,7 @@ export namespace ReportKnowledge {
     let score = 0
 
     for (const token of tokens) {
-      const escaped = token.replace(/[\\^$.*+?()[\]{}|]/g, "\\\\$&")
+      const escaped = token.replace(/[\\^$.*+?()[\]{}|]/g, "\\.replace(/[\\^$.*+?()[\]{}|]/g, "\\\\$&")")
       const exact = new RegExp("(^|[^\\p{L}\\p{N}_])" + escaped + "([^\\p{L}\\p{N}_]|$)", "iu")
       if (exact.test(title)) score += 45
       else if (exact.test(lesson)) score += 25
