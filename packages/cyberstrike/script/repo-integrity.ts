@@ -33,12 +33,14 @@ async function checkPackages() {
   const packageFiles = await glob(root, "**/package.json")
   const packages = new Map<string, string>()
   const parsed: Array<{ file: string; pkg: any }> = []
+  const rootPackage = path.join(root, "package.json")
 
   for (const file of packageFiles) {
+    if (file.includes("/node_modules/") || file.includes("/.git/")) continue
     try {
       const pkg = JSON.parse(await Bun.file(file).text())
       parsed.push({ file, pkg })
-      if (typeof pkg.name === "string") {
+      if (typeof pkg.name === "string" && file !== rootPackage) {
         if (packages.has(pkg.name)) fail("package-layout", "duplicate package name: " + pkg.name, file)
         packages.set(pkg.name, path.dirname(file))
       }
