@@ -166,11 +166,17 @@ function firstMatchingSentence(text: string, pattern: RegExp) {
 }
 
 function impactOf(text: string) {
-  return firstMatchingSentence(text, /impact|allows|expos|access|takeover|privilege|execute|delete|modify|read/i)?.slice(0, 1000)
+  return firstMatchingSentence(
+    text,
+    /impact|allows|expos|access|takeover|privilege|execute|delete|modify|read/i,
+  )?.slice(0, 1000)
 }
 
 function attackVectorOf(text: string) {
-  return firstMatchingSentence(text, /endpoint|request|parameter|header|cookie|payload|token|url|api|upload/i)?.slice(0, 1000)
+  return firstMatchingSentence(text, /endpoint|request|parameter|header|cookie|payload|token|url|api|upload/i)?.slice(
+    0,
+    1000,
+  )
 }
 
 function lessonOf(text: string, vulnerabilityClass?: string) {
