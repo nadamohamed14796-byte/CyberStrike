@@ -1,4 +1,5 @@
-import { realpath, realpathSync } from "node:fs"
+import { realpathSync } from "node:fs"
+import { realpath } from "node:fs/promises"
 import { dirname, join, relative } from "path"
 
 export namespace Filesystem {
