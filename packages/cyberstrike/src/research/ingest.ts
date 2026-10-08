@@ -112,14 +112,21 @@ function sourceRelevance(url: string, title: string, text: string, source: Resea
 }
 
 function isResearchCandidate(url: string, source: ResearchSource) {
-  const path = new URL(url).pathname.toLowerCase()
+  const parsed = new URL(url)
+  const path = parsed.pathname.toLowerCase()
+  if (source.id === "medium") {
+    const segments = path.split("/").filter(Boolean)
+    if (path.startsWith("/@") || (segments.length >= 2 && !/^(tag|me|membership|about|help|search|plans|topics|media|home|latest)$/i.test(segments[0]))) {
+      return true
+    }
+  }
   if (
     /\/reports?\b|\/hacktivity\b|\/writeups?\b|\/research\b|\/blog\b|\/articles?\b|\/labs?\b|\/disclos|\/advisories?\b|\/learn\b|\/academy\b|\/techniques?\b|\/payloads?\b|\/cheats?heets?\b|\/blob\/|\/tree\//.test(
       path,
     )
   )
     return true
-  return /[?&](page|p|offset|start)=\d+/i.test(new URL(url).search)
+  return /[?&](page|p|offset|start|pageindex)=\d+/i.test(parsed.search)
 }
 
 function classify(text: string) {
