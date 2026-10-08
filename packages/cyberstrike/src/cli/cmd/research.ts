@@ -40,16 +40,23 @@ export const ResearchCommand = cmd({
             .option("deep", {
               type: "boolean",
               default: false,
-              describe: "deep preset: 200 records, 750 pages, depth 3",
+              describe: "deep preset: 200 new records, 750 pages, depth 3",
+            })
+            .option("all", {
+              type: "boolean",
+              default: false,
+              describe: "exhaust the discovered public queue up to the page/depth budgets",
             }),
         async handler(args) {
           prompts.intro("CyberStrike Research Learning")
           const deep = Boolean(args.deep)
+          const exhaustive = Boolean(args.all)
           const results = await syncResearch({
             sourceID: args.source,
             limit: deep ? 200 : args.limit,
-            pages: deep ? 750 : args.pages,
-            depth: deep ? 3 : args.depth,
+            pages: exhaustive ? 1000 : deep ? 750 : args.pages,
+            depth: exhaustive ? 4 : deep ? 3 : args.depth,
+            all: exhaustive,
           })
           for (const result of results) {
             prompts.log.info(
@@ -69,7 +76,7 @@ export const ResearchCommand = cmd({
             )
             for (const error of result.error_samples) prompts.log.warn(error)
           }
-          prompts.outro("Research sync complete")
+          prompts.outro(exhaustive ? "Exhaustive research sync complete" : "Research sync complete")
         },
       })
       .command({
@@ -91,6 +98,37 @@ export const ResearchCommand = cmd({
                 " — " +
                 (row.source_url ?? "local"),
             )
+        },
+      })
+      .command({
+        command: "recommend <query>",
+        describe: "show high-confidence learned research relevant to a query",
+        builder: (yargs) =>
+          yargs
+            .positional("query", { type: "string", demandOption: true })
+            .option("class", { type: "string" })
+            .option("cwe", { type: "string" })
+            .option("limit", { type: "number", default: 6 }),
+        async handler(args) {
+          const rows = ReportKnowledge.recommendations({
+            signal: args.query,
+            vulnerabilityClass: args.class,
+            cweID: args.cwe,
+            limit: args.limit,
+          })
+          for (const row of rows) {
+            console.log(
+              String(row.confidence) +
+                "% " +
+                (row.vulnerability_class ?? "unknown") +
+                " — " +
+                row.title +
+                " — " +
+                (row.lesson ?? "no lesson") +
+                " — " +
+                (row.source_url ?? "local"),
+            )
+          }
         },
       })
       .command({
