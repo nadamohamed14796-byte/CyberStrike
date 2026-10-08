@@ -38,7 +38,17 @@ export function discoverySeeds(source: ResearchSource, maxPages: number) {
 
   switch (source.id) {
     case "hackerone-hacktivity":
-      addQueryPages(source.seedUrls)
+      for (const url of source.seedUrls) {
+        const parsed = new URL(url)
+        if (parsed.pathname.includes("/overview")) {
+          for (let page = 1; page < pages; page++) {
+            parsed.searchParams.set("pageIndex", String(page))
+            seeds.add(parsed.toString())
+          }
+        } else {
+          addQueryPages([url])
+        }
+      }
       break
     case "bugcrowd-crowdstream":
       addQueryPages(source.seedUrls)
