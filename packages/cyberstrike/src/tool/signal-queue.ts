@@ -150,9 +150,16 @@ export namespace SignalQueue {
           .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.status, "completed")))
           .limit(500)
           .all(),
-      ).map((x) => `${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`),
+      ).map(
+        (x) =>
+          `${(x.target ?? "*").trim().toLowerCase()}::${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`,
+      ),
     )
-    const uncovered = rows.filter((x) => !completed.has(`${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`))
+    const uncovered = rows.filter((x) =>
+      !completed.has(
+        `${(x.target ?? "*").trim().toLowerCase()}::${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`,
+      ),
+    )
     return uncovered[0] ?? rows[0]
   }
 
