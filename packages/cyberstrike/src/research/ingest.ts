@@ -101,9 +101,10 @@ function sourceRelevance(url: string, title: string, text: string, source: Resea
 
   // For noisy sources such as Medium, require real security relevance.
   // A title/path hit alone is not enough unless it is a highly specific vuln term.
-  const specificVulnerability = /\b(idor|xss|ssrf|csrf|sqli|ssti|xxe|cve|account takeover|prototype pollution|request smuggling|race condition|subdomain takeover|path traversal)\b/i.test(
-    title + " " + path,
-  )
+  const specificVulnerability =
+    /\b(idor|xss|ssrf|csrf|sqli|ssti|xxe|cve|account takeover|prototype pollution|request smuggling|race condition|subdomain takeover|path traversal)\b/i.test(
+      title + " " + path,
+    )
   const accepted = specificVulnerability || included >= 2 || (included >= 1 && pathBoost > 0)
   return { accepted: accepted && excluded === 0, score: included * 12 + pathBoost - excluded * 20 }
 }
@@ -176,12 +177,16 @@ function lessonOf(text: string, vulnerabilityClass?: string) {
     .map((line) => line.trim())
     .filter((line) => line.length >= 45)
   const useful = sentences.filter((line) =>
-    /because|caused by|allows|leads to|impact|bypass|authorization|validation|exploit|root cause|misconfigur/i.test(line),
+    /because|caused by|allows|leads to|impact|bypass|authorization|validation|exploit|root cause|misconfigur/i.test(
+      line,
+    ),
   )
   const selected = useful.slice(0, 3)
   if (selected.length) return selected.join(" ").slice(0, 1600)
   return vulnerabilityClass
-    ? "Research pattern for " + vulnerabilityClass + ": validate prerequisites, exploitability, and impact independently."
+    ? "Research pattern for " +
+        vulnerabilityClass +
+        ": validate prerequisites, exploitability, and impact independently."
     : undefined
 }
 
@@ -409,9 +414,7 @@ export async function syncResearchSource(
   return result
 }
 
-export async function syncResearch(
-  input: { sourceID?: string } & ResearchSyncOptions = {},
-) {
+export async function syncResearch(input: { sourceID?: string } & ResearchSyncOptions = {}) {
   const sources = input.sourceID ? RESEARCH_SOURCES.filter((source) => source.id === input.sourceID) : RESEARCH_SOURCES
   if (sources.length === 0) throw new Error("unknown research source: " + input.sourceID)
 
