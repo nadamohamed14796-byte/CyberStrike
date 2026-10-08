@@ -81,6 +81,32 @@ function linksOf(html: string, base: URL, source: ResearchSource) {
   return [...links]
 }
 
+function matchesTerm(text: string, term: string) {
+  return text.toLowerCase().includes(term.toLowerCase())
+}
+
+function sourceRelevance(url: string, title: string, text: string, source: ResearchSource) {
+  const haystack = (title + " " + text).toLowerCase()
+  const path = new URL(url).pathname.toLowerCase()
+  const excludedPath = source.excludePaths?.some((value) => path.includes(value.toLowerCase()))
+  if (excludedPath) return { accepted: false, score: -100 }
+
+  const excluded = source.excludeTerms?.filter((term) => matchesTerm(haystack, term)).length ?? 0
+  const included = source.includeTerms?.filter((term) => matchesTerm(haystack, term)).length ?? 0
+  const pathBoost = source.includePaths?.some((value) => path.includes(value.toLowerCase())) ? 25 : 0
+
+  // Sources without a policy keep the generic crawler behaviour.
+  if (!source.includeTerms?.length) return { accepted: true, score: pathBoost }
+
+  // For noisy sources such as Medium, require real security relevance.
+  // A title/path hit alone is not enough unless it is a highly specific vuln term.
+  const specificVulnerability = /\b(idor|xss|ssrf|csrf|sqli|ssti|xxe|cve|account takeover|prototype pollution|request smuggling|race condition|subdomain takeover|path traversal)\b/i.test(
+    title + " " + path,
+  )
+  const accepted = specificVulnerability || included >= 2 || (included >= 1 && pathBoost > 0)
+  return { accepted: accepted && excluded === 0, score: included * 12 + pathBoost - excluded * 20 }
+}
+
 function isResearchCandidate(url: string, source: ResearchSource) {
   const path = new URL(url).pathname.toLowerCase()
   if (
@@ -287,6 +313,12 @@ export async function syncResearchSource(
       const text = cleanHtml(html)
       const title = titleOf(html, current.url)
       if (text.length < 250) {
+        result.skipped++
+        continue
+      }
+
+      const relevance = sourceRelevance(current.url, title, text, source)
+      if (!relevance.accepted) {
         result.skipped++
         continue
       }
