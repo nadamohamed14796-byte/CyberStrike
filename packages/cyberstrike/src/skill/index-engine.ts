@@ -63,8 +63,8 @@ export namespace SkillIndex {
   function indexEntry(state: State, entry: Entry) {
     for (const tag of entry.tags) {
       const key = tag.toLowerCase()
-      if (!state.state().tagIndex.has(key)) state.state().tagIndex.set(key, new Set())
-      state.state().tagIndex.get(key)!.add(entry.name)
+      if (!state.tagIndex.has(key)) state.tagIndex.set(key, new Set())
+      state.tagIndex.get(key)!.add(entry.name)
     }
     for (const tech of entry.tech_stack) {
       const key = tech.toLowerCase()
@@ -91,30 +91,30 @@ export namespace SkillIndex {
   export async function rebuild() {
     const current = state()
     current.initialized = false
-    current.state().entries.clear()
-    current.state().tagIndex.clear()
-    current.state().techIndex.clear()
-    current.state().cweIndex.clear()
-    current.state().categoryIndex.clear()
-    current.state().aliasIndex.clear()
+    current.entries.clear()
+    current.tagIndex.clear()
+    current.techIndex.clear()
+    current.cweIndex.clear()
+    current.categoryIndex.clear()
+    current.aliasIndex.clear()
 
     const skills = await Skill.all()
     for (const skill of skills) {
       const entry = toEntry(skill)
-      current.state().entries.set(entry.name, entry)
+      current.entries.set(entry.name, entry)
       indexEntry(current, entry)
 
       const directoryName = path.basename(path.dirname(skill.location))
       if (directoryName && directoryName !== entry.name && /^[a-z0-9][a-z0-9._-]*$/i.test(directoryName)) {
-        const existing = current.state().aliasIndex.get(directoryName)
+        const existing = current.aliasIndex.get(directoryName)
         if (existing && existing !== entry.name) {
-          current.state().aliasIndex.delete(directoryName)
-        } else if (!existing && !current.state().entries.has(directoryName)) {
-          current.state().aliasIndex.set(directoryName, entry.name)
+          current.aliasIndex.delete(directoryName)
+        } else if (!existing && !current.entries.has(directoryName)) {
+          current.aliasIndex.set(directoryName, entry.name)
         }
       }
     }
-    log.info("skill index built", { count: current.state().entries.size, directory: Instance.directory })
+    log.info("skill index built", { count: current.entries.size, directory: Instance.directory })
     current.initialized = true
   }
 
