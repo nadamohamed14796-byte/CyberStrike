@@ -97,12 +97,37 @@ export const TaskTool = Tool.define("task", async (ctx) => {
       const agent = await Agent.get(params.subagent_type)
       if (!agent) throw new Error(`Unknown agent type: ${params.subagent_type} is not a valid agent type`)
 
-      const hasTaskPermission = agent.permission.some((rule) => rule.permission === "task")
+      // A child only needs the task tool when at least one available subagent
+      // target is permitted by this agent. Checking for the presence of any
+      // task rule is incorrect because a wildcard deny is still a task rule.
+      const hasTaskPermission = agents.some(
+        (candidate) => PermissionNext.evaluate("task", candidate.name, agent.permission).action !== "deny",
+      )
 
       const session = await iife(async () => {
         if (params.task_id) {
           const found = await Session.get(params.task_id).catch(() => {})
-          if (found) return found
+          if (found) {
+            // A task id is scoped to the child created by this parent. Never
+            // treat it as a global session selector that can resume a sibling
+            // or an unrelated session.
+            if (found.parentID !== ctx.sessionID) {
+              throw new Error(
+                `Cannot resume task ${params.task_id}: it is not a child of the current parent session.`,
+              )
+            }
+
+            // Also prevent resuming a sibling that belongs to another
+            // specialist. Child user messages carry the agent identity.
+            const history = await Session.messages({ sessionID: found.id, limit: 50 }).catch(() => [])
+            const owner = history.find((item) => item.info.role === "user")?.info.agent
+            if (owner && owner !== params.subagent_type && owner !== agent.name) {
+              throw new Error(
+                `Cannot resume task ${params.task_id}: it belongs to subagent "${owner}", not "${params.subagent_type}".`,
+              )
+            }
+            return found
+          }
         }
 
         return await Session.create({
