@@ -31,12 +31,29 @@ import { Log } from "../../util/log"
 import { PermissionNext } from "@/permission/next"
 import { errors } from "../error"
 import { lazy } from "../../util/lazy"
+import { Learning } from "../../learning/learning"
+import { syncResearch } from "../../research"
 
 const log = Log.create({ service: "server" })
 
 const MAX_REQUEST_SIZE = 16 * 1024 // 16 KB
 const MAX_REQUEST_HEADERS = 20 // First N headers
 const MAX_REQUEST_BODY = 8 * 1024 // 8 KB
+
+function latestUserResearchQuery(messages: MessageV2.WithParts[]) {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const message = messages[i]
+    if (message.info.role !== "user") continue
+    const text = message.parts
+      .filter((part) => part.type === "text" && !part.synthetic && !part.ignored)
+      .map((part) => part.text.trim())
+      .filter(Boolean)
+      .join("\n")
+      .trim()
+    if (text) return text.slice(0, 4000)
+  }
+  return undefined
+}
 
 function truncateRawRequest(rawRequest: string): string {
   const originalSize = Buffer.byteLength(rawRequest, "utf-8")
@@ -1993,6 +2010,140 @@ export const SessionRoutes = lazy(() =>
         })
       },
     )
+    .post(
+      "/:sessionID/research/update",
+      describeRoute({
+        summary: "Refresh public security research for the active hunt",
+        description:
+          "Fetches all configured public security-research sources using bounded incremental crawling, extracts lessons and vulnerability patterns into the persistent research knowledge base, and activates the most relevant learned research for the current hunt session.",
+        operationId: "session.researchUpdate",
+        responses: {
+          200: {
+            description: "Research refreshed and activated for the session",
+            content: {
+              "application/json": {
+                schema: resolver(
+                  z.object({
+                    sessionID: z.string(),
+                    query: z.string().optional(),
+                    sources: z.number(),
+                    fetched: z.number(),
+                    learned: z.number(),
+                    skipped: z.number(),
+                    failed: z.number(),
+                    pages_crawled: z.number(),
+                    recommendations: z.array(
+                      z.object({
+                        id: z.string(),
+                        title: z.string(),
+                        vulnerability_class: z.string().nullable().optional(),
+                        confidence: z.number(),
+                        lesson: z.string().nullable().optional(),
+                        source_url: z.string().nullable().optional(),
+                      }),
+                    ),
+                    error_samples: z.array(z.string()),
+                  }),
+                ),
+              },
+            },
+          },
+          ...errors(400, 404),
+        },
+      }),
+      validator(
+        "param",
+        z.object({
+          sessionID: z.string(),
+        }),
+      ),
+      validator(
+        "json",
+        z.object({
+          limit: z.number().int().min(1).max(20).optional(),
+          pages: z.number().int().min(1).max(20).optional(),
+          depth: z.number().int().min(0).max(3).optional(),
+        }),
+      ),
+      async (c) => {
+        const sessionID = c.req.valid("param").sessionID
+        const body = c.req.valid("json")
+        await Session.get(sessionID)
+
+        const messages = await Session.messages({ sessionID, limit: 25 })
+        const query = latestUserResearchQuery(messages)
+
+        // /update is intentionally incremental: all sources are visited, but
+        // each source gets a small crawl budget so starting a hunt stays fast.
+        const results = await syncResearch({
+          limit: body.limit ?? 3,
+          pages: body.pages ?? 2,
+          depth: body.depth ?? 1,
+        })
+
+        const totals = results.reduce(
+          (acc, result) => {
+            acc.fetched += result.fetched
+            acc.learned += result.learned
+            acc.skipped += result.skipped
+            acc.failed += result.failed
+            acc.pages_crawled += result.pages_crawled
+            for (const sample of result.error_samples) {
+              if (acc.error_samples.length < 20) acc.error_samples.push(sample)
+            }
+            return acc
+          },
+          { fetched: 0, learned: 0, skipped: 0, failed: 0, pages_crawled: 0, error_samples: [] as string[] },
+        )
+
+        // Activate the newly learned material directly in this hunt. When a
+        // strong vulnerability class is identified, emit a normal learning
+        // signal so skill routing and next-tool dispatch can react immediately.
+        let recommendations = Learning.activateResearch(sessionID, {
+          query,
+          limit: 6,
+        })
+        const researchClass = recommendations.find((row) => row.vulnerability_class)?.vulnerability_class
+        if (researchClass) {
+          await Learning.emit({
+            sessionID,
+            hook: "before_recon",
+            signal: "research:" + researchClass,
+            category: researchClass,
+            outcome: "observed",
+            evidence: "Public research refreshed via /update",
+            metadata: {
+              source_tool: "research-update",
+              sources: results.length,
+              learned: totals.learned,
+            },
+          })
+          // Learning.emit() also refreshes the normal session caches. Re-add
+          // the query-specific research so /update remains active for the hunt.
+          recommendations = Learning.activateResearch(sessionID, {
+            query,
+            vulnerabilityClass: researchClass,
+            limit: 6,
+          })
+        }
+
+        return c.json({
+          sessionID,
+          ...(query ? { query } : {}),
+          sources: results.length,
+          ...totals,
+          recommendations: recommendations.map((row) => ({
+            id: row.id,
+            title: row.title,
+            vulnerability_class: row.vulnerability_class,
+            confidence: row.confidence,
+            lesson: row.lesson,
+            source_url: row.source_url,
+          })),
+          error_samples: totals.error_samples,
+        })
+      },
+    ),
     .post(
       "/:sessionID/command",
       describeRoute({
