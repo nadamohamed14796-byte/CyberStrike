@@ -7,14 +7,26 @@ import { LearningRouter } from "../learning/router"
 export namespace SkillContext {
   const log = Log.create({ service: "skill-context" })
 
-  const loaded = new Map<string, { content: string; tokens: number }>()
+  export const MAX_CONTEXT_TOKENS = 24_000
+  type LoadedSkill = { content: string; tokens: number }
+  const loaded = new Map<string, Map<string, LoadedSkill>>()
+
+  function sessionLoaded(sessionID: string) {
+    let bucket = loaded.get(sessionID)
+    if (!bucket) {
+      bucket = new Map()
+      loaded.set(sessionID, bucket)
+    }
+    return bucket
+  }
 
   function estimateTokens(text: string): number {
     return Math.ceil(text.length / 4)
   }
 
-  export async function load(name: string): Promise<string | undefined> {
-    if (loaded.has(name)) return loaded.get(name)!.content
+  export async function load(name: string, sessionID = "global"): Promise<string | undefined> {
+    const bucket = sessionLoaded(sessionID)
+    if (bucket.has(name)) return bucket.get(name)!.content
 
     const skill = await Skill.get(name)
     if (!skill) {
@@ -23,37 +35,47 @@ export namespace SkillContext {
     }
 
     const tokens = estimateTokens(skill.content)
-    loaded.set(name, { content: skill.content, tokens })
-    log.info("skill loaded into context", { name, tokens })
+    const currentTokens = Array.from(bucket.values()).reduce((sum, entry) => sum + entry.tokens, 0)
+    if (currentTokens + tokens > MAX_CONTEXT_TOKENS) {
+      throw new Error(
+        `Loading "${name}" would exceed the skill context budget (${currentTokens + tokens} > ${MAX_CONTEXT_TOKENS} tokens).` +
+          " Unload an existing skill or use a narrower specialist.",
+      )
+    }
+    bucket.set(name, { content: skill.content, tokens })
+    log.info("skill loaded into context", { name, tokens, sessionID, contextTokens: currentTokens + tokens })
     return skill.content
   }
 
-  export function unload(name: string): boolean {
-    const had = loaded.has(name)
-    if (had) {
-      log.info("skill unloaded from context", { name, tokens: loaded.get(name)!.tokens })
-      loaded.delete(name)
-    }
-    return had
+  export function unload(name: string, sessionID = "global"): boolean {
+    const bucket = loaded.get(sessionID)
+    if (!bucket) return false
+    const entry = bucket.get(name)
+    if (!entry) return false
+    log.info("skill unloaded from context", { name, sessionID, tokens: entry.tokens })
+    bucket.delete(name)
+    if (bucket.size === 0) loaded.delete(sessionID)
+    return true
   }
 
-  export function active(): string[] {
-    return Array.from(loaded.keys())
+  export function active(sessionID = "global"): string[] {
+    return Array.from(loaded.get(sessionID)?.keys() ?? [])
   }
 
-  export function tokenCount(): number {
+  export function tokenCount(sessionID = "global"): number {
     let total = 0
-    for (const entry of loaded.values()) total += entry.tokens
+    for (const entry of loaded.get(sessionID)?.values() ?? []) total += entry.tokens
     return total
   }
 
-  export function isLoaded(name: string): boolean {
-    return loaded.has(name)
+  export function isLoaded(name: string, sessionID = "global"): boolean {
+    return loaded.get(sessionID)?.has(name) ?? false
   }
 
-  export function clear() {
-    loaded.clear()
-    log.info("context cleared")
+  export function clear(sessionID?: string) {
+    if (sessionID) loaded.delete(sessionID)
+    else loaded.clear()
+    log.info("context cleared", { sessionID: sessionID ?? "all" })
   }
 
   export type Suggestion = {
@@ -64,9 +86,11 @@ export namespace SkillContext {
 
   export function suggest(
     findings: Array<{ skill_id: string; severity?: string; cwe_id?: string; tech_stack?: string[] }>,
+    sessionID = "global",
+    limit = 12,
   ): Suggestion[] {
     const result = new Map<string, Suggestion>()
-    const active = new Set(loaded.keys())
+    const active = new Set(loaded.get(sessionID)?.keys() ?? [])
 
     const add = (name: string, priority: Suggestion["priority"], reason: string) => {
       if (active.has(name)) return
@@ -116,8 +140,8 @@ export namespace SkillContext {
     }
 
     const order = { high: 0, medium: 1, low: 2 }
-    return Array.from(result.values()).sort(
-      (a, b) => order[a.priority] - order[b.priority] || a.name.localeCompare(b.name),
-    )
+    return Array.from(result.values())
+      .sort((a, b) => order[a.priority] - order[b.priority] || a.name.localeCompare(b.name))
+      .slice(0, Math.max(1, Math.min(limit, 50)))
   }
 }
