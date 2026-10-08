@@ -1,10 +1,6 @@
-import { beforeAll, describe, expect, test } from "bun:test"
+import { describe, expect, spyOn, test } from "bun:test"
 import { LearningRouter, type LearningSignal } from "../../src/learning/router"
 import { SkillIndex } from "../../src/skill/index-engine"
-
-beforeAll(async () => {
-  await SkillIndex.ensureBuilt()
-})
 
 describe("LearningRouter.route", () => {
   test("explicit skill signals are always routed first", () => {
@@ -36,11 +32,30 @@ describe("LearningRouter concrete-signal gate", () => {
   })
 
   test("accepts explicit concrete raw signal", () => {
-    const result = LearningRouter.route({
-      hook: "during_testing",
-      signal: "API",
-      metadata: { concrete_signal: true },
-    })
-    expect(result.some((entry) => entry.name === "api-sec")).toBe(true)
+    const apiEntry = {
+      name: "api-sec",
+      description: "API security router",
+      tags: [],
+      tech_stack: [],
+      cwe_ids: [],
+      chains_with: [],
+      prerequisites: [],
+      severity_boost: {},
+    }
+    const searchSpy = spyOn(SkillIndex, "search").mockImplementation((query) =>
+      query.toLowerCase() === "api" ? [apiEntry] : [],
+    )
+
+    try {
+      const result = LearningRouter.route({
+        hook: "during_testing",
+        signal: "API",
+        metadata: { concrete_signal: true },
+      })
+      expect(result.some((entry) => entry.name === "api-sec")).toBe(true)
+      expect(searchSpy).toHaveBeenCalledWith("API", 12)
+    } finally {
+      searchSpy.mockRestore()
+    }
   })
 })
