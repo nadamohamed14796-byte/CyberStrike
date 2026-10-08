@@ -109,36 +109,22 @@ export const useSessionCommands = (input: SessionCommandContext) => {
         if (!sessionID) return
 
         try {
-          const response = await input.sdk.fetch(`/session/${encodeURIComponent(sessionID)}/research/update`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: "{}",
+          const response = await input.sdk.client.session.researchUpdate({
+            sessionID,
+            directory: input.sdk.directory,
+            limit: 3,
+            pages: 2,
+            depth: 1,
           })
-          const payload = (await response.json().catch(() => undefined)) as
-            | {
-                learned?: number
-                fetched?: number
-                sources?: number
-                failed?: number
-                recommendations?: Array<{ title: string }>
-              }
-            | undefined
 
-          if (!response.ok) {
-            throw new Error(
-              typeof payload === "object" && payload && "message" in payload
-                ? String((payload as { message?: unknown }).message)
-                : `Research update failed (HTTP ${response.status})`,
-            )
-          }
+          const payload = response.data
+          if (!payload) throw new Error("Research update returned no data")
 
-          const learned = payload?.learned ?? 0
-          const fetched = payload?.fetched ?? 0
-          const sources = payload?.sources ?? 0
-          const failed = payload?.failed ?? 0
-          const recommendationCount = payload?.recommendations?.length ?? 0
+          const learned = payload.learned
+          const fetched = payload.fetched
+          const sources = payload.sources
+          const failed = payload.failed
+          const recommendationCount = payload.recommendations.length
 
           showToast({
             title: "Security research updated",
