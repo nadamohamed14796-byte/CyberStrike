@@ -3,6 +3,10 @@ import { LearningRouter, type LearningSignal } from "../../src/learning/router"
 import { SkillIndex } from "../../src/skill/index-engine"
 
 describe("LearningRouter.route", () => {
+  test("index is initialized before routing", async () => {
+    await SkillIndex.ensureBuilt()
+  })
+
   test("explicit skill signals are always routed first", () => {
     const result = LearningRouter.route({
       hook: "during_testing",
