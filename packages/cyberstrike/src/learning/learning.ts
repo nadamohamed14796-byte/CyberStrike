@@ -18,6 +18,7 @@ const sessionRoutes = new Map<string, RoutedSkill[]>()
 const sessionNextTools = new Map<string, ReturnType<typeof ReconDispatch.next>>()
 const sessionResearch = new Map<string, ReturnType<typeof ReportKnowledge.recommendations>>()
 const MAX_SESSION_ROUTES = 256
+const MAX_SESSION_CACHE = 256
 const log = Log.create({ service: "learning" })
 
 export namespace Learning {
@@ -109,26 +110,34 @@ export namespace Learning {
 
     // Public research is advisory knowledge: expose the highest-confidence
     // matching reports to the live session without turning them into findings.
+    const researchClass = /^research:([a-z0-9-]+)$/i.exec(signal.signal)?.[1]
     const researchRecommendations = ReportKnowledge.recommendations({
       signal: signal.signal,
-      vulnerabilityClass: signal.category ?? undefined,
+      vulnerabilityClass: signal.category ?? researchClass,
       cweID: signal.cwe_id ?? undefined,
       limit: 6,
     })
 
-    if (signal.metadata?.source_tool && signal.outcome)
-      ToolLearning.observe({
-        tool: String(signal.metadata.source_tool),
-        signal: signal.signal,
-        sessionID: signal.sessionID,
-        target: signal.target,
-        outcome: /finding|useful|confirmed|validated/i.test(signal.outcome)
-          ? "useful"
-          : /rejected|disproven|false|duplicate/i.test(signal.outcome)
-            ? "rejected"
-            : "error",
-        evidence: signal.evidence,
-      })
+    if (signal.metadata?.source_tool && signal.outcome) {
+      const outcome = /finding|useful|confirmed|validated/i.test(signal.outcome)
+        ? "useful"
+        : /rejected|disproven|false|duplicate/i.test(signal.outcome)
+          ? "rejected"
+          : signal.outcome === "empty"
+            ? "empty"
+            : /cancelled|timed_out|error|failed/i.test(signal.outcome)
+              ? "error"
+              : undefined
+      if (outcome)
+        ToolLearning.observe({
+          tool: String(signal.metadata.source_tool),
+          signal: signal.signal,
+          sessionID: signal.sessionID,
+          target: signal.target,
+          outcome,
+          evidence: signal.evidence,
+        })
+    }
 
     if (signal.skill_name && signal.outcome) {
       const outcome = /finding|useful|confirmed|validated/i.test(signal.outcome)
@@ -167,6 +176,22 @@ export namespace Learning {
         const oldest = sessionRoutes.keys().next().value
         if (!oldest) break
         sessionRoutes.delete(oldest)
+        sessionNextTools.delete(oldest)
+        sessionResearch.delete(oldest)
+      }
+      while (sessionNextTools.size > MAX_SESSION_CACHE) {
+        const oldest = sessionNextTools.keys().next().value
+        if (!oldest) break
+        sessionNextTools.delete(oldest)
+        sessionRoutes.delete(oldest)
+        sessionResearch.delete(oldest)
+      }
+      while (sessionResearch.size > MAX_SESSION_CACHE) {
+        const oldest = sessionResearch.keys().next().value
+        if (!oldest) break
+        sessionResearch.delete(oldest)
+        sessionRoutes.delete(oldest)
+        sessionNextTools.delete(oldest)
       }
     }
 
