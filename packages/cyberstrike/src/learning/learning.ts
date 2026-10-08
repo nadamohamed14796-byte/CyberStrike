@@ -264,6 +264,36 @@ export namespace Learning {
     return (sessionResearch.get(sessionID) ?? []).slice(0, limit)
   }
 
+  /**
+   * Prime the session with public research knowledge before the first
+   * runtime signal arrives. Research sync is intentionally session-agnostic,
+   * so the live hunt must hydrate its own advisory cache from persisted
+   * knowledge instead of waiting for a later learning signal.
+   */
+  export function primeResearch(sessionID: string, limit = 6) {
+    try {
+      const latest = recent({ sessionID, limit: 1 })[0]
+      const researchClass = latest?.signal ? /^research:([a-z0-9-]+)$/i.exec(latest.signal)?.[1] : undefined
+      const recommendations = ReportKnowledge.recommendations({
+        signal: latest?.signal,
+        vulnerabilityClass: latest?.category ?? researchClass,
+        cweID: undefined,
+        limit,
+      })
+      sessionResearch.delete(sessionID)
+      sessionResearch.set(sessionID, recommendations)
+      while (sessionResearch.size > MAX_SESSION_CACHE) {
+        const oldest = sessionResearch.keys().next().value
+        if (!oldest) break
+        sessionResearch.delete(oldest)
+      }
+      return recommendations
+    } catch (error) {
+      log.warn("research session hydration failed", { error: String(error), sessionID })
+      return []
+    }
+  }
+
   export function recent(input?: { sessionID?: string; hook?: LearningHook; limit?: number }) {
     const limit = input?.limit ?? 50
     return Database.use((db) => {
