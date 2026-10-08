@@ -55,10 +55,12 @@ export namespace LearningRouter {
    */
   export function route(signal: LearningSignal, limit = 8): RoutedSkill[] {
     const candidates = new Map<string, { score: number; reasons: string[] }>()
+    const explicitSkills = new Set<string>()
 
     if (signal.skill_name) {
       const explicit = SkillIndex.get(signal.skill_name)
       if (explicit) {
+        explicitSkills.add(explicit.name)
         add(candidates, explicit.name, 100, "explicit skill signal")
       }
     }
@@ -118,9 +120,11 @@ export namespace LearningRouter {
           name,
           score: value.score + learningBoost,
           reasons: [...value.reasons, `learned usefulness=${learned}%`],
+          explicit: explicitSkills.has(name),
         }
       })
-      .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name))
+      .sort((a, b) => Number(b.explicit) - Number(a.explicit) || b.score - a.score || a.name.localeCompare(b.name))
       .slice(0, limit)
+      .map(({ explicit: _explicit, ...entry }) => entry)
   }
 }
