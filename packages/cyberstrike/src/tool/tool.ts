@@ -145,7 +145,7 @@ export namespace Tool {
                   runID: run.id,
                   runKey: run.runKey,
                   scopeVerified,
-                } as Result,
+                } as unknown as Result,
               }
             }
 
