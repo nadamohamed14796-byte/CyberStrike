@@ -20,7 +20,7 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
     authorized_active_testing: z.boolean().default(false),
     max_tools: z.number().int().min(1).max(8).default(3),
   }),
-  async execute(params) {
+  async execute(params): Promise<{ title: string; output: string; metadata: ReconOrchestratorMetadata }> {
     const planned = SignalQueue.planNext({
       sessionID: params.sessionID,
       scope_items: params.scope_items,
