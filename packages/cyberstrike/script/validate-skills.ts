@@ -182,8 +182,9 @@ export function validateSkillSet(
       }
     } else {
       const candidates = items.filter((item) => item.name === entry.name)
-      if (candidates.length === 1) rootDir = path.dirname(candidates[0].path)
-      else {
+      if (candidates.length >= 1) {
+        rootDir = path.dirname(candidates[0].path)
+      } else {
         const byDir = items.filter((item) => path.basename(path.dirname(item.path)) === entry.name)
         if (byDir.length === 1) rootDir = path.dirname(byDir[0].path)
         else orphanRegistryEntries.push(entry.name)
