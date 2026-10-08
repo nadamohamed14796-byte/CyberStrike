@@ -292,14 +292,12 @@ async function checkDatabase() {
       }
     }
 
-    const fkRows = sqlite
-      .prepare(
-        "SELECT m.name AS table_name, fk.table AS target_table FROM sqlite_master m JOIN pragma_foreign_key_list(m.name) fk WHERE m.type='table' AND m.name NOT LIKE 'sqlite_%'",
-      )
-      .all() as { table_name: string; target_table: string }[]
-    for (const row of fkRows) {
-      if (!expected.has(row.target_table))
-        fail("schema-fk", "foreign key points to unknown table: " + row.table_name + " -> " + row.target_table)
+    for (const table of actualTables) {
+      const fkRows = sqlite.prepare('PRAGMA foreign_key_list("' + table + '")').all() as { table: string }[]
+      for (const row of fkRows) {
+        if (!expected.has(row.table))
+          fail("schema-fk", "foreign key points to unknown table: " + table + " -> " + row.table)
+      }
     }
 
     const integrity = sqlite.query("PRAGMA integrity_check").get() as { integrity_check: string }
