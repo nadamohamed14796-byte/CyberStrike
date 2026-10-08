@@ -18,12 +18,39 @@ export const ResearchCommand = cmd({
       })
       .command({
         command: "sync [source]",
-        describe: "fetch public research and learn from it",
+        describe: "crawl configured research sources and learn from public security material",
         builder: (yargs) =>
-          yargs.positional("source", { type: "string" }).option("limit", { type: "number", default: 10 }),
+          yargs
+            .positional("source", { type: "string" })
+            .option("limit", {
+              type: "number",
+              default: 50,
+              describe: "maximum new knowledge records per source",
+            })
+            .option("pages", {
+              type: "number",
+              default: 250,
+              describe: "maximum pages crawled per source",
+            })
+            .option("depth", {
+              type: "number",
+              default: 2,
+              describe: "maximum crawl depth from each seed URL",
+            })
+            .option("deep", {
+              type: "boolean",
+              default: false,
+              describe: "deep preset: 200 records, 750 pages, depth 3",
+            }),
         async handler(args) {
           prompts.intro("CyberStrike Research Learning")
-          const results = await syncResearch({ sourceID: args.source, limit: args.limit })
+          const deep = Boolean(args.deep)
+          const results = await syncResearch({
+            sourceID: args.source,
+            limit: deep ? 200 : args.limit,
+            pages: deep ? 750 : args.pages,
+            depth: deep ? 3 : args.depth,
+          })
           for (const result of results) {
             prompts.log.info(
               result.source +
@@ -34,8 +61,13 @@ export const ResearchCommand = cmd({
                 " skipped=" +
                 result.skipped +
                 " failed=" +
-                result.failed,
+                result.failed +
+                " pages=" +
+                result.pages_crawled +
+                " candidates=" +
+                result.candidates_discovered,
             )
+            for (const error of result.error_samples) prompts.log.warn(error)
           }
           prompts.outro("Research sync complete")
         },
@@ -59,6 +91,17 @@ export const ResearchCommand = cmd({
                 " — " +
                 (row.source_url ?? "local"),
             )
+        },
+      })
+      .command({
+        command: "stats",
+        describe: "show research knowledge database statistics",
+        async handler() {
+          const stats = ReportKnowledge.stats()
+          console.log("knowledge_total=" + stats.total)
+          console.log("external_research=" + stats.external)
+          console.log("useful_or_confirmed=" + stats.useful)
+          console.log("rejected_or_disproven=" + stats.rejected)
         },
       })
       .demandCommand(),
