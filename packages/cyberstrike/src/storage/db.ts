@@ -245,7 +245,10 @@ export namespace Database {
         count: entries.length,
         mode: typeof CYBERSTRIKE_MIGRATIONS !== "undefined" ? "bundled" : "dev",
       })
-      // Make migration statements idempotent when the journal is missing but the DB survives.\n      // SQLite does not support ALTER TABLE ADD COLUMN IF NOT EXISTS, so skip already-present columns.\n      const safe = entries.map((e) => ({ ...e, sql: safeMigrationSQL(sqlite, e.sql) }))\n      migrate(db, safe)
+      // Make migration statements idempotent when the journal is missing but the DB survives.
+      // SQLite does not support ALTER TABLE ADD COLUMN IF NOT EXISTS, so skip already-present columns.
+      const safe = entries.map((e) => ({ ...e, sql: safeMigrationSQL(sqlite, e.sql) }))
+      migrate(db, safe)
     }
 
     // Reconcile schema: ensures all tables have all expected columns.
