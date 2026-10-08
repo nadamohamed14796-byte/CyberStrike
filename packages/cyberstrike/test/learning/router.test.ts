@@ -1,9 +1,9 @@
-import { describe, expect, spyOn, test } from "bun:test"
+import { beforeAll, describe, expect, spyOn, test } from "bun:test"
 import { LearningRouter, type LearningSignal } from "../../src/learning/router"
 import { SkillIndex } from "../../src/skill/index-engine"
 
 describe("LearningRouter.route", () => {
-  test("index is initialized before routing", async () => {
+  beforeAll(async () => {
     await SkillIndex.ensureBuilt()
   })
 

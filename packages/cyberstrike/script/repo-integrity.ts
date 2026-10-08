@@ -6,6 +6,7 @@ import path from "node:path"
 import { Database as BunDatabase } from "bun:sqlite"
 import { is } from "drizzle-orm"
 import { getTableConfig, SQLiteTable } from "drizzle-orm/sqlite-core"
+import { parse, type ParseError } from "jsonc-parser"
 import * as schema from "../src/storage/schema"
 
 type Problem = { category: string; path?: string; message: string }
@@ -111,7 +112,8 @@ async function checkRelativeImports() {
       const spec = match[1]
       if (!(spec.startsWith(".") || spec.startsWith("@/"))) continue
       if (/\.(css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)$/i.test(spec)) continue
-      if (!(await Promise.any(candidatesFor(spec, file).map(exists)).catch(() => false)))
+      const resolved = await Promise.all(candidatesFor(spec, file).map(exists))
+      if (!resolved.some(Boolean))
         fail("import-resolution", "unresolved import: " + spec, path.relative(root, file))
     }
   }
@@ -138,14 +140,19 @@ async function checkTsconfigs() {
   for (const file of files) {
     if (file.includes("/node_modules/") || file.includes("/.git/")) continue
     try {
-      const cfg = JSON.parse(await Bun.file(file).text())
-      if (typeof cfg.extends !== "string" || !cfg.extends.startsWith(".")) continue
+      const errors: ParseError[] = []
+      const cfg = parse(await Bun.file(file).text(), errors)
+      if (errors.length) {
+        fail("tsconfig", "invalid JSONC: " + errors.length + " parse error(s)", file)
+        continue
+      }
+      if (!cfg || typeof cfg.extends !== "string" || !cfg.extends.startsWith(".")) continue
       const base = path.resolve(path.dirname(file), cfg.extends)
       const candidates = [base, base + ".json", path.join(base, "tsconfig.json")]
-      const ok = await Promise.any(candidates.map(exists)).catch(() => false)
-      if (!ok) fail("tsconfig", "missing extends target: " + cfg.extends, file)
+      const resolved = await Promise.all(candidates.map(exists))
+      if (!resolved.some(Boolean)) fail("tsconfig", "missing extends target: " + cfg.extends, file)
     } catch (error) {
-      fail("tsconfig", "invalid JSON: " + String(error), file)
+      fail("tsconfig", "invalid JSONC: " + String(error), file)
     }
   }
 }
