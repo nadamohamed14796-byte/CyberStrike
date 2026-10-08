@@ -16,7 +16,12 @@ function fail(category: string, message: string, file?: string) {
   problems.push({ category, path: file, message })
 }
 async function exists(file: string) {
-  try { await fs.access(file); return true } catch { return false }
+  try {
+    await fs.access(file)
+    return true
+  } catch {
+    return false
+  }
 }
 async function glob(rootDir: string, pattern: string) {
   return Array.fromAsync(new Bun.Glob(pattern).scan({ cwd: rootDir, absolute: true, onlyFiles: true, dot: true }))
@@ -31,7 +36,13 @@ async function checkPackages() {
       const pkg = JSON.parse(await Bun.file(file).text())
       if (typeof pkg.name === "string") packages.set(pkg.name, path.dirname(file))
 
-      const deps = Object.assign({}, pkg.dependencies || {}, pkg.devDependencies || {}, pkg.optionalDependencies || {}, pkg.peerDependencies || {})
+      const deps = Object.assign(
+        {},
+        pkg.dependencies || {},
+        pkg.devDependencies || {},
+        pkg.optionalDependencies || {},
+        pkg.peerDependencies || {},
+      )
       for (const [name, version] of Object.entries(deps)) {
         if (version === "workspace:*" && !packages.has(name)) {
           fail("package-dependency", "workspace dependency does not resolve: " + name, file)
@@ -83,7 +94,7 @@ async function checkScripts() {
     glob(root, "script/**/*.{ts,tsx,js,mjs,cjs}"),
     glob(root, "packages/**/script/**/*.{ts,tsx,js,mjs,cjs}"),
     glob(root, "packages/**/scripts/**/*.{ts,tsx,js,mjs,cjs}"),
-  ]).then(x => [...new Set(x.flat())])
+  ]).then((x) => [...new Set(x.flat())])
   for (const file of ts) {
     try {
       const ext = path.extname(file)
@@ -98,7 +109,7 @@ async function checkScripts() {
     glob(root, "script/**/*.{sh,bash}"),
     glob(root, "packages/**/script/**/*.{sh,bash}"),
     glob(root, "packages/**/scripts/**/*.{sh,bash}"),
-  ]).then(x => [...new Set(x.flat())])
+  ]).then((x) => [...new Set(x.flat())])
   for (const file of sh) {
     const r = Bun.spawnSync(["bash", "-n", file], { stdout: "ignore", stderr: "pipe" })
     if (r.exitCode !== 0) {
@@ -110,7 +121,7 @@ async function checkScripts() {
     glob(root, ".cyberstrike/**/*.py"),
     glob(root, "packages/**/*.py"),
     glob(root, "script/**/*.py"),
-  ]).then(x => [...new Set(x.flat())])
+  ]).then((x) => [...new Set(x.flat())])
   for (const file of py) {
     const r = Bun.spawnSync(["python3", "-m", "py_compile", file], { stdout: "ignore", stderr: "pipe" })
     if (r.exitCode !== 0) {
@@ -125,7 +136,7 @@ async function checkSchemaExports() {
   for (const file of files) {
     if (file.endsWith("/storage/schema.sql.ts")) continue
     const source = await Bun.file(file).text()
-    const names = [...source.matchAll(/export const ([A-Za-z0-9_]+) = sqliteTable\(/g)].map(m => m[1])
+    const names = [...source.matchAll(/export const ([A-Za-z0-9_]+) = sqliteTable\(/g)].map((m) => m[1])
     for (const name of names) {
       if (!new RegExp("\\b" + name + "\\b").test(schemaText)) {
         fail("schema-export", "table is not exported through storage/schema.ts: " + name, path.relative(root, file))
@@ -135,12 +146,16 @@ async function checkSchemaExports() {
 }
 
 function splitMigration(sql: string) {
-  return sql.split(/-->\s*statement-breakpoint/gi).map(x => x.trim()).filter(Boolean)
+  return sql
+    .split(/-->\s*statement-breakpoint/gi)
+    .map((x) => x.trim())
+    .filter(Boolean)
 }
 
 async function checkDatabase() {
-  const migrations = (await glob(path.join(pkgRoot, "migration"), "*/migration.sql"))
-    .sort((a, b) => path.basename(path.dirname(a)).localeCompare(path.basename(path.dirname(b))))
+  const migrations = (await glob(path.join(pkgRoot, "migration"), "*/migration.sql")).sort((a, b) =>
+    path.basename(path.dirname(a)).localeCompare(path.basename(path.dirname(b))),
+  )
 
   const sqlite = new BunDatabase(":memory:")
   sqlite.run("PRAGMA foreign_keys = ON")
@@ -155,7 +170,8 @@ async function checkDatabase() {
         fail("migration-order", "migration directory has no 14-digit timestamp: " + name, path.relative(root, file))
       } else {
         const ts = Number(match[1])
-        if (ts <= lastTimestamp) fail("migration-order", "migration timestamp is not strictly increasing: " + name, path.relative(root, file))
+        if (ts <= lastTimestamp)
+          fail("migration-order", "migration timestamp is not strictly increasing: " + name, path.relative(root, file))
         lastTimestamp = ts
       }
       if (names.has(name)) fail("migration-order", "duplicate migration directory: " + name, path.relative(root, file))
@@ -179,32 +195,46 @@ async function checkDatabase() {
       expected.set(cfg.name, cfg)
     }
 
-    const actualTables = (sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all() as { name: string }[]).map(x => x.name)
+    const actualTables = (
+      sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all() as {
+        name: string
+      }[]
+    ).map((x) => x.name)
 
     for (const table of expected.keys()) {
       if (!actualTables.includes(table)) fail("schema-table", "table missing after migrations: " + table)
     }
     for (const table of actualTables) {
-      if (!expected.has(table)) fail("schema-table", "migration-created table missing from current Drizzle schema: " + table)
+      if (!expected.has(table))
+        fail("schema-table", "migration-created table missing from current Drizzle schema: " + table)
     }
 
     for (const [table, cfg] of expected) {
-      const actualColumns = new Set((sqlite.prepare('PRAGMA table_info("' + table + '")').all() as { name: string }[]).map(x => x.name))
+      const actualColumns = new Set(
+        (sqlite.prepare('PRAGMA table_info("' + table + '")').all() as { name: string }[]).map((x) => x.name),
+      )
       for (const col of cfg.columns) {
-        if (!actualColumns.has(col.name)) fail("schema-column", "column missing after migrations: " + table + "." + col.name)
+        if (!actualColumns.has(col.name))
+          fail("schema-column", "column missing after migrations: " + table + "." + col.name)
       }
-      const actualIndexes = new Set((sqlite.prepare('PRAGMA index_list("' + table + '")').all() as { name: string }[]).map(x => x.name))
-      for (const idx of ((cfg as any).indexes || [])) {
+      const actualIndexes = new Set(
+        (sqlite.prepare('PRAGMA index_list("' + table + '")').all() as { name: string }[]).map((x) => x.name),
+      )
+      for (const idx of (cfg as any).indexes || []) {
         const name = idx?.config?.name
-        if (typeof name === "string" && !actualIndexes.has(name)) fail("schema-index", "index missing after migrations: " + name)
+        if (typeof name === "string" && !actualIndexes.has(name))
+          fail("schema-index", "index missing after migrations: " + name)
       }
     }
 
-    const fkRows = sqlite.prepare(
-      "SELECT m.name AS table_name, fk.table AS target_table FROM sqlite_master m JOIN pragma_foreign_key_list(m.name) fk WHERE m.type='table' AND m.name NOT LIKE 'sqlite_%'"
-    ).all() as { table_name: string; target_table: string }[]
+    const fkRows = sqlite
+      .prepare(
+        "SELECT m.name AS table_name, fk.table AS target_table FROM sqlite_master m JOIN pragma_foreign_key_list(m.name) fk WHERE m.type='table' AND m.name NOT LIKE 'sqlite_%'",
+      )
+      .all() as { table_name: string; target_table: string }[]
     for (const row of fkRows) {
-      if (!expected.has(row.target_table)) fail("schema-fk", "foreign key points to unknown table: " + row.table_name + " -> " + row.target_table)
+      if (!expected.has(row.target_table))
+        fail("schema-fk", "foreign key points to unknown table: " + row.table_name + " -> " + row.target_table)
     }
 
     const integrity = sqlite.query("PRAGMA integrity_check").get() as { integrity_check: string }
