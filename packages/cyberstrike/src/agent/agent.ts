@@ -912,10 +912,13 @@ export namespace Agent {
 
   export async function list() {
     const cfg = await Config.get()
+    const agents = await state()
+    const configuredDefault = cfg.default_agent
+      ? agents[cfg.default_agent] ?? Object.values(agents).find((item) => item.name === cfg.default_agent)
+      : undefined
     return pipe(
-      await state(),
-      values(),
-      sortBy([(x) => (cfg.default_agent ? x.name === cfg.default_agent : x.name === "cyberstrike"), "desc"]),
+      values(agents),
+      sortBy([(x) => (configuredDefault ? x.name === configuredDefault.name : x.name === "cyberstrike"), "desc"]),
     )
   }
 
@@ -924,7 +927,7 @@ export namespace Agent {
     const agents = await state()
 
     if (cfg.default_agent) {
-      const agent = agents[cfg.default_agent]
+      const agent = agents[cfg.default_agent] ?? Object.values(agents).find((item) => item.name === cfg.default_agent)
       if (!agent) throw new Error(`default agent "${cfg.default_agent}" not found`)
       if (agent.mode === "subagent") throw new Error(`default agent "${cfg.default_agent}" is a subagent`)
       if (agent.hidden === true) throw new Error(`default agent "${cfg.default_agent}" is hidden`)
