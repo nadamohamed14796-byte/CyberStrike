@@ -41,6 +41,7 @@ export namespace ReportKnowledge {
     lesson?: string
     tags?: string[]
     metadata?: Record<string, unknown>
+    sourceTrust?: number
   }) {
     try {
       const now = Date.now()
@@ -62,6 +63,8 @@ export namespace ReportKnowledge {
           return existing.id
         }
         const id = Identifier.ascending("report_knowledge")
+        const sourceTrust = Math.max(0, Math.min(100, Math.round(input.sourceTrust ?? 50)))
+        const baseConfidence = Math.max(50, sourceTrust)
         db.insert(ReportKnowledgeTable).values({
           id, session_id: input.sessionID ?? null, source_vulnerability_id: input.vulnerabilityID ?? null,
           fingerprint: key, title: input.title, vulnerability_class: input.vulnerabilityClass ?? null,
@@ -70,7 +73,7 @@ export namespace ReportKnowledge {
           target_pattern: input.targetPattern ?? null, endpoint: input.endpoint ?? null, attack_vector: input.attackVector ?? null,
           impact: input.impact ?? null, reproduction: input.reproduction ?? null, poc: input.poc ?? null,
           outcome: input.outcome ?? null, lesson: input.lesson ?? null, tags: input.tags ?? [], metadata: input.metadata ?? {},
-          confidence: input.outcome === "confirmed" || input.outcome === "useful" ? 75 : 50,
+          confidence: input.outcome === "confirmed" || input.outcome === "useful" ? baseConfidence : Math.min(baseConfidence, 60),
           times_seen: 1, times_useful: input.outcome === "confirmed" || input.outcome === "useful" ? 1 : 0,
           times_rejected: 0, time_created: now, time_updated: now,
         }).run()
