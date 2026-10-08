@@ -174,7 +174,7 @@ export namespace Database {
       source_url TEXT NOT NULL,
       title TEXT,
       payload TEXT NOT NULL DEFAULT '{}',
-      status TEXT NOT NULL DEFAULT 'discovered',
+      status TEXT NOT NULL DEFAULT 'queued',
       attempts INTEGER NOT NULL DEFAULT 0,
       last_error TEXT,
       discovered_at INTEGER NOT NULL,
