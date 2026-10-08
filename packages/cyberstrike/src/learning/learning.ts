@@ -11,6 +11,7 @@ import { ReconDispatch } from "../tool/recon-dispatch"
 import { ReferenceLearning } from "./reference"
 import { SignalQueue } from "../tool/signal-queue"
 import { ToolLearning } from "./tool-learning"
+import { ReportKnowledge } from "./report-knowledge"
 import { Log } from "../util/log"
 
 const sessionRoutes = new Map<string, RoutedSkill[]>()
@@ -82,6 +83,20 @@ export namespace Learning {
       }
     } catch (error) {
       log.warn("recon dispatch failed", { error: String(error), signal: signal.signal })
+    }
+
+    const reportID = typeof signal.metadata?.report_knowledge_id === "string" ? signal.metadata.report_knowledge_id : undefined
+    if (reportID && signal.outcome) {
+      const mapped = /duplicate/i.test(signal.outcome) ? "duplicate" : /rejected|disproven|false/i.test(signal.outcome) ? "rejected" : /confirmed|approved|finding|useful|validated/i.test(signal.outcome) ? "confirmed" : "observed"
+      ReportKnowledge.recordOutcome({
+        reportID,
+        sessionID: signal.sessionID,
+        outcome: mapped,
+        signal: signal.signal,
+        evidence: signal.evidence,
+        hook: signal.hook,
+        metadata: signal.metadata,
+      })
     }
 
     if (signal.metadata?.source_tool && signal.outcome) ToolLearning.observe({ tool: String(signal.metadata.source_tool), signal: signal.signal, sessionID: signal.sessionID, target: signal.target, outcome: /finding|useful|confirmed|validated/i.test(signal.outcome) ? "useful" : /rejected|disproven|false|duplicate/i.test(signal.outcome) ? "rejected" : "error", evidence: signal.evidence })
