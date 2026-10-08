@@ -168,6 +168,7 @@ export namespace SkillIndex {
     const results = Array.from(names)
       .map((n) => currentState().entries.get(n)!)
       .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name))
     return results.slice(0, limit)
   }
 
@@ -185,18 +186,20 @@ export namespace SkillIndex {
     const set = currentState().categoryIndex.get(cat.toLowerCase())
     if (!set) return []
     return Array.from(set)
-      .slice(0, limit)
       .map((n) => currentState().entries.get(n)!)
       .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, limit)
   }
 
   export function byTag(tag: string, limit = 50): Entry[] {
     const set = currentState().tagIndex.get(tag.toLowerCase())
     if (!set) return []
     return Array.from(set)
-      .slice(0, limit)
       .map((n) => currentState().entries.get(n)!)
       .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, limit)
   }
 
   export function prerequisitesSatisfied(skillName: string, available: Iterable<string>): boolean {
