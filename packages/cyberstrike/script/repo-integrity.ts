@@ -268,6 +268,11 @@ async function checkDatabase() {
         if (!actualColumns.has(col.name))
           fail("schema-column", "column missing after migrations: " + table + "." + col.name)
       }
+      const expectedColumns = new Set(cfg.columns.map((col: any) => col.name))
+      for (const col of actualColumns) {
+        if (!expectedColumns.has(col))
+          fail("schema-column", "migration-created column is absent from current Drizzle schema: " + table + "." + col)
+      }
       const actualIndexes = new Set(
         (sqlite.prepare('PRAGMA index_list("' + table + '")').all() as { name: string }[]).map((x) => x.name),
       )
