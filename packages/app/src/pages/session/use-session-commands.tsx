@@ -145,7 +145,7 @@ export const useSessionCommands = (input: SessionCommandContext) => {
             description:
               `${learned} new lessons from ${sources} sources (${fetched} pages fetched), ${recommendationCount} hunt recommendations activated` +
               (failed ? `; ${failed} fetches failed` : ""),
-            variant: failed ? "warning" : "success",
+            variant: failed ? "error" : "success",
           })
         } catch (error) {
           showToast({
