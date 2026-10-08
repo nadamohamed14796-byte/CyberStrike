@@ -81,6 +81,49 @@ async function checkPackages() {
   }
 }
 
+async function checkRelativeImports() {
+  const sourceFiles = await glob(root, "**/*.{ts,tsx,js,jsx,mjs,cjs}")
+  const importRe = /(?:from\s*[('\"`]|import\s*\(\s*[('\"`]|require\s*\(\s*[('\"`])([^'\"`]+)['\"`]/g
+
+  function candidatesFor(spec: string, file: string) {
+    const base = spec.startsWith("@/") ? path.join(pkgRoot, "src", spec.slice(2)) : path.resolve(path.dirname(file), spec)
+    const out = [base]
+    if (!path.extname(base)) {
+      for (const ext of [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json"]) out.push(base + ext)
+      for (const ext of [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]) out.push(path.join(base, "index" + ext))
+    }
+    return out
+  }
+
+  for (const file of sourceFiles) {
+    if (file.includes("/node_modules/") || file.includes("/.git/")) continue
+    const source = await Bun.file(file).text()
+    for (const match of source.matchAll(importRe)) {
+      const spec = match[1]
+      if (!(spec.startsWith(".") || spec.startsWith("@/"))) continue
+      if (/\.(css|scss|sass|less|svg|png|jpg|jpeg|gif|webp|ico|woff2?|ttf)$/i.test(spec)) continue
+      if (!(await Promise.any(candidatesFor(spec, file).map(exists)).catch(() => false)))
+        fail("import-resolution", "unresolved import: " + spec, path.relative(root, file))
+    }
+  }
+}
+
+async function checkLocalWorkflowActions() {
+  const workflows = await glob(root, ".github/workflows/*.{yml,yaml}")
+  for (const file of workflows) {
+    const source = await Bun.file(file).text()
+    for (const match of source.matchAll(/uses:\s*\.\/\.github\/actions\/([^@\s]+)/g)) {
+      const dir = path.join(root, ".github", "actions", match[1])
+      if (!(await exists(dir))) {
+        fail("workflow-action", "missing local action directory: " + match[1], path.relative(root, file))
+        continue
+      }
+      if (!(await exists(path.join(dir, "action.yml"))) && !(await exists(path.join(dir, "action.yaml"))))
+        fail("workflow-action", "local action has no action.yml/action.yaml: " + match[1], path.relative(root, file))
+    }
+  }
+}
+
 async function checkTsconfigs() {
   const files = await glob(root, "**/tsconfig*.json")
   for (const file of files) {
@@ -256,6 +299,8 @@ async function checkDatabase() {
 
 async function main() {
   await checkPackages()
+  await checkRelativeImports()
+  await checkLocalWorkflowActions()
   await checkTsconfigs()
   await checkSchemaExports()
   await checkScripts()
