@@ -1,9 +1,11 @@
+import type { PlannedReconTool } from "./recon-toolchain-plan"
+
 type ReconOrchestratorMetadata = {
   status: "empty" | "planned"
   queue_id?: string
   signal?: string
   target?: string
-  tools: string[]
+  tools: PlannedReconTool[]
 }
 
 import z from "zod"
@@ -69,7 +71,7 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
         queue_id: planned.queue.id,
         signal: planned.queue.signal,
         target: planned.queue.target,
-        tools: planned.tools.map((tool) => tool.id),
+        tools: planned.tools,
       } as ReconOrchestratorMetadata,
     }
   },
