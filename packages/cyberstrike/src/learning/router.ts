@@ -57,7 +57,10 @@ export namespace LearningRouter {
     const candidates = new Map<string, { score: number; reasons: string[] }>()
 
     if (signal.skill_name) {
-      add(candidates, signal.skill_name, 100, "explicit skill signal")
+      const explicit = SkillIndex.get(signal.skill_name)
+      if (explicit) {
+        add(candidates, explicit.name, 100, "explicit skill signal")
+      }
     }
 
     if (signal.cwe_id) {
