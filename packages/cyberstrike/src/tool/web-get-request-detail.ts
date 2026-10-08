@@ -98,7 +98,9 @@ export const WebGetRequestDetailTool = Tool.define("web_get_request_detail", {
           url: item.url,
           request_id: item.request_id ?? null,
           credential_id:
-            typeof item.metadata?.credential_id === "string" ? item.metadata.credential_id : request.credential_id ?? null,
+            typeof item.metadata?.credential_id === "string"
+              ? item.metadata.credential_id
+              : (request.credential_id ?? null),
           account_label:
             typeof item.metadata?.credential_id === "string"
               ? (credentials.get(item.metadata.credential_id) ?? null)
