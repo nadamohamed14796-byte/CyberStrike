@@ -28,6 +28,19 @@ import { dispatchScopeViolation, dispatchOffLaneMessage } from "./vuln-scope"
 // web_get_request_detail for the rare response that still exceeds this.
 const MAX_PREPEND_BYTES = 48 * 1024
 
+/** @internal Validate that a task resume token belongs to the current parent and specialist. */
+export function isResumableTaskSession(input: {
+  session: Session.Info
+  parentSessionID: string
+  requestedAgent: string
+  configuredAgent: string
+  owner?: string
+}): boolean {
+  if (input.session.parentID !== input.parentSessionID) return false
+  if (!input.owner) return true
+  return input.owner === input.requestedAgent || input.owner === input.configuredAgent
+}
+
 const parameters = z.object({
   description: z.string().describe("A short (3-5 words) description of the task"),
   prompt: z.string().describe("The task for the agent to perform"),
@@ -111,19 +124,21 @@ export const TaskTool = Tool.define("task", async (ctx) => {
             // A task id is scoped to the child created by this parent. Never
             // treat it as a global session selector that can resume a sibling
             // or an unrelated session.
-            if (found.parentID !== ctx.sessionID) {
-              throw new Error(
-                `Cannot resume task ${params.task_id}: it is not a child of the current parent session.`,
-              )
-            }
-
-            // Also prevent resuming a sibling that belongs to another
-            // specialist. Child user messages carry the agent identity.
             const history = await Session.messages({ sessionID: found.id, limit: 50 }).catch(() => [])
             const owner = history.find((item) => item.info.role === "user")?.info.agent
-            if (owner && owner !== params.subagent_type && owner !== agent.name) {
+            if (
+              !isResumableTaskSession({
+                session: found,
+                parentSessionID: ctx.sessionID,
+                requestedAgent: params.subagent_type,
+                configuredAgent: agent.name,
+                owner,
+              })
+            ) {
               throw new Error(
-                `Cannot resume task ${params.task_id}: it belongs to subagent "${owner}", not "${params.subagent_type}".`,
+                owner
+                  ? `Cannot resume task ${params.task_id}: it does not belong to this parent/specialist.`
+                  : `Cannot resume task ${params.task_id}: it is not a child of the current parent session.`,
               )
             }
             return found
