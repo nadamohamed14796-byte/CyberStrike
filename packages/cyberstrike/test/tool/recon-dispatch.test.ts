@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test"
+import crypto from "node:crypto"
 import path from "path"
 import { Instance } from "../../src/project/instance"
 import { Session } from "../../src/session"
