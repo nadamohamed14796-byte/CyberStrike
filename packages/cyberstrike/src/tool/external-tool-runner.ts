@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process"
 import z from "zod"
 import { Tool } from "./tool"
+import { Agent } from "../agent/agent"
 import { EXTERNAL_TOOLS, externalTool } from "./external-tool-registry"
 import { ScopeGuard } from "./scope-check"
 import { Truncate } from "./truncation"
@@ -127,7 +128,7 @@ export const ExternalToolRunnerTool = Tool.define("external_tool_runner", {
 
     const status = aborted ? "cancelled" : timedOut ? "timed_out" : exitCode === 0 ? "completed" : "failed"
     const combined = [stdout, stderr].filter(Boolean).join("\n")
-    const truncated = await Truncate.output(combined, {}, ctx.agent)
+    const truncated = await Truncate.output(combined, {}, await Agent.get(ctx.agent))
 
     return {
       title: `${spec.id}: ${status}`,
