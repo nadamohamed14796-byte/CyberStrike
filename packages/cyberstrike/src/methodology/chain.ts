@@ -198,17 +198,25 @@ export namespace Chain {
     }
 
     // 6. ssti_rce: SSTI → RCE
+    // This is a single-source escalation hypothesis, not a graph self-loop.
     for (const a of entries) {
       if (!hasVulnCheck(a, "ssti")) continue
-      addChain(
-        "ssti_rce",
-        a,
-        a,
-        "RCE",
-        "critical",
-        `Escalate SSTI in "${a.title}" to full RCE via template engine gadgets`,
-        85,
-      )
+      const key = `ssti_rce:${a.id}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      chains.push({
+        id: Identifier.ascending("chain_candidate"),
+        pattern: "ssti_rce",
+        entryIDs: [a.id],
+        entryTitles: [a.title],
+        assets: [a.asset],
+        expectedImpact: "RCE",
+        severity: "critical",
+        testingPlan: `Escalate SSTI in "${a.title}" to full RCE via template engine gadgets`,
+        status: "detected",
+        confidence: 85,
+        detectedAt: Date.now(),
+      })
     }
 
     // 7. race_condition_business: Race + payment/transfer
@@ -258,7 +266,7 @@ export namespace Chain {
   export function save(sessionID: string, chains: Candidate[]): void {
     // Load existing to preserve status
     const existing = load(sessionID)
-    const existingMap = new Map(existing.map((c) => [`${c.pattern}:${c.entryIDs.sort().join("+")}`, c]))
+    const existingMap = new Map(existing.map((c) => [`${c.pattern}:${[...c.entryIDs].sort().join("+")}`, c]))
 
     Database.use((db) => {
       // Clear old chains for this session
@@ -266,7 +274,7 @@ export namespace Chain {
 
       const now = Date.now()
       for (const chain of chains) {
-        const key = `${chain.pattern}:${chain.entryIDs.sort().join("+")}`
+        const key = `${chain.pattern}:${[...chain.entryIDs].sort().join("+")}`
         const prev = existingMap.get(key)
 
         db.insert(ChainCandidateTable)
@@ -326,7 +334,7 @@ export namespace Chain {
     for (const c of active.slice(0, 10)) {
       const confLabel = c.confidence >= 80 ? "HIGH" : c.confidence >= 60 ? "MED" : "LOW"
       lines.push(
-        `[${confLabel}-${c.confidence}%] ${c.pattern.toUpperCase()}: "${c.entryTitles[0]}" + "${c.entryTitles[1]}" -> ${c.expectedImpact}`,
+        `[${confLabel}-${c.confidence}%] ${c.pattern.toUpperCase()}: "${c.entryTitles[0]}"${c.entryTitles.length > 1 ? ` + "${c.entryTitles[1]}"` : ""} -> ${c.expectedImpact}`,
       )
       lines.push(`  Test: ${c.testingPlan}`)
       lines.push(`  Entries: ${c.entryIDs.join(", ")} | Assets: ${c.assets.join(", ")}`)
