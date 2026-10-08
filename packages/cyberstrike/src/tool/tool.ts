@@ -5,7 +5,6 @@ import type { PermissionNext } from "../permission/next"
 import { Truncate } from "./truncation"
 import { ToolRunRecord } from "./run-record"
 import { ToolArtifact } from "./artifact"
-import { Learning } from "../learning/learning"
 import { TargetMemory } from "../session/target-memory"
 import { ingestParameterDiscovery } from "../methodology/parameter-ingest"
 import { Log } from "../util/log"
@@ -195,6 +194,7 @@ export namespace Tool {
                   ...(typeof result.metadata.session_workspace === "string" ? { session_workspace: result.metadata.session_workspace } : {}),
                 },
               })
+              const { Learning } = await import("../learning/learning")
               await Learning.emit({
                 hook: "during_testing",
                 signal: `tool:${id}:${aborted ? "cancelled" : timedOut ? "timed_out" : "completed"}`,
