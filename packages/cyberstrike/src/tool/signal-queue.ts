@@ -35,42 +35,55 @@ export namespace SignalQueue {
     const normalizedInput = { ...input, signal: normalized.signal }
     const key = dedupKey(normalizedInput)
     const sessionID = input.sessionID
-    const existing = sessionID
-      ? Database.use((db) =>
-          db
+    return Database.transaction((db) => {
+      const existing = sessionID
+        ? db
             .select()
             .from(SignalQueueTable)
             .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.dedup_key, key)))
             .limit(1)
-            .get(),
-        )
-      : undefined
-    if (existing) return existing.id
+            .get()
+        : undefined
+      if (existing) return existing.id
 
-    const id = Identifier.ascending("signal_queue")
-    const now = Date.now()
-    Database.use((db) =>
-      db
-        .insert(SignalQueueTable)
-        .values({
-          id,
-          session_id: input.sessionID ?? null,
-          parent_id: input.parentID,
-          signal: normalized.signal,
-          target: input.target,
-          depth: Math.max(0, input.depth ?? 0),
-          attempts: 0,
-          max_attempts: Math.max(1, Math.min(20, input.maxAttempts ?? 1)),
-          priority: Math.min(priority(normalized.signal), normalized.priority),
-          status: "pending",
-          dedup_key: key,
-          metadata: input.metadata,
-          time_created: now,
-          time_updated: now,
-        })
-        .run(),
-    )
-    return id
+      const id = Identifier.ascending("signal_queue")
+      const now = Date.now()
+      try {
+        db
+          .insert(SignalQueueTable)
+          .values({
+            id,
+            session_id: input.sessionID ?? null,
+            parent_id: input.parentID,
+            signal: normalized.signal,
+            target: input.target,
+            depth: Math.max(0, input.depth ?? 0),
+            attempts: 0,
+            max_attempts: Math.max(1, Math.min(20, input.maxAttempts ?? 1)),
+            priority: Math.min(priority(normalized.signal), normalized.priority),
+            status: "pending",
+            dedup_key: key,
+            metadata: input.metadata,
+            time_created: now,
+            time_updated: now,
+          })
+          .run()
+      } catch (error) {
+        // Another worker may have won the same unique (session, dedup_key)
+        // race. Return its id instead of surfacing a false tool failure.
+        if (sessionID) {
+          const winner = db
+            .select({ id: SignalQueueTable.id })
+            .from(SignalQueueTable)
+            .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.dedup_key, key)))
+            .limit(1)
+            .get()
+          if (winner) return winner.id
+        }
+        throw error
+      }
+      return id
+    })
   }
 
   export function get(id: string) {
