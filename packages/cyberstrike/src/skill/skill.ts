@@ -90,6 +90,8 @@ export namespace Skill {
       if (!md) return
 
       const raw = md.data as Record<string, unknown>
+      if (Object.keys(raw).length === 0) return
+
       const name =
         typeof raw.name === "string" && raw.name.trim().length > 0
           ? raw.name.trim()

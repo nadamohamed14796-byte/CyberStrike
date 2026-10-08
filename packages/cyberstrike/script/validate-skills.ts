@@ -193,7 +193,7 @@ export function validateSkillSet(
     if (rootDir && entry.files) {
       for (const rel of entry.files) {
         const safe = safeRelative(rel)
-        const candidate = safe === undefined ? undefined : path.resolve(rootDir, safe)
+        const candidate: string | undefined = safe === undefined ? undefined : path.resolve(rootDir, safe)
         if (
           !candidate ||
           (candidate !== rootDir && !candidate.startsWith(rootDir + path.sep)) ||
