@@ -111,6 +111,19 @@ function sourceRelevance(url: string, title: string, text: string, source: Resea
   return { accepted: accepted && excluded === 0, score: included * 12 + pathBoost - excluded * 20 }
 }
 
+function isIndexLikeResearchUrl(url: string) {
+  try {
+    const parsed = new URL(url)
+    const path = parsed.pathname.toLowerCase().replace(/\\/+$/, "") || "/"
+    if (/[?&](page|p|offset|start|pageindex)=\\d+/i.test(parsed.search)) return true
+    if (/\\/(category|categories|topic|topics|tag|tags|archives?|search|help|docs|documentation)(\\/|$)/i.test(path)) return true
+    if (/\\/(blog|research|hacktivity|writeups?|articles?|news|resources)(\\/)?$/.test(path)) return true
+    return false
+  } catch {
+    return true
+  }
+}
+
 function isResearchCandidate(url: string, source: ResearchSource) {
   const parsed = new URL(url)
   const path = parsed.pathname.toLowerCase()
@@ -362,7 +375,7 @@ export async function syncResearchSource(
       }
 
       const relevance = sourceRelevance(current.url, title, text, source)
-      if (!relevance.accepted) {
+      if (!relevance.accepted || isIndexLikeResearchUrl(current.url)) {
         result.skipped++
         continue
       }
