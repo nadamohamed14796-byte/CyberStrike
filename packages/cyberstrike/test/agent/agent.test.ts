@@ -312,9 +312,6 @@ test("default_agent accepts the configured agent name alias", async () => {
   })
 })
 
-
-
-
 test("agent prompt can be set from config", async () => {
   await using tmp = await tmpdir({
     config: {

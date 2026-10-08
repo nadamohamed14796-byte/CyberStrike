@@ -914,7 +914,7 @@ export namespace Agent {
     const cfg = await Config.get()
     const agents = await state()
     const configuredDefault = cfg.default_agent
-      ? agents[cfg.default_agent] ?? Object.values(agents).find((item) => item.name === cfg.default_agent)
+      ? (agents[cfg.default_agent] ?? Object.values(agents).find((item) => item.name === cfg.default_agent))
       : undefined
     return pipe(
       values(agents),

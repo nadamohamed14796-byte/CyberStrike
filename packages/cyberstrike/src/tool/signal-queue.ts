@@ -252,8 +252,7 @@ export namespace SignalQueue {
       let failed = 0
       for (const row of stale) {
         const nextStatus = row.attempts < row.max_attempts ? "pending" : "failed"
-        db
-          .update(SignalQueueTable)
+        db.update(SignalQueueTable)
           .set({ status: nextStatus, time_updated: Date.now() })
           .where(and(eq(SignalQueueTable.id, row.id), eq(SignalQueueTable.status, "running")))
           .run()
