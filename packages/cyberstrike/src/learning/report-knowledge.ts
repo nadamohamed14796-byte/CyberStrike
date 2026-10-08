@@ -11,7 +11,7 @@ export namespace ReportKnowledge {
   }
 
   function fingerprint(input: { title: string; vulnerabilityClass?: string; cweID?: string; endpoint?: string; sourceURL?: string }) {
-    return [input.sourceURL, input.vulnerabilityClass, input.cweID, input.endpoint, input.title].map(normalize).filter(Boolean).join("|")
+    if (input.sourceURL) return "url:" + normalize(input.sourceURL)\n    return [input.vulnerabilityClass, input.cweID, input.endpoint, input.title].map(normalize).filter(Boolean).join("|")
   }
 
   function confidence(row: typeof ReportKnowledgeTable.$inferSelect, outcome?: Outcome) {
