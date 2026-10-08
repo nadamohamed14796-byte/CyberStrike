@@ -47,6 +47,30 @@ describe("ReportKnowledge", () => {
     expect(Learning.researchFor(sessionID, 6).some((row) => row.id === id)).toBe(true)
   })
 
+  test("keeps research explicitly activated by an update across prompt hydration", () => {
+    const id = ReportKnowledge.ingestExternal({
+      title: "Explicit update research context retention",
+      vulnerabilityClass: "idor",
+      severity: "high",
+      sourceURL: "https://example.com/research/update-context-retention",
+      lesson: "Compare object ownership across two independent accounts.",
+      sourceTrust: 95,
+    })
+    expect(id).toBeTruthy()
+
+    const sessionID = "session-research-update-retention-test"
+    const activated = Learning.activateResearch(sessionID, {
+      query: "update context retention",
+      limit: 6,
+    })
+    expect(activated.some((row) => row.id === id)).toBe(true)
+
+    const rehydrated = Learning.primeResearch(sessionID, 6, {
+      query: "query-with-no-matching-research-token-9f2c",
+    })
+    expect(rehydrated.some((row) => row.id === id)).toBe(true)
+  })
+
   test("records rejected outcomes without deleting knowledge", () => {
     const id = ReportKnowledge.ingest({
       title: "Weak CORS reflection",
