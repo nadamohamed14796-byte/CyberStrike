@@ -1,5 +1,10 @@
-import { describe, expect, test } from "bun:test"
+import { beforeAll, describe, expect, test } from "bun:test"
 import { LearningRouter, type LearningSignal } from "../../src/learning/router"
+import { SkillIndex } from "../../src/skill/index-engine"
+
+beforeAll(async () => {
+  await SkillIndex.ensureBuilt()
+})
 
 describe("LearningRouter.route", () => {
   test("explicit skill signals are always routed first", () => {
