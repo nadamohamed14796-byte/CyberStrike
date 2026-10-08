@@ -107,7 +107,7 @@ export const GenerateReportTool = Tool.define("generate_report", {
       return {
         title: `Report JSON: ${vulns.length} findings`,
         output: JSON.stringify(payload, null, 2),
-        metadata: { format: "json", findingCount: vulns.length, coveragePercent: coverage.coveragePercent },
+        metadata: { format: params.format, findingCount: vulns.length, criticalCount: breakdown.critical, highCount: breakdown.high, coveragePercent: coverage.coveragePercent, methodologyPercent: state.completionPercent, activeChains: chains.filter((c) => c.status !== "disproven").length },
       }
     }
 
