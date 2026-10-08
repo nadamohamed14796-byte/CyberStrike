@@ -13,30 +13,30 @@ function hostAllowed(url: URL, source: ResearchSource) {
 
 function cleanHtml(html: string) {
   return html
-    .replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
-    .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
-    .replace(/<svg[\\s\\S]*?<\\/svg>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
-    .replace(/\\s+/g, " ")
+    .replace(/\s+/g, " ")
     .trim()
 }
 
 function titleOf(html: string, fallback: string) {
-  return html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i)?.[1]?.replace(/<[^>]+>/g, " ").replace(/\\s+/g, " ").trim() || fallback
+  return html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() || fallback
 }
 
 function linksOf(html: string, base: URL, source: ResearchSource) {
   const links: string[] = []
-  for (const match of html.matchAll(/href\\s*=\\s*["']([^"']+)["']/gi)) {
+  for (const match of html.matchAll(/href\s*=\s*["']([^"']+)["']/gi)) {
     try {
       const url = new URL(match[1], base)
       url.hash = ""
       if (url.protocol !== "https:" || !hostAllowed(url, source)) continue
-      if (/\\.(png|jpe?g|gif|svg|webp|css|js|zip|pdf|woff2?)$/i.test(url.pathname)) continue
+      if (/\.(png|jpe?g|gif|svg|webp|css|js|zip|pdf|woff2?)$/i.test(url.pathname)) continue
       const value = url.toString()
       if (!links.includes(value)) links.push(value)
       if (links.length >= MAX_LINKS_PER_PAGE) break
@@ -48,13 +48,13 @@ function linksOf(html: string, base: URL, source: ResearchSource) {
 function classify(text: string) {
   const lower = text.toLowerCase()
   const classes: Array<[string, RegExp]> = [
-    ["idor", /\\bidor\\b|insecure direct object|broken object level authorization/],
-    ["xss", /cross[- ]site scripting|\\bxss\\b/],
-    ["ssrf", /server[- ]side request forgery|\\bssrf\\b/],
-    ["csrf", /cross[- ]site request forgery|\\bcsrf\\b/],
-    ["sqli", /sql injection|\\bsqli\\b/],
-    ["xxe", /xml external entity|\\bxxe\\b/],
-    ["ssti", /server[- ]side template injection|\\bssti\\b/],
+    ["idor", /\bidor\b|insecure direct object|broken object level authorization/],
+    ["xss", /cross[- ]site scripting|\bxss\b/],
+    ["ssrf", /server[- ]side request forgery|\bssrf\b/],
+    ["csrf", /cross[- ]site request forgery|\bcsrf\b/],
+    ["sqli", /sql injection|\bsqli\b/],
+    ["xxe", /xml external entity|\bxxe\b/],
+    ["ssti", /server[- ]side template injection|\bssti\b/],
     ["race-condition", /race condition|time[- ]of[- ]check/],
     ["open-redirect", /open redirect/],
     ["auth-bypass", /authentication bypass|auth bypass/],
@@ -66,18 +66,18 @@ function classify(text: string) {
     ["cache-poisoning", /cache poisoning/],
     ["file-upload", /file upload/],
     ["graphql", /graphql/],
-    ["jwt", /\\bjwt\\b|json web token/],
+    ["jwt", /\bjwt\b|json web token/],
   ]
   return classes.find(([, pattern]) => pattern.test(lower))?.[0]
 }
 
 function severityOf(text: string) {
-  const match = text.match(/\\b(critical|high|medium|low|informational)\\b/i)
+  const match = text.match(/\b(critical|high|medium|low|informational)\b/i)
   return match?.[1]?.toLowerCase() ?? "unknown"
 }
 
 function lessonOf(text: string, vulnerabilityClass?: string) {
-  const lines = text.split(/(?<=[.!?])\\s+/).filter((line) => line.length >= 40)
+  const lines = text.split(/(?<=[.!?])\s+/).filter((line) => line.length >= 40)
   const useful = lines.find((line) => /because|caused by|allows|leads to|impact|bypass|authorization|validation/i.test(line))
   return useful?.slice(0, 700) ?? (vulnerabilityClass ? "Research pattern for " + vulnerabilityClass + ": validate prerequisites and impact independently." : undefined)
 }
