@@ -125,9 +125,10 @@ export namespace SignalQueue {
     const completed = new Set(
       Database.use((db) => db.select().from(SignalQueueTable)
         .where(and(eq(SignalQueueTable.session_id, sessionID), eq(SignalQueueTable.status, "completed")))
-        .limit(500).all()).map((x) => phaseFor(x.signal)),
+        .limit(500).all())
+        .map((x) => `${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`),
     )
-    const uncovered = rows.filter((x) => !completed.has(phaseFor(x.signal)))
+    const uncovered = rows.filter((x) => !completed.has(`${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`))
     return (uncovered[0] ?? rows[0])
   }
 
@@ -177,13 +178,18 @@ export namespace SignalQueue {
   }
 
   export function markRunning(id: string): boolean {
-    return Database.use((db) => db.update(SignalQueueTable)
-      .set({ status: "running", attempts: sql`attempts + 1`, time_updated: Date.now() })
-      .where(and(
-        eq(SignalQueueTable.id, id),
-        eq(SignalQueueTable.status, "pending"),
-        sql`attempts < max_attempts`,
-      )).run().changes > 0)
+    return Database.use((db) => {
+      const row = db.update(SignalQueueTable)
+        .set({ status: "running", attempts: sql`attempts + 1`, time_updated: Date.now() })
+        .where(and(
+          eq(SignalQueueTable.id, id),
+          eq(SignalQueueTable.status, "pending"),
+          sql`attempts < max_attempts`,
+        ))
+        .returning({ id: SignalQueueTable.id })
+        .get()
+      return Boolean(row)
+    })
   }
 
   export function complete(id: string) {
