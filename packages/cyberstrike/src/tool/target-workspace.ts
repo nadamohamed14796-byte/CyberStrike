@@ -122,12 +122,16 @@ export namespace TargetWorkspace {
     }
   }
 
+  function cleanLessonText(value: string | undefined, maxLength: number) {
+    return value?.replace(/\s+/g, " ").trim().slice(0, maxLength)
+  }
+
   function normalizeLesson(input: Omit<Lesson, "id" | "createdAt">) {
     return {
       ...input,
-      summary: input.summary.trim().slice(0, 500),
-      details: input.details?.trim().slice(0, 4000),
-      source: input.source?.trim().slice(0, 300),
+      summary: cleanLessonText(input.summary, 500) ?? "",
+      details: cleanLessonText(input.details, 4000),
+      source: cleanLessonText(input.source, 300),
       tags: input.tags
         ?.map((tag) => tag.trim().toLowerCase())
         .filter(Boolean)
