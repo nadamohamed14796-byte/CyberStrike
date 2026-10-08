@@ -130,7 +130,7 @@ export const SkillTool = Tool.define("skill", async (ctx) => {
 
       if (params.action === "unload") {
         if (!params.name) throw new Error("Skill name required for unload action")
-        const removed = SkillContext.unload(params.name)
+        const removed = SkillContext.unload(params.name, ctx.sessionID)
         return {
           title: removed ? `Unloaded: ${params.name}` : `Not loaded: ${params.name}`,
           output: removed
