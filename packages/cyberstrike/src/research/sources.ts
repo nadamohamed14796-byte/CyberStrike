@@ -30,6 +30,7 @@ export const RESEARCH_SOURCES: ResearchSource[] = [
   { id: "hacktricks", name: "HackTricks", kind: "reference", seedUrls: ["https://book.hacktricks.xyz/"], hosts: ["book.hacktricks.xyz", "hacktricks.xyz"], trust: 90 },
   { id: "payloadsallthethings", name: "PayloadsAllTheThings", kind: "reference", seedUrls: ["https://github.com/swisskyrepo/PayloadsAllTheThings"], hosts: ["github.com"], trust: 90 },
   { id: "github", name: "GitHub security writeups", kind: "writeup", seedUrls: ["https://github.com/search?q=bug+bounty+writeup&type=repositories"], hosts: ["github.com"], trust: 80 },
+  { id: "src-hunter-skill", name: "MyuriKanao src-hunter-skill", kind: "reference", seedUrls: ["https://github.com/MyuriKanao/src-hunter-skill", "https://github.com/MyuriKanao/src-hunter-skill/blob/main/SKILL.md", "https://github.com/MyuriKanao/src-hunter-skill/blob/main/README.en.md"], hosts: ["github.com"], trust: 90 },
 ]
 
 export function getResearchSource(id: string) {
