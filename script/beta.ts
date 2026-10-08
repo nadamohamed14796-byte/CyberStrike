@@ -15,9 +15,11 @@ interface CommandResult {
 
 async function run(command: string, args: string[] = []): Promise<CommandResult> {
   const process = Bun.spawn([command, ...args], { stdout: "pipe", stderr: "pipe" })
-  const stdout = await new Response(process.stdout).text()
-  const stderr = await new Response(process.stderr).text()
-  const code = await process.exited
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(process.stdout).text(),
+    new Response(process.stderr).text(),
+    process.exited,
+  ])
   return { code, stdout, stderr }
 }
 
