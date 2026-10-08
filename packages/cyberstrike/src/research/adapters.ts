@@ -47,6 +47,7 @@ export function discoverySeeds(source: ResearchSource, maxPages: number) {
     case "infosec-writeups":
     case "hackerone-blog":
     case "bugcrowd-blog":
+    case "yeswehack":
     case "nahamsec":
     case "pentesterland":
     case "assetnote":
