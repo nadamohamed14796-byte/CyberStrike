@@ -422,9 +422,13 @@ export namespace File {
     const project = Instance.project
     const full = path.join(Instance.directory, file)
 
-    // TODO: Filesystem.contains is lexical only - symlinks inside the project can escape.
-    // TODO: On Windows, cross-drive paths bypass this check. Consider realpath canonicalization.
     if (!Instance.containsPath(full)) {
+      throw new Error(`Access denied: path escapes project directory`)
+    }
+    const inDirectory = await Filesystem.containsReal(Instance.directory, full)
+    const inWorktree =
+      Instance.worktree !== "/" && (await Filesystem.containsReal(Instance.worktree, full))
+    if (!inDirectory && !inWorktree) {
       throw new Error(`Access denied: path escapes project directory`)
     }
 
@@ -502,9 +506,13 @@ export namespace File {
     }
     const resolved = dir ? path.join(Instance.directory, dir) : Instance.directory
 
-    // TODO: Filesystem.contains is lexical only - symlinks inside the project can escape.
-    // TODO: On Windows, cross-drive paths bypass this check. Consider realpath canonicalization.
     if (!Instance.containsPath(resolved)) {
+      throw new Error(`Access denied: path escapes project directory`)
+    }
+    const inDirectory = await Filesystem.containsReal(Instance.directory, resolved)
+    const inWorktree =
+      Instance.worktree !== "/" && (await Filesystem.containsReal(Instance.worktree, resolved))
+    if (!inDirectory && !inWorktree) {
       throw new Error(`Access denied: path escapes project directory`)
     }
 
