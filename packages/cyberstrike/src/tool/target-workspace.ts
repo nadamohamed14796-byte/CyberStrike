@@ -97,15 +97,42 @@ export namespace TargetWorkspace {
     }
   }
 
+  function lessonKey(lesson: Pick<Lesson, "kind" | "summary" | "tags">) {
+    return [
+      lesson.kind,
+      lesson.summary.trim().toLowerCase().replace(/\s+/g, " "),
+      ...(lesson.tags ?? []).map((tag) => tag.trim().toLowerCase()).sort(),
+    ].join("|")
+  }
+
+  /** Persist a target-scoped lesson once. Repeated observations are merged by key at write time. */
   export async function addLesson(target: string, lesson: Omit<Lesson, "id" | "createdAt">): Promise<Lesson> {
     const paths = await ensure(target, lesson.sessionID)
-    const record: Lesson = {
+    const normalized = {
       ...lesson,
+      summary: lesson.summary.trim().slice(0, 500),
+      details: lesson.details?.trim().slice(0, 4000),
+      source: lesson.source?.trim().slice(0, 300),
+      tags: lesson.tags?.map((tag) => tag.trim().toLowerCase()).filter(Boolean).slice(0, 20),
+    }
+    const existing = await readLessons(target)
+    const key = lessonKey(normalized)
+    const duplicate = existing.find((item) => lessonKey(item) === key)
+    if (duplicate) return duplicate
+
+    const record: Lesson = {
+      ...normalized,
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
     }
     await fs.appendFile(paths.lessonsFile, JSON.stringify(record) + "\n", "utf8")
     return record
+  }
+
+  /** Return the newest bounded lessons for prompt/context injection. */
+  export async function recentLessons(target: string, limit = 12): Promise<Lesson[]> {
+    const lessons = await readLessons(target)
+    return lessons.slice(-Math.max(0, limit))
   }
 
   export async function readLessons(target: string): Promise<Lesson[]> {
