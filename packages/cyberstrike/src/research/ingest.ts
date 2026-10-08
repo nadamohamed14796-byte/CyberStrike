@@ -83,9 +83,7 @@ function linksOf(html: string, base: URL, source: ResearchSource) {
 }
 
 function matchesTerm(text: string, term: string) {
-  const escaped = term.trim().replace(/[.*+?^{}()|[\\]\\]/g, "\\function matchesTerm(text: string, term: string) {
-  return text.toLowerCase().includes(term.toLowerCase())
-}")
+  const escaped = term.trim().replace(/[.*+?^{}()|[\\]\\]/g, "\\$&")
   if (!escaped) return false
   return new RegExp("(^|[^\\p{L}\\p{N}_])" + escaped + "([^\\p{L}\\p{N}_]|$)", "iu").test(text)
 }
