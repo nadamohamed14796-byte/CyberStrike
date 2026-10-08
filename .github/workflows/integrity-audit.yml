@@ -21,3 +21,5 @@ jobs:
         uses: ./.github/actions/setup-bun
       - name: Run repository integrity audit
         run: bun run packages/cyberstrike/script/repo-integrity.ts
+      - name: Run numbered runtime relationship audit
+        run: bun run audit:runtime
