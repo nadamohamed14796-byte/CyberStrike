@@ -643,6 +643,8 @@ export async function learnResearchQueue(input: { limit?: number; workerID?: str
       ResearchQueue.complete(item.sequence, workerID, item.attempts >= 3 ? "rejected" : "retry", message)
       result.failed++
       if (result.errors.length < 5) result.errors.push(item.public_id + " " + item.source_url + " — " + message)
+      // Do not immediately reclaim the same failing item repeatedly in one batch.
+      break
     }
   }
   return result
