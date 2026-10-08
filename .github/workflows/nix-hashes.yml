@@ -6,7 +6,7 @@ permissions:
 on:
   workflow_dispatch:
   push:
-    branches: [dev]
+    branches: [main]
     paths:
       - "bun.lock"
       - "package.json"
@@ -83,15 +83,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          persist-credentials: true
           fetch-depth: 0
           ref: ${{ github.ref_name }}
 
-      - name: Setup git committer
-        uses: ./.github/actions/setup-git-committer
-        with:
-          cyberstrike-app-id: ${{ vars.CYBERSTRIKE_APP_ID }}
-          cyberstrike-app-secret: ${{ secrets.CYBERSTRIKE_APP_SECRET }}
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Pull latest changes
         run: |
