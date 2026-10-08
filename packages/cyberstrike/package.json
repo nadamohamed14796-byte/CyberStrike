@@ -34,7 +34,8 @@
     "build": "bun run script/build.ts",
     "dev": "bun run --conditions=browser ./src/index.ts",
     "clean": "rm -rf node_modules dist",
-    "db": "bun drizzle-kit"
+    "db": "bun drizzle-kit",
+    "skills:validate": "bun run script/validate-skills.ts"
   },
   "bin": {
     "cyberstrike": "./bin/cyberstrike"
