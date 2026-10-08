@@ -112,6 +112,26 @@ export namespace ToolArtifact {
     )
   }
 
+
+  /** Return artifacts for an exact execution key without a recency limit. */
+  export function byExecutionKey(sessionID: string, tool: string, target: string | null | undefined, signal: string) {
+    return Database.use((db) =>
+      db
+        .select()
+        .from(ToolArtifactTable)
+        .where(
+          and(
+            eq(ToolArtifactTable.session_id, sessionID),
+            eq(ToolArtifactTable.tool, tool),
+            target == null ? eq(ToolArtifactTable.target, null as never) : eq(ToolArtifactTable.target, target),
+            eq(ToolArtifactTable.signal, signal),
+          ),
+        )
+        .orderBy(desc(ToolArtifactTable.time_created))
+        .all(),
+    )
+  }
+
   export function byCall(sessionID: string, callID: string) {
     return Database.use((db) =>
       db
