@@ -26,6 +26,12 @@ describe("skill registry validator", () => {
     expect(report.unindexedSkillNames).toEqual(["specialist"])
   })
 
+  test("marks nameless skill records as invalid", () => {
+    const report = validateSkillSet([skill("", { description: "" })], [])
+    expect(report.invalidSkills).toEqual(["/tmp//SKILL.md"])
+    expect(report.missingDescriptions).toEqual(["/tmp//SKILL.md"])
+  })
+
   test("distinguishes known skill prerequisites from external identifiers", () => {
     const report = validateSkillSet([skill("router", { prerequisites: ["specialist", "T1634"] })], [])
     expect(report.unknownPrerequisites).toEqual([{ skill: "router", prerequisite: "specialist" }])
