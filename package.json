@@ -9,6 +9,7 @@
     "dev": "bun run --cwd packages/cyberstrike --conditions=browser src/index.ts",
     "dev:web": "bun --cwd packages/app dev",
     "typecheck": "bun turbo typecheck",
+    "audit:runtime": "bun script/runtime-audit.ts",
     "prepare": "husky",
     "test": "echo 'do not run tests from root' && exit 1"
   },
