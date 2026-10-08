@@ -47,10 +47,23 @@ const parameters = z.object({
 export const TaskTool = Tool.define("task", async (ctx) => {
   const agents = await Agent.list().then((x) => x.filter((a) => a.mode !== "primary"))
 
+  // Keep permission matching on the registry selector, not a user-facing alias.
+  // An overridden display name must never bypass an explicit deny rule.
+  const agentSelectors = new Map<string, string>()
+  await Promise.all(
+    agents.map(async (agent) => {
+      const key = await Agent.key(agent.name)
+      if (key) agentSelectors.set(agent.name, key)
+    }),
+  )
+
   // Filter agents by permissions if agent provided
   const caller = ctx?.agent
   const accessibleAgents = caller
-    ? agents.filter((a) => PermissionNext.evaluate("task", a.name, caller.permission).action !== "deny")
+    ? agents.filter((a) => {
+        const selector = agentSelectors.get(a.name) ?? a.name
+        return PermissionNext.evaluate("task", selector, caller.permission).action !== "deny"
+      })
     : agents
 
   const description = DESCRIPTION.replace(
@@ -84,9 +97,12 @@ export const TaskTool = Tool.define("task", async (ctx) => {
           }
         }
 
+        const selector = await Agent.key(params.subagent_type)
         await ctx.ask({
           permission: "task",
-          patterns: [params.subagent_type],
+          // Permission rules are keyed by the canonical registry id. The
+          // display name remains visible in metadata and task output.
+          patterns: [selector ?? params.subagent_type],
           always: ["*"],
           metadata: {
             description: params.description,
@@ -101,8 +117,11 @@ export const TaskTool = Tool.define("task", async (ctx) => {
       // A child only needs the task tool when at least one available subagent
       // target is permitted by this agent. Checking for the presence of any
       // task rule is incorrect because a wildcard deny is still a task rule.
-      const hasTaskPermission = agents.some(
-        (candidate) => PermissionNext.evaluate("task", candidate.name, agent.permission).action !== "deny",
+      const candidateSelectors = await Promise.all(
+        agents.map(async (candidate) => (await Agent.key(candidate.name)) ?? candidate.name),
+      )
+      const hasTaskPermission = candidateSelectors.some(
+        (candidate) => PermissionNext.evaluate("task", candidate, agent.permission).action !== "deny",
       )
 
       const session = await iife(async () => {
