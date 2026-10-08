@@ -82,6 +82,30 @@ export namespace ReportKnowledge {
     }
   }
 
+  export function ingestExternal(input: {
+    title: string
+    severity: string
+    vulnerabilityClass?: string
+    cweID?: string
+    sourceURL: string
+    program?: string
+    targetPattern?: string
+    endpoint?: string
+    attackVector?: string
+    impact?: string
+    reproduction?: string
+    poc?: string
+    lesson?: string
+    tags?: string[]
+    metadata?: Record<string, unknown>
+  }) {
+    return ingest({
+      ...input,
+      sourceKind: "external_report",
+      outcome: "confirmed",
+    })
+  }
+
   export function recordOutcome(input: {
     reportID: string
     sessionID?: string
