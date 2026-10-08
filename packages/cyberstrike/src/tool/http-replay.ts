@@ -10,6 +10,7 @@
 
 import z from "zod"
 import { Tool } from "./tool"
+import { ScopeGuard } from "./scope-check"
 import { Session } from "../session"
 import { WebRetest } from "../session/web/web-retest"
 import { Request } from "../session/request"
