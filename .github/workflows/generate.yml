@@ -39,6 +39,9 @@ jobs:
       - name: Generate
         run: ./script/generate.ts
 
+      - name: Generate skill registry
+        run: bun run --cwd packages/cyberstrike skills:registry
+
       - name: Commit and push
         run: |
           if [ -z "$(git status --porcelain)" ]; then
