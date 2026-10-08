@@ -160,7 +160,10 @@ export namespace SignalQueue {
         `${(x.target ?? "*").trim().toLowerCase()}::${phaseFor(x.signal)}::${normalizeSignal(x.signal).signal}`,
       ),
     )
-    return uncovered[0] ?? rows[0]
+    // Covered pending rows can exist after legacy/partial state repair.
+    // Do not fall back to one of them: that would re-surface work that is already
+    // complete and can drive an autonomous subagent loop indefinitely.
+    return uncovered[0]
   }
 
   export function planNext(input: {
