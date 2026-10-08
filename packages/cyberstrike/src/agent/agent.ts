@@ -910,6 +910,13 @@ export namespace Agent {
     return state().then((agents) => agents[agent] ?? Object.values(agents).find((item) => item.name === agent))
   }
 
+  export async function key(agent: string): Promise<string | undefined> {
+    return state().then((agents) => {
+      if (agents[agent]) return agent
+      return Object.entries(agents).find(([, item]) => item.name === agent)?.[0]
+    })
+  }
+
   export async function list() {
     const cfg = await Config.get()
     const agents = await state()
