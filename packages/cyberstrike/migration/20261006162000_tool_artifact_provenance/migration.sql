@@ -1,9 +1,7 @@
 CREATE TABLE IF NOT EXISTS `tool_artifact` (
   `id` text PRIMARY KEY NOT NULL,
-  `session_id` text,
+  `session_id` text REFERENCES session(id) ON DELETE CASCADE,
   `call_id` text,
-  `request_id` text,
-  `credential_id` text,
   `parent_id` text,
   `tool` text NOT NULL,
   `target` text,
