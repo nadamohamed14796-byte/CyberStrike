@@ -5,6 +5,7 @@ import { RESEARCH_SOURCES, type ResearchSource } from "./sources"
 
 const MAX_DOCUMENT_BYTES = 1_500_000
 const MAX_LINKS_PER_PAGE = 80
+const MAX_CANDIDATE_SCORE = 100
 
 function hostAllowed(url: URL, source: ResearchSource) {
   return source.hosts.some((host) => url.hostname === host || url.hostname.endsWith("." + host))
@@ -81,6 +82,17 @@ function lessonOf(text: string, vulnerabilityClass?: string) {
   return useful?.slice(0, 700) ?? (vulnerabilityClass ? "Research pattern for " + vulnerabilityClass + ": validate prerequisites and impact independently." : undefined)
 }
 
+function candidateScore(url: string, source: ResearchSource) {
+  const path = new URL(url).pathname.toLowerCase()
+  let score = 0
+  if (/\/reports?\b|\/hacktivity\/|\/writeups?\b|\/research\b|\/blog\/|\/articles?\b|\/labs?\b/.test(path)) score += 60
+  if (/\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{4}\/\d{1,2}/.test(path)) score += 20
+  if (source.kind === "disclosure" && /reports?|hacktivity|disclosure/.test(path)) score += 20
+  if (source.kind === "academy" && /lab|academy|web-security/.test(path)) score += 20
+  if (source.kind === "reference" && /payload|cheatsheet|technique|book/.test(path)) score += 20
+  return Math.min(MAX_CANDIDATE_SCORE, score)
+}
+
 async function fetchText(url: string, source: ResearchSource) {
   const parsed = new URL(url)
   if (!hostAllowed(parsed, source)) throw new Error("blocked research host: " + parsed.hostname)
@@ -115,8 +127,9 @@ export async function syncResearchSource(source: ResearchSource, limit = 10): Pr
     }
   }
 
+  const orderedCandidates = Array.from(candidates).sort((a, b) => candidateScore(b, source) - candidateScore(a, source))
   let processed = 0
-  for (const url of candidates) {
+  for (const url of orderedCandidates) {
     if (processed >= limit) break
     processed++
     try {
@@ -135,7 +148,7 @@ export async function syncResearchSource(source: ResearchSource, limit = 10): Pr
         continue
       }
 
-      const fingerprint = createHash("sha256").update(source.id + "|" + url + "|" + title).digest("hex").slice(0, 40)
+      const contentFingerprint = createHash("sha256").update(text).digest("hex").slice(0, 40)
       const lesson = lessonOf(text, vulnerabilityClass)
       const id = ReportKnowledge.ingestExternal({
         title,
@@ -149,7 +162,8 @@ export async function syncResearchSource(source: ResearchSource, limit = 10): Pr
           research_source: source.id,
           research_source_name: source.name,
           source_trust: source.trust,
-          content_fingerprint: fingerprint,
+          content_fingerprint: contentFingerprint,
+          candidate_score: candidateScore(url, source),
           excerpt: text.slice(0, 1200),
         },
       })
