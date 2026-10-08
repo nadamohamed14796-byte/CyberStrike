@@ -89,7 +89,7 @@ export const ResearchCommand = cmd({
             .option("pages", { type: "number", default: 100, describe: "maximum pages visited per source" })
             .option("depth", { type: "number", default: 2, describe: "maximum discovery depth" })
             .option("watch", { type: "boolean", default: false, describe: "repeat discovery until interrupted" })
-            .option("interval", { type: "number", default: 60, describe: "seconds between watch cycles" }),
+            .option("interval", { type: "number", default: 300, describe: "seconds between watch cycles" }),
         async handler(args) {
           prompts.intro("CyberStrike Research Discovery Worker")
           do {
@@ -119,7 +119,7 @@ export const ResearchCommand = cmd({
             prompts.log.info("worker=" + result.worker + " claimed=" + result.claimed + " learned=" + result.learned + " skipped=" + result.skipped + " failed=" + result.failed)
             for (const error of result.errors) prompts.log.warn(error)
             if (!args.watch) break
-            if (result.claimed === 0) await Bun.sleep(Math.max(2, args.interval) * 1000)
+            if (result.claimed === 0 || result.failed > 0) await Bun.sleep(Math.max(2, args.interval) * 1000)
           } while (true)
         },
       })
