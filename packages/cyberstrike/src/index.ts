@@ -161,7 +161,7 @@ const cli = yargs(hideBin(process.argv))
   .strict()
 
 try {
-  await cli.parse()
+  await cli.parseAsync()
 } catch (e) {
   let data: Record<string, any> = {}
   if (e instanceof NamedError) {
