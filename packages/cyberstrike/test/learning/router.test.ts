@@ -14,6 +14,16 @@ describe("LearningRouter.route", () => {
     expect(result[0]?.score).toBeGreaterThanOrEqual(90)
   })
 
+  test("does not route stale skill names that are absent from the index", () => {
+    const result = LearningRouter.route({
+      hook: "during_testing",
+      signal: "skill_loaded",
+      skill_name: "__missing_skill_for_regression__",
+    })
+
+    expect(result.some((entry) => entry.name === "__missing_skill_for_regression__")).toBe(false)
+  })
+
   test("routing is deterministic for the same signal", () => {
     const signal: LearningSignal = {
       hook: "after_finding",
