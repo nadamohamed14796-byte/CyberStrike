@@ -447,20 +447,26 @@ export async function syncResearchSource(
   return result
 }
 
+const RESEARCH_SOURCE_CONCURRENCY = 4
+
 export async function syncResearch(input: { sourceID?: string } & ResearchSyncOptions = {}) {
   const sources = input.sourceID ? RESEARCH_SOURCES.filter((source) => source.id === input.sourceID) : RESEARCH_SOURCES
   if (sources.length === 0) throw new Error("unknown research source: " + input.sourceID)
 
-  const results = []
-  for (const source of sources) {
-    results.push(
-      await syncResearchSource(source, {
-        limit: input.limit,
-        pages: input.pages,
-        depth: input.depth,
-        all: input.all,
-      }),
+  const results: ResearchIngestResult[] = []
+  for (let i = 0; i < sources.length; i += RESEARCH_SOURCE_CONCURRENCY) {
+    const batch = sources.slice(i, i + RESEARCH_SOURCE_CONCURRENCY)
+    const batchResults = await Promise.all(
+      batch.map((source) =>
+        syncResearchSource(source, {
+          limit: input.limit,
+          pages: input.pages,
+          depth: input.depth,
+          all: input.all,
+        }),
+      ),
     )
+    results.push(...batchResults)
   }
   return results
 }
