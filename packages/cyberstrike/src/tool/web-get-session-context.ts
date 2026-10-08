@@ -121,7 +121,9 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
     }
 
     // Persistent target lessons are advisory, bounded memory from earlier sessions.
-    const target = TargetWorkspace.targetFrom(requestURL(currentReq)) ?? TargetWorkspace.targetFrom(currentReq?.host)
+    const target =
+      TargetWorkspace.targetFrom(currentReq ? requestURL(currentReq) : undefined) ??
+      TargetWorkspace.targetFrom(currentReq?.host)
     if (target) {
       try {
         context.target_lessons = (await TargetWorkspace.recentLessons(target, 8)).map((lesson) => ({
