@@ -155,6 +155,21 @@ function severityOf(text: string) {
   return match?.[1]?.toLowerCase() ?? "unknown"
 }
 
+function firstMatchingSentence(text: string, pattern: RegExp) {
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .map((line) => line.trim())
+    .find((line) => pattern.test(line) && line.length >= 45)
+}
+
+function impactOf(text: string) {
+  return firstMatchingSentence(text, /impact|allows|expos|access|takeover|privilege|execute|delete|modify|read/i)?.slice(0, 1000)
+}
+
+function attackVectorOf(text: string) {
+  return firstMatchingSentence(text, /endpoint|request|parameter|header|cookie|payload|token|url|api|upload/i)?.slice(0, 1000)
+}
+
 function lessonOf(text: string, vulnerabilityClass?: string) {
   const sentences = text
     .split(/(?<=[.!?])\s+/)
@@ -341,6 +356,8 @@ export async function syncResearchSource(
         severity: severityOf(title + " " + text),
         vulnerabilityClass,
         sourceURL: current.url,
+        attackVector: attackVectorOf(text),
+        impact: impactOf(text),
         lesson,
         sourceTrust: source.trust,
         tags: [source.id, source.kind].concat(vulnerabilityClass ? [vulnerabilityClass] : []),
@@ -352,6 +369,13 @@ export async function syncResearchSource(
           candidate_score: current.score,
           crawl_depth: current.depth,
           excerpt: text.slice(0, 1600),
+          content_length: text.length,
+          extracted: {
+            vulnerability_class: vulnerabilityClass ?? null,
+            severity: severityOf(title + " " + text),
+            attack_vector: attackVectorOf(text) ?? null,
+            impact: impactOf(text) ?? null,
+          },
         },
       })
 
