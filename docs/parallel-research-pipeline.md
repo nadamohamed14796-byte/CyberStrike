@@ -1,31 +1,61 @@
-# Parallel Research Pipeline — Implementation Contract
+# Parallel Research Pipeline
 
-This document defines the durable contract for splitting public research ingestion into independent discovery and study workers. It is deliberately not a claim that the workers are already wired into the CLI.
+The research pipeline has two separately invokable workers backed by a durable SQLite queue.
 
-## Required pipeline
+## Commands
 
-1. **Discover worker**: crawl only configured public research sources, normalize URLs, and enqueue each candidate before expensive parsing.
-2. **Study worker**: claim pending rows transactionally, parse and classify content, save report_knowledge, then mark the queue item complete in the same recoverable workflow.
-3. **Independent operation**: both workers may run concurrently; neither should wait for the other to finish a full crawl.
-4. **Durability**: queue state lives in SQLite, not process memory. Restart resumes pending and expired leases.
-5. **Stable numbering**: allocate a monotonic human-facing RPT-000001 sequence in the database. Keep the existing rkn_... identifier as the canonical knowledge-row ID. Never derive report numbers from the current row count.
-6. **Deduplication**: unique normalized source URL plus content fingerprint; duplicate discoveries increment sightings rather than create duplicate lessons.
-7. **Crash safety**: leases have expiry, attempts are bounded, and failures store a short error plus retry time. A worker must only mark an item learned after the knowledge record is persisted.
-8. **Observability**: expose counts for discovered, pending, studying, learned, duplicate, retry, and failed; show each report number, source, and state.
-9. **Parallelism**: bounded concurrency for both workers, SQLite busy timeout, WAL, and atomic claim updates to prevent two study workers claiming the same report.
-10. **Safety and provenance**: only configured public sources and allowlisted hosts are crawled. Keep original source URL and timestamp; treat extracted claims as unverified research, not confirmed vulnerabilities.
+Run from the repository root:
 
-## Acceptance tests
+```bash
+bun run dev research discover hackerone-hacktivity --pages 100 --depth 2
+bun run dev research learn --limit 50
+bun run dev research queue-stats
+bun run dev research queue-pending --limit 50
+```
 
-- Two discover workers enqueue the same URL concurrently and produce one queue record.
-- Two study workers cannot claim the same pending row.
-- Killing a worker after claim allows the lease to expire and the row to be retried.
-- A knowledge persistence error never marks a row learned.
-- Re-running discovery preserves the stable report number.
-- Queue counts and per-report status survive process restart.
-- A source failure is recorded and does not stop other sources.
-- Existing research sync, research search, research recommend, and research stats commands remain compatible.
+To keep the discovery worker polling for new sources, run in terminal 1:
 
-## Current implementation status
+```bash
+bun run dev research discover --pages 100 --depth 2 --watch --interval 60
+```
 
-The current research sync path combines crawling, extraction, and knowledge ingestion inside syncResearchSource; it runs up to four sources concurrently, but it does not yet expose a durable per-report queue with independent discovery and study workers. This contract must be implemented in code and verified with tests before describing the pipeline as operational.
+To keep the study worker consuming queued reports, run in terminal 2:
+
+```bash
+bun run dev research learn --limit 50 --watch --interval 10
+```
+
+Stop either process with Ctrl+C. Both can run at the same time. The existing `research sync` command remains available as the legacy combined crawl-and-ingest path.
+
+## Queue behavior
+
+- Queue state is stored in the `research_queue` table in the existing SQLite database.
+- A report receives a stable human-readable ID from its monotonically increasing SQLite sequence, formatted as `RPT-000001`. The knowledge table keeps its existing canonical `rkn_...` identifier.
+- The unique source-ID/source-URL index deduplicates repeat discoveries. Concurrent enqueue races are handled by re-reading the winning row.
+- Study workers atomically claim rows in a transaction and hold a five-minute lease. Expired claims can be reclaimed after a crash.
+- Processing attempts are counted. Failures retry; after three attempts the item is rejected with its last error. A report is only marked learned after knowledge ingestion succeeds.
+- Extracted material is public research context, not proof that a vulnerability is valid on any particular target. The original source URL and source metadata are retained.
+- The crawler is restricted to configured source hosts and HTTPS.
+
+## Acceptance tests still required
+
+Run these from `packages/cyberstrike` before treating the feature as production-verified:
+
+```bash
+bun run typecheck
+bun test
+```
+
+Also exercise these scenarios against a disposable database:
+1. Enqueue the same source URL twice; confirm one row and the same RPT ID.
+2. Run two learning workers concurrently; confirm one row is claimed by at most one worker.
+3. Stop a worker while it owns a row, then wait for lease expiry and confirm it is reclaimed.
+4. Simulate a fetch/ingest error and confirm retry state and error details persist.
+5. Restart CyberStrike and confirm queue status and RPT IDs remain unchanged.
+
+## Implementation limitations to verify
+
+- The current worker commands are independently runnable and can be run in separate terminals, but there is not yet a supervisor process managing both.
+- The existing `research sync` command remains a combined legacy path; use `discover` plus `learn` for the new queue.
+- The discovery command's source/page/depth limits should be kept conservative to avoid overloading public sites.
+- This branch has not been run in the user's Kali/WSL environment by the assistant; local typecheck and runtime acceptance tests are still necessary.
