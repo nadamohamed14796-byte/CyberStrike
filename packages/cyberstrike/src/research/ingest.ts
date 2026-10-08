@@ -85,7 +85,7 @@ function lessonOf(text: string, vulnerabilityClass?: string) {
 export function candidateScore(url: string, source: ResearchSource) {
   const path = new URL(url).pathname.toLowerCase()
   let score = 0
-  if (/\/reports?\b|\/hacktivity\/|\/writeups?\b|\/research\b|\/blog\/|\/articles?\b|\/labs?\b/.test(path)) score += 60
+  if (/\/reports?\b|\/hacktivity\/|\/writeups?\b|\/research\b|\/blog\/|\/articles?\b|\/labs?\b|\/blob\/|\/tree\//.test(path)) score += 60
   if (/\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{4}\/\d{1,2}/.test(path)) score += 20
   if (source.kind === "disclosure" && /reports?|hacktivity|disclosure/.test(path)) score += 20
   if (source.kind === "academy" && /lab|academy|web-security/.test(path)) score += 20
