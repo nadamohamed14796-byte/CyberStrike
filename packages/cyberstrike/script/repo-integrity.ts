@@ -4,7 +4,8 @@ import { $ } from "bun"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { Database as BunDatabase } from "bun:sqlite"
-import { is } from "drizzle-orm"\nimport { getTableConfig, SQLiteTable } from "drizzle-orm/sqlite-core"
+import { is } from "drizzle-orm"
+import { getTableConfig, SQLiteTable } from "drizzle-orm/sqlite-core"
 import * as schema from "../src/storage/schema"
 
 type Problem = { category: string; path?: string; message: string }
