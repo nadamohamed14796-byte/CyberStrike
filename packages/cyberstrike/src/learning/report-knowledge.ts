@@ -143,14 +143,18 @@ export namespace ReportKnowledge {
     tags?: string[]
     metadata?: Record<string, unknown>
     sourceTrust?: number
-  }) {
+  }): IngestExternalResult | null {
     try {
-      const now = Date.now()
       const key = fingerprint(input)
       if (!key) return null
-      return Database.use((db) => {
-        const existing = db.select().from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.fingerprint, key)).get()
-        if (existing) {
+
+      const existing = Database.use((db) =>
+        db.select().from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.fingerprint, key)).get(),
+      )
+
+      if (existing) {
+        const now = Date.now()
+        Database.use((db) => {
           db.update(ReportKnowledgeTable)
             .set({
               times_seen: existing.times_seen + 1,
@@ -160,23 +164,25 @@ export namespace ReportKnowledge {
               endpoint: input.endpoint ?? existing.endpoint,
               reproduction: input.reproduction ?? existing.reproduction,
               poc: input.poc ?? existing.poc,
-              tags: input.tags?.length ? Array.from(new Set([...(existing.tags ?? []), ...input.tags])) : existing.tags,
+              tags: input.tags?.length
+                ? Array.from(new Set([...(existing.tags ?? []), ...input.tags]))
+                : existing.tags,
               metadata: { ...(existing.metadata ?? {}), ...(input.metadata ?? {}) },
               time_updated: now,
             })
             .where(eq(ReportKnowledgeTable.id, existing.id))
             .run()
-          return { id: existing.id, created: false } satisfies IngestExternalResult
-        }
-
-        const id = ingest({
-          ...input,
-          sourceKind: "external_report",
-          outcome: "observed",
-          sourceTrust: input.sourceTrust,
         })
-        return id ? ({ id, created: true } satisfies IngestExternalResult) : null
+        return { id: existing.id, created: false }
+      }
+
+      const id = ingest({
+        ...input,
+        sourceKind: "external_report",
+        outcome: "observed",
+        sourceTrust: input.sourceTrust,
       })
+      return id ? { id, created: true } : null
     } catch (error) {
       console.warn("[cyberstrike] external report knowledge persistence failed:", error)
       return null
