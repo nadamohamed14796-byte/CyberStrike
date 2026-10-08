@@ -1,4 +1,4 @@
-import { Database, eq, and, desc } from "../storage/db"
+import { Database, eq, and, desc, isNull } from "../storage/db"
 import { Request } from "./request"
 import { TargetMemoryTable } from "./target-memory.sql"
 import { SessionTable } from "./session.sql"
@@ -47,7 +47,7 @@ export namespace TargetMemory {
       const existing = db.select().from(TargetMemoryTable).where(and(
         eq(TargetMemoryTable.project_id, input.projectID),
         eq(TargetMemoryTable.kind, input.kind),
-        eq(TargetMemoryTable.method, input.method),
+        input.method === null ? isNull(TargetMemoryTable.method) : eq(TargetMemoryTable.method, input.method),
         eq(TargetMemoryTable.url, input.url),
       )).get()
       if (existing) {
