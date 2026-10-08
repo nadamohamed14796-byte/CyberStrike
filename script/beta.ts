@@ -43,11 +43,101 @@ async function main() {
     return
   }
 
-  console.log("Fetching latest dev branch...")
-  await $`git fetch origin dev`
+  console.log("Fetching latest main branch...")
+  await #!/usr/bin/env bun
+
+import { $ } from "bun"
+
+interface PR {
+  number: number
+  title: string
+  author: { login: string }
+  labels: Array<{ name: string }>
+}
+
+interface FailedPR {
+  number: number
+  title: string
+  reason: string
+}
+
+async function commentOnPR(prNumber: number, reason: string) {
+  const body = `⚠️ **Blocking Beta Release**
+
+This PR cannot be merged into the beta branch due to: **${reason}**
+
+Please resolve this issue to include this PR in the next beta release.`
+
+  try {
+    await $`gh pr comment ${prNumber} --body ${body}`
+    console.log(`  Posted comment on PR #${prNumber}`)
+  } catch (err) {
+    console.log(`  Failed to post comment on PR #${prNumber}: ${err}`)
+  }
+}
+
+async function main() {
+  console.log("Fetching open PRs with beta label...")
+
+  const stdout = await $`gh pr list --state open --label beta --json number,title,author,labels --limit 100`.text()
+  const prs: PR[] = JSON.parse(stdout).sort((a: PR, b: PR) => a.number - b.number)
+
+  console.log(`Found ${prs.length} open PRs with beta label`)
+
+  if (prs.length === 0) {
+    console.log("No team PRs to merge")
+    return
+  }
+
+git fetch origin main`
 
   console.log("Checking out beta branch...")
-  await $`git checkout -B beta origin/dev`
+  await #!/usr/bin/env bun
+
+import { $ } from "bun"
+
+interface PR {
+  number: number
+  title: string
+  author: { login: string }
+  labels: Array<{ name: string }>
+}
+
+interface FailedPR {
+  number: number
+  title: string
+  reason: string
+}
+
+async function commentOnPR(prNumber: number, reason: string) {
+  const body = `⚠️ **Blocking Beta Release**
+
+This PR cannot be merged into the beta branch due to: **${reason}**
+
+Please resolve this issue to include this PR in the next beta release.`
+
+  try {
+    await $`gh pr comment ${prNumber} --body ${body}`
+    console.log(`  Posted comment on PR #${prNumber}`)
+  } catch (err) {
+    console.log(`  Failed to post comment on PR #${prNumber}: ${err}`)
+  }
+}
+
+async function main() {
+  console.log("Fetching open PRs with beta label...")
+
+  const stdout = await $`gh pr list --state open --label beta --json number,title,author,labels --limit 100`.text()
+  const prs: PR[] = JSON.parse(stdout).sort((a: PR, b: PR) => a.number - b.number)
+
+  console.log(`Found ${prs.length} open PRs with beta label`)
+
+  if (prs.length === 0) {
+    console.log("No team PRs to merge")
+    return
+  }
+
+git checkout -B beta origin/main`
 
   const applied: number[] = []
   const failed: FailedPR[] = []

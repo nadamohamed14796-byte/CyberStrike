@@ -20,14 +20,7 @@ jobs:
       - name: Setup Bun
         uses: ./.github/actions/setup-bun
 
-      - name: Setup Git Committer
-        id: setup-git-committer
-        uses: ./.github/actions/setup-git-committer
-        with:
-          cyberstrike-app-id: ${{ vars.CYBERSTRIKE_APP_ID }}
-          cyberstrike-app-secret: ${{ secrets.CYBERSTRIKE_APP_SECRET }}
-
       - name: Sync beta branch
         env:
-          GH_TOKEN: ${{ steps.setup-git-committer.outputs.token }}
+          GH_TOKEN: ${{ github.token }}
         run: bun script/beta.ts

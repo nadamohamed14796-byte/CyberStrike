@@ -15,7 +15,9 @@ describe("SkillIndex", () => {
 
         for (const entry of entries.slice(0, 100)) {
           for (const tag of entry.tags) {
-            expect(SkillIndex.byTag(tag.toUpperCase()).some((skill) => skill.name === entry.name)).toBe(true)
+            expect(
+              SkillIndex.byTag(tag.toUpperCase(), entries.length).some((skill) => skill.name === entry.name),
+            ).toBe(true)
           }
         }
       },

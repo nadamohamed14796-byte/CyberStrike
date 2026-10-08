@@ -212,6 +212,7 @@ export namespace Learning {
             outcome: signal.outcome,
             metadata: {
               ...(signal.metadata ?? {}),
+              cwe_id: signal.cwe_id,
               next_tools: nextTools,
               research_recommendations: researchRecommendations.map((row) => ({
                 id: row.id,
@@ -281,7 +282,7 @@ export namespace Learning {
       const recommendations = ReportKnowledge.recommendations({
         signal: input?.query ?? latest?.signal,
         vulnerabilityClass: input?.vulnerabilityClass ?? latest?.category ?? researchClass,
-        cweID: input?.cweID ?? latest?.cwe_id,
+        cweID: input?.cweID ?? (typeof latest?.metadata?.cwe_id === "string" ? latest.metadata.cwe_id : undefined),
         limit,
       })
 

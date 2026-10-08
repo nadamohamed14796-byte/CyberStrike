@@ -45,7 +45,7 @@ function latestUserResearchQuery(messages: MessageV2.WithParts[]) {
     const message = messages[i]
     if (message.info.role !== "user") continue
     const text = message.parts
-      .filter((part) => part.type === "text" && !part.synthetic && !part.ignored)
+      .filter((part): part is MessageV2.TextPart => part.type === "text" && !part.synthetic && !part.ignored)
       .map((part) => part.text.trim())
       .filter(Boolean)
       .join("\n")
