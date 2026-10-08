@@ -904,9 +904,9 @@ export namespace SessionPrompt {
           lines.push("", "Recommended skills for this agent (load these first):")
           for (const name of agent.skills) lines.push(`- ${name}`)
         }
-        const loaded = SkillContext.active(input.session.id)
+        const loaded = SkillContext.active(sessionID)
         if (loaded.length > 0) {
-          lines.push("", `Currently loaded: ${loaded.join(", ")} (${SkillContext.tokenCount(input.session.id)} tokens)`)
+          lines.push("", `Currently loaded: ${loaded.join(", ")} (${SkillContext.tokenCount(sessionID)} tokens)`)
         }
         system.push(lines.join("\n"))
       }
@@ -1254,6 +1254,14 @@ export namespace SessionPrompt {
               sessionID: ctx.sessionID,
               toolID: item.id,
               target: queueTarget,
+              scope_items:
+                args && typeof args === "object" && !Array.isArray(args) && Array.isArray((args as Record<string, unknown>).scope_items)
+                  ? ((args as Record<string, unknown>).scope_items as unknown[]).filter((x): x is string => typeof x === "string")
+                  : undefined,
+              scope_verified:
+                args && typeof args === "object" && !Array.isArray(args) && (args as Record<string, unknown>).scope_verified === true,
+              authorized_active_testing:
+                args && typeof args === "object" && !Array.isArray(args) && (args as Record<string, unknown>).authorized_active_testing === true,
             })
           } catch (error) {
             log.warn("failed to claim signal queue item", { error, tool: item.id, callID: ctx.callID })
