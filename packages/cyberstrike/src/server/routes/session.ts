@@ -2143,7 +2143,7 @@ export const SessionRoutes = lazy(() =>
           error_samples: totals.error_samples,
         })
       },
-    ),
+    )
     .post(
       "/:sessionID/command",
       describeRoute({
