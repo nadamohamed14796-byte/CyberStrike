@@ -21,7 +21,7 @@ export namespace FalsePositive {
 
   function fingerprint(input: { vulnClass: string; endpointPattern?: string; assetPattern?: string; reason: string }) {
     return createHash("sha256")
-      .update([normalize(input.vulnClass), normalize(input.endpointPattern), normalize(input.assetPattern), normalize(input.reason)].join("\\n"))
+      .update([normalize(input.vulnClass), normalize(input.endpointPattern), normalize(input.assetPattern), normalize(input.reason)].join("\n"))
       .digest("hex")
       .slice(0, 32)
   }
@@ -36,7 +36,15 @@ export namespace FalsePositive {
     sourceFindingID?: string
     confidence?: number
   }) {
-    const fp = fingerprint(input)
+    const normalizedClass = normalize(input.vulnClass)
+    const normalizedEndpoint = input.endpointPattern ? normalize(input.endpointPattern) : undefined
+    const normalizedAsset = input.assetPattern ? normalize(input.assetPattern) : undefined
+    const fp = fingerprint({
+      vulnClass: normalizedClass,
+      endpointPattern: normalizedEndpoint,
+      assetPattern: normalizedAsset,
+      reason: input.reason,
+    })
     const now = Date.now()
     const existing = Database.use((db) =>
       db.select().from(FalsePositiveTable)
@@ -58,9 +66,9 @@ export namespace FalsePositive {
       id,
       session_id: input.sessionID,
       fingerprint: fp,
-      vuln_class: input.vulnClass,
-      endpoint_pattern: input.endpointPattern ?? null,
-      asset_pattern: input.assetPattern ?? null,
+      vuln_class: normalizedClass,
+      endpoint_pattern: normalizedEndpoint ?? null,
+      asset_pattern: normalizedAsset ?? null,
       reason: input.reason,
       evidence: input.evidence ?? null,
       source_finding_id: input.sourceFindingID ?? null,
