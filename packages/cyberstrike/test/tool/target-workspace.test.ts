@@ -35,6 +35,34 @@ describe("TargetWorkspace", () => {
     })
   })
 
+  test("deduplicates equivalent lessons and bounds recent lessons", async () => {
+    const target = `https://example.com/lesson-dedupe-${crypto.randomUUID()}.test`
+    const first = await TargetWorkspace.addLesson(target, {
+      kind: "pattern",
+      summary: "  Repeated API behavior  ",
+      tags: ["API", "pattern"],
+    })
+    const second = await TargetWorkspace.addLesson(target, {
+      kind: "pattern",
+      summary: "Repeated API behavior",
+      tags: ["pattern", "api"],
+    })
+
+    expect(second.id).toBe(first.id)
+    expect(await TargetWorkspace.readLessons(target)).toHaveLength(1)
+
+    for (let i = 0; i < 3; i++) {
+      await TargetWorkspace.addLesson(target, {
+        kind: "observation",
+        summary: `observation ${i}`,
+      })
+    }
+    expect(await TargetWorkspace.recentLessons(target, 2).then((items) => items.map((x) => x.summary))).toEqual([
+      "observation 1",
+      "observation 2",
+    ])
+  })
+
   test("rejects path traversal in session ids", () => {
     expect(() => TargetWorkspace.paths("https://example.com", "../escape")).toThrow()
     expect(() => TargetWorkspace.paths("https://example.com", "a/b")).toThrow()
