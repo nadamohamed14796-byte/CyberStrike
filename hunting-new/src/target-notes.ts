@@ -25,6 +25,7 @@ export async function renderTargetNotes(root: string, target: string): Promise<s
   const edges = state.edges ?? []
   const params = state.parameters ?? []
   const relations = state.assetRelations ?? []
+  const hypotheses = state.hypotheses ?? []
   const responseByRequest = new Map(responses.map(item => [item.requestId, item]))
   const requestsByHost = new Map<string, typeof requests>()
   for (const request of requests) {
@@ -134,8 +135,8 @@ export async function renderTargetNotes(root: string, target: string): Promise<s
   }
 
   lines.push("", "## Hypotheses and Validation", "")
-  if (!state.hypotheses.length) lines.push("_No vulnerability hypotheses are recorded in the target knowledge store._", "")
-  for (const hypothesis of state.hypotheses) {
+  if (!hypotheses.length) lines.push("_No vulnerability hypotheses are recorded in the target knowledge store._", "")
+  for (const hypothesis of hypotheses) {
     lines.push("- **" + safe(hypothesis.title ?? hypothesis.id) + "** — status: " + safe(hypothesis.status) + "; ID: " + hypothesis.id)
   }
 
