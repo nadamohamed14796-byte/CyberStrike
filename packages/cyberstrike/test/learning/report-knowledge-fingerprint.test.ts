@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test"
 import { ReportKnowledge } from "../../src/learning/report-knowledge"
+import { ReportKnowledgeTable } from "../../src/learning/report-knowledge.sql"
+import { Database } from "../../src/storage/db"
 import { createLearningTestSessions } from "./test-session"
 
 test("persists case-sensitive source URLs as distinct records and deduplicates fragments", () => {
@@ -167,4 +169,51 @@ test("keeps equivalent local findings separate across sessions and targets", () 
 
   expect(alpha.map((row) => row.id)).toEqual([first!])
   expect(beta.map((row) => row.id)).toEqual([second!])
+})
+
+test("reuses a legacy lowercase URL fingerprint without merging a different URL case", () => {
+  const sourceURL = "https://research.example/LegacyCaseSensitive?id=AbC"
+  const legacyID = "legacy-report-knowledge-case-compatibility"
+  const now = Date.now()
+
+  Database.transaction((db) => {
+    db.insert(ReportKnowledgeTable)
+      .values({
+        id: legacyID,
+        fingerprint: "url:" + sourceURL.toLowerCase(),
+        title: "LegacyFingerprintCompatibilityMarker IDOR research",
+        severity: "medium",
+        status: "observed",
+        source_kind: "external_report",
+        source_url: sourceURL,
+        metadata: { source_trust: 90 },
+        confidence: 60,
+        times_seen: 2,
+        times_useful: 0,
+        times_rejected: 0,
+        time_created: now,
+        time_updated: now,
+      })
+      .run()
+  })
+
+  const same = ReportKnowledge.ingestExternalDetailed({
+    title: "LegacyFingerprintCompatibilityMarker IDOR research",
+    severity: "medium",
+    sourceURL,
+    sourceTrust: 90,
+    metadata: { source_trust: 90 },
+  })
+  const caseDifferent = ReportKnowledge.ingestExternalDetailed({
+    title: "LegacyFingerprintCompatibilityMarker different case research",
+    severity: "medium",
+    sourceURL: "https://research.example/legacycasesensitive?id=abc",
+    sourceTrust: 90,
+    metadata: { source_trust: 90 },
+  })
+
+  expect(same?.id).toBe(legacyID)
+  expect(same?.created).toBe(false)
+  expect(caseDifferent?.id).not.toBe(legacyID)
+  expect(ReportKnowledge.search({ query: "LegacyFingerprintCompatibilityMarker", limit: 10 }).length).toBe(2)
 })
