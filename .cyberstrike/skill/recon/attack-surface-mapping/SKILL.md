@@ -25,7 +25,7 @@ Field patterns for where the rest of the surface actually lives: [SURFACE_PATTER
 
 Do **not** use this skill to expand an organization-wide host universe. Map the current application cluster. Finish it. Then, if scope allows, take the next cluster.
 
-Authorization and destruction bounds: [hack](../hack/SKILL.md) start gate. Stay in scope.
+Authorization and destruction bounds: [hack](../../hack/SKILL.md) start gate. Stay in scope.
 
 ## What must exist (not a file tree)
 
@@ -112,7 +112,7 @@ JS extracts more than `/api/` paths. For each row, write the value or `none`:
 
 **Frontend present but inventory empty → directory brute** is forbidden.
 
-Docs and debug planes, if this app already linked them: [api-recon-and-docs](../api-recon-and-docs/SKILL.md). Exposed VCS / backups: [insecure-source-code-management](../insecure-source-code-management/SKILL.md). Both are *this cluster's* extra planes, not a new search.
+Docs and debug planes, if this app already linked them: [api-recon-and-docs](../../api/api-recon-and-docs/SKILL.md). Exposed VCS / backups: [insecure-source-code-management](../../rce/insecure-source-code-management/SKILL.md). Both are *this cluster's* extra planes, not a new search.
 
 ### 4. Classify responses before any probe
 
@@ -167,19 +167,19 @@ Mapping is done when:
 5. Same-skin / same-gate leftovers glanced, not rematrixed
 6. Auth endpoints listed if the inventory has issue-session / reset / rebind / ticket-swap / 2FA — listed, not yet exploited
 
-Then load [hack](../hack/SKILL.md) for effort order and the matching category skill. Do not start testing inside this file.
+Then load [hack](../../hack/SKILL.md) for effort order and the matching category skill. Do not start testing inside this file.
 
 ## Handoff
 
 | Surface you drew | Load |
 |---|---|
-| Unauthenticated other-subject data, object ids | [auth-sec](../auth-sec/SKILL.md), [idor-broken-object-authorization](../idor-broken-object-authorization/SKILL.md) |
-| Issue-session / reset / rebind / ticket-swap | [authbypass-authentication-flaws](../authbypass-authentication-flaws/SKILL.md) |
-| Differential filters, URL-fetch params, templates | [injection-checking](../injection-checking/SKILL.md) |
-| Upload / preview / convert | [upload-insecure-files](../upload-insecure-files/SKILL.md) |
-| Money / coupon / stock / approval | [business-logic-vuln](../business-logic-vuln/SKILL.md) |
-| REST / GraphQL / gateway docs | [api-sec](../api-sec/SKILL.md) |
-| Public middleware admin | [unauthorized-access-common-services](../unauthorized-access-common-services/SKILL.md) |
+| Unauthenticated other-subject data, object ids | [auth-sec](../../auth/auth-sec/SKILL.md), [idor-broken-object-authorization](../../idor/idor-broken-object-authorization/SKILL.md) |
+| Issue-session / reset / rebind / ticket-swap | [authbypass-authentication-flaws](../../auth/authbypass-authentication-flaws/SKILL.md) |
+| Differential filters, URL-fetch params, templates | [injection-checking](../../injection-checking/SKILL.md) |
+| Upload / preview / convert | [upload-insecure-files](../../file-upload/upload-insecure-files/SKILL.md) |
+| Money / coupon / stock / approval | [business-logic-vuln](../../business-logic/business-logic-vuln/SKILL.md) |
+| REST / GraphQL / gateway docs | [api-sec](../../api/api-sec/SKILL.md) |
+| Public middleware admin | [unauthorized-access-common-services](../../auth/unauthorized-access-common-services/SKILL.md) |
 
 ## Anti-patterns
 

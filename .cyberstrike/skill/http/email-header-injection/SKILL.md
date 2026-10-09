@@ -11,7 +11,7 @@ description: >-
 ## 0. RELATED ROUTING
 
 - [crlf-injection](../crlf-injection/SKILL.md) — general CRLF injection; email headers are a specific high-value sink
-- [ssrf-server-side-request-forgery](../ssrf-server-side-request-forgery/SKILL.md) — when SMTP server is reachable via SSRF (gopher://smtp)
+- [ssrf-server-side-request-forgery](../../ssrf/ssrf-server-side-request-forgery/SKILL.md) — when SMTP server is reachable via SSRF (gopher://smtp)
 - [open-redirect](../open-redirect/SKILL.md) — redirect in password-reset emails as phishing amplification
 
 ---

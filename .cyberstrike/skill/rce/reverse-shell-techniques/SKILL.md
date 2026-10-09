@@ -12,9 +12,9 @@ description: >-
 
 Before going deep, consider loading:
 
-- [tunneling-and-pivoting](../tunneling-and-pivoting/SKILL.md) after shell access for network pivoting
-- [linux-privilege-escalation](../linux-privilege-escalation/SKILL.md) or [windows-privilege-escalation](../windows-privilege-escalation/SKILL.md) after landing shell
-- [windows-av-evasion](../windows-av-evasion/SKILL.md) when AV blocks shell payloads
+- [tunneling-and-pivoting](../../network/tunneling-and-pivoting/SKILL.md) after shell access for network pivoting
+- [linux-privilege-escalation](../../linux/linux-privilege-escalation/SKILL.md) or [windows-privilege-escalation](../../windows/windows-privilege-escalation/SKILL.md) after landing shell
+- [windows-av-evasion](../../evasion/windows-av-evasion/SKILL.md) when AV blocks shell payloads
 
 ### Quick Reference
 

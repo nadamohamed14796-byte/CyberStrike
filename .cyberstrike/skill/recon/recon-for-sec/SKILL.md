@@ -21,14 +21,14 @@ This is the starting router for new targets and unknown attack surfaces.
 
 - [Attack Surface Mapping](../attack-surface-mapping/SKILL.md) — from one URL / one app, draw hosts, APIs, keys, and the object graph
 - [Recon and Methodology](../recon-and-methodology/SKILL.md)
-- [Insecure Source Code Management](../insecure-source-code-management/SKILL.md) — .git/.svn/.hg exposure detection
-- [Dependency Confusion](../dependency-confusion/SKILL.md) — Supply chain reconnaissance for internal package names
+- [Insecure Source Code Management](../../rce/insecure-source-code-management/SKILL.md) — .git/.svn/.hg exposure detection
+- [Dependency Confusion](../../supply-chain/dependency-confusion/SKILL.md) — Supply chain reconnaissance for internal package names
 
 ## Recommended Flow
 
 1. Confirm in-scope assets and target type
 2. Draw the surface from the application: [attack-surface-mapping](../attack-surface-mapping/SKILL.md)
-3. Route the inventory to [api-sec](../api-sec/SKILL.md), [auth-sec](../auth-sec/SKILL.md), [injection-checking](../injection-checking/SKILL.md), or [business-logic-vuln](../business-logic-vuln/SKILL.md)
+3. Route the inventory to [api-sec](../../api/api-sec/SKILL.md), [auth-sec](../../auth/auth-sec/SKILL.md), [injection-checking](../../injection-checking/SKILL.md), or [business-logic-vuln](../../business-logic/business-logic-vuln/SKILL.md)
 
 ---
 

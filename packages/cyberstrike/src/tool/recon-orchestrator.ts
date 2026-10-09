@@ -6,11 +6,13 @@ type ReconOrchestratorMetadata = {
   signal?: string
   target?: string
   tools: PlannedReconTool[]
+  workspaces?: string[]
 }
 
 import z from "zod"
 import { Tool } from "./tool"
 import { SignalQueue } from "./signal-queue"
+import { TargetWorkspace } from "./target-workspace"
 
 export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
   description:
@@ -23,6 +25,7 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
     max_tools: z.number().int().min(1).max(8).default(3),
   }),
   async execute(params): Promise<{ title: string; output: string; metadata: ReconOrchestratorMetadata }> {
+    const workspaces = (await TargetWorkspace.ensureScopes(params.scope_items, params.sessionID)).map((workspace) => workspace.root)
     const planned = SignalQueue.planNext({
       sessionID: params.sessionID,
       scope_items: params.scope_items,
@@ -41,6 +44,7 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
           signal: undefined,
           target: undefined,
           tools: [],
+          workspaces,
         } as ReconOrchestratorMetadata,
       }
     }
@@ -78,6 +82,9 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
             (tool.authorization_verified ? "verified" : "not-required"),
         ),
         "",
+        "WORKSPACES",
+        ...(workspaces.length ? workspaces : ["No scope workspace initialized: pass scope_items."]),
+        "",
         "The orchestrator does not execute these tools. Execute only through the normal tool permission/scope path.",
       ].join("\n"),
       metadata: {
@@ -86,6 +93,7 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
         signal: planned.queue.signal,
         target: planned.queue.target,
         tools: planned.tools,
+        workspaces,
       } as ReconOrchestratorMetadata,
     }
   },

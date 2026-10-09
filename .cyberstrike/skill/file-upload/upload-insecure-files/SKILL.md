@@ -24,12 +24,12 @@ Also load [SCENARIOS.md](./SCENARIOS.md) when you need:
 
 Use this file as the deep upload workflow reference. Also load:
 
-- [path traversal lfi](../path-traversal-lfi/SKILL.md) when filename, extraction path, or include path becomes file-system control
-- [xss cross site scripting](../xss-cross-site-scripting/SKILL.md) when uploads are rendered in browser contexts
-- [xxe xml external entity](../xxe-xml-external-entity/SKILL.md) when SVG, OOXML, or XML imports are accepted
-- [cmdi command injection](../cmdi-command-injection/SKILL.md) when a processor, converter, or media pipeline executes system tools
-- [business logic vulnerabilities](../business-logic-vulnerabilities/SKILL.md) when quotas, overwrite rules, approvals, or storage paths create logic bugs
-- [ghost-bits-cast-attack](../ghost-bits-cast-attack/SKILL.md) when the server is **Apache Tomcat** and the WAF blocks `.jsp` in `filename*` — Tomcat's `RFC2231Utility` narrows each char to byte, so `1.陪sp` (U+966A low byte = `j`) writes `1.jsp` to disk while the WAF sees no `.jsp` literal
+- [path traversal lfi](../../path-traversal/path-traversal-lfi/SKILL.md) when filename, extraction path, or include path becomes file-system control
+- [xss cross site scripting](../../xss/xss-cross-site-scripting/SKILL.md) when uploads are rendered in browser contexts
+- [xxe xml external entity](../../xxe/xxe-xml-external-entity/SKILL.md) when SVG, OOXML, or XML imports are accepted
+- [cmdi command injection](../../command-injection/cmdi-command-injection/SKILL.md) when a processor, converter, or media pipeline executes system tools
+- [business logic vulnerabilities](../../business-logic/business-logic-vulnerabilities/SKILL.md) when quotas, overwrite rules, approvals, or storage paths create logic bugs
+- [ghost-bits-cast-attack](../../ghost-bits-cast-attack/SKILL.md) when the server is **Apache Tomcat** and the WAF blocks `.jsp` in `filename*` — Tomcat's `RFC2231Utility` narrows each char to byte, so `1.陪sp` (U+966A low byte = `j`) writes `1.jsp` to disk while the WAF sees no `.jsp` literal
 
 ---
 
@@ -199,11 +199,11 @@ When the upload path includes account, project, or organization identifiers, alw
 
 | Observation | Pivot |
 |---|---|
-| SVG or XML accepted | [xxe xml external entity](../xxe-xml-external-entity/SKILL.md) |
-| filename or metadata reflected | [xss cross site scripting](../xss-cross-site-scripting/SKILL.md) |
-| converter or processor shells out | [cmdi command injection](../cmdi-command-injection/SKILL.md) |
-| extraction path looks controllable | [path traversal lfi](../path-traversal-lfi/SKILL.md) |
-| overwrite, quota, approval, or tenant bug | [business logic vulnerabilities](../business-logic-vulnerabilities/SKILL.md) |
+| SVG or XML accepted | [xxe xml external entity](../../xxe/xxe-xml-external-entity/SKILL.md) |
+| filename or metadata reflected | [xss cross site scripting](../../xss/xss-cross-site-scripting/SKILL.md) |
+| converter or processor shells out | [cmdi command injection](../../command-injection/cmdi-command-injection/SKILL.md) |
+| extraction path looks controllable | [path traversal lfi](../../path-traversal/path-traversal-lfi/SKILL.md) |
+| overwrite, quota, approval, or tenant bug | [business logic vulnerabilities](../../business-logic/business-logic-vulnerabilities/SKILL.md) |
 
 ---
 

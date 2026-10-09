@@ -13,9 +13,9 @@ description: >-
 Before going deep, consider loading:
 
 - [windows-privilege-escalation](../windows-privilege-escalation/SKILL.md) when privesc tools are blocked by AV
-- [windows-lateral-movement](../windows-lateral-movement/SKILL.md) when lateral movement tools trigger EDR
-- [active-directory-kerberos-attacks](../active-directory-kerberos-attacks/SKILL.md) when Rubeus/Mimikatz are detected
-- [active-directory-acl-abuse](../active-directory-acl-abuse/SKILL.md) for non-binary AD attacks (less AV-sensitive)
+- [windows-lateral-movement](../../windows/windows-lateral-movement/SKILL.md) when lateral movement tools trigger EDR
+- [active-directory-kerberos-attacks](../../active-directory/active-directory-kerberos-attacks/SKILL.md) when Rubeus/Mimikatz are detected
+- [active-directory-acl-abuse](../../active-directory/active-directory-acl-abuse/SKILL.md) for non-binary AD attacks (less AV-sensitive)
 
 ### Advanced Reference
 

@@ -41,9 +41,9 @@ For token cryptography and JWT header abuse, also load:
 
 ## 4. RELATED ROUTES
 
-- CORS or cross-origin token exposure: [cors cross origin misconfiguration](../cors-cross-origin-misconfiguration/SKILL.md)
-- XML federation or enterprise SSO: [saml sso assertion attacks](../saml-sso-assertion-attacks/SKILL.md)
-- CSRF-heavy login or binding bugs: [csrf cross site request forgery](../csrf-cross-site-request-forgery/SKILL.md)
+- CORS or cross-origin token exposure: [cors cross origin misconfiguration](../../cors/cors-cross-origin-misconfiguration/SKILL.md)
+- XML federation or enterprise SSO: [saml sso assertion attacks](../../saml/saml-sso-assertion-attacks/SKILL.md)
+- CSRF-heavy login or binding bugs: [csrf cross site request forgery](../../csrf/csrf-cross-site-request-forgery/SKILL.md)
 
 ---
 

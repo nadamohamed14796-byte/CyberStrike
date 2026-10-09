@@ -12,10 +12,10 @@ description: >-
 
 Before going deep, consider loading:
 
-- [windows-lateral-movement](../windows-lateral-movement/SKILL.md) after escalation for pivoting to other hosts
+- [windows-lateral-movement](./windows-lateral-movement/SKILL.md) after escalation for pivoting to other hosts
 - [windows-av-evasion](../windows-av-evasion/SKILL.md) when AV/EDR blocks your privesc tools
-- [active-directory-kerberos-attacks](../active-directory-kerberos-attacks/SKILL.md) when the host is domain-joined and you need AD-level escalation
-- [active-directory-acl-abuse](../active-directory-acl-abuse/SKILL.md) for domain privilege escalation via ACL misconfigurations
+- [active-directory-kerberos-attacks](../../active-directory/active-directory-kerberos-attacks/SKILL.md) when the host is domain-joined and you need AD-level escalation
+- [active-directory-acl-abuse](../../active-directory/active-directory-acl-abuse/SKILL.md) for domain privilege escalation via ACL misconfigurations
 
 ### Advanced Reference
 

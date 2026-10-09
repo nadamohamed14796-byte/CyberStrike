@@ -74,11 +74,11 @@ Do not expand onto unauthorized assets.
 |---|---|---|
 | Pentest / red team / foothold / SRC | §§3–5 | [RED_TEAM.md](./RED_TEAM.md), [TEST_MATRIX.md](./TEST_MATRIX.md) |
 | Code audit / whitebox / find sinks | §3 R6 | [CODE_AUDIT.md](./CODE_AUDIT.md) |
-| Source leak / Git leak / secret leak | §3 R5 | [SOURCE_LEAK.md](./SOURCE_LEAK.md), [insecure-source-code-management](../insecure-source-code-management/SKILL.md) |
-| Middleware / gateway / component audit | §3 R7 | [RED_TEAM.md](./RED_TEAM.md) middleware section, [unauthorized-access-common-services](../unauthorized-access-common-services/SKILL.md) |
+| Source leak / Git leak / secret leak | §3 R5 | [SOURCE_LEAK.md](./SOURCE_LEAK.md), [insecure-source-code-management](../rce/insecure-source-code-management/SKILL.md) |
+| Middleware / gateway / component audit | §3 R7 | [RED_TEAM.md](./RED_TEAM.md) middleware section, [unauthorized-access-common-services](../auth/unauthorized-access-common-services/SKILL.md) |
 | Alert triage / SOC / hunting | Blue quality gate | [BLUE_TEAM.md](./BLUE_TEAM.md) |
 | Detection rules | Blue B6 | [BLUE_TEAM.md](./BLUE_TEAM.md), template in [EVIDENCE_REPORT.md](./EVIDENCE_REPORT.md) |
-| IR / forensics / containment | Blue B7 | [BLUE_TEAM.md](./BLUE_TEAM.md), [memory-forensics-volatility](../memory-forensics-volatility/SKILL.md), [traffic-analysis-pcap](../traffic-analysis-pcap/SKILL.md) |
+| IR / forensics / containment | Blue B7 | [BLUE_TEAM.md](./BLUE_TEAM.md), [memory-forensics-volatility](../memory-forensics-volatility/SKILL.md), [traffic-analysis-pcap](../network/traffic-analysis-pcap/SKILL.md) |
 | Write the report | §6 | [EVIDENCE_REPORT.md](./EVIDENCE_REPORT.md) |
 
 When a task crosses red and blue, freeze evidence for the current phase before switching role.
@@ -87,36 +87,36 @@ When a task crosses red and blue, freeze evidence for the current phase before s
 
 ### Step 1: Draw the surface from the application
 
-With a URL or an application in hand, map the surface first: [attack-surface-mapping](../attack-surface-mapping/SKILL.md). Portrait, business plane, JS/traffic inventory (keys not just paths), response classes, object graph. Do not scan into a blank portrait. Do not open with directory brute or payload spray.
+With a URL or an application in hand, map the surface first: [attack-surface-mapping](../recon/attack-surface-mapping/SKILL.md). Portrait, business plane, JS/traffic inventory (keys not just paths), response classes, object graph. Do not scan into a blank portrait. Do not open with directory brute or payload spray.
 
 ### Step 2: Route by observed behavior
 
 | Signal | First direction | Load |
 |---|---|---|
 | Input reflects into HTML / JS | XSS / SSTI | [injection-checking](../injection-checking/SKILL.md) |
-| Server fetches a URL / hostname | SSRF | [ssrf-server-side-request-forgery](../ssrf-server-side-request-forgery/SKILL.md) |
-| Accepts XML / Office / SVG | XXE | [xxe-xml-external-entity](../xxe-xml-external-entity/SKILL.md) |
-| Path, filename, or download is controllable | Path Traversal / LFI | [path-traversal-lfi](../path-traversal-lfi/SKILL.md) |
-| Many object IDs in APIs | IDOR / BOLA / BFLA | [auth-sec](../auth-sec/SKILL.md), [idor-broken-object-authorization](../idor-broken-object-authorization/SKILL.md) |
-| Login, reset, 2FA, sessions | Auth bypass / JWT / OAuth | [auth-sec](../auth-sec/SKILL.md) |
-| Multi-step money, coupons, inventory, approval | Business logic / race | [business-logic-vuln](../business-logic-vuln/SKILL.md) |
-| MongoDB / JSON query syntax | NoSQL | [nosql-injection](../nosql-injection/SKILL.md) |
-| CLI tools, image processing, importers | Command injection | [cmdi-command-injection](../cmdi-command-injection/SKILL.md) |
+| Server fetches a URL / hostname | SSRF | [ssrf-server-side-request-forgery](../ssrf/ssrf-server-side-request-forgery/SKILL.md) |
+| Accepts XML / Office / SVG | XXE | [xxe-xml-external-entity](../xxe/xxe-xml-external-entity/SKILL.md) |
+| Path, filename, or download is controllable | Path Traversal / LFI | [path-traversal-lfi](../path-traversal/path-traversal-lfi/SKILL.md) |
+| Many object IDs in APIs | IDOR / BOLA / BFLA | [auth-sec](../auth/auth-sec/SKILL.md), [idor-broken-object-authorization](../idor/idor-broken-object-authorization/SKILL.md) |
+| Login, reset, 2FA, sessions | Auth bypass / JWT / OAuth | [auth-sec](../auth/auth-sec/SKILL.md) |
+| Multi-step money, coupons, inventory, approval | Business logic / race | [business-logic-vuln](../business-logic/business-logic-vuln/SKILL.md) |
+| MongoDB / JSON query syntax | NoSQL | [nosql-injection](../sqli/nosql/sqli/nosql-injection/SKILL.md) |
+| CLI tools, image processing, importers | Command injection | [cmdi-command-injection](../command-injection/cmdi-command-injection/SKILL.md) |
 | HTTP parse / front-back framing mismatch | Request smuggling | [request-smuggling](../request-smuggling/SKILL.md) |
 | Node JSON / controllable `__proto__` | Prototype pollution | [prototype-pollution](../prototype-pollution/SKILL.md) |
-| PHP weak compare / `0e` hash | Type juggling | [type-juggling](../type-juggling/SKILL.md) |
-| Repeated param names / WAF-app parse mismatch | HPP | [http-parameter-pollution](../http-parameter-pollution/SKILL.md) |
+| PHP weak compare / `0e` hash | Type juggling | [type-juggling](../business-logic/type-juggling/SKILL.md) |
+| Repeated param names / WAF-app parse mismatch | HPP | [http-parameter-pollution](../parameter-pollution/http-parameter-pollution/SKILL.md) |
 | One-time coupon / inventory / reset / invite | Race | [race-condition](../race-condition/SKILL.md) |
 | XML/XSLT templates | XSLT | [xslt-injection](../xslt-injection/SKILL.md) |
 | `.git` / `.svn` / `.env` / backups / public buckets | Source leak | [SOURCE_LEAK.md](./SOURCE_LEAK.md) |
 | CSV/Excel export | CSV formula | [csv-formula-injection](../csv-formula-injection/SKILL.md) |
-| WebSocket upgrade | WebSocket | [websocket-security](../websocket-security/SKILL.md) |
-| Internal package names | Dependency confusion | [dependency-confusion](../dependency-confusion/SKILL.md) |
+| WebSocket upgrade | WebSocket | [websocket-security](../websocket/websocket-security/SKILL.md) |
+| Internal package names | Dependency confusion | [dependency-confusion](../supply-chain/dependency-confusion/SKILL.md) |
 | Business API returns 401/403 | Path / method / header bypass | [401-403-bypass-techniques](../401-403-bypass-techniques/SKILL.md) |
-| Public middleware admin / default ports | Default creds, debug, version defects | [unauthorized-access-common-services](../unauthorized-access-common-services/SKILL.md) |
+| Public middleware admin / default ports | Default creds, debug, version defects | [unauthorized-access-common-services](../auth/unauthorized-access-common-services/SKILL.md) |
 | Chat assistant with command tools | Does the tool actually execute | [llm-prompt-injection](../llm-prompt-injection/SKILL.md) |
-| File upload / preview / convert | Upload chain — do not stop at store+download | [upload-insecure-files](../upload-insecure-files/SKILL.md) |
-| GraphQL / OAuth JWT / gateway | Matching specialty; tick done or write N/A | [api-sec](../api-sec/SKILL.md), [jwt-oauth-token-attacks](../jwt-oauth-token-attacks/SKILL.md) |
+| File upload / preview / convert | Upload chain — do not stop at store+download | [upload-insecure-files](../file-upload/upload-insecure-files/SKILL.md) |
+| GraphQL / OAuth JWT / gateway | Matching specialty; tick done or write N/A | [api-sec](../api/api-sec/SKILL.md), [jwt-oauth-token-attacks](../jwt-oauth-token-attacks/SKILL.md) |
 
 Opening one check class does not mean firing only that one shot. Walk the rest of the matrix.
 
@@ -169,14 +169,14 @@ Success is shorter dwell time, not close-rate. Details: [BLUE_TEAM.md](./BLUE_TE
 
 If the full repository is present, prefer these together. Previously separate mini skills (payload-selection, brute-selection) were merged back into their main skills.
 
-- [Attack Surface Mapping](../attack-surface-mapping/SKILL.md) · [Recon and Methodology](../recon-and-methodology/SKILL.md)
-- [XSS](../xss-cross-site-scripting/SKILL.md) · [SQLi](../sqli-sql-injection/SKILL.md) · [SSRF](../ssrf-server-side-request-forgery/SKILL.md) · [XXE](../xxe-xml-external-entity/SKILL.md) · [SSTI](../ssti-server-side-template-injection/SKILL.md)
-- [IDOR](../idor-broken-object-authorization/SKILL.md) · [CMDi](../cmdi-command-injection/SKILL.md) · [Path Traversal / LFI](../path-traversal-lfi/SKILL.md) · [CSRF](../csrf-cross-site-request-forgery/SKILL.md)
-- [API Security Router](../api-sec/SKILL.md) · [JWT / OAuth](../jwt-oauth-token-attacks/SKILL.md) · [OAuth / OIDC](../oauth-oidc-misconfiguration/SKILL.md) · [SAML](../saml-sso-assertion-attacks/SKILL.md) · [Auth Bypass](../authbypass-authentication-flaws/SKILL.md)
-- [Business Logic](../business-logic-vulnerabilities/SKILL.md) · [Upload](../upload-insecure-files/SKILL.md) · [NoSQL](../nosql-injection/SKILL.md) · [Request Smuggling](../request-smuggling/SKILL.md)
-- [Prototype Pollution](../prototype-pollution/SKILL.md) · [Type Juggling](../type-juggling/SKILL.md) · [HPP](../http-parameter-pollution/SKILL.md) · [Race](../race-condition/SKILL.md)
-- [XSLT](../xslt-injection/SKILL.md) · [Insecure SCM](../insecure-source-code-management/SKILL.md) · [CSV Formula](../csv-formula-injection/SKILL.md) · [WebSocket](../websocket-security/SKILL.md) · [Dependency Confusion](../dependency-confusion/SKILL.md)
-- [CORS](../cors-cross-origin-misconfiguration/SKILL.md) · [Ghost Bits Cast](../ghost-bits-cast-attack/SKILL.md) · [401/403 Bypass](../401-403-bypass-techniques/SKILL.md) · [Common Services](../unauthorized-access-common-services/SKILL.md)
+- [Attack Surface Mapping](../recon/attack-surface-mapping/SKILL.md) · [Recon and Methodology](../recon/recon-and-methodology/SKILL.md)
+- [XSS](../xss/xss-cross-site-scripting/SKILL.md) · [SQLi](../sqli/sqli-sql-injection/SKILL.md) · [SSRF](../ssrf/ssrf-server-side-request-forgery/SKILL.md) · [XXE](../xxe/xxe-xml-external-entity/SKILL.md) · [SSTI](../ssti/ssti-server-side-template-injection/SKILL.md)
+- [IDOR](../idor/idor-broken-object-authorization/SKILL.md) · [CMDi](../command-injection/cmdi-command-injection/SKILL.md) · [Path Traversal / LFI](../path-traversal/path-traversal-lfi/SKILL.md) · [CSRF](../csrf/csrf-cross-site-request-forgery/SKILL.md)
+- [API Security Router](../api/api-sec/SKILL.md) · [JWT / OAuth](../jwt-oauth-token-attacks/SKILL.md) · [OAuth / OIDC](../oauth/oauth-oidc-misconfiguration/SKILL.md) · [SAML](../saml/saml-sso-assertion-attacks/SKILL.md) · [Auth Bypass](../auth/authbypass-authentication-flaws/SKILL.md)
+- [Business Logic](../business-logic/business-logic-vulnerabilities/SKILL.md) · [Upload](../file-upload/upload-insecure-files/SKILL.md) · [NoSQL](../sqli/nosql/sqli/nosql-injection/SKILL.md) · [Request Smuggling](../request-smuggling/SKILL.md)
+- [Prototype Pollution](../prototype-pollution/SKILL.md) · [Type Juggling](../business-logic/type-juggling/SKILL.md) · [HPP](../parameter-pollution/http-parameter-pollution/SKILL.md) · [Race](../race-condition/SKILL.md)
+- [XSLT](../xslt-injection/SKILL.md) · [Insecure SCM](../rce/insecure-source-code-management/SKILL.md) · [CSV Formula](../csv-formula-injection/SKILL.md) · [WebSocket](../websocket/websocket-security/SKILL.md) · [Dependency Confusion](../supply-chain/dependency-confusion/SKILL.md)
+- [CORS](../cors/cors-cross-origin-misconfiguration/SKILL.md) · [Ghost Bits Cast](../ghost-bits-cast-attack/SKILL.md) · [401/403 Bypass](../401-403-bypass-techniques/SKILL.md) · [Common Services](../auth/unauthorized-access-common-services/SKILL.md)
 
 ## 5. High-Value Expert Intuitions
 

@@ -15,7 +15,7 @@ Before going deep, consider loading:
 - [active-directory-acl-abuse](../active-directory-acl-abuse/SKILL.md) for ACL-based AD attacks often chained with Kerberos
 - [active-directory-certificate-services](../active-directory-certificate-services/SKILL.md) for ADCS-based persistence (golden certificate)
 - [ntlm-relay-coercion](../ntlm-relay-coercion/SKILL.md) for NTLM relay attacks that complement Kerberos abuse
-- [windows-lateral-movement](../windows-lateral-movement/SKILL.md) after obtaining tickets for lateral movement
+- [windows-lateral-movement](../../windows/windows-lateral-movement/SKILL.md) after obtaining tickets for lateral movement
 
 ### Advanced Reference
 

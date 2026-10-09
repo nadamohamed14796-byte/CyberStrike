@@ -14,7 +14,7 @@ Before going deep, consider loading:
 
 - [android-pentesting-tricks](../android-pentesting-tricks/SKILL.md) for broader Android testing beyond SSL bypass
 - [ios-pentesting-tricks](../ios-pentesting-tricks/SKILL.md) for broader iOS testing beyond SSL bypass
-- [api-sec](../api-sec/SKILL.md) once traffic is intercepted for API-level testing
+- [api-sec](../../api/api-sec/SKILL.md) once traffic is intercepted for API-level testing
 
 ---
 

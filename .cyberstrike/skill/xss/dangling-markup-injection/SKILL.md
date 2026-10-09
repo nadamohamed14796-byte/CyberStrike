@@ -15,9 +15,9 @@ description: >-
 
 - [xss-cross-site-scripting](../xss-cross-site-scripting/SKILL.md) when full XSS is possible (no need for dangling markup)
 - [csp-bypass-advanced](../csp-bypass-advanced/SKILL.md) when CSP blocks JS execution — dangling markup bypasses script restrictions
-- [csrf-cross-site-request-forgery](../csrf-cross-site-request-forgery/SKILL.md) when dangling markup steals CSRF tokens for subsequent CSRF attacks
-- [crlf-injection](../crlf-injection/SKILL.md) when CRLF enables HTML injection in HTTP response
-- [web-cache-deception](../web-cache-deception/SKILL.md) when dangling markup + cache poisoning amplifies the attack
+- [csrf-cross-site-request-forgery](../../csrf/csrf-cross-site-request-forgery/SKILL.md) when dangling markup steals CSRF tokens for subsequent CSRF attacks
+- [crlf-injection](../../http/crlf-injection/SKILL.md) when CRLF enables HTML injection in HTTP response
+- [web-cache-deception](../../web-cache/web-cache-deception/SKILL.md) when dangling markup + cache poisoning amplifies the attack
 
 ---
 

@@ -36,6 +36,9 @@ jobs:
       - name: Verify CLI help
         run: bun run --cwd packages/cyberstrike src/index.ts -h
 
+      - name: Run focused CyberStrike scope workspace tests
+        run: cd packages/cyberstrike && bun test --timeout 30000 test/tool/target-workspace.test.ts
+
       - name: Run unit tests
         run: bun turbo test
 
