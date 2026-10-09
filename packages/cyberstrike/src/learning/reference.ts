@@ -94,7 +94,7 @@ export namespace ReferenceLearning {
   ): void {
     try {
       const now = Date.now()
-      Database.use((db) => {
+      Database.transaction((db) => {
         const where = sessionID
           ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skillName))
           : eq(SkillLearningTable.skill_name, skillName)
