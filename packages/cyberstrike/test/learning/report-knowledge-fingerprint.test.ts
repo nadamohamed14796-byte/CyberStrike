@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { ReportKnowledge } from "../../src/learning/report-knowledge"
+import { createLearningTestSessions } from "./test-session"
 
 test("persists case-sensitive source URLs as distinct records and deduplicates fragments", () => {
   const shared = {
@@ -109,8 +110,9 @@ test("uses one persisted identity for repeated concurrent ingestion attempts", a
 })
 
 test("runtime recommendations never expose target-specific local findings", () => {
+  const sessions = createLearningTestSessions("report-isolation", ["private"])
   const localID = ReportKnowledge.ingest({
-    sessionID: "target-isolation-session",
+    sessionID: sessions.private,
     title: "TargetLeakMarker private.example profile authorization finding",
     vulnerabilityClass: "idor",
     severity: "high",
@@ -134,6 +136,7 @@ test("runtime recommendations never expose target-specific local findings", () =
 })
 
 test("keeps equivalent local findings separate across sessions and targets", () => {
+  const sessions = createLearningTestSessions("report-scope", ["alpha", "beta"])
   const common = {
     title: "ScopedFingerprintMarker IDOR profile read",
     vulnerabilityClass: "idor",
@@ -146,12 +149,12 @@ test("keeps equivalent local findings separate across sessions and targets", () 
 
   const first = ReportKnowledge.ingest({
     ...common,
-    sessionID: "target-session-alpha",
+    sessionID: sessions.alpha,
     targetPattern: "alpha.example",
   })
   const second = ReportKnowledge.ingest({
     ...common,
-    sessionID: "target-session-beta",
+    sessionID: sessions.beta,
     targetPattern: "beta.example",
   })
 
