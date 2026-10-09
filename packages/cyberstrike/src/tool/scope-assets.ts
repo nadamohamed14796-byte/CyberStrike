@@ -199,7 +199,7 @@ function matchIdentifier(target: string, record: ScopeAssetRecord): { matched: b
   }
   // Non-web identifiers (mobile app IDs, repositories, cloud resource IDs, etc.)
   // use exact identity matching; never reduce them to their URL hostname.
-  const normalizeIdentity = (value: string) => value.trim().replace(/\\/$/, "").toLowerCase()
+  const normalizeIdentity = (value: string) => value.trim().replace(/\/$/, "").toLowerCase()
   const candidate = normalizeIdentity(target)
   for (const raw of patterns) {
     if (normalizeIdentity(raw) === candidate) return { matched: true, pattern: raw }
