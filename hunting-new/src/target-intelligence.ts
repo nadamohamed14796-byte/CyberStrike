@@ -9,7 +9,7 @@ import type { ApiSource } from "./api-diff"
 export interface ParameterCandidate {
   id: string
   name: string
-  location: "path" | "query" | "body"
+  location: "path" | "query" | "body" | "header"
   endpoint: string
   requestIds: string[]
   sources: Array<"observed" | "js" | "tool">
