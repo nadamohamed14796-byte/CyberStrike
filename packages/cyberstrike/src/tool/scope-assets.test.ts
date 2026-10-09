@@ -54,7 +54,9 @@ describe("scope asset inventory import and evaluation", () => {
   })
 
   test("matches non-web asset identifiers by exact identity only", () => {
-    const assets = parseScopeAssetCSV(csv)\n    expect(ScopeAssets.evaluate("com.example.mobile", assets).matched).toBe(true)\n    expect(ScopeAssets.evaluate("https://play.google.com/store/apps/details?id=com.example.mobile", assets).matched).toBe(false)
+    const assets = parseScopeAssetCSV(csv)
+    expect(ScopeAssets.evaluate("com.example.mobile", assets).matched).toBe(true)
+    expect(ScopeAssets.evaluate("https://play.google.com/store/apps/details?id=com.example.mobile", assets).matched).toBe(false)
   })
 
   test("rejects malformed CSV with missing required columns", () => {
