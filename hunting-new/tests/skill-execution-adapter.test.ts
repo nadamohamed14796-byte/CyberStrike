@@ -24,10 +24,10 @@ describe("configured skill agents", () => {
   test("uses the skill-configured agent after explicit overrides are absent", () => {
     const result = buildSkillExecutionInvocation({
       taskId: "task-3", target: "example.test", role: "primary-hunter", primarySkill: "authorization",
-      recommendedAgent: "web-application", resolvedSkills: ["authorization"], strategyHints: [],
+      recommendedAgent: "configured-agent", resolvedSkills: ["authorization"], strategyHints: [],
       signal: "object_identifier_detected", signalConfidence: 0.9, reason: "configured skill agent",
     })
-    expect(result.agent).toBe("web-application")
+    expect(result.agent).toBe("configured-agent")
   })
 
   test("explicit role mapping still beats configured skill agent", () => {
@@ -36,7 +36,7 @@ describe("configured skill agents", () => {
       recommendedAgent: "configured-agent", resolvedSkills: ["authorization"], strategyHints: [],
       signal: "object_identifier_detected", signalConfidence: 0.9, reason: "override precedence",
     }, { agentByRole: { "primary-hunter": "role-agent" } })
-    expect(result.agent).toBe("configured-agent")
+    expect(result.agent).toBe("role-agent")
   })
 })
 
