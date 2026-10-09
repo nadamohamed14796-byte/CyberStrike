@@ -12,6 +12,7 @@ import { Vulnerability } from "../session/vulnerability"
 import { TargetMemory } from "../session/target-memory"
 import { Instance } from "../project/instance"
 import { TargetWorkspace } from "./target-workspace"
+import path from "node:path"
 
 const description = `Get the bounded web-application context for this session — scoped to the endpoint you are testing, so it stays small no matter how large the session grows.
 
@@ -118,6 +119,81 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
         content: m.content,
         last_seen: m.time.updated,
       })),
+    }
+
+    // Cross-session target intelligence: bounded retrieval from the target-wide
+    // graph, not a dump of the entire request/session history.
+    const targetInput = currentReq ? requestURL(currentReq) : currentReq?.host
+    if (targetInput) {
+      try {
+        const identity = TargetWorkspace.paths(targetInput).identity
+        const knowledgeTarget = identity.replace(/^https?:\/\//i, "").split("/")[0]
+        const root = process.env.HUNT_ROOT ?? path.resolve(process.cwd(), "hunting-new")
+        const { loadTargetIntelligence } = await import("../../../../hunting-new/src/target-intelligence")
+        const intelligence = await loadTargetIntelligence(root, knowledgeTarget)
+        const currentHost = currentReq?.host?.toLowerCase()
+        const relatedRequests = intelligence.requests
+          .filter((request) => !currentHost || request.host?.toLowerCase() === currentHost || request.url.toLowerCase().includes(currentHost))
+          .slice(-20)
+        const relatedAssetIds = new Set(
+          intelligence.edges
+            .filter((edge) => relatedRequests.some((request) => request.id === edge.to || request.id === edge.from))
+            .flatMap((edge) => [edge.from, edge.to]),
+        )
+        context.target_knowledge = {
+          target: intelligence.target,
+          updated_at: intelligence.updatedAt,
+          counts: {
+            hosts: new Set([
+              ...intelligence.requests.map((request) => request.host).filter(Boolean),
+              ...intelligence.jsAssets.map((asset) => {
+                try { return new URL(asset.url).hostname } catch { return undefined }
+              }).filter(Boolean),
+            ]).size,
+            requests: intelligence.requests.length,
+            javascript_assets: intelligence.jsAssets.length,
+            functions: intelligence.functions.length,
+            parameters: intelligence.parameters.length,
+            relationships: intelligence.edges.length + intelligence.assetRelations.length,
+          },
+          related_requests: relatedRequests.map((request) => ({
+            id: request.id,
+            method: request.method,
+            host: request.host,
+            path: request.path,
+            account: request.accountLabel ?? request.credentialId ?? "unknown",
+            observed_at: request.observedAt,
+            header_names: request.headerNames ?? [],
+            cookie_names: request.cookieNames ?? [],
+          })),
+          javascript_assets: intelligence.jsAssets
+            .filter((asset) => !currentHost || relatedAssetIds.has(asset.id) || asset.url.toLowerCase().includes(currentHost))
+            .slice(-12)
+            .map((asset) => ({ id: asset.id, url: asset.url, page_url: asset.pageUrl })),
+          functions: intelligence.functions
+            .filter((fn) => !currentHost || relatedAssetIds.has(fn.id) || (fn.assetId && relatedAssetIds.has(fn.assetId)))
+            .slice(-24)
+            .map((fn) => ({ id: fn.id, name: fn.name, asset_id: fn.assetId, source_location: fn.sourceLocation })),
+          parameters: intelligence.parameters
+            .filter((parameter) => relatedRequests.some((request) => parameter.requestIds.includes(request.id)))
+            .slice(-30)
+            .map((parameter) => ({ name: parameter.name, location: parameter.location, endpoint: parameter.endpoint, confidence: parameter.confidence, sources: parameter.sources })),
+          asset_relations: intelligence.assetRelations.slice(-20).map((relation) => ({
+            from: relation.fromTarget,
+            host: relation.toHost,
+            kind: relation.kind,
+            scope: relation.scope,
+            confidence: relation.confidence,
+            source: relation.source,
+          })),
+          relationship_edges: intelligence.edges
+            .filter((edge) => relatedAssetIds.has(edge.from) || relatedAssetIds.has(edge.to))
+            .slice(-30)
+            .map((edge) => ({ from: edge.from, to: edge.to, kind: edge.kind, evidence: edge.evidence, confidence: edge.confidence })),
+        }
+      } catch {
+        context.target_knowledge = { available: false, reason: "Target-wide knowledge is not initialized for this scope yet." }
+      }
     }
 
     // Persistent target lessons are advisory, bounded memory from earlier sessions.
