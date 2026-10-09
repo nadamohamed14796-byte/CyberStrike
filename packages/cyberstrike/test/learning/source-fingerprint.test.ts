@@ -5,7 +5,7 @@ test("normalizes URL scheme and host while stripping fragments", () => {
   const first = sourceFingerprints("HTTPS://Research.Example/CaseSensitive/Report?id=AbC#section")
   const second = sourceFingerprints("https://research.example/CaseSensitive/Report?id=AbC#other")
 
-  expect(first[0]).toBe("url:https://research.example/CaseSensitive/Report?id=AbC")
+  expect(first[0]).toBe("url:v2:https://research.example/CaseSensitive/Report?id=AbC")
   expect(second[0]).toBe(first[0])
 })
 
