@@ -23,6 +23,17 @@ describe("hackbrowser host scope", () => {
     expect(match("deep.admin.example.com")).toBe(true)
   })
 
+  test("supports suffix shorthand, brace alternatives and wildcard TLDs", () => {
+    const suffixes = makeMatcher(["*.nymhair.co.uk,.com,.uk"])
+    expect(suffixes("shop.nymhair.uk")).toBe(true)
+    expect(suffixes("shop.nymhair.com")).toBe(true)
+    const braces = makeMatcher(["*.wc-frisch.{de,ch}"])
+    expect(braces("shop.wc-frisch.ch")).toBe(true)
+    const anyTld = makeMatcher(["*.natturalabs.*"])
+    expect(anyTld("shop.natturalabs.es")).toBe(true)
+    expect(anyTld("natturalabs.attacker.test")).toBe(false)
+  })
+
   test("rejects URL path and port constraints that a hostname-only matcher cannot enforce", () => {
     expect(normalizeScope("https://example.com/api")).toBe("")
     expect(normalizeScope("https://example.com:8443")).toBe("")
