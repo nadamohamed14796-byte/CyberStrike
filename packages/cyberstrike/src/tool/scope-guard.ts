@@ -141,8 +141,11 @@ function checkMatch(target: string, scope: string): ScopeMatch {
   }
 
   const wildcard = scopeValue.startsWith("*.")
-  const parsedScope = parseTarget(wildcard ? scopeValue.slice(2) : scopeValue)
   const parsedTarget = parseTarget(target)
+  if (wildcard && scopeValue.endsWith(".*") && parsedTarget && wildcardTldMatch(parsedTarget.host, scopeValue)) {
+    return { matches: true, reason: "host matches wildcard-TLD scope " + scopeValue }
+  }
+  const parsedScope = parseTarget(wildcard ? scopeValue.slice(2) : scopeValue)
   if (!parsedTarget) return { matches: false, reason: "target could not be normalized" }
   if (!parsedScope) return { matches: false, reason: "scope item could not be normalized" }
 
@@ -173,11 +176,72 @@ function checkMatch(target: string, scope: string): ScopeMatch {
   }
 }
 
+const COMMON_TWO_LABEL_SUFFIXES = new Set([
+  "co.uk", "org.uk", "ac.uk", "com.au", "net.au", "org.au", "com.br", "com.cn",
+  "com.mx", "co.jp", "co.kr", "com.sg", "com.tr", "com.pl", "co.nz", "com.tw",
+])
+
+function expandBraces(pattern: string): string[] {
+  const match = pattern.match(/\{([^{}]+)\}/)
+  if (!match) return [pattern]
+  return match[1].split(",").map((item) => pattern.replace(match[0], item.trim())).flatMap(expandBraces)
+}
+
+function splitTopLevelComma(value: string): string[] {
+  const parts: string[] = []
+  let current = ""
+  let depth = 0
+  for (const char of value) {
+    if (char === "{") depth++
+    if (char === "}") depth = Math.max(0, depth - 1)
+    if (char === "," && depth === 0) { parts.push(current.trim()); current = "" }
+    else current += char
+  }
+  if (current.trim()) parts.push(current.trim())
+  return parts.filter(Boolean)
+}
+
+function expandScopePattern(raw: string): string[] {
+  const trimmed = raw.trim()
+  const exclusion = trimmed.startsWith("!")
+  const value = (exclusion ? trimmed.slice(1) : trimmed).trim()
+  const parts = splitTopLevelComma(value)
+  let alternatives = parts
+  if (parts.length > 1 && parts[0].startsWith("*.")) {
+    const labels = parts[0].slice(2).split(".")
+    const suffix2 = labels.slice(-2).join(".")
+    const base = "*." + labels.slice(0, COMMON_TWO_LABEL_SUFFIXES.has(suffix2) ? -2 : -1).join(".")
+    const suffixShorthand = (item: string) => {
+      const suffix = item.replace(/^\./, "")
+      return /^[a-z]{2,}(?:\.[a-z]{2,})?$/i.test(suffix) &&
+        (suffix.split(".").length === 1 || COMMON_TWO_LABEL_SUFFIXES.has(suffix.toLowerCase()))
+    }
+    if (parts.slice(1).every(suffixShorthand)) {
+      alternatives = parts.map((item, index) => index === 0 ? item : base + "." + item.replace(/^\./, ""))
+    }
+  }
+  return alternatives.flatMap(expandBraces).map((item) => (exclusion ? "!" : "") + item)
+}
+
+function wildcardTldMatch(host: string, scope: string): boolean {
+  const base = scope.slice(2, -2)
+  if (!base) return false
+  const marker = "." + base + "."
+  const index = host.indexOf(marker)
+  const isRoot = host.startsWith(base + ".")
+  const suffix = isRoot ? host.slice(base.length + 1) : index >= 0 ? host.slice(index + marker.length) : ""
+  const prefix = isRoot ? "" : index >= 0 ? host.slice(0, index) : ""
+  if (!suffix || !/^[a-z0-9-]+(?:\.[a-z0-9-]+)?$/i.test(suffix)) return false
+  const suffixParts = suffix.toLowerCase().split(".")
+  if (suffixParts.length === 2 && !COMMON_TWO_LABEL_SUFFIXES.has(suffixParts.join("."))) return false
+  return !prefix || prefix.split(".").every((label) => /^[a-z0-9-]+$/i.test(label))
+}
+
 function evaluatePatterns(target: string, scopeItems: string[]): ScopeDecision {
   const results: ScopeDecision["results"] = []
   let included = false
   let excluded = false
-  for (const rawScope of scopeItems) {
+  for (const rawScope of scopeItems.flatMap(expandScopePattern)) {
     const trimmed = rawScope.trim()
     const isExclusion = trimmed.startsWith("!")
     const scope = (isExclusion ? trimmed.slice(1) : trimmed).trim().toLowerCase()
