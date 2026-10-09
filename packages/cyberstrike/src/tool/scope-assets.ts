@@ -81,6 +81,7 @@ export function parseScopeAssetCSV(input: string): ScopeAssetRecord[] {
   if (missing.length) throw new Error(`Scope CSV is missing required columns: ${missing.join(", ")}`)
   const indexes = new Map(headers.map((header, index) => [header, index]))
   return rows.slice(1).map((cells, rowIndex) => {
+    if (cells.length !== headers.length) throw new Error(`Scope CSV row ${rowIndex + 2} has ${cells.length} fields; expected ${headers.length}`)
     const raw: Record<string, string> = {}
     for (const header of headers) raw[header] = (cells[indexes.get(header) ?? -1] ?? "").trim()
     const get = (key: typeof REQUIRED_COLUMNS[number]) => (cells[indexes.get(key) ?? -1] ?? "").trim()
