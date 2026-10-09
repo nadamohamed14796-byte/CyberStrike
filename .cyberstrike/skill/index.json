@@ -7901,14 +7901,15 @@
     },
     {
       "name": "bb-methodology",
-      "description": "Use at the START of any bug bounty hunting session, when switching targets, or when feeling lost about what to do next. Master orchestrator that combines the 5-phase non-linear hunting workflow with the critical thinking framework (developer psychology, anomaly detection, What-If experiments). Routes to all other skills based on current hunting phase. Also use when asking 'what should I do next' or 'where am I in the process.",
+      "description": "Compatibility entry point for the unified methodology skill. Use at the start of a bug bounty hunt, when switching targets, or when deciding what to do next. The canonical workflow, scope gate, evidence gate, target-context correlation, and skill routing live in ../SKILL.md. Load security-arsenal separately only when concrete payloads or bypass references are needed.",
       "path": "methodology/bb-methodology",
-      "category": "reconnaissance",
+      "category": "methodology",
       "verified": "unverified",
       "tags": [
         "bug-bounty",
         "security-testing",
-        "methodology"
+        "methodology",
+        "compatibility"
       ],
       "tech_stack": [],
       "cwe_ids": [],
@@ -7974,15 +7975,15 @@
     },
     {
       "name": "bug-bounty",
-      "description": "Complete bug bounty workflow — recon (subdomain enumeration, asset discovery, fingerprinting, HackerOne scope, source code audit), pre-hunt learning (disclosed reports, tech stack research, mind maps, threat modeling), vulnerability hunting (IDOR, SSRF, XSS, auth bypass, CSRF, race conditions, SQLi, XXE, file upload, business logic, GraphQL, HTTP smuggling, cache poisoning, OAuth, timing side-channels, OIDC, SSTI, subdomain takeover, cloud misconfig, ATO chains, agentic AI), LLM/AI security testing (chatbot IDOR, prompt injection, indirect injection, ASCII smuggling, exfil channels, RCE via code tools, system prompt extraction, ASI01-ASI10), A-to-B bug chaining (IDOR→auth bypass, SSRF→cloud metadata, XSS→ATO, open redirect→OAuth theft, S3→bundle→secret→OAuth), bypass tables (SSRF IP bypass, open redirect bypass, file upload bypass), language-specific grep (JS prototype pollution, Python pickle, PHP type juggling, Go template.HTML, Ruby YAML.load, Rust unwrap), and reporting (7-Question Gate, 4 validation gates, human-tone writing, templates by vuln class, CVSS 3.1, PoC generation, always-rejected list, conditional chain table, submission checklist). Use for ANY bug bounty task — starting a new target, doing recon, hunting specific vulns, auditing source code, testing AI features, validating findings, or writing reports. 中文触发词：漏洞赏金、安全测试、渗透测试、漏洞挖掘、信息收集、子域名枚举、XSS测试、SQL注入、SSRF、安全审计、漏洞报告",
+      "description": "Compatibility entry point for bug bounty workflow tasks including recon planning, target research, vulnerability hunting, chaining, validation, AI security assessment, and reporting. Follow the canonical methodology in ../SKILL.md and load focused vulnerability skills only for concrete signals.",
       "path": "methodology/bug-bounty",
-      "category": "reconnaissance",
+      "category": "methodology",
       "verified": "unverified",
       "tags": [
         "bug-bounty",
         "security-testing",
-        "bug",
-        "bounty"
+        "workflow",
+        "compatibility"
       ],
       "tech_stack": [],
       "cwe_ids": [],
@@ -140438,16 +140439,40 @@
       ]
     },
     {
-      "name": "methodology-sec",
-      "description": "Signal-driven security methodology orchestration for scoped research and assessment workflows.",
-      "path": "methodology/methodology-sec",
+      "name": "methodology",
+      "description": "Canonical bug bounty methodology and workflow orchestrator. Use at the start of a hunt, when switching targets, planning assessment, deciding what to do next, validating a suspected issue, chaining findings, or preparing a report. Consolidates bb-methodology, bug-bounty workflow, and methodology-sec routing and evidence gates. Load security-arsenal separately only when concrete payloads, bypasses, or wordlists are needed.",
+      "path": "methodology",
       "category": "methodology",
-      "verified": "official",
+      "verified": "unverified",
       "tags": [
         "methodology",
         "bug-bounty",
         "assessment",
-        "signal-driven"
+        "signal-driven",
+        "validation"
+      ],
+      "tech_stack": [],
+      "cwe_ids": [],
+      "files": [
+        "SKILL.md",
+        "bb-methodology/SKILL.md",
+        "bug-bounty/SKILL.md",
+        "methodology-sec/SKILL.md",
+        "security-arsenal/SKILL.md"
+      ]
+    },
+    {
+      "name": "methodology-sec",
+      "description": "Compatibility router for methodology and assessment-planning requests. The canonical scope, workflow, evidence, and safety gates are defined in ../SKILL.md. Route payload-specific needs to security-arsenal only when indicated.",
+      "path": "methodology/methodology-sec",
+      "category": "methodology",
+      "verified": "unverified",
+      "tags": [
+        "methodology",
+        "bug-bounty",
+        "assessment",
+        "signal-driven",
+        "compatibility"
       ],
       "tech_stack": [],
       "cwe_ids": [],
@@ -159401,7 +159426,7 @@
     },
     {
       "name": "security-arsenal",
-      "description": "Security payloads, bypass tables, wordlists, gf pattern names, always-rejected bug list, and conditionally-valid-with-chain table. Use when you need specific payloads for XSS/SSRF/SQLi/XXE/NoSQLi/command injection/SSTI/IDOR/path-traversal/HTTP smuggling/WebSocket/MFA bypass, or bypass techniques. Submittability and the always-rejected / what-NOT-to-submit decision are owned by triage-validation.",
+      "description": "Reference skill for security-testing payloads, bypass tables, wordlists, gf patterns, and vulnerability-specific test patterns. Load only when a concrete, in-scope hypothesis needs these references. General planning and evidence gates live in ../SKILL.md.",
       "path": "methodology/security-arsenal",
       "category": "web-testing",
       "verified": "unverified",
