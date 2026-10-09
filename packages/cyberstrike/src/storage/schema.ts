@@ -38,3 +38,5 @@ export { ReportKnowledgeTable, ReportKnowledgeEventTable } from "../learning/rep
 export { ToolArtifactTable } from "../tool/artifact.sql"
 export { SignalQueueTable } from "../tool/signal-queue.sql"
 export { ToolRunRecordTable } from "../tool/run-record.sql"
+
+export { ResearchQueueTable } from "../research/queue.sql"

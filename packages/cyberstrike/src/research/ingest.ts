@@ -79,6 +79,21 @@ function linksOf(html: string, base: URL, source: ResearchSource) {
       if (links.size >= MAX_LINKS_PER_PAGE) break
     } catch {}
   }
+
+  // RSS 2.0 uses <link>https://... </link> rather than an HTML href attribute.
+  // Accept feed item links, but never treat the feed's own self-link as a candidate.
+  for (const match of html.matchAll(/<link(?:\s[^>]*)?>\s*(https?:\/\/[^<\s]+)\s*<\/link>/gi)) {
+    const value = normalizeUrl(match[1], base)
+    if (!value) continue
+    try {
+      const url = new URL(value)
+      if (url.protocol !== "https:" || !hostAllowed(url, source)) continue
+      if (url.href === base.href) continue
+      if (/\.(png|jpe?g|gif|svg|webp|css|js|zip|pdf|woff2?|mp4|mp3)$/i.test(url.pathname)) continue
+      links.add(value)
+      if (links.size >= MAX_LINKS_PER_PAGE) break
+    } catch {}
+  }
   return [...links]
 }
 
@@ -128,6 +143,15 @@ function isIndexLikeResearchUrl(url: string) {
 function isResearchCandidate(url: string, source: ResearchSource) {
   const parsed = new URL(url)
   const path = parsed.pathname.toLowerCase()
+  // These editorial sites publish individual posts at varied URL shapes (slugs or dates),
+  // so their article links cannot be identified reliably by generic path keywords alone.
+  if (source.id === "infosec-weekly" || source.id === "securitycipher-bounty-writeups") {
+    if (path === "/" || path === "/bounty-writeups") return false
+    if (/\/(about|contact|privacy|terms|login|register|subscribe|membership|wp-admin|wp-login\.php)(\/|$)/i.test(path)) {
+      return false
+    }
+    return true
+  }
   if (source.id === "medium") {
     const segments = path.split("/").filter(Boolean)
     if (
@@ -263,7 +287,7 @@ async function fetchText(url: string, source: ResearchSource) {
       }
       if (!response.ok) throw new Error("HTTP " + response.status)
       const contentType = response.headers.get("content-type") ?? ""
-      if (!/text\/html|application\/xhtml\+xml|text\/plain|application\/xml/i.test(contentType)) {
+      if (!/text\/html|application\/xhtml\+xml|text\/plain|application\/(?:rss\+xml|atom\+xml|xml)|text\/xml/i.test(contentType)) {
         throw new Error("unsupported content type: " + contentType)
       }
       const length = Number(response.headers.get("content-length") ?? 0)
@@ -469,4 +493,183 @@ export async function syncResearch(input: { sourceID?: string } & ResearchSyncOp
     results.push(...batchResults)
   }
   return results
+}
+
+
+/** Discovery-only worker: persist candidate URLs without doing knowledge extraction. */
+export async function discoverResearch(input: { sourceID?: string; pages?: number; depth?: number } = {}) {
+  const { ResearchQueue } = await import("./queue")
+  const sources = input.sourceID ? RESEARCH_SOURCES.filter((source) => source.id === input.sourceID) : RESEARCH_SOURCES
+  if (!sources.length) throw new Error("unknown research source: " + input.sourceID)
+  const maxPages = Math.max(1, Math.min(input.pages ?? 100, MAX_PAGES))
+  const maxDepth = Math.max(0, Math.min(input.depth ?? 2, MAX_DEPTH))
+  const results: Array<{ source: string; pages: number; candidates: number; added: number; errors: string[] }> = []
+
+  for (const source of sources) {
+    const queue: Array<{ url: string; depth: number }> = []
+    const queued = new Set<string>()
+    const visited = new Set<string>()
+    const errors: string[] = []
+    let pages = 0
+    let candidates = 0
+    let added = 0
+    const add = (value: string, depth: number) => {
+      const url = normalizeUrl(value)
+      if (!url || depth > maxDepth || queued.has(url) || visited.has(url)) return
+      try {
+        const parsed = new URL(url)
+        if (parsed.protocol !== "https:" || !hostAllowed(parsed, source)) return
+        if (depth > 0 && !isResearchCandidate(url, source)) return
+      } catch {
+        return
+      }
+      queued.add(url)
+      queue.push({ url, depth })
+    }
+
+    for (const seed of discoverySeeds(source, maxPages)) add(seed, 0)
+    for (const url of await discoverSitemap(source)) add(url, 1)
+
+    while (queue.length && pages < maxPages) {
+      queue.sort((a, b) => candidateScore(b.url, source) - candidateScore(a.url, source) || a.depth - b.depth)
+      const current = queue.shift()!
+      if (visited.has(current.url)) continue
+      visited.add(current.url)
+      pages++
+      try {
+        const html = await fetchText(current.url, source)
+        const title = titleOf(html, current.url)
+        const text = cleanHtml(html)
+        for (const link of linksOf(html, new URL(current.url), source)) {
+          candidates++
+          add(link, current.depth + 1)
+        }
+
+        if (text.length >= 120 && (current.depth === 0 || isResearchCandidate(current.url, source))) {
+          const relevance = sourceRelevance(current.url, title, text, source)
+          if (relevance.accepted && !isIndexLikeResearchUrl(current.url)) {
+            const row = ResearchQueue.enqueue({
+              sourceID: source.id,
+              sourceURL: current.url,
+              title,
+              payload: {
+                source_name: source.name,
+                source_kind: source.kind,
+                source_trust: source.trust,
+                crawl_depth: current.depth,
+                candidate_score: candidateScore(current.url, source),
+              },
+            })
+            if (row.created) added++
+          }
+        }
+      } catch (error) {
+        if (errors.length < 5) errors.push(current.url + " — " + (error instanceof Error ? error.message : String(error)))
+      }
+      if (current.depth >= maxDepth) continue
+    }
+    results.push({ source: source.id, pages, candidates, added, errors })
+  }
+  return results
+}
+
+/** Learning-only worker: claim persisted candidates, extract a lesson, and record a terminal/retry state. */
+export async function learnResearchQueue(input: { limit?: number; workerID?: string } = {}) {
+  const { ResearchQueue } = await import("./queue")
+  const workerID = input.workerID ?? "learn-" + process.pid + "-" + crypto.randomUUID()
+  const limit = Math.max(1, Math.min(input.limit ?? 50, MAX_LIMIT))
+  const result = { worker: workerID, claimed: 0, learned: 0, skipped: 0, failed: 0, errors: [] as string[] }
+
+  for (let i = 0; i < limit; i++) {
+    const item = ResearchQueue.claimNext(workerID)
+    if (!item) break
+    result.claimed++
+    const source = RESEARCH_SOURCES.find((entry) => entry.id === item.source_id)
+    if (!source) {
+      ResearchQueue.complete(item.sequence, workerID, "rejected", "unknown source id")
+      result.skipped++
+      continue
+    }
+    try {
+      const html = await fetchText(item.source_url, source)
+      const text = cleanHtml(html)
+      const title = titleOf(html, item.source_url)
+      if (text.length < 250) {
+        ResearchQueue.complete(item.sequence, workerID, "rejected", "page content too short")
+        result.skipped++
+        continue
+      }
+      const relevance = sourceRelevance(item.source_url, title, text, source)
+      if (!relevance.accepted || isIndexLikeResearchUrl(item.source_url)) {
+        ResearchQueue.complete(item.sequence, workerID, "rejected", "page failed research relevance gate")
+        result.skipped++
+        continue
+      }
+      const vulnerabilityClass = classify(title + " " + text)
+      if (!vulnerabilityClass && source.kind !== "reference" && source.kind !== "academy") {
+        ResearchQueue.complete(item.sequence, workerID, "rejected", "no recognizable security topic")
+        result.skipped++
+        continue
+      }
+
+      const contentFingerprint = createHash("sha256").update(text).digest("hex").slice(0, 40)
+      const lesson = lessonOf(text, vulnerabilityClass)
+      const ingested = ReportKnowledge.ingestExternalDetailed({
+        title,
+        severity: severityOf(title + " " + text),
+        vulnerabilityClass,
+        sourceURL: item.source_url,
+        attackVector: attackVectorOf(text),
+        impact: impactOf(text),
+        lesson,
+        sourceTrust: source.trust,
+        tags: [source.id, source.kind].concat(vulnerabilityClass ? [vulnerabilityClass] : []),
+        metadata: {
+          research_source: source.id,
+          research_source_name: source.name,
+          source_trust: source.trust,
+          content_fingerprint: contentFingerprint,
+          candidate_score: item.payload.candidate_score ?? 0,
+          crawl_depth: item.payload.crawl_depth ?? 0,
+          excerpt: text.slice(0, 1600),
+          content_length: text.length,
+          queue_id: item.public_id,
+          extracted: {
+            vulnerability_class: vulnerabilityClass ?? null,
+            severity: severityOf(title + " " + text),
+            attack_vector: attackVectorOf(text) ?? null,
+            impact: impactOf(text) ?? null,
+          },
+        },
+      })
+      if (!ingested) throw new Error("knowledge ingestion returned no record")
+      if (ingested.created) {
+        result.learned++
+        await Learning.emit({
+          hook: "after_finding",
+          signal: vulnerabilityClass ? "research:" + vulnerabilityClass : "research:" + source.id,
+          outcome: "observed",
+          evidence: "Public research source: " + item.source_url,
+          metadata: {
+            report_knowledge_id: ingested.id,
+            research_queue_id: item.public_id,
+            source_tool: "research-learn-worker",
+            research_source: source.id,
+            source_url: item.source_url,
+          },
+        })
+      } else {
+        result.skipped++
+      }
+      ResearchQueue.complete(item.sequence, workerID, "learned")
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      ResearchQueue.complete(item.sequence, workerID, item.attempts >= 3 ? "rejected" : "retry", message)
+      result.failed++
+      if (result.errors.length < 5) result.errors.push(item.public_id + " " + item.source_url + " — " + message)
+      // Do not immediately reclaim the same failing item repeatedly in one batch.
+      break
+    }
+  }
+  return result
 }
