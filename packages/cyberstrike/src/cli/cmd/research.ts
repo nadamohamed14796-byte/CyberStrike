@@ -4,6 +4,22 @@ import { ReportKnowledge } from "../../learning/report-knowledge"
 import { RESEARCH_SOURCES } from "../../research/sources"
 import { syncResearch } from "../../research/ingest"
 
+function knowledgeScoreLabel(row: {
+  confidence: number
+  source_kind: string
+  status: string
+  metadata?: Record<string, unknown> | null
+}) {
+  if (row.source_kind === "external_report" && row.status === "observed") {
+    const trust = row.metadata?.source_trust
+    const value = typeof trust === "number" && Number.isFinite(trust)
+      ? String(Math.max(0, Math.min(100, Math.round(trust)))) + "%"
+      : "unknown"
+    return "source-trust=" + value + " (unverified)"
+  }
+  return "confidence=" + row.confidence + "%"
+}
+
 export const ResearchCommand = cmd({
   command: "research",
   describe: "sync public security research into report knowledge",
@@ -90,8 +106,8 @@ export const ResearchCommand = cmd({
           const rows = ReportKnowledge.search({ query: args.query, limit: args.limit })
           for (const row of rows)
             console.log(
-              String(row.confidence) +
-                "% " +
+              knowledgeScoreLabel(row) +
+                " " +
                 (row.vulnerability_class ?? "unknown") +
                 " — " +
                 row.title +
@@ -102,7 +118,7 @@ export const ResearchCommand = cmd({
       })
       .command({
         command: "recommend <query>",
-        describe: "show high-confidence learned research relevant to a query",
+        describe: "show relevant research references; public imports are unverified until independently validated",
         builder: (yargs) =>
           yargs
             .positional("query", { type: "string", demandOption: true })
@@ -118,8 +134,8 @@ export const ResearchCommand = cmd({
           })
           for (const row of rows) {
             console.log(
-              String(row.confidence) +
-                "% " +
+              knowledgeScoreLabel(row) +
+                " " +
                 (row.vulnerability_class ?? "unknown") +
                 " — " +
                 row.title +
