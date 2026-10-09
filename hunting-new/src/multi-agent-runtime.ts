@@ -25,6 +25,7 @@ import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool
 import { ensureAttemptEvidence } from "./evidence-store"
 import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
+import { loadPolicies } from "./policy"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -217,7 +218,8 @@ export async function prepareAgentTaskValidation(
     createdAt:new Date().toISOString(),
   }
   if(!existing) await upsertHypothesis(root,plan.target,hypothesis)
-  const ledger=await PersistentAttemptLedger.create(root,plan.target,{maxAttempts:20,minimumAttempts:20,stopOnConfirmation:false,stopOnRejection:false})
+  const policies=await loadPolicies(root)
+  const ledger=await PersistentAttemptLedger.create(root,plan.target,{maxAttempts:policies.validation.default_attempt_budget,minimumAttempts:0,stopOnConfirmation:policies.validation.allow_early_stop,stopOnRejection:policies.validation.allow_early_stop,requireDistinctVariants:true})
   const existingPlanned=ledger.list(hypothesis.id).find(x=>x.state==="planned")
   if(existingPlanned) return {hypothesis,attempt:existingPlanned}
   const used=new Set(ledger.list(hypothesis.id).map(x=>x.strategy+":"+x.variant))
