@@ -76,14 +76,20 @@ export function makeMatcher(scopes: readonly string[]): ScopeMatcher {
   const normalized = scopes.map(normalizeScope).filter(Boolean)
   const includes = normalized.filter((s) => !s.startsWith("!"))
   const excludes = normalized.filter((s) => s.startsWith("!")).map((s) => s.slice(1))
-  const bases = includes.map((s) => s.startsWith("*.") ? s.slice(2) : s)
-  const excludedBases = excludes.map((s) => s.startsWith("*.") ? s.slice(2) : s)
-  if (bases.length === 0) return () => false
+  const toPattern = (value: string) => ({
+    base: value.startsWith("*.") ? value.slice(2) : value,
+    wildcard: value.startsWith("*."),
+  })
+  const includePatterns = includes.map(toPattern)
+  const excludePatterns = excludes.map(toPattern)
+  if (includePatterns.length === 0) return () => false
 
-  const matches = (host: string, patterns: string[]): boolean => {
-    const h = host.toLowerCase().replace(/\.+$/, "").replace(/^\[|\]$/g, "")
-    return patterns.some((base) => h === base || h.endsWith("." + base))
+  const matches = (host: string, patterns: ReturnType<typeof toPattern>[]): boolean => {
+    const h = host.toLowerCase().replace(/\\.+$/, "").replace(/^\\[|\\]$/g, "")
+    return patterns.some(({ base, wildcard }) =>
+      wildcard ? h === base || h.endsWith("." + base) : h === base,
+    )
   }
 
-  return (host: string) => matches(host, bases) && !matches(host, excludedBases)
+  return (host: string) => matches(host, includePatterns) && !matches(host, excludePatterns)
 }
