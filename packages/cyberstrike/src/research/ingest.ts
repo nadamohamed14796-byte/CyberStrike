@@ -3,8 +3,8 @@ import { ReportKnowledge } from "../learning/report-knowledge"
 import { Learning } from "../learning/learning"
 import { RESEARCH_SOURCES, type ResearchSource } from "./sources"
 import { discoverySeeds, sourceDocumentPriority } from "./adapters"
+import { fetchResearchText as fetchText } from "./safe-fetch"
 
-const MAX_DOCUMENT_BYTES = 1_500_000
 const MAX_LINKS_PER_PAGE = 160
 const MAX_CANDIDATE_SCORE = 100
 const DEFAULT_LIMIT = 50
@@ -13,8 +13,6 @@ const DEFAULT_PAGES = 250
 const MAX_PAGES = 1000
 const DEFAULT_DEPTH = 2
 const MAX_DEPTH = 4
-const REQUEST_TIMEOUT_MS = 20_000
-const MAX_RETRIES = 2
 
 function hostAllowed(url: URL, source: ResearchSource) {
   return source.hosts.some((host) => url.hostname === host || url.hostname.endsWith("." + host))
@@ -240,45 +238,6 @@ export function candidateScore(url: string, source: ResearchSource) {
   if (source.kind === "reference" && /payload|cheat|technique|book|skill/.test(path)) score += 20
   score += sourceDocumentPriority(source, parsed.toString())
   return Math.min(MAX_CANDIDATE_SCORE, score)
-}
-
-async function fetchText(url: string, source: ResearchSource) {
-  const parsed = new URL(url)
-  if (!hostAllowed(parsed, source)) throw new Error("blocked research host: " + parsed.hostname)
-
-  let lastError: unknown
-  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
-    try {
-      const response = await fetch(parsed, {
-        signal: controller.signal,
-        headers: {
-          accept: "text/html,application/xhtml+xml,text/plain,application/xml;q=0.9,*/*;q=0.8",
-          "user-agent": "CyberStrike-Research/2.0 (+public-security-research)",
-        },
-      })
-      if (response.status === 429 || response.status >= 500) {
-        throw new Error("HTTP " + response.status)
-      }
-      if (!response.ok) throw new Error("HTTP " + response.status)
-      const contentType = response.headers.get("content-type") ?? ""
-      if (!/text\/html|application\/xhtml\+xml|text\/plain|application\/xml/i.test(contentType)) {
-        throw new Error("unsupported content type: " + contentType)
-      }
-      const length = Number(response.headers.get("content-length") ?? 0)
-      if (length > MAX_DOCUMENT_BYTES) throw new Error("research document too large")
-      const html = await response.text()
-      if (new TextEncoder().encode(html).byteLength > MAX_DOCUMENT_BYTES) throw new Error("research document too large")
-      return html
-    } catch (error) {
-      lastError = error
-      if (attempt < MAX_RETRIES) await Bun.sleep(500 * 2 ** attempt)
-    } finally {
-      clearTimeout(timer)
-    }
-  }
-  throw lastError instanceof Error ? lastError : new Error(String(lastError))
 }
 
 async function discoverSitemap(source: ResearchSource) {
