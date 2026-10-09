@@ -11,24 +11,57 @@ export namespace ReportKnowledge {
     return value?.trim().toLowerCase().replace(/\s+/g, " ") || ""
   }
 
-  function fingerprint(input: {
+  type FingerprintInput = {
+    sessionID?: string
     title: string
     vulnerabilityClass?: string
     cweID?: string
     endpoint?: string
     sourceURL?: string
-  }) {
-    if (input.sourceURL) return sourceFingerprints(input.sourceURL)[0]
+  }
+
+  function legacyFingerprint(input: FingerprintInput) {
     return [input.vulnerabilityClass, input.cweID, input.endpoint, input.title].map(normalize).filter(Boolean).join("|")
   }
 
-  function fingerprintCondition(sourceURL: string | undefined, key: string) {
-    // Match both the case-preserving key and the legacy lowercased key so
-    // existing databases are reused without a destructive migration.
-    const keys = sourceURL ? sourceFingerprints(sourceURL) : [key]
+  function fingerprint(input: FingerprintInput) {
+    if (input.sourceURL) return sourceFingerprints(input.sourceURL)[0]
+    const legacy = legacyFingerprint(input)
+    // Findings without a public source URL are target/session-specific. Scope
+    // their identity to the owning session to stop identical endpoints/titles
+    // from different targets being merged into one row.
+    return input.sessionID ? "scope:" + normalize(input.sessionID) + "|" + legacy : legacy
+  }
+
+  function fingerprintCondition(input: FingerprintInput, key: string) {
+    const keys = input.sourceURL
+      ? sourceFingerprints(input.sourceURL)
+      : Array.from(new Set([key, legacyFingerprint(input)]))
     return keys.length > 1
       ? or(...keys.map((value) => eq(ReportKnowledgeTable.fingerprint, value)))!
       : eq(ReportKnowledgeTable.fingerprint, keys[0])
+  }
+
+  function findFingerprintMatch(
+    rows: (typeof ReportKnowledgeTable.$inferSelect)[],
+    input: FingerprintInput,
+    key: string,
+  ) {
+    const exact = rows.find((row) => row.fingerprint === key)
+    if (exact) return exact
+
+    if (input.sourceURL) {
+      return rows.find((row) => matchesSourceURLFingerprint(row.source_url, key))
+    }
+
+    const legacy = legacyFingerprint(input)
+    // Legacy local records are reusable only inside the same session scope.
+    // A previously merged row from another target must not absorb this finding.
+    return rows.find(
+      (row) =>
+        row.fingerprint === legacy &&
+        (row.session_id ?? undefined) === input.sessionID,
+    )
   }
 
   function confidence(row: typeof ReportKnowledgeTable.$inferSelect, outcome?: Outcome) {
@@ -69,11 +102,9 @@ export namespace ReportKnowledge {
         const matches = db
           .select()
           .from(ReportKnowledgeTable)
-          .where(fingerprintCondition(input.sourceURL, key))
+          .where(fingerprintCondition(input, key))
           .all()
-        const existing =
-          matches.find((row) => row.fingerprint === key) ??
-          matches.find((row) => matchesSourceURLFingerprint(row.source_url, key))
+        const existing = findFingerprintMatch(matches, input, key)
         if (existing) {
           db.update(ReportKnowledgeTable)
             .set({
@@ -173,11 +204,9 @@ export namespace ReportKnowledge {
         const matches = db
           .select()
           .from(ReportKnowledgeTable)
-          .where(fingerprintCondition(input.sourceURL, key))
+          .where(fingerprintCondition(input, key))
           .all()
-        const existing =
-          matches.find((row) => row.fingerprint === key) ??
-          matches.find((row) => matchesSourceURLFingerprint(row.source_url, key))
+        const existing = findFingerprintMatch(matches, input, key)
 
         if (existing) {
           const now = Date.now()
