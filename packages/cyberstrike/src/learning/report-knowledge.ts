@@ -52,9 +52,12 @@ export namespace ReportKnowledge {
     key: string,
   ) {
     const exact = rows.find((row) => row.fingerprint === key)
-    if (exact) return exact
+    if (exact && (!input.sourceURL || matchesSourceURLFingerprint(exact.source_url, key))) return exact
 
     if (input.sourceURL) {
+      // Even when a legacy lowercase fingerprint happens to equal the incoming
+      // URL text, only reuse it when the original stored URL canonicalizes to
+      // the same case-preserving v2 identity.
       return rows.find((row) => matchesSourceURLFingerprint(row.source_url, key))
     }
 
