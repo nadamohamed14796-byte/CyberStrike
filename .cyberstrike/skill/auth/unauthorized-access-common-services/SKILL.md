@@ -10,11 +10,11 @@ description: >-
 
 ## 0. RELATED ROUTING
 
-- [ssrf-server-side-request-forgery](../ssrf-server-side-request-forgery/SKILL.md) when these services are reachable via SSRF (e.g., SSRF → Redis)
-- [jndi-injection](../jndi-injection/SKILL.md) when H2 Console or similar accepts JNDI connection strings
-- [deserialization-insecure](../deserialization-insecure/SKILL.md) when RMI Registry or T3 protocol is exposed
-- [network-protocol-attacks](../network-protocol-attacks/SKILL.md) for layer 2/3 attacks during service enumeration
-- [reverse-shell-techniques](../reverse-shell-techniques/SKILL.md) for shell payloads after gaining command execution
+- [ssrf-server-side-request-forgery](../../ssrf/ssrf-server-side-request-forgery/SKILL.md) when these services are reachable via SSRF (e.g., SSRF → Redis)
+- [jndi-injection](../../command-injection/jndi-injection/SKILL.md) when H2 Console or similar accepts JNDI connection strings
+- [deserialization-insecure](../../deserialization/deserialization-insecure/SKILL.md) when RMI Registry or T3 protocol is exposed
+- [network-protocol-attacks](../../network/network-protocol-attacks/SKILL.md) for layer 2/3 attacks during service enumeration
+- [reverse-shell-techniques](../../rce/reverse-shell-techniques/SKILL.md) for shell payloads after gaining command execution
 
 ### Comprehensive Port Reference
 
@@ -298,7 +298,7 @@ forceString: x=eval
 x: Runtime.getRuntime().exec("id")
 ```
 
-Also see [jndi-injection](../jndi-injection/SKILL.md) for the full JNDI/BeanFactory exploitation flow.
+Also see [jndi-injection](../../command-injection/jndi-injection/SKILL.md) for the full JNDI/BeanFactory exploitation flow.
 
 ### RCE via RUNSCRIPT
 
