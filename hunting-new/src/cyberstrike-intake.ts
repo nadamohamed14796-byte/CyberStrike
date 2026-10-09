@@ -17,6 +17,8 @@ export interface CyberStrikeIntakeRecord{
     path?:string
     credentialId?:string
     accountLabel?:string
+    headerNames?:string[]
+    cookieNames?:string[]
     observedAt?:number
   }
   response?:{
