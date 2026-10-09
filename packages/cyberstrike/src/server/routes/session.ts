@@ -18,6 +18,7 @@ import { Request } from "../../session/request"
 import { Observation } from "../../session/observation"
 import { CoverageNote } from "../../session/coverage-note"
 import { Normalize } from "../../session/normalize"
+import type { ParamSlot } from "../../session/normalize/types"
 import { IngestSummary } from "../../session/ingest-summary"
 import { IngestQueue } from "../../session/ingest-queue"
 import { WebCredential } from "../../session/web/web-credential"
@@ -403,6 +404,7 @@ async function feedHuntingLayerFromRequest(input:{
   jsAssetIds?:string[]
   functionIds?:string[]
   pageUrl?:string
+  observedParams?:ParamSlot[]
   rawRequest?:string
 }):Promise<void>{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
@@ -413,6 +415,7 @@ async function feedHuntingLayerFromRequest(input:{
     await ingestCyberStrikeRequest(root,{
       ...input,
       request:{ ...input.request, ...headerMetadata },
+      observedParams: input.observedParams,
     })
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
       const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
@@ -1526,6 +1529,7 @@ export const SessionRoutes = lazy(() =>
                     bodyHash: normalized.bodyHash,
                     observedAt: req.time.created,
                   } : undefined,
+                  observedParams: normalized.observedParams,
                   rawRequest: body.text,
                 })
 
@@ -1561,6 +1565,7 @@ export const SessionRoutes = lazy(() =>
                       observedAt: req.time.created,
                     } : undefined,
                     functionIds: [learnedFunction.id],
+                    observedParams: normalized.observedParams,
                     rawRequest: body.text,
                   })
                 }
