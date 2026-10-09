@@ -30,7 +30,7 @@ export namespace ReferenceLearning {
       const sourceMatch = skill.content.match(/(?:^|\n)Source:\s*(\S+)/i)
       const source = sourceMatch?.[1] ?? skill.author ?? skill.verified ?? "reference"
 
-      Database.use((db) => {
+      Database.transaction((db) => {
         const where = sessionID
           ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skill.name))
           : eq(SkillLearningTable.skill_name, skill.name)
