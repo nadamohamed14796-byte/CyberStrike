@@ -97,7 +97,7 @@ export namespace ReferenceLearning {
       Database.transaction((db) => {
         const where = sessionID
           ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skillName))
-          : eq(SkillLearningTable.skill_name, skillName)
+          : and(isNull(SkillLearningTable.session_id), eq(SkillLearningTable.skill_name, skillName))
 
         const row = db.select().from(SkillLearningTable).where(where).get()
         if (!row) return
