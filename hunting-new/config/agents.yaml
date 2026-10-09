@@ -2,18 +2,140 @@ agents:
   recon:
     runtime: cyberstrike
     role: attack-surface-mapping
+    purpose: >-
+      Discover and correlate authorized assets, applications, services,
+      routes, and externally observable relationships.
+    inputs:
+      - scope_context
+      - target_context
+      - existing_asset_inventory
+    outputs:
+      - discovered_assets
+      - asset_relationships
+      - discovered_services
+      - unresolved_scope_questions
+    constraints:
+      - respect_scope_rules
+      - deduplicate_existing_assets
+      - preserve_evidence_provenance
+      - do_not_assume_scope_from_asset_relationships
+
   javascript:
     runtime: cyberstrike
     role: javascript-intelligence
+    purpose: >-
+      Analyze client-side assets to identify application functionality,
+      route definitions, API references, security-relevant code paths,
+      and relationships to observed network traffic.
+    inputs:
+      - target_context
+      - javascript_assets
+      - source_maps
+      - correlated_http_observations
+    outputs:
+      - application_features
+      - route_references
+      - api_references
+      - code_to_request_relationships
+      - security_hypotheses
+    constraints:
+      - correlate_duplicate_bundles
+      - distinguish_static_indicators_from_verified_behavior
+      - preserve_source_locations
+      - do_not_report_unverified_patterns_as_findings
+
   api:
     runtime: cyberstrike
     role: api-intelligence
+    purpose: >-
+      Map API operations, parameters, request-response behavior,
+      application state transitions, and relationships between
+      API operations and business workflows.
+    inputs:
+      - target_context
+      - discovered_routes
+      - correlated_http_observations
+      - application_feature_map
+    outputs:
+      - api_operation_inventory
+      - parameter_relationships
+      - request_response_correlations
+      - state_transition_observations
+      - security_hypotheses
+    constraints:
+      - deduplicate_equivalent_operations
+      - preserve_http_method_and_route_context
+      - distinguish_observed_behavior_from_inference
+      - respect_scope_and_rate_limits
+
   authorization:
     runtime: cyberstrike
     role: authorization-analysis
+    purpose: >-
+      Evaluate evidence-backed authentication, object-level authorization,
+      function-level authorization, tenant isolation, and role-boundary
+      hypotheses using explicitly authorized test identities.
+    inputs:
+      - target_context
+      - api_operation_inventory
+      - identity_and_role_context
+      - object_relationships
+      - authorization_hypotheses
+    outputs:
+      - authorization_test_results
+      - verified_access_control_observations
+      - rejected_hypotheses
+      - unresolved_authorization_questions
+    constraints:
+      - require_authorized_test_accounts
+      - minimize_data_access
+      - require_reproducible_evidence
+      - do_not_infer_impact_from_identifier_presence_alone
+
   verifier:
     runtime: cyberstrike
     role: evidence-verification
+    purpose: >-
+      Independently evaluate candidate findings for scope eligibility,
+      reproducibility, security-boundary violations, causal attribution,
+      demonstrated impact, and evidence quality.
+    inputs:
+      - candidate_hypothesis
+      - supporting_evidence
+      - relevant_target_context
+      - scope_decision
+      - test_conditions
+    outputs:
+      - verification_status
+      - evidence_gaps
+      - alternative_explanations
+      - impact_assessment
+      - recommended_next_action
+    constraints:
+      - do_not_treat_scanner_alerts_as_confirmed_findings
+      - distinguish_inconclusive_from_rejected
+      - require_evidence_for_impact_claims
+      - stop_when_sufficient_evidence_is_collected
+
   reporter:
     runtime: cyberstrike
     role: professional-reporting
+    purpose: >-
+      Produce clear, reproducible, evidence-backed vulnerability reports
+      from findings that satisfy the required validation criteria.
+    inputs:
+      - verified_finding
+      - supporting_evidence
+      - affected_component_context
+      - severity_assessment
+      - program_reporting_requirements
+    outputs:
+      - report_draft
+      - reproduction_steps
+      - impact_summary
+      - remediation_guidance
+    constraints:
+      - require_verified_finding_status
+      - preserve_evidence_provenance
+      - do_not_invent_missing_details
+      - distinguish_demonstrated_impact_from_assumptions
