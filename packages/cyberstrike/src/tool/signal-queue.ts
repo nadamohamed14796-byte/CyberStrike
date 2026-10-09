@@ -274,12 +274,15 @@ export namespace SignalQueue {
     })
   }
 
+  // State transitions are conditional at the database boundary so late or
+  // duplicated callbacks cannot overwrite a terminal result or finalize work
+  // that was never claimed by a worker.
   export function complete(id: string) {
     return Database.use((db) =>
       db
         .update(SignalQueueTable)
         .set({ status: "completed", time_updated: Date.now() })
-        .where(eq(SignalQueueTable.id, id))
+        .where(and(eq(SignalQueueTable.id, id), eq(SignalQueueTable.status, "running")))
         .run(),
     )
   }
@@ -289,7 +292,7 @@ export namespace SignalQueue {
       db
         .update(SignalQueueTable)
         .set({ status: "skipped", time_updated: Date.now() })
-        .where(eq(SignalQueueTable.id, id))
+        .where(and(eq(SignalQueueTable.id, id), eq(SignalQueueTable.status, "pending")))
         .run(),
     )
   }
@@ -299,7 +302,7 @@ export namespace SignalQueue {
       db
         .update(SignalQueueTable)
         .set({ status: "failed", time_updated: Date.now() })
-        .where(eq(SignalQueueTable.id, id))
+        .where(and(eq(SignalQueueTable.id, id), eq(SignalQueueTable.status, "running")))
         .run(),
     )
   }
