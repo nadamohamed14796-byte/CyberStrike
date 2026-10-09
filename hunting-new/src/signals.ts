@@ -317,6 +317,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
     const source=requestSourceValue(request)
     if(source!=="js" && source!=="observed")continue
     const methods=apiMethods.get(key) ?? new Map<"js"|"observed",Set<string>>()
+    if(typeof request.method!=="string" || !request.method.trim()) continue
     const values=methods.get(source) ?? new Set<string>()
     values.add(request.method.toUpperCase())
     methods.set(source,values)
