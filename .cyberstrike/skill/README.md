@@ -5,7 +5,7 @@ This directory is the versioned knowledge library used by CyberStrike's skill ro
 ## Start here
 
 1. **Choose the workflow** — use [methodology/SKILL.md](./methodology/SKILL.md) for authorized bug-bounty workflow, target-level context, hypothesis selection, validation, and reporting handoff.
-2. **Choose a router** — use the relevant category router before loading a specialist skill. Examples: [api/api-sec/SKILL.md](./api/api-sec/SKILL.md), [recon/recon-sec/SKILL.md](./recon/recon-sec/SKILL.md), [web/web-sec/SKILL.md](./web/web-sec/SKILL.md), [auth/auth-sec/SKILL.md](./auth/auth-sec/SKILL.md), [cloud/cloud-sec/SKILL.md](./cloud/cloud-sec/SKILL.md) when present.
+2. **Choose a router** — use the relevant category router before loading a specialist skill. Examples: [api/api-sec/SKILL.md](./api/api-sec/SKILL.md), [recon/recon-sec/SKILL.md](./recon/recon-sec/SKILL.md), [web/web-sec/SKILL.md](./web/web-sec/SKILL.md), [auth/auth-sec/SKILL.md](./auth/auth-sec/SKILL.md), [cloud](./cloud/) when present.
 3. **Load only the specialist needed** — follow links from the router and match the skill to observed evidence, technology, and the current hypothesis. Do not load the whole library into every agent's context.
 4. **Validate before reporting** — use the methodology's evidence/false-positive gate and the reporting skill where applicable.
 5. **Feed back outcomes** — [reference-learning/SKILL.md](./reference-learning/SKILL.md) explains how to learn from outcomes without mutating source skill definitions.
