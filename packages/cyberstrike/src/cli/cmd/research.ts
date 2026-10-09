@@ -155,7 +155,7 @@ export const ResearchCommand = cmd({
           console.log("knowledge_total=" + stats.total)
           console.log("external_research=" + stats.external)
           console.log("useful_or_confirmed=" + stats.useful)
-          console.log("rejected_or_disproven=" + stats.rejected)
+          console.log("rejected_disproven_or_duplicate=" + stats.rejected)
         },
       })
       .demandCommand(),
