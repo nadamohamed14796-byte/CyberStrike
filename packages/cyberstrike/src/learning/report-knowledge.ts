@@ -31,7 +31,8 @@ export namespace ReportKnowledge {
     // Findings without a public source URL are local knowledge. Scope identity
     // to the session and/or explicit target pattern so equivalent paths on
     // separate targets cannot be merged into one record.
-    const sessionScope = normalize(input.sessionID)
+    // Session identifiers are case-sensitive keys; do not lowercase them.
+    const sessionScope = input.sessionID?.trim() ?? ""
     const targetScope = normalize(input.targetPattern)
     return sessionScope || targetScope ? "scope:" + sessionScope + "|" + targetScope + "|" + legacy : legacy
   }
