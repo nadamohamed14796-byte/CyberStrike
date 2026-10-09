@@ -74,7 +74,7 @@ test("recommendations rank by query relevance and do not promote low-trust impor
     limit: 10,
   })
 
-  expect(recommendations[0]?.id).toBe(relevant?.id)
+  expect(recommendations[0]?.id).toBe(relevant!.id)
   expect(recommendations.some((row) => row.id === weakMatch?.id)).toBe(true)
   expect(recommendations.some((row) => row.id === lowTrust?.id)).toBe(false)
 })
