@@ -83,3 +83,27 @@ test("recommendations preserve relevance and label low-trust imports as advisory
   expect(advisoryLowTrust?.status).toBe("observed")
   expect(advisoryLowTrust?.metadata?.source_trust).toBe(20)
 })
+
+test("uses one persisted identity for repeated concurrent ingestion attempts", async () => {
+  const input = {
+    title: "ConcurrentDedupMarker IDOR research",
+    severity: "medium",
+    vulnerabilityClass: "idor",
+    sourceURL: "https://research.example/concurrency/ConcurrentDedupMarker?id=ExactCase",
+    sourceTrust: 85,
+    lesson: "Validate the object authorization rule using separate test accounts.",
+  }
+
+  const results = await Promise.all(
+    Array.from({ length: 8 }, () => Promise.resolve().then(() => ReportKnowledge.ingestExternalDetailed(input))),
+  )
+  const successful = results.filter((result): result is NonNullable<typeof result> => result !== null)
+
+  expect(successful).toHaveLength(8)
+  expect(new Set(successful.map((result) => result.id)).size).toBe(1)
+  expect(successful.filter((result) => result.created).length).toBe(1)
+
+  const rows = ReportKnowledge.search({ query: "ConcurrentDedupMarker", limit: 10 })
+  expect(rows).toHaveLength(1)
+  expect(rows[0]?.times_seen).toBe(8)
+})
