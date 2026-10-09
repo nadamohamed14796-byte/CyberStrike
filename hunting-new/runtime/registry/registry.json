@@ -1,0 +1,20 @@
+{
+  "runtime": "cyberstrike",
+  "runtime_package": "packages/cyberstrike",
+  "version": "1.1.16",
+  "adapters": {
+    "session": "cyberstrike-session",
+    "agents": "cyberstrike-agent",
+    "skills": "cyberstrike-skill",
+    "browser": "cyberstrike-browser",
+    "mcp": "cyberstrike-mcp"
+  },
+  "hunting_layer": {
+    "scope": "hunting-new/src/scope.ts",
+    "ledgers": "hunting-new/src/ledger.ts",
+    "signals": "hunting-new/src/signals.ts",
+    "validation": "hunting-new/src/validation.ts",
+    "javascript": "hunting-new/src/js.ts",
+    "findings": "hunting-new/src/findings.ts"
+  }
+}

@@ -1,0 +1,19 @@
+agents:
+  recon:
+    runtime: cyberstrike
+    role: attack-surface-mapping
+  javascript:
+    runtime: cyberstrike
+    role: javascript-intelligence
+  api:
+    runtime: cyberstrike
+    role: api-intelligence
+  authorization:
+    runtime: cyberstrike
+    role: authorization-analysis
+  verifier:
+    runtime: cyberstrike
+    role: evidence-verification
+  reporter:
+    runtime: cyberstrike
+    role: professional-reporting

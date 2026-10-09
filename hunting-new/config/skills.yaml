@@ -1,0 +1,44 @@
+signals:
+  graphql_detected:
+    skills: [graphql]
+  websocket_detected:
+    skills: [websocket]
+  jwt_detected:
+    skills: [jwt]
+  object_identifier_detected:
+    skills: [authorization, idor]
+  tenant_identifier_detected:
+    skills: [authorization, multi_tenant]
+  file_upload_detected:
+    skills: [file_upload]
+  redirect_parameter_detected:
+    skills: [redirect, oauth]
+  waf_signal_detected:
+    skills: [waf-awareness]
+  source_map_detected:
+    skills: [javascript_intelligence]
+  parameter_discovered:
+    skills: [endpoint_discovery, authorization]
+  graphql_and_authorization_anomaly:
+    skills: [graphql, authorization]
+
+skills:
+  authorization:
+    agent: web-application
+    confidence_threshold: 0.70
+    required_signals: [authenticated_endpoint, object_identifier]
+    optional_signals: [multiple_accounts, tenant_identifier]
+    dependencies: [endpoint_discovery]
+    maximum_parallel_tasks: 2
+  javascript_intelligence:
+    agent: proxy-analyzer
+    confidence_threshold: 0.50
+    required_signals: [javascript_asset]
+    dependencies: []
+    maximum_parallel_tasks: 2
+  waf-awareness:
+    agent: web-application
+    confidence_threshold: 0.60
+    required_signals: [waf_signal_detected]
+    dependencies: []
+    maximum_parallel_tasks: 1

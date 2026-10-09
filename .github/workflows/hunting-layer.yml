@@ -1,0 +1,23 @@
+name: hunting-layer
+on:
+  push:
+    branches: ["feat/hunting-intelligence-layer"]
+    paths: ["hunting-new/**"]
+  pull_request:
+    paths: ["hunting-new/**"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.9"
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Test hunting layer
+        working-directory: hunting-new
+        run: bun test
+      - name: Typecheck hunting layer
+        working-directory: hunting-new
+        run: bunx tsc --noEmit

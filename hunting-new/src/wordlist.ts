@@ -1,0 +1,2 @@
+export type WordlistEntry={value:string;source_js:string;source_function?:string;confidence:number;first_seen:string;status:"discovered"|"tested"|"confirmed"|"negative"|"blocked"}
+export function buildWordlist(inputs:{value:string;source_js:string;source_function?:string;confidence:number}[]){const seen=new Set<string>();return inputs.filter(x=>{const value=x.value.trim().replace(/^\//,"");if(!value||seen.has(value))return false;seen.add(value);return true}).map(x=>({...x,value:x.value.trim(),first_seen:new Date().toISOString(),status:"discovered" as const}))}

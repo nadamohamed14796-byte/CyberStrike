@@ -1,0 +1,5 @@
+scope:
+  mode: explicit
+  unknown_target: block
+  exclusions: []
+  rules: []

@@ -1,0 +1,3 @@
+export type ContextBudget={context_budget:number;reserved_reasoning_budget:number;retrieval_budget:number;tool_output_budget:number;agent_context_budget:number}
+export function allocate(budget:ContextBudget,records:number){const available=Math.max(0,budget.agent_context_budget-budget.reserved_reasoning_budget);return Math.min(records,available)}
+export function compactState(state:Record<string,unknown>){return{mission_state:state.mission_state,pending_ledgers:state.pending_ledgers,tested_items:state.tested_items,hypotheses:state.hypotheses,attempts:state.attempts,evidence_ids:state.evidence_ids,scope_decisions:state.scope_decisions,account_contexts:state.account_contexts,js_correlations:state.js_correlations,next_actions:state.next_actions}}
