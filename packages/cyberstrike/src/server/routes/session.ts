@@ -354,6 +354,28 @@ async function getProxyWorkerSession(parentSessionID: string): Promise<string> {
   }
 }
 
+function collectObservedJavaScriptAssets(
+  sessionID: string,
+  pageUrl: string | undefined,
+  requestHost: string,
+): Array<{ id: string; url: string; pageUrl?: string; observedAt: number }> {
+  const assets = new Map<string, { id: string; url: string; pageUrl?: string; observedAt: number }>()
+  for (const request of Request.get(sessionID)) {
+    if (!request.response_content_type || !/(?:javascript|ecmascript)/i.test(request.response_content_type)) continue
+    if (pageUrl ? request.page_url !== pageUrl : request.host?.toLowerCase() !== requestHost.toLowerCase()) continue
+    if (!request.host) continue
+    try {
+      const origin = request.origin ?? ((request.scheme ?? "https") + "://" + request.host + (request.port ? ":" + request.port : ""))
+      const url = new URL(request.canonical_path ?? request.normalized_path, origin)
+      url.hash = ""
+      const assetURL = url.toString()
+      const id = "js_" + Bun.hash(assetURL).toString(16)
+      assets.set(assetURL, { id, url: assetURL, pageUrl: request.page_url, observedAt: request.time.created })
+    } catch {}
+  }
+  return [...assets.values()].slice(-20)
+}
+
 function sanitizeResponseHeaders(headers: Record<string, string>): Record<string, string> {
   const sensitive = /^(?:set-cookie|cookie|authorization|proxy-authorization|www-authenticate|proxy-authenticate|x-api-key|api-key|x-auth-token|x-access-token|x-csrf-token)$/i
   return Object.fromEntries(
@@ -411,6 +433,7 @@ async function feedHuntingLayerFromRequest(input:{
   jsAssetIds?:string[]
   functionIds?:string[]
   pageUrl?:string
+  jsAssets?:Array<{id:string;url:string;pageUrl?:string;observedAt:number}>
   observedParams?:ParamSlot[]
   rawRequest?:string
 }):Promise<void>{
@@ -1519,6 +1542,8 @@ export const SessionRoutes = lazy(() =>
                 await feedHuntingLayerFromRequest({
                   sessionID,
                   target: normalized.site || normalized.host,
+                  pageUrl: req.page_url,
+                  jsAssets: collectObservedJavaScriptAssets(sessionID, req.page_url, normalized.host),
                   request: {
                     id: req.id,
                     method: req.method,
@@ -1554,6 +1579,8 @@ export const SessionRoutes = lazy(() =>
                   void feedHuntingLayerFromRequest({
                     sessionID,
                     target: normalized.site || normalized.host,
+                    pageUrl: req.page_url,
+                    jsAssets: collectObservedJavaScriptAssets(sessionID, req.page_url, normalized.host),
                     request: {
                       id: req.id,
                       method: req.method,
