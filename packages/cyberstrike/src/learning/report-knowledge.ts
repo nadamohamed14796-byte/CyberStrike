@@ -418,12 +418,19 @@ export namespace ReportKnowledge {
       limit: Math.min((input.limit ?? 8) * 3, 100),
     })
     return rows
-      .filter((row) => row.confidence >= 50)
-      .sort((a, b) => {
-        const aScore = a.confidence + Math.min(a.times_useful * 3, 15) + (a.source_kind === "external_report" ? 5 : 0)
-        const bScore = b.confidence + Math.min(b.times_useful * 3, 15) + (b.source_kind === "external_report" ? 5 : 0)
-        return bScore - aScore
+      // Public imports are advisory, not validated findings. Use the source's
+      // explicit trust metadata for those records; use outcome confidence for
+      // locally triaged/validated knowledge and never recommend terminal rejects.
+      .filter((row) => {
+        if (["rejected", "disproven", "duplicate"].includes(row.status)) return false
+        if (row.source_kind === "external_report" && row.status === "observed") {
+          const trust = row.metadata?.source_trust
+          return typeof trust === "number" && Number.isFinite(trust) && trust >= 70
+        }
+        return row.confidence >= 50
       })
+      // search() already ranks by query relevance, then confidence/usefulness.
+      // Do not replace that ordering with a confidence-only sort.
       .slice(0, Math.max(1, Math.min(input.limit ?? 8, 50)))
   }
 }
