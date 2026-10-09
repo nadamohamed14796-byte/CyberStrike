@@ -1,0 +1,112 @@
+import { expect, test } from "bun:test"
+import { fetchResearchText } from "../../src/research/safe-fetch"
+
+const source = {
+  id: "test",
+  name: "Test source",
+  kind: "research" as const,
+  seedUrls: ["https://research.example/"],
+  hosts: ["research.example"],
+  trust: 80,
+}
+
+async function withFetch(implementation: typeof fetch, run: () => Promise<void>) {
+  const original = globalThis.fetch
+  globalThis.fetch = implementation
+  try {
+    await run()
+  } finally {
+    globalThis.fetch = original
+  }
+}
+
+test("blocks a redirect outside the configured HTTPS source hosts", async () => {
+  const requested: string[] = []
+  const redirectModes: RequestRedirect[] = []
+
+  await withFetch(
+    (async (input, init) => {
+      requested.push(new URL(input instanceof Request ? input.url : String(input)).toString())
+      redirectModes.push(init?.redirect ?? "follow")
+      return new Response(null, {
+        status: 302,
+        headers: { location: "http://127.0.0.1:8080/admin" },
+      })
+    }) as typeof fetch,
+    async () => {
+      await expect(fetchResearchText("https://research.example/start", source)).rejects.toThrow(
+        "blocked research redirect",
+      )
+    },
+  )
+
+  expect(requested).toEqual(["https://research.example/start"])
+  expect(redirectModes).toEqual(["manual"])
+})
+
+test("follows same-host HTTPS redirects and returns the bounded response body", async () => {
+  const requested: string[] = []
+  const redirectModes: RequestRedirect[] = []
+
+  await withFetch(
+    (async (input, init) => {
+      const url = new URL(input instanceof Request ? input.url : String(input))
+      requested.push(url.toString())
+      redirectModes.push(init?.redirect ?? "follow")
+      if (url.pathname === "/start") {
+        return new Response(null, { status: 302, headers: { location: "/article" } })
+      }
+      return new Response("A useful public security research article.", {
+        status: 200,
+        headers: { "content-type": "text/html; charset=utf-8" },
+      })
+    }) as typeof fetch,
+    async () => {
+      await expect(fetchResearchText("https://research.example/start", source)).resolves.toBe(
+        "A useful public security research article.",
+      )
+    },
+  )
+
+  expect(requested).toEqual(["https://research.example/start", "https://research.example/article"])
+  expect(redirectModes).toEqual(["manual", "manual"])
+})
+
+test("rejects oversized responses even when Content-Length is absent", async () => {
+  const requested: string[] = []
+
+  await withFetch(
+    (async (input) => {
+      requested.push(new URL(input instanceof Request ? input.url : String(input)).toString())
+      return new Response(new Uint8Array(1_500_001), {
+        status: 200,
+        headers: { "content-type": "text/html" },
+      })
+    }) as typeof fetch,
+    async () => {
+      await expect(fetchResearchText("https://research.example/large", source)).rejects.toThrow(
+        "research document too large",
+      )
+    },
+  )
+
+  expect(requested).toEqual(["https://research.example/large"])
+})
+
+test("rejects an initially out-of-scope URL without making a request", async () => {
+  let requests = 0
+
+  await withFetch(
+    (async () => {
+      requests++
+      return new Response("should not be fetched")
+    }) as typeof fetch,
+    async () => {
+      await expect(fetchResearchText("https://untrusted.example/private", source)).rejects.toThrow(
+        "blocked research host",
+      )
+    },
+  )
+
+  expect(requests).toBe(0)
+})
