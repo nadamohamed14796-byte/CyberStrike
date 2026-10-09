@@ -43,6 +43,9 @@ export namespace ReferenceLearning {
               observations: existing.observations + 1,
               concepts: learned,
               source,
+              // An observed skill with no outcome history should remain neutral,
+              // not be ranked as useless merely because feedback is absent.
+              usefulness: existing.successes + existing.rejections === 0 ? 50 : existing.usefulness,
               category: skill.category,
               tags: skill.tags ?? [],
               last_used_at: now,
@@ -61,6 +64,7 @@ export namespace ReferenceLearning {
               tags: skill.tags ?? [],
               concepts: learned,
               observations: 1,
+              usefulness: 50,
               last_used_at: now,
               time_created: now,
               time_updated: now,
@@ -134,7 +138,9 @@ export namespace ReferenceLearning {
       return Database.use((db) => {
         if (sessionID) {
           const where = and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skillName))
-          return db.select().from(SkillLearningTable).where(where).get()?.usefulness ?? 50
+          const row = db.select().from(SkillLearningTable).where(where).get()
+          if (!row || row.successes + row.rejections === 0) return 50
+          return Math.round((row.successes / (row.successes + row.rejections)) * 100)
         }
 
         // Cross-session score: aggregate actual outcomes instead of reading one arbitrary session row.
