@@ -5,6 +5,7 @@ import { loadMission } from "./mission"
 import { buildAssetRelation } from "./cross-host-graph"
 import type { ParamSlot } from "../../packages/cyberstrike/src/session/normalize/types"
 import { discoverParameters } from "./parameter-discovery"
+import { renderTargetNotes } from "./target-notes"
 
 export interface CyberStrikeIntakeRecord{
   target:string
@@ -63,6 +64,7 @@ export async function ingestCyberStrikeRequest(
     functionIds:input.functionIds,
     parameters,
   })
+  await renderTargetNotes(root,input.target)
 
   if(!mission)return
   const observedAt=input.request.observedAt ?? Date.now()
