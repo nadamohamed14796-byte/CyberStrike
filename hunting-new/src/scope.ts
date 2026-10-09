@@ -1,3 +1,5 @@
+import path from "node:path"
+
 export type ScopeRule={value:string;path?:string;protocols?:string[];ports?:number[];exclude?:boolean}
 export type ScopeDecision={allowed:boolean;normalized:string;reason:string}
 
@@ -68,6 +70,104 @@ function rulePortMatches(target:ParsedTarget,rule:ScopeRule):boolean{
 function rulePathMatches(target:ParsedTarget,rule:ScopeRule):boolean{
   if(!rule.path)return true
   return globMatch(target.path||"/",rule.path)
+}
+
+function scalar(value:string):string{
+  const trimmed=value.trim()
+  if((trimmed.startsWith('"')&&trimmed.endsWith('"'))||(trimmed.startsWith("'")&&trimmed.endsWith("'"))){
+    return trimmed.slice(1,-1)
+  }
+  return trimmed
+}
+
+function scalarList(value:string):string[]{
+  const trimmed=value.trim()
+  if(!trimmed)return []
+  const inner=trimmed.startsWith("[")&&trimmed.endsWith("]")?trimmed.slice(1,-1):trimmed
+  return inner.split(",").map(item=>scalar(item)).filter(Boolean)
+}
+
+/**
+ * Read the deliberately small, explicit list-of-mappings format used by
+ * config/scope.yaml. Unknown targets remain blocked when the list is empty.
+ */
+export async function loadScopeRules(root:string):Promise<ScopeRule[]>{
+  const file=path.join(root,"config","scope.yaml")
+  if(!await Bun.file(file).exists())throw new Error("SCOPE_CONFIG_NOT_FOUND: "+file)
+  const source=await Bun.file(file).text()
+  const rules:ScopeRule[]=[]
+  let section:"rules"|"exclusions"|null=null
+  let sectionIndent=-1
+  let current:ScopeRule|null=null
+
+  const finish=()=>{
+    if(!current)return
+    if(!current.value.trim())throw new Error("SCOPE_RULE_INVALID: each rule must define value")
+    rules.push(current)
+    current=null
+  }
+
+  for(const line of source.split(/\r?\n/)){
+    if(!line.trim()||line.trim().startsWith("#"))continue
+    const header=line.match(/^(\s*)(rules|exclusions):\s*(.*?)\s*$/)
+    if(header){
+      finish()
+      section=header[3]==="[]" ? null : header[2] as "rules"|"exclusions"
+      sectionIndent=header[1].length
+      continue
+    }
+    if(!section)continue
+
+    const indent=line.match(/^\s*/)?.[0].length??0
+    if(indent<=sectionIndent){
+      finish()
+      section=null
+      continue
+    }
+
+    const item=line.match(/^\s*-\s*(.*?)\s*$/)
+    if(item){
+      finish()
+      current={value:"",...(section==="exclusions"?{exclude:true}:{})}
+      if(item[1]){
+        const pair=item[1].match(/^([A-Za-z_-]+):\s*(.*?)\s*$/)
+        if(pair){
+          const key=pair[1]
+          assignRuleField(current,key,pair[2])
+        }else{
+          current.value=scalar(item[1])
+        }
+      }
+      continue
+    }
+
+    if(!current)throw new Error("SCOPE_RULE_INVALID: expected a list item beneath "+section)
+    const pair=line.trim().match(/^([A-Za-z_-]+):\s*(.*?)\s*$/)
+    if(!pair)throw new Error("SCOPE_RULE_INVALID: unsupported rule syntax: "+line.trim())
+    assignRuleField(current,pair[1],pair[2])
+  }
+
+  finish()
+  return rules
+}
+
+function assignRuleField(rule:ScopeRule,key:string,raw:string){
+  if(key==="value")rule.value=scalar(raw)
+  else if(key==="path")rule.path=scalar(raw)
+  else if(key==="protocols")rule.protocols=scalarList(raw)
+  else if(key==="ports"){
+    const ports=scalarList(raw).map(Number)
+    if(ports.some(port=>!Number.isInteger(port)||port<1||port>65535)){
+      throw new Error("SCOPE_RULE_INVALID: ports must be integers between 1 and 65535")
+    }
+    rule.ports=ports
+  }else if(key==="exclude"){
+    const value=scalar(raw).toLowerCase()
+    if(value!=="true"&&value!=="false")throw new Error("SCOPE_RULE_INVALID: exclude must be true or false")
+    rule.exclude=value==="true"
+  }else{
+    throw new Error("SCOPE_RULE_INVALID: unsupported field "+key)
+  }
 }
 
 export function checkScope(target:string,rules:ScopeRule[]):ScopeDecision{

@@ -27,13 +27,24 @@ The layer intentionally does not replace CyberStrike agents, skills, sessions, b
 
 ## Run
 
-From the repository root:
+Before initializing a mission, add only explicitly authorized assets to `hunting-new/config/scope.yaml`. For example, replace the empty `rules: []` with:
 
-`bun run hunting-new/src/cli.ts init example.com`
+```yaml
+  rules:
+    - value: example.com
+      protocols: [https]
+      ports: [443]
+```
+
+From the repository root, the explicit scope policy is checked before a mission can be created:
+
+`bun run hunting-new/src/cli.ts scope https://example.com`
+
+`bun run hunting-new/src/cli.ts init https://example.com`
 
 `bun run hunting-new/src/cli.ts status example.com`
 
-The CLI stores target state under `hunting-new/targets/<target-slug>/`.
+An empty rule list blocks every target. Exclusions override matching allow rules. The CLI stores target state under `hunting-new/targets/<target-slug>/`.
 
 ## Safety
 

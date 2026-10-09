@@ -15,7 +15,7 @@ describe("hunting runtime end-to-end", () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-e2e-"))
     try {
       const target="example.com"
-      await initMission(root,target,[{type:"host",value:target}])
+      await initMission(root,target,[{value:target}])
 
       const request={
         id:"req-1",
