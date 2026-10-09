@@ -60,6 +60,7 @@ import { DialogTimeline } from "./dialog-timeline"
 import { DialogForkFromTimeline } from "./dialog-fork-from-timeline"
 import { DialogSessionRename } from "../../component/dialog-session-rename"
 import { DialogHackbrowserLaunch } from "../../component/dialog-hackbrowser-launch"
+import { TargetWorkspace } from "@/tool/target-workspace"
 import { DialogVulnerability } from "../../component/dialog-vulnerability"
 import { DialogWebContext } from "../../component/dialog-web-context"
 import { DialogMethodology } from "../../component/dialog-methodology"
@@ -327,7 +328,7 @@ export function Session() {
       slash: {
         name: "recon",
       },
-      onSelect: (dialog) => {
+      onSelect: async (dialog) => {
         const current = promptRef.current?.current.input.trim() ?? ""
         const match = current.match(/^\/recon(?:\s+(\S+))?/i)
         const target = match?.[1]?.replace(/[),;]+$/, "")
@@ -370,8 +371,15 @@ export function Session() {
           "",
           "Target: " + targetURL,
         ].join("\n")
-        promptRef.current?.set({ input: mission, parts: [] })
-        setTimeout(() => promptRef.current?.submit(), 0)
+        try {
+          const workspace = await TargetWorkspace.ensure(targetURL, route.sessionID)
+          toast.show({ message: "Target workspace ready: " + workspace.root, variant: "info" })
+          promptRef.current?.set({ input: mission, parts: [] })
+          setTimeout(() => promptRef.current?.submit(), 0)
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Failed to initialize target workspace"
+          toast.show({ message: msg, variant: "error" })
+        }
       },
     },
     {
