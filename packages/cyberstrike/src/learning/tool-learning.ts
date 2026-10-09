@@ -88,6 +88,7 @@ export namespace ToolLearning {
   export function score(tool: string, signal: string, sessionID?: string) {
     try {
       return Database.use((db) => {
+        const key = tool.trim().toLowerCase()
         const normalized = normalizeSignal(signal).signal
         const sessionRows = sessionID
           ? db
@@ -96,7 +97,7 @@ export namespace ToolLearning {
               .where(
                 and(
                   eq(ToolLearningTable.session_id, sessionID),
-                  eq(ToolLearningTable.tool, tool),
+                  eq(ToolLearningTable.tool, key),
                   eq(ToolLearningTable.signal, normalized),
                 ),
               )
@@ -107,7 +108,7 @@ export namespace ToolLearning {
           : db
               .select()
               .from(ToolLearningTable)
-              .where(and(eq(ToolLearningTable.tool, tool), eq(ToolLearningTable.signal, normalized)))
+              .where(and(eq(ToolLearningTable.tool, key), eq(ToolLearningTable.signal, normalized)))
               .all()
         let success = 0
         let reject = 0
