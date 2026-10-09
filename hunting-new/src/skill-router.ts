@@ -81,6 +81,7 @@ export function routeRegisteredSkills(
 
   const selected: SkillSelection[] = []
   for (const metadata of registry.list()) {
+    if (!(metadata.required_context ?? []).every(requirement => contextSatisfied(requirement, signals))) continue
     const matchedSignals = [...new Set(
       signals
         .filter(signal =>

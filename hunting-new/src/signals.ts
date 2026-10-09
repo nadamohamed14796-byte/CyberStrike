@@ -308,7 +308,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
     if(source!=="js" && source!=="observed")continue
     const methods=apiMethods.get(key) ?? new Map<"js"|"observed",Set<string>>()
     const values=methods.get(source) ?? new Set<string>()
-    values.add(request.method.toUpperCase())
+    values.add((request.method ?? "GET").toUpperCase())
     methods.set(source,values)
     apiMethods.set(key,methods)
   }
@@ -336,7 +336,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   if(input.apiSources?.length){
     const observedSources:ApiSource[]=input.requests
       .filter(request=>requestSourceValue(request)==="js" || requestSourceValue(request)==="observed")
-      .map(request=>({endpoint:request.path??request.url,method:(request.method??"GET").toUpperCase(),source:requestSourceValue(request) as "js"|"observed"}))
+      .map(request=>({endpoint:request.url,method:(request.method??"GET").toUpperCase(),source:requestSourceValue(request) as "js"|"observed"}))
     for(const diff of diffApiSources([...(input.apiSources??[]),...observedSources])){
       const separator=diff.indexOf(":")
       const kind=separator>0 ? diff.slice(0,separator) : diff
@@ -350,6 +350,32 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         endpoint,
         metadata:{apiDiff:diff},
       })
+    }
+
+    const normalizeApiEndpoint=(value:string)=>{
+      try {
+        const url=new URL(value)
+        return url.origin.toLowerCase()+url.pathname.replace(/\/$/,"")
+      } catch {
+        return value.trim().replace(/\/$/,"")
+      }
+    }
+    for(const api of input.apiSources.filter(item=>item.source==="swagger")){
+      const apiKey=normalizeApiEndpoint(api.endpoint)
+      const hasJavaScript=input.requests.some(request=>
+        requestSourceValue(request)==="js" &&
+        normalizeApiEndpoint(request.url)===apiKey,
+      )
+      if(!hasJavaScript){
+        emit({
+          signal:"endpoint_discovery",
+          source:"correlation:api-diff",
+          confidence:0.65,
+          target:input.target,
+          endpoint:api.endpoint,
+          metadata:{apiSource:api.source,method:api.method},
+        })
+      }
     }
   }
 

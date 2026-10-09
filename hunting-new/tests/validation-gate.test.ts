@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { validateHypothesis, hasCrossAccountEvidence } from "../src/validation-gate"
+import { validateHypothesis, hasCrossAccountEvidence, hasBehaviorChange } from "../src/validation-gate"
 
 describe("validation gate", () => {
   test("blocks inference-only claims", () => {

@@ -2,7 +2,7 @@ import type { SignalEngine, SkillRule, SkillSelection } from "./signals"
 import { routeSkills, routeRegisteredSkills, type RoutingDecision } from "./skill-router"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
-import type { SkillRegistry, SkillMetadata } from "./skill-registry"
+import { SkillRegistry, type SkillMetadata } from "./skill-registry"
 import { canonicalSignal } from "./canonical-signals"
 
 export type HuntingAgentRole = "primary-hunter" | "validator" | "correlator" | "reviewer"
@@ -19,7 +19,7 @@ export interface AgentTask {
   target: string
   priority: number
   reason: string
-  dependencies: string[]
+  dependencies: HuntingAgentRole[]
   maxParallelTasks: number
   strategyHints: string[]
   resolvedSkills?: string[]

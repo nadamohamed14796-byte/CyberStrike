@@ -4,7 +4,7 @@ import { persistAgentPlan, recoverStaleAgentTasks } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import { signalEngineFromCorrelation, type SignalEngine, type SkillRule } from "./signals"
-import type { LearningEngine } from "./learning-engine"
+import { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
 import { loadTargetIntelligence } from "./target-intelligence"
@@ -15,7 +15,6 @@ import { createValidationPlan } from "./validation-runner"
 import { checkpointPhase } from "./runtime-persistence"
 import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type SkillExecutionInvocation } from "./skill-execution-adapter"
 import { loadLearning } from "./learning-store"
-import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
 import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
 import { loadMission } from "./mission"
@@ -26,6 +25,7 @@ import { ensureAttemptEvidence } from "./evidence-store"
 import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
 import { loadPolicies } from "./policy"
+import { ledgers } from "./ledger"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -517,7 +517,7 @@ export async function executeAndRecordDispatchedTask(
       ? "completed"
       : "running"
   if(terminal){
-    await finishAgentTask(root,plan.target,taskId,taskState)
+    await finishAgentTask(root,plan.target,taskId,taskState==="blocked" ? "blocked" : "completed")
     if(context.endpoint){
       const endpointLedger=ledgers(root,plan.target).endpoint
       const endpointId="endpoint_"+Bun.hash([
