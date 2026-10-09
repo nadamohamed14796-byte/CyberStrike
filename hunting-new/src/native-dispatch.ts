@@ -6,6 +6,7 @@ import { checkpointPhase } from "./runtime-persistence"
 import { coverageGate } from "./ledger"
 import { loadTaskStates } from "./task-state-store"
 import { updateMission } from "./mission"
+import { loadPolicies } from "./policy"
 
 export interface NativeDispatchOptions {
   limit?:number
@@ -28,6 +29,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
     persistedTaskIds:plan.tasks.map(task=>task.id),
     resolvedSkillCount:plan.tasks.reduce((sum,task)=>sum+(task.resolvedSkills?.length??0),0),
   }
+  const policies=await loadPolicies(root)
   const batchLimit=Math.max(1,options.limit??4)
   const batches=[]
   const results=[]
@@ -49,7 +51,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
       const taskResults=[]
       let terminal=false
 
-      for(let attempt=0;attempt<20 && !terminal;attempt++){
+      for(let attempt=0;attempt<policies.validation.default_attempt_budget && !terminal;attempt++){
         try{
           const result=await executeAndRecordDispatchedTask(
             root,
