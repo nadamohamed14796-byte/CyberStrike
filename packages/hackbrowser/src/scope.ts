@@ -7,37 +7,46 @@ const psl = pslDefault as {
   parse(host: string): { domain: string | null; error?: { code: string; message: string } }
 }
 
-// ============================================================
-// Network scope (ARCHITECTURE.md §1.2 — Network Scope)
-//
-// Scope = which hostnames the agent forwards to CyberStrike.
-// Distinct from --exclude (semantic task filter, planner-side).
-//
-// Resolution order at startup:
-//   1. If user passes --scope flag(s), use that list verbatim.
-//   2. Otherwise derive scope from target URL via PSL eTLD+1
-//      and wrap as "*.{base}" wildcard.
-//
-// All matching uses the same predicate: exact match OR endsWith
-// "." + base. Wildcard "*.foo.com" and bare "foo.com" produce
-// equivalent matchers (matching foo.com itself + any subdomain).
-// ============================================================
+// Network scope here is HOSTNAME-only. URL path/port constraints cannot be
+// enforced by this host-only predicate, so reject those patterns instead of
+// silently widening them to the entire host. ScopeGuard handles URL-level
+// path/port checks at the tool layer.
 
 export type ScopeMatcher = (host: string) => boolean
 
 /**
- * Strip protocol, path, query, port, trailing dots; lowercase.
- * Accepts "https://app.test.com:8080/foo?x=1" or bare "app.test.com".
- * Wildcard prefix "*." is preserved.
+ * Normalize a hostname-only scope pattern. A leading ! marks an exclusion.
+ * URL paths and non-default ports are rejected because this matcher receives
+ * hostnames, not full URLs. Empty string means unsupported/invalid pattern.
  */
 export function normalizeScope(input: string): string {
   let s = input.trim().toLowerCase()
   if (!s) return ""
-  s = s.replace(/^https?:\/\//, "")
-  s = s.split(/[/?#]/)[0] ?? ""
-  s = s.replace(/:\d+$/, "")
+  const exclusion = s.startsWith("!")
+  if (exclusion) s = s.slice(1).trim()
+  if (!s) return ""
+
+  if (/^https?:\/\//i.test(s)) {
+    try {
+      const url = new URL(s)
+      if (url.protocol !== "http:" && url.protocol !== "https:") return ""
+      if (url.pathname !== "/" || url.search || url.hash) return ""
+      if (url.port) return ""
+      s = url.hostname.toLowerCase()
+      if (s.startsWith("[") && s.endsWith("]")) s = s.slice(1, -1)
+    } catch {
+      return ""
+    }
+  } else {
+    // CIDR, URL paths, query strings and ports cannot be represented by a
+    // hostname-only matcher. Fail closed rather than truncating the pattern.
+    if (/[/?#]/.test(s)) return ""
+    if ((s.match(/:/g)?.length ?? 0) === 1 && /:\d+$/.test(s)) return ""
+  }
+
   while (s.endsWith(".")) s = s.slice(0, -1)
-  return s
+  if (!s || s === "*" || s.startsWith("*.") && s.slice(2).length === 0) return ""
+  return `${exclusion ? "!" : ""}${s}`
 }
 
 /**
@@ -45,11 +54,10 @@ export function normalizeScope(input: string): string {
  * Examples:
  *   https://test.com         → "*.test.com"
  *   https://app.test.com     → "*.test.com"
- *   https://x.example.com.tr → "*.example.com.tr"  (PSL handles ccTLDs)
+ *   https://x.example.com.tr → "*.example.com.tr" (PSL handles ccTLDs)
  *
  * Falls back to "*.{hostname}" when PSL cannot resolve (e.g. raw IP,
- * localhost, unknown TLD). This keeps the agent functional in test
- * setups while logging a warning is the caller's responsibility.
+ * localhost, unknown TLD). Callers should review the fallback before testing.
  */
 export function deriveScope(targetUrl: string): string {
   const host = new URL(targetUrl).hostname.toLowerCase()
@@ -59,26 +67,23 @@ export function deriveScope(targetUrl: string): string {
 }
 
 /**
- * Build a matcher from one or more scope patterns. The matcher
- * returns true when the host matches ANY pattern (OR semantics).
- *
- *   makeMatcher(["*.test.com"])               → matches test.com + *.test.com
- *   makeMatcher(["app.test.com"])             → same as "*.app.test.com"
- *   makeMatcher(["app.test.com","api.test.com"]) → exact OR
- *
- * Empty input → matcher that rejects everything (safe default).
+ * Build a host matcher from scope patterns. Positive patterns use OR semantics;
+ * any matching !exclusion overrides all inclusions. A wildcard matches its root
+ * and all subdomains, preserving CyberStrike's existing runtime behavior.
+ * Empty/unsupported input rejects everything.
  */
 export function makeMatcher(scopes: readonly string[]): ScopeMatcher {
-  const bases = scopes
-    .map(normalizeScope)
-    .filter((s) => s.length > 0)
-    .map((s) => (s.startsWith("*.") ? s.slice(2) : s))
+  const normalized = scopes.map(normalizeScope).filter(Boolean)
+  const includes = normalized.filter((s) => !s.startsWith("!"))
+  const excludes = normalized.filter((s) => s.startsWith("!")).map((s) => s.slice(1))
+  const bases = includes.map((s) => s.startsWith("*.") ? s.slice(2) : s)
+  const excludedBases = excludes.map((s) => s.startsWith("*.") ? s.slice(2) : s)
   if (bases.length === 0) return () => false
-  return (host: string) => {
-    const h = host.toLowerCase().replace(/\.+$/, "")
-    for (const base of bases) {
-      if (h === base || h.endsWith("." + base)) return true
-    }
-    return false
+
+  const matches = (host: string, patterns: string[]): boolean => {
+    const h = host.toLowerCase().replace(/\.+$/, "").replace(/^\[|\]$/g, "")
+    return patterns.some((base) => h === base || h.endsWith("." + base))
   }
+
+  return (host: string) => matches(host, bases) && !matches(host, excludedBases)
 }
