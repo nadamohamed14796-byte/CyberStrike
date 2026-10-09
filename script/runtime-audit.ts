@@ -145,6 +145,92 @@ function nearestAliases(
   return best?.aliases ?? []
 }
 
+function packageNameAndSubpath(specifier: string) {
+  const parts = specifier.split("/")
+  if (specifier.startsWith("@")) {
+    return { packageName: parts.slice(0, 2).join("/"), subpath: parts.slice(2).join("/") }
+  }
+  return { packageName: parts[0], subpath: parts.slice(1).join("/") }
+}
+
+function exportConditions(value: unknown): string[] {
+  if (typeof value === "string") return [value]
+  if (Array.isArray(value)) return value.flatMap(exportConditions)
+  if (!value || typeof value !== "object") return []
+  const record = value as Record<string, unknown>
+  const priority = ["types", "import", "browser", "node", "require", "default"]
+  return [
+    ...priority.filter((key) => key in record).flatMap((key) => exportConditions(record[key])),
+    ...Object.keys(record)
+      .filter((key) => !priority.includes(key) && !key.startsWith("."))
+      .flatMap((key) => exportConditions(record[key])),
+  ]
+}
+
+function packageExportTargets(packageRoot: string, request: string): string[] {
+  const pkg = readJson(path.posix.join(packageRoot, "package.json"))
+  const exportsValue = pkg?.exports
+  if (exportsValue === undefined) return []
+  if (typeof exportsValue === "string" || Array.isArray(exportsValue)) {
+    return request === "." ? exportConditions(exportsValue) : []
+  }
+  if (!exportsValue || typeof exportsValue !== "object") return []
+
+  const record = exportsValue as Record<string, unknown>
+  const subpathMap = Object.keys(record).some((key) => key.startsWith("."))
+  if (!subpathMap) return request === "." ? exportConditions(record) : []
+  if (request in record) return exportConditions(record[request])
+
+  const patterns = Object.keys(record)
+    .filter((key) => key.includes("*"))
+    .map((key) => {
+      const [prefix, suffix = ""] = key.split("*", 2)
+      return { key, prefix, suffix, score: prefix.length + suffix.length }
+    })
+    .filter(({ prefix, suffix }) => request.startsWith(prefix) && request.endsWith(suffix) && request.length >= prefix.length + suffix.length)
+    .sort((a, b) => b.score - a.score)
+  const selected = patterns[0]
+  if (!selected) return []
+  const capture = request.slice(selected.prefix.length, request.length - selected.suffix.length)
+  return exportConditions(record[selected.key]).map((target) => target.replace(/\*/g, capture))
+}
+
+function resolveWorkspacePackage(packageRoot: string, subpath: string) {
+  const request = subpath ? "./" + subpath : "."
+  for (const target of packageExportTargets(packageRoot, request)) {
+    const resolved = resolveExisting(path.posix.join(packageRoot, target.replace(/^\.\//, "")))
+    if (resolved) return resolved
+  }
+  if (!subpath) {
+    const pkg = readJson(path.posix.join(packageRoot, "package.json"))
+    for (const entry of [pkg?.types, pkg?.typings, pkg?.module, pkg?.main]) {
+      if (typeof entry !== "string") continue
+      const resolved = resolveExisting(path.posix.join(packageRoot, entry.replace(/^\.\//, "")))
+      if (resolved) return resolved
+    }
+  }
+  return resolveExisting(path.posix.join(packageRoot, subpath))
+}
+
+function aliasMatches(sourcePath: string, specifier: string, tsconfigs: Array<{ path: string; aliases: ReturnType<typeof collectAliases> }>) {
+  return nearestAliases(sourcePath, tsconfigs).some(({ pattern }) => {
+    if (pattern.endsWith("/*")) return specifier.startsWith(pattern.slice(0, -1))
+    return specifier === pattern
+  })
+}
+
+/** Only repository-relative, configured-alias, or known workspace-package imports are internal relations. */
+function isRepositorySpecifier(
+  sourcePath: string,
+  specifier: string,
+  packageNames: Map<string, string>,
+  tsconfigs: Array<{ path: string; aliases: ReturnType<typeof collectAliases> }>,
+) {
+  if (specifier.startsWith(".") || specifier.startsWith("/")) return true
+  if (aliasMatches(sourcePath, specifier, tsconfigs)) return true
+  return packageNames.has(packageNameAndSubpath(specifier).packageName)
+}
+
 function resolveSpecifier(
   sourcePath: string,
   specifier: string,
@@ -164,25 +250,18 @@ function resolveSpecifier(
       if (!specifier.startsWith(prefix)) continue
       const capture = specifier.slice(prefix.length)
       const target = alias.target.endsWith("/*") ? alias.target.slice(0, -2) + capture : alias.target
-      return resolveExisting(path.posix.join(alias.base, target))
+      const resolved = resolveExisting(path.posix.join(alias.base, target))
+      if (resolved) return resolved
+    } else if (specifier === pattern) {
+      const resolved = resolveExisting(path.posix.join(alias.base, alias.target))
+      if (resolved) return resolved
     }
-    if (specifier === pattern) return resolveExisting(path.posix.join(alias.base, alias.target))
   }
 
-  let packageName = specifier
-  let subpath = ""
-  if (specifier.startsWith("@")) {
-    const parts = specifier.split("/")
-    packageName = parts.slice(0, 2).join("/")
-    subpath = parts.slice(2).join("/")
-  } else {
-    const parts = specifier.split("/")
-    packageName = parts[0]
-    subpath = parts.slice(1).join("/")
-  }
+  const { packageName, subpath } = packageNameAndSubpath(specifier)
   const packageRoot = packageNames.get(packageName)
   if (!packageRoot) return
-  return resolveExisting(path.posix.join(packageRoot, subpath))
+  return resolveWorkspacePackage(packageRoot, subpath)
 }
 
 function addRelation(
@@ -218,32 +297,37 @@ function parseCodeFile(
 ) {
   const file = ts.createSourceFile(source.path, text, ts.ScriptTarget.Latest, true, tsKind(source.path))
   const visit = (node: ts.Node) => {
+    let kind: Relation["kind"] | undefined
+    let specifier: string | undefined
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
-      addRelation(relations, broken, "import", source, node.moduleSpecifier.text, () =>
-        resolveSpecifier(source.path, node.moduleSpecifier.text, packageNames, tsconfigs),
-      )
+      kind = "import"
+      specifier = node.moduleSpecifier.text
     } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-      addRelation(relations, broken, "export", source, node.moduleSpecifier.text, () =>
-        resolveSpecifier(source.path, node.moduleSpecifier.text, packageNames, tsconfigs),
-      )
+      kind = "export"
+      specifier = node.moduleSpecifier.text
     } else if (ts.isImportEqualsDeclaration(node)) {
       const ref = node.moduleReference
       if (ts.isExternalModuleReference(ref) && ref.expression && ts.isStringLiteral(ref.expression)) {
-        addRelation(relations, broken, "import", source, ref.expression.text, () =>
-          resolveSpecifier(source.path, ref.expression.text, packageNames, tsconfigs),
-        )
+        kind = "import"
+        specifier = ref.expression.text
       }
     } else if (ts.isCallExpression(node) && node.arguments.length === 1 && ts.isStringLiteral(node.arguments[0])) {
       const arg = node.arguments[0].text
       if (node.expression.kind === ts.SyntaxKind.ImportKeyword) {
-        addRelation(relations, broken, "dynamic-import", source, arg, () =>
-          resolveSpecifier(source.path, arg, packageNames, tsconfigs),
-        )
+        kind = "dynamic-import"
+        specifier = arg
       } else if (ts.isIdentifier(node.expression) && node.expression.text === "require") {
-        addRelation(relations, broken, "require", source, arg, () =>
-          resolveSpecifier(source.path, arg, packageNames, tsconfigs),
-        )
+        kind = "require"
+        specifier = arg
       }
+    }
+
+    // Bare imports that are not workspace packages are external dependencies,
+    // not links to repository files, so they must not be reported as broken files.
+    if (kind && specifier && isRepositorySpecifier(source.path, specifier, packageNames, tsconfigs)) {
+      addRelation(relations, broken, kind, source, specifier, () =>
+        resolveSpecifier(source.path, specifier!, packageNames, tsconfigs),
+      )
     }
     ts.forEachChild(node, visit)
   }
