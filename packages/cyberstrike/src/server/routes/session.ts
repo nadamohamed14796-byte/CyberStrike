@@ -354,6 +354,13 @@ async function getProxyWorkerSession(parentSessionID: string): Promise<string> {
   }
 }
 
+function sanitizeResponseHeaders(headers: Record<string, string>): Record<string, string> {
+  const sensitive = /^(?:set-cookie|cookie|authorization|proxy-authorization|www-authenticate|proxy-authenticate|x-api-key|api-key|x-auth-token|x-access-token|x-csrf-token)$/i
+  return Object.fromEntries(
+    Object.entries(headers).map(([name, value]) => [name, sensitive.test(name) ? "[REDACTED]" : value]),
+  )
+}
+
 function extractRequestHeaderMetadata(rawText: string): { headerNames: string[]; cookieNames: string[] } {
   const lines = rawText.split(/\r?\n/)
   const headerLines = lines.slice(1, lines.findIndex((line) => line.trim() === "") < 0 ? undefined : lines.findIndex((line) => line.trim() === ""))
@@ -1524,7 +1531,7 @@ export const SessionRoutes = lazy(() =>
                   response: body.response ? {
                     id: req.id + ":response",
                     status: body.response.status,
-                    headers: body.response.headers,
+                    headers: sanitizeResponseHeaders(body.response.headers),
                     contentType: body.response.headers["content-type"],
                     bodyHash: normalized.bodyHash,
                     observedAt: req.time.created,
@@ -1559,7 +1566,7 @@ export const SessionRoutes = lazy(() =>
                     response: body.response ? {
                       id: req.id + ":response",
                       status: body.response.status,
-                      headers: body.response.headers,
+                      headers: sanitizeResponseHeaders(body.response.headers),
                       contentType: body.response.headers["content-type"],
                       bodyHash: normalized.bodyHash,
                       observedAt: req.time.created,
