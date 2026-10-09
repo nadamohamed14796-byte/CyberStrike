@@ -21,12 +21,12 @@ Use it to decide whether the issue is mainly login mechanics, object-level autho
 ## Skill Map
 
 - [Authentication Bypass](../authbypass-authentication-flaws/SKILL.md): login bypass, password reset, 2FA, enumeration, brute-force protections
-- [IDOR Broken Object Authorization](../idor-broken-object-authorization/SKILL.md): IDOR, BOLA, BFLA, missing object permissions
+- [IDOR Broken Object Authorization](../../idor/idor-broken-object-authorization/SKILL.md): IDOR, BOLA, BFLA, missing object permissions
 - [JWT OAuth Token Attacks](../jwt-oauth-token-attacks/SKILL.md): algorithm confusion, key trust issues, claim abuse, token forgery
-- [OAuth OIDC Misconfiguration](../oauth-oidc-misconfiguration/SKILL.md): redirect URI, state, nonce, PKCE, account binding
-- [CSRF Cross Site Request Forgery](../csrf-cross-site-request-forgery/SKILL.md): CSRF tokens, SameSite, JSON CSRF, login CSRF
-- [CORS Cross Origin Misconfiguration](../cors-cross-origin-misconfiguration/SKILL.md): reflected Origin, credentialed cross-origin reads, allowlist bypass
-- [SAML SSO Assertion Attacks](../saml-sso-assertion-attacks/SKILL.md): assertion wrapping, signature validation, audience, ACS boundaries
+- [OAuth OIDC Misconfiguration](../../oauth/oauth-oidc-misconfiguration/SKILL.md): redirect URI, state, nonce, PKCE, account binding
+- [CSRF Cross Site Request Forgery](../../csrf/csrf-cross-site-request-forgery/SKILL.md): CSRF tokens, SameSite, JSON CSRF, login CSRF
+- [CORS Cross Origin Misconfiguration](../../cors/cors-cross-origin-misconfiguration/SKILL.md): reflected Origin, credentialed cross-origin reads, allowlist bypass
+- [SAML SSO Assertion Attacks](../../saml/saml-sso-assertion-attacks/SKILL.md): assertion wrapping, signature validation, audience, ACS boundaries
 
 ## Recommended Flow
 
@@ -37,7 +37,7 @@ Use it to decide whether the issue is mainly login mechanics, object-level autho
 
 ## Related Categories
 
-- [api-sec](../api-sec/SKILL.md)
+- [api-sec](../../api/api-sec/SKILL.md)
 - Default credentials, username variants, wordlist sizing, and port focus are consolidated in [authbypass-authentication-flaws](../authbypass-authentication-flaws/SKILL.md)
 
 ---
