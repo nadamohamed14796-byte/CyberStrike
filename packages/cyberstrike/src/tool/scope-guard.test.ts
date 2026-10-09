@@ -19,6 +19,7 @@ describe("ScopeGuard", () => {
     expect(ScopeGuard.check("https://shop.wc-frisch.ch", ["*.wc-frisch.{de,ch}"]).inScope).toBe(true)
     expect(ScopeGuard.check("https://shop.natturalabs.co.uk", ["*.natturalabs.*"]).inScope).toBe(true)
     expect(ScopeGuard.check("https://natturalabs.attacker.test", ["*.natturalabs.*"]).inScope).toBe(false)
+    expect(ScopeGuard.check("https://shop.natturalabs.es:8443", ["*.natturalabs.*"]).inScope).toBe(false)
   })
 
   test("respects URL scheme, port, and path boundaries", () => {
