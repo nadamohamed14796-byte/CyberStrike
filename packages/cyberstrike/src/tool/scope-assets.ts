@@ -107,15 +107,25 @@ export function parseScopeAssetCSV(input: string): ScopeAssetRecord[] {
 }
 
 function splitAlternatives(identifier: string): string[] {
-  const parts = identifier.split(/,(?![^{}]*})/).map((part) => part.trim()).filter(Boolean)
-  if (parts.length < 2) return parts
-  const first = parts[0]
-  if (!first.startsWith("*.")) return parts
+  const parts: string[] = []
+  let current = ""
+  let braceDepth = 0
+  for (const char of identifier) {
+    if (char === "{") braceDepth++
+    if (char === "}") braceDepth = Math.max(0, braceDepth - 1)
+    if (char === "," && braceDepth === 0) { parts.push(current.trim()); current = "" }
+    else current += char
+  }
+  if (current.trim()) parts.push(current.trim())
+  const cleaned = parts.filter(Boolean)
+  if (cleaned.length < 2) return cleaned
+  const first = cleaned[0]
+  if (!first.startsWith("*.")) return cleaned
   const labels = first.slice(2).split(".")
   const commonTwoLabelSuffixes = new Set(["co.uk", "org.uk", "ac.uk", "com.au", "net.au", "org.au", "com.br", "com.cn", "com.mx", "co.jp", "co.kr", "com.sg", "com.tr", "com.pl"])
   const lastTwo = labels.slice(-2).join(".")
   const base = "*." + labels.slice(0, commonTwoLabelSuffixes.has(lastTwo) ? -2 : -1).join(".")
-  return parts.map((part, index) => {
+  return cleaned.map((part, index) => {
     if (index === 0) return part
     const suffix = part.replace(/^\./, "")
     if (/^[a-z0-9-]+(?:\.[a-z0-9-]+)*$/i.test(suffix) && !part.includes("*") && !part.includes("{")) {
@@ -154,18 +164,45 @@ function wildcardTldMatch(host: string, pattern: string): boolean {
 }
 
 function matchIdentifier(target: string, record: ScopeAssetRecord): { matched: boolean; pattern?: string } {
-  const parsed = hostOf(target)
-  if (!parsed) return { matched: false }
+  const type = record.asset_type.trim().toUpperCase()
   const patterns = splitAlternatives(record.identifier).flatMap(expandBraces)
-  for (const raw of patterns) {
-    const pattern = raw.trim().toLowerCase()
-    if (!pattern) continue
-    if (pattern.includes(".*") && !pattern.startsWith("*.")) {
-      if (wildcardTldMatch(parsed.host, pattern)) return { matched: true, pattern: raw }
-      continue
+  if (type === "URL") {
+    const parsed = hostOf(target)
+    if (!parsed) return { matched: false }
+    for (const raw of patterns) {
+      const pattern = raw.trim().toLowerCase()
+      if (!pattern || pattern.includes("*") || pattern.includes("{") || pattern.includes("}")) continue
+      if (ScopeGuard.check(target, [pattern]).inScope) return { matched: true, pattern: raw }
     }
-    const result = ScopeGuard.check(target, [pattern])
-    if (result.inScope) return { matched: true, pattern: raw }
+    return { matched: false }
+  }
+  if (type === "WILDCARD") {
+    const parsed = hostOf(target)
+    if (!parsed) return { matched: false }
+    for (const raw of patterns) {
+      const pattern = raw.trim().toLowerCase()
+      if (!pattern) continue
+      if (pattern.startsWith("*.") && pattern.endsWith(".*")) {
+        if (wildcardTldMatch(parsed.host, pattern)) return { matched: true, pattern: raw }
+        continue
+      }
+      if (pattern.includes("*") && !pattern.startsWith("*.")) continue
+      if (ScopeGuard.check(target, [pattern]).inScope) return { matched: true, pattern: raw }
+    }
+    return { matched: false }
+  }
+  if (["IP", "IP_ADDRESS", "IP_RANGE", "CIDR", "NETWORK"].includes(type)) {
+    for (const raw of patterns) {
+      if (ScopeGuard.check(target, [raw]).inScope) return { matched: true, pattern: raw }
+    }
+    return { matched: false }
+  }
+  // Non-web identifiers (mobile app IDs, repositories, cloud resource IDs, etc.)
+  // use exact identity matching; never reduce them to their URL hostname.
+  const normalizeIdentity = (value: string) => value.trim().replace(/\\/$/, "").toLowerCase()
+  const candidate = normalizeIdentity(target)
+  for (const raw of patterns) {
+    if (normalizeIdentity(raw) === candidate) return { matched: true, pattern: raw }
   }
   return { matched: false }
 }
