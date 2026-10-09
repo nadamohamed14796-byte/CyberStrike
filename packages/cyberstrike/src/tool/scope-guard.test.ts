@@ -67,4 +67,22 @@ describe("ScopeGuard", () => {
     expect(result.reportEligible).toBe(false)
     expect(result.decision).toBe("REQUIRES_REVIEW")
   })
+  test("unlisted active testing requires explicit policy permission and ownership", () => {
+    const denied = ScopeGuard.evaluate("unlisted.example.com", ["example.com"], {
+      intent: "active_test",
+      policy: { openScopeUnlistedReports: true },
+      ownershipConfirmed: true,
+      impactMeetsPolicy: true,
+    })
+    expect(denied.activeTestingAuthorized).toBe(false)
+
+    const allowed = ScopeGuard.evaluate("unlisted.example.com", ["example.com"], {
+      intent: "active_test",
+      policy: { activeTestingUnlistedAssets: true },
+      ownershipConfirmed: true,
+    })
+    expect(allowed.activeTestingAuthorized).toBe(true)
+    expect(allowed.decision).toBe("ACTIVE_TEST_AUTHORIZED_BY_POLICY")
+  })
+
 })
