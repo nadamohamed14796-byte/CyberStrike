@@ -55,7 +55,7 @@ export async function ingestCyberStrikeRequest(
     endpoint:input.request.path ?? input.request.url,
     requestId:input.request.id,
     observedAt:input.request.observedAt ?? Date.now(),
-    slots:(input.observedParams ?? []).filter(slot => slot.loc !== "header"),
+    slots:input.observedParams ?? [],
   })
   await ingestAndPersistObservation(root,input.target,graph,{
     sessionId:input.sessionId,
