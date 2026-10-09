@@ -83,7 +83,7 @@ export async function loadPolicies(root: string): Promise<HuntingPolicies> {
   return policies
 }
 
-const SECRET_KEY = /(authorization|cookie|set-cookie|password|passwd|secret|access.?token|refresh.?token|api.?key|client.?secret|session.?id|credential|private.?key)/i
+const SECRET_KEY = /(authorization|cookie|set-cookie|password|passwd|secret|access.?token|refresh.?token|api.?key|client.?secret|session.?id|credential(?!fingerprint)|private.?key)/i
 const SECRET_VALUE = /\b(Bearer\s+)[A-Za-z0-9._~+\/-]+=*|\b(sk-[A-Za-z0-9_-]{16,})\b/gi
 
 export function redactSecrets<T>(value: T): T {
