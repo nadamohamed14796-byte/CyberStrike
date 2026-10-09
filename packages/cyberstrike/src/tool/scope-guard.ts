@@ -21,7 +21,7 @@ export type ScopePolicyDecision = ScopeDecision & {
   intent: "active_test" | "report"
   activeTestingAuthorized: boolean
   reportEligible: boolean
-  decision: "IN_SCOPE" | "OUT_OF_SCOPE" | "EXCLUDED" | "REPORT_ELIGIBLE_ONLY" | "REQUIRES_REVIEW"
+  decision: "IN_SCOPE" | "ACTIVE_TEST_AUTHORIZED_BY_POLICY" | "OUT_OF_SCOPE" | "EXCLUDED" | "REPORT_ELIGIBLE_ONLY" | "REQUIRES_REVIEW"
   reason: string
 }
 
@@ -240,6 +240,9 @@ export namespace ScopeGuard {
     } else if (options.policyLoaded === false) {
       decision = "REQUIRES_REVIEW"
       reason = "program policy is missing or could not be verified; active testing is not authorized"
+    } else if (!explicitlyMatched && intent === "active_test" && activeTestingAuthorized) {
+      decision = "ACTIVE_TEST_AUTHORIZED_BY_POLICY"
+      reason = "the program explicitly authorizes active testing of unlisted assets and ownership is confirmed"
     } else if (!explicitlyMatched && intent === "report" && openReport) {
       decision = "REPORT_ELIGIBLE_ONLY"
       reason = "unlisted owned asset meets the report policy; this does not authorize active testing"
