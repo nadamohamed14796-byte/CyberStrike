@@ -59,7 +59,7 @@ test("recommendations preserve relevance and label low-trust imports as advisory
   })
   const lowTrust = ReportKnowledge.ingestExternalDetailed({
     ...shared,
-    title: "LessonRankMarker low-trust report",
+    title: "Low-trust external report about object authorization",
     sourceURL: "https://research.example/recommendations/LowTrust",
     metadata: { source_trust: 20 },
   })
