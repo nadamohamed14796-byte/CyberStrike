@@ -14,9 +14,9 @@ description: >-
 
 - [xss-cross-site-scripting](../xss-cross-site-scripting/SKILL.md) for XSS vectors to deliver after CSP bypass
 - [dangling-markup-injection](../dangling-markup-injection/SKILL.md) when CSP blocks scripts but HTML injection exists — exfiltrate without JS
-- [crlf-injection](../crlf-injection/SKILL.md) when CRLF can inject CSP header or steal nonce via response splitting
-- [waf-bypass-techniques](../waf-bypass-techniques/SKILL.md) when both WAF and CSP must be bypassed
-- [clickjacking](../clickjacking/SKILL.md) when CSP lacks `frame-ancestors` — clickjacking still possible
+- [crlf-injection](../../http/crlf-injection/SKILL.md) when CRLF can inject CSP header or steal nonce via response splitting
+- [waf-bypass-techniques](../../waf-bypass/waf-bypass-techniques/SKILL.md) when both WAF and CSP must be bypassed
+- [clickjacking](../../clickjacking/clickjacking/SKILL.md) when CSP lacks `frame-ancestors` — clickjacking still possible
 
 ---
 
