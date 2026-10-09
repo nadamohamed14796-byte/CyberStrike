@@ -124,6 +124,17 @@ test("runs source discovery through persistence and recommendations, is idempote
       expect(Learning.researchFor(sessionID, 10).map((row) => row.id).sort()).toEqual(
         recommendations.map((row) => row.id).sort(),
       )
+      expect(Learning.researchFor(sessionID, -1)).toHaveLength(0)
+      expect(Learning.researchFor(sessionID, 0)).toHaveLength(0)
+      expect(Learning.researchFor(sessionID, Number.NaN)).toHaveLength(2)
+      expect(Learning.researchFor(sessionID, Number.POSITIVE_INFINITY)).toHaveLength(2)
+      expect(
+        Learning.activateResearch(sessionID, {
+          query: "PipelineE2EMarker",
+          vulnerabilityClass: "idor",
+          limit: Number.NaN,
+        }),
+      ).toHaveLength(2)
 
       const repeat = await syncResearchSource(source, { limit: 10, pages: 10, depth: 1 })
       expect(repeat.failed).toBe(0)
