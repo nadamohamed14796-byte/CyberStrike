@@ -50,7 +50,7 @@ export interface CorrelationSignalInput {
   }>
   jsAssets: Array<{ id: string; url: string; observedAt: number }>
   functions: Array<{ id: string; name: string; assetId?: string }>
-  parameters?: Array<{ id:string; name:string; location:"path"|"query"|"body"; endpoint:string; requestIds:string[]; confidence:number; sources:string[] }>
+  parameters?: Array<{ id:string; name:string; location:"path"|"query"|"body"|"header"; endpoint:string; requestIds:string[]; confidence:number; sources:string[] }>
   apiSources?: ApiSource[]
   edges: Array<{
     from: string
