@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, isNull } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { ToolLearningEventTable, ToolLearningTable } from "./tool-learning.sql"
@@ -26,7 +26,11 @@ export namespace ToolLearning {
               eq(ToolLearningTable.tool, key),
               eq(ToolLearningTable.signal, normalizedSignal),
             )
-          : and(eq(ToolLearningTable.tool, key), eq(ToolLearningTable.signal, normalizedSignal))
+          : and(
+              isNull(ToolLearningTable.session_id),
+              eq(ToolLearningTable.tool, key),
+              eq(ToolLearningTable.signal, normalizedSignal),
+            )
         const row = db.select().from(ToolLearningTable).where(where).get()
         const success = input.outcome === "useful" || input.outcome === "finding"
         const reject = input.outcome === "rejected" || input.outcome === "disproven" || input.outcome === "empty"
