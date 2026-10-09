@@ -184,7 +184,7 @@ function matchIdentifier(target: string, record: ScopeAssetRecord): { matched: b
       const pattern = raw.trim().toLowerCase()
       if (!pattern) continue
       if (pattern.startsWith("*.") && pattern.endsWith(".*")) {
-        if (wildcardTldMatch(parsed.host, pattern)) return { matched: true, pattern: raw }
+        if (parsed.url.protocol === "https:" && parsed.url.port === "" && wildcardTldMatch(parsed.host, pattern)) return { matched: true, pattern: raw }
         continue
       }
       if (pattern.includes("*") && !pattern.startsWith("*.")) continue
