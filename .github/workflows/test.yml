@@ -49,10 +49,10 @@ jobs:
       # Use the repository fixture rather than fetching live models.dev data.
       - name: Build CyberStrike native Linux binary
         if: always()
-        env:
-          MODELS_DEV_API_JSON: test/tool/fixtures/models-api.json
         run: |
-          bun run --cwd packages/cyberstrike build --single --skip-install
+          # The test models fixture is intentionally empty; provide a valid disposable JSON snapshot.
+          printf '{}' > /tmp/cyberstrike-models-api.json
+          MODELS_DEV_API_JSON=/tmp/cyberstrike-models-api.json bun run --cwd packages/cyberstrike build --single --skip-install
           test -x packages/cyberstrike/dist/cyberstrike-linux-x64/bin/cyberstrike
           test -s packages/cyberstrike/dist/hackbrowser-worker/hackbrowser-worker.js
 
