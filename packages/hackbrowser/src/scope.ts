@@ -85,7 +85,7 @@ export function makeMatcher(scopes: readonly string[]): ScopeMatcher {
   if (includePatterns.length === 0) return () => false
 
   const matches = (host: string, patterns: ReturnType<typeof toPattern>[]): boolean => {
-    const h = host.toLowerCase().replace(/\\.+$/, "").replace(/^\\[|\\]$/g, "")
+    const h = host.toLowerCase().replace(/\.+$/, "").replace(/^\[|\]$/g, "")
     return patterns.some(({ base, wildcard }) =>
       wildcard ? h === base || h.endsWith("." + base) : h === base,
     )
