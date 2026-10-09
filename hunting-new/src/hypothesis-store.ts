@@ -51,5 +51,4 @@ export async function transitionHypothesis(
     await saveHypotheses(root, state)
     return item
   })
-  })
 }
