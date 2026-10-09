@@ -128,7 +128,9 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
     const targetInput = currentReq?.site ?? currentReq?.host
     if (targetInput) {
       try {
-        const knowledgeTarget = targetInput.replace(/^https?:\/\//i, "").split(/[/:]/)[0].toLowerCase()
+        const knowledgeTarget = currentReq?.site
+          ? currentReq.site.replace(/^https?:\/\//i, "").split(/[/:]/)[0].toLowerCase()
+          : TargetWorkspace.paths(targetInput).identity.replace(/^https?:\/\//i, "").replace(/^\*\./, "").split(/[/:]/)[0].toLowerCase()
         const root = process.env.HUNT_ROOT ?? path.resolve(process.cwd(), "hunting-new")
         const { loadTargetIntelligence } = await import("../../../../hunting-new/src/target-intelligence")
         const intelligence = await loadTargetIntelligence(root, knowledgeTarget)
