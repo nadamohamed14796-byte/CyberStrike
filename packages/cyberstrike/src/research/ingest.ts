@@ -128,6 +128,15 @@ function isIndexLikeResearchUrl(url: string) {
 function isResearchCandidate(url: string, source: ResearchSource) {
   const parsed = new URL(url)
   const path = parsed.pathname.toLowerCase()
+  // These editorial sites publish individual posts at varied URL shapes (slugs or dates),
+  // so their article links cannot be identified reliably by generic path keywords alone.
+  if (source.id === "infosec-weekly" || source.id === "securitycipher-bounty-writeups") {
+    if (path === "/" || path === "/bounty-writeups") return false
+    if (/\/(about|contact|privacy|terms|login|register|subscribe|membership|wp-admin|wp-login\.php)(\/|$)/i.test(path)) {
+      return false
+    }
+    return true
+  }
   if (source.id === "medium") {
     const segments = path.split("/").filter(Boolean)
     if (
