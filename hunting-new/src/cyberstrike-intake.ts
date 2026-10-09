@@ -34,7 +34,6 @@ export interface CyberStrikeIntakeRecord{
   observedParams?:ParamSlot[]
   jsAssetIds?:string[]
   functionIds?:string[]
-  observedParams?:ParamSlot[]
 }
 
 export async function ingestCyberStrikeRequest(
