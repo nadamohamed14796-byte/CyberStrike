@@ -425,7 +425,10 @@ export namespace ReportKnowledge {
         if (["rejected", "disproven", "duplicate"].includes(row.status)) return false
         if (row.source_kind === "external_report" && row.status === "observed") {
           const trust = row.metadata?.source_trust
-          return typeof trust === "number" && Number.isFinite(trust) && trust >= 70
+          // Keep externally imported material advisory regardless of trust;
+          // require a valid score to disclose provenance, but never promote it
+          // into a validated finding based on source reputation alone.
+          return typeof trust === "number" && Number.isFinite(trust) && trust >= 0 && trust <= 100
         }
         return row.confidence >= 50
       })
