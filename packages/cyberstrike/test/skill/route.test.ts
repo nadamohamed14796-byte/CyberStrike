@@ -1,9 +1,21 @@
 import { describe, expect, test } from "bun:test"
-import { existsSync } from "fs"
+import { readdirSync } from "fs"
 import path from "path"
 import { SIGNALS, route } from "../../src/skill/route"
 
 const root = path.join(import.meta.dir, "../../../..")
+const skillsRoot = path.join(root, ".cyberstrike", "skill")
+function skillExists(name: string): boolean {
+  const visit = (dir: string): boolean => readdirSync(dir, { withFileTypes: true }).some((entry) => {
+    const full = path.join(dir, entry.name)
+    return entry.isDirectory()
+      ? entry.name === name
+        ? readdirSync(full, { withFileTypes: true }).some((item) => item.isFile() && item.name === "SKILL.md")
+        : visit(full)
+      : false
+  })
+  return visit(skillsRoot)
+}
 const prompt = await Bun.file(path.join(import.meta.dir, "../../src/agent/prompt/cyberstrike.txt")).text()
 const promptSkills = [...prompt.matchAll(/^\| .+ \| ([a-z0-9-]+) \|$/gm)].map((match) => match[1])
 
@@ -22,7 +34,7 @@ describe("signal routing", () => {
 
   test("every routed skill exists on disk", () => {
     const targets = [...new Set(Object.values(SIGNALS).flat())]
-    const missing = targets.filter((name) => !existsSync(path.join(root, ".cyberstrike/skill", name, "SKILL.md")))
+    const missing = targets.filter((name) => !skillExists(name))
     expect(missing).toEqual([])
   })
 

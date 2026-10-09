@@ -1,16 +1,33 @@
 # Operations
 
-## Initialize
+## Configure authorized scope first
 
-```bash
-bun run hunting-new/src/cli.ts init example.com
-``
+Edit `hunting-new/config/scope.yaml` and list only assets you are authorized to test. For example:
+
+```yaml
+scope:
+  mode: explicit
+  unknown_target: block
+  exclusions: []
+  rules:
+    - value: example.com
+      protocols: [https]
+      ports: [443]
+```
+
+An empty `rules: []` list blocks every target. Exclusions override matching allow rules.
 
 ## Inspect scope
 
 ```bash
-bun run hunting-new/src/cli.ts scope example.com
-``
+bun run hunting-new/src/cli.ts scope https://example.com
+```
+
+## Initialize
+
+```bash
+bun run hunting-new/src/cli.ts init https://example.com
+```
 
 ## Inspect coverage
 

@@ -5,7 +5,9 @@ import { NativeCyberStrikeExecutor } from "./native-cyberstrike-executor"
 import { checkpointPhase } from "./runtime-persistence"
 import { coverageGate } from "./ledger"
 import { loadTaskStates } from "./task-state-store"
-import { updateMission } from "./mission"
+import { updateMission, loadMission } from "./mission"
+import { checkScope } from "./scope"
+import { loadPolicies } from "./policy"
 
 export interface NativeDispatchOptions {
   limit?:number
@@ -21,6 +23,10 @@ export async function executePersistedDispatchWithNativeCyberStrike(
   target:string,
   options:NativeDispatchOptions={},
 ){
+  const mission=await loadMission(root,target)
+  if(!mission) throw new Error("MISSION_NOT_FOUND: initialize the target with an explicit configured scope first")
+  const scopeDecision=checkScope(target,mission.scope)
+  if(!scopeDecision.allowed) throw new Error("MISSION_BLOCKED: "+scopeDecision.reason)
   const plan=await loadAgentPlan(root,target)
   if(!plan) throw new Error("AGENT_PLAN_NOT_FOUND")
   const prepared:PreparedMultiAgentPlan={
@@ -28,6 +34,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
     persistedTaskIds:plan.tasks.map(task=>task.id),
     resolvedSkillCount:plan.tasks.reduce((sum,task)=>sum+(task.resolvedSkills?.length??0),0),
   }
+  const policies=await loadPolicies(root)
   const batchLimit=Math.max(1,options.limit??4)
   const batches=[]
   const results=[]
@@ -49,7 +56,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
       const taskResults=[]
       let terminal=false
 
-      for(let attempt=0;attempt<20 && !terminal;attempt++){
+      for(let attempt=0;attempt<policies.validation.default_attempt_budget && !terminal;attempt++){
         try{
           const result=await executeAndRecordDispatchedTask(
             root,

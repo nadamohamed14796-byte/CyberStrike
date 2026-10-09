@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { advance, fingerprint, gate } from "../../src/finding/lifecycle"
+import { advance, fingerprint, gate, type State } from "../../src/finding/lifecycle"
 
 const passing = [true, true, true, true, true, true, true, true, true, false]
 
@@ -26,7 +26,7 @@ describe("finding lifecycle", () => {
     const end = path.reduce((state, next) => {
       const result = advance(state, next, true)
       return result.ok ? result.state : state
-    }, "DISCOVERED" as const)
+    }, "DISCOVERED" as State)
     expect(end).toBe("SUBMITTED")
   })
 })

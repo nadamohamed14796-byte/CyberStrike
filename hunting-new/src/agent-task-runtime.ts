@@ -1,10 +1,16 @@
 import type { MultiAgentPlan } from "./multi-agent-planner"
 import { loadTaskStates, saveTaskState, transitionTaskState } from "./task-state-store"
 import type { TaskStateRecord } from "./task-state"
+import { loadPolicies } from "./policy"
 
 export async function persistAgentPlan(root: string, plan: MultiAgentPlan): Promise<TaskStateRecord[]> {
   const current = await loadTaskStates(root, plan.target)
+  const policies = await loadPolicies(root)
   const existing = new Set(current.tasks.map(x => x.taskId))
+  const newTaskCount = plan.tasks.filter(task => !existing.has(task.id)).length
+  if (newTaskCount > 0 && current.tasks.length + newTaskCount > policies.context.max_task_records) {
+    throw new Error(`TASK_RECORD_LIMIT: plan needs ${current.tasks.length + newTaskCount} records; policy limit is ${policies.context.max_task_records}. Existing records were preserved.`)
+  }
   const now = new Date().toISOString()
   const created: TaskStateRecord[] = []
 

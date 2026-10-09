@@ -15,7 +15,7 @@ describe("hunting runtime end-to-end", () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-e2e-"))
     try {
       const target="example.com"
-      await initMission(root,target,[{type:"host",value:target}])
+      await initMission(root,target,[{value:target}])
 
       const request={
         id:"req-1",
@@ -65,7 +65,7 @@ describe("hunting runtime end-to-end", () => {
       expect(engine.forTarget(target).some(x=>x.signal==="waf_signal_detected")).toBe(true)
 
       const prepared=await prepareMultiAgentPlan(root,engine,[{
-        name:"waf-check",
+        name:"waf-xss-bypass",
         confidence_threshold:.6,
         required_signals:["waf_signal_detected"],
         optional_signals:[],
@@ -77,7 +77,7 @@ describe("hunting runtime end-to-end", () => {
       await dispatchPersistedTasks(root,prepared,1)
 
       let calls=0
-      const execution=await executeTaskUntilTerminal(root,prepared.plan,prepared.plan.tasks[0].id,async context=>{
+      const execution=await executeTaskUntilTerminal(root,prepared.plan,prepared.plan.tasks[0].id,{execute:async context=>{
         calls++
         const responseId="res-"+calls
         return {
@@ -100,7 +100,7 @@ describe("hunting runtime end-to-end", () => {
             observations:["The protected object response changed across validation variants."],
           }),
         }
-      })
+      }})
       
       expect(calls).toBe(20)
       expect(execution.terminal).toBe(true)

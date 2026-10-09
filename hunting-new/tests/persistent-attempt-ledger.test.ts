@@ -23,6 +23,6 @@ describe("persistent attempt ledger", () => {
     expect(duplicateVariantAcrossStrategy).toBeTruthy()
 
     const a2 = await second.plan("hyp-1", "encoding", "mixed-encoding", "alternate validation")
-    expect(a2?.id).toBe("attempt-hyp-1-2")
+    expect(a2?.id).toBe("attempt-hyp-1-3")
   })
 })

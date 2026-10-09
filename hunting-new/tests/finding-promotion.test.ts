@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { mkdtemp } from "node:fs/promises"
+import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { initMission } from "../src/mission"
@@ -78,18 +78,19 @@ describe("persisted false-positive promotion gate", () => {
       })
       const request=createEvidence({kind:"request",sourceId:"req",requestId:"req",confidence:.95,details:"request"})
       const response=createEvidence({kind:"response",sourceId:"res",requestId:"req",responseId:"res",confidence:.95,details:"response"})
+      const response2=createEvidence({kind:"response",sourceId:"res2",requestId:"req",responseId:"res2",confidence:.95,details:"different response behavior"})
       const functionEvidence=createEvidence({kind:"function",sourceId:"fn",functionId:"fn",confidence:.95,details:"function"})
-      await appendEvidence(root,target,request); await appendEvidence(root,target,response); await appendEvidence(root,target,functionEvidence)
+      await appendEvidence(root,target,request); await appendEvidence(root,target,response); await appendEvidence(root,target,response2); await appendEvidence(root,target,functionEvidence)
       const ledger=await PersistentAttemptLedger.create(root,target)
       const attempts=[]
       for(let i=1;i<=20;i++){
         const a=await ledger.plan("hyp-fp",i===1?"identifier":"parameter",`v-${i}`,`v-${i}`)
-        await ledger.record(a!.id,{state:"executed",evidenceIds:[request.id,response.id,functionEvidence.id]})
+        await ledger.record(a!.id,{state:"executed",evidenceIds:[request.id,response.id,response2.id,functionEvidence.id]})
         attempts.push(a!.id)
       }
       const result=await promoteValidatedHypothesis(root,target,{
         hypothesisId:"hyp-fp",title:"Known FP",severity:"medium",summary:"summary",impact:"impact",
-        validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,functionEvidence.id,...attempts]},
+        validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attempts]},
         signal:"access-control",skill:"idor",strategy:"identifier",endpoint:"/api/users/123",
       })
       expect(result.action).toBe("skip")

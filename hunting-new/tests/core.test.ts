@@ -4,8 +4,30 @@ import { SignalEngine } from "../src/signals"
 import { AttemptEngine,tenQuestionGate } from "../src/validation"
 import { analyzeJS,discoverScripts } from "../src/js"
 import { dedupe,evidenceBackedSeverity } from "../src/findings"
+import path from "node:path"
+import { loadPolicies,redactSecrets } from "../src/policy"
+import { loadConfiguredScope } from "../src/scope-config"
 describe("scope",()=>{test("matches wildcard",()=>{expect(checkScope("api.example.com",[{value:"*.example.com"}]).allowed).toBe(true);expect(checkScope("evil.example.net",[{value:"*.example.com"}]).allowed).toBe(false)});test("enforces protocol and port constraints",()=>{const rule={value:"api.example.com",protocols:["https"],ports:[8443]};expect(checkScope("https://api.example.com:8443/x", [rule]).allowed).toBe(true);expect(checkScope("http://api.example.com:8443/x", [rule]).allowed).toBe(false);expect(checkScope("https://api.example.com:443/x", [rule]).allowed).toBe(false)})})
 describe("signals",()=>{test("selects contextual skill",()=>{const e=new SignalEngine();e.emit({signal:"object_identifier_detected",source:"javascript",confidence:.91,target:"example.com"});expect(e.selectSkills([{name:"authorization",confidence_threshold:.7,required_signals:["object_identifier_detected"]}])[0]?.name).toBe("authorization")})})
 describe("validation",()=>{test("stops at twenty",()=>{const e=new AttemptEngine(20);for(let i=0;i<20;i++)e.record({attempt_id:String(i),hypothesis_id:"h",strategy:"s"+i,variant:"v"+i,reason:"new evidence",result:"INCONCLUSIVE",evidence_refs:[]});expect(e.shouldStop("h")).toBe("INCONCLUSIVE")});test("passes ten-question gate",()=>{expect(tenQuestionGate({in_scope:true,real:true,reproducible:true,crosses_security_boundary:true,attacker_controlled:true,measurable_impact:true,security_relevant:true,authorization_boundary:true,demonstrated:true,duplicate_or_expected:false}).status).toBe("VERIFIED")})})
 describe("js",()=>{test("discovers and analyzes",()=>{expect(discoverScripts('<script src="/static/runtime.js"></script><script src="/static/app.js"></script>',"https://example.com/app")).toHaveLength(2);const r=analyzeJS('fetch("/api/users/" + userId, {method:"PATCH"}); const x="?tenant_id=1"; headers["Authorization"]=token;',"https://example.com/app.js");expect(r.endpoints).toContain("/api/users/");expect(r.methods).toContain("PATCH");expect(r.parameters[0]?.name).toBe("tenant_id");expect(r.security_leads).toContain("object_identifier_detected")})})
-describe("findings",()=>{test("dedupes and gates severity",()=>{const a={finding_id:"1",target:"x",category:"idor",root_cause:"missing-authz",state:"VERIFIED" as const,confidence:.9,exploitability:.8,impact:.8,evidence_refs:[]};const b={...a,finding_id:"2",confidence:.8};expect(dedupe([a,b])).toHaveLength(1);expect(evidenceBackedSeverity(.9,.8,.8)).toBe("critical")})})
+describe("findings",()=>{test("dedupes and gates severity",()=>{const a={finding_id:"1",target:"x",category:"idor",root_cause:"missing-authz",state:"VERIFIED" as const,confidence:.9,exploitability:.8,impact:.8,evidence_refs:[]};const b={...a,finding_id:"2",confidence:.8};expect(dedupe([a,b])).toHaveLength(1);expect(evidenceBackedSeverity(.9,.8,.8)).toBe("high")})})
+describe("runtime policies",()=> {
+  test("loads validated budget and task-record limit from config",async()=>{
+    const root=path.resolve(import.meta.dir,"..")
+    const policies=await loadPolicies(root)
+    expect(policies.validation.default_attempt_budget).toBe(20)
+    expect(policies.context.max_task_records).toBe(40)
+    expect(policies.mission.unknown_scope).toBe("BLOCK")
+  })
+  test("redacts secret-bearing keys and bearer tokens before persistence",()=>{
+    const value=redactSecrets({authorization:"Bearer abc123",nested:{password:"not-for-storage",note:"Authorization: Bearer eyJhbGciOiJIUzI1NiJ9"}})
+    expect(value.authorization).toBe("[REDACTED]")
+    expect(value.nested.password).toBe("[REDACTED]")
+    expect(value.nested.note).not.toContain("eyJhbGciOiJIUzI1NiJ9")
+  })
+  test("does not treat an empty scope configuration as authorization",async()=>{
+    const root=path.resolve(import.meta.dir,"..")
+    expect(await loadConfiguredScope(root)).toEqual([])
+  })
+})
