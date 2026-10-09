@@ -318,7 +318,7 @@ export namespace ReportKnowledge {
   }
 
   export function search(
-    input: { query?: string; vulnerabilityClass?: string; cweID?: string; targetPattern?: string; limit?: number } = {},
+    input: { query?: string; vulnerabilityClass?: string; cweID?: string; targetPattern?: string; sourceKind?: string; limit?: number } = {},
   ) {
     try {
       return Database.use((db) => {
@@ -328,6 +328,7 @@ export namespace ReportKnowledge {
         if (input.cweID) conditions.push(eq(ReportKnowledgeTable.cwe_id, input.cweID))
         if (input.targetPattern)
           conditions.push(eq(ReportKnowledgeTable.target_pattern, normalize(input.targetPattern)))
+        if (input.sourceKind) conditions.push(eq(ReportKnowledgeTable.source_kind, input.sourceKind))
 
         const tokens = queryTokens(input.query)
         if (tokens.length) {
@@ -412,10 +413,14 @@ export namespace ReportKnowledge {
   export function recommendations(
     input: { signal?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {},
   ) {
+    // Runtime recommendations are reusable public references only. Local findings and
+    // triage lessons can contain target-specific details, so they remain available to
+    // explicit search but are never mixed into cross-target hunting context.
     const rows = search({
       query: input.signal,
       vulnerabilityClass: input.vulnerabilityClass,
       cweID: input.cweID,
+      sourceKind: "external_report",
       limit: Math.min((input.limit ?? 8) * 3, 100),
     })
     return rows
