@@ -24,20 +24,41 @@ export async function loadConfiguredScope(root: string): Promise<ScopeRule[]> {
     if (section === "rules") {
       const item = line.match(/^\s{4}-\s*value:\s*(.+?)\s*$/)
       if (item) {
-        current = { value: scalar(item[1]) }
+        const value = scalar(item[1])
+        if (!value) throw new Error("SCOPE_CONFIG_INVALID: rule value must not be empty")
+        current = { value }
         rules.push(current as ScopeRule)
         continue
       }
       const property = line.match(/^\s{6}([a-zA-Z_][\w-]*):\s*(.*?)\s*$/)
       if (property && current) {
         const [, key, rawValue] = property
-        if (key === "value" && rawValue) current.value = scalar(rawValue)
-        else if (key === "path") current.path = scalar(rawValue)
-        else if (key === "exclude") current.exclude = rawValue === "true"
-        else if (key === "protocols" || key === "ports") {
-          const values = rawValue.replace(/^\[|\]$/g, "").split(",").map(scalar).filter(Boolean)
-          if (key === "protocols") current.protocols = values
-          else current.ports = values.map(Number).filter(Number.isInteger)
+        if (key === "value") {
+          const value = scalar(rawValue)
+          if (!value) throw new Error("SCOPE_CONFIG_INVALID: rule value must not be empty")
+          current.value = value
+        } else if (key === "path") {
+          const value = scalar(rawValue)
+          if (!value.startsWith("/")) throw new Error("SCOPE_CONFIG_INVALID: rule path must start with /")
+          current.path = value
+        } else if (key === "exclude") {
+          if (rawValue !== "true" && rawValue !== "false") throw new Error("SCOPE_CONFIG_INVALID: exclude must be true or false")
+          current.exclude = rawValue === "true"
+        } else if (key === "protocols" || key === "ports") {
+          const listText = rawValue.trim()
+          if (!listText.startsWith("[") || !listText.endsWith("]")) throw new Error("SCOPE_CONFIG_INVALID: " + key + " must be a non-empty inline list")
+          const values = listText.slice(1, -1).split(",").map(scalar).filter(Boolean)
+          if (!values.length) throw new Error("SCOPE_CONFIG_INVALID: " + key + " must not be empty")
+          if (key === "protocols") {
+            if (values.some(value => value !== "http" && value !== "https")) throw new Error("SCOPE_CONFIG_INVALID: protocols must contain only http or https")
+            current.protocols = values
+          } else {
+            const ports = values.map(Number)
+            if (ports.some(port => !Number.isInteger(port) || port < 1 || port > 65535)) throw new Error("SCOPE_CONFIG_INVALID: ports must be integers between 1 and 65535")
+            current.ports = ports
+          }
+        } else {
+          throw new Error("SCOPE_CONFIG_INVALID: unsupported scope rule field " + key)
         }
       }
     } else if (section === "exclusions") {
