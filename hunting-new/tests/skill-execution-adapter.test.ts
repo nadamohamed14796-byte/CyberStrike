@@ -36,7 +36,7 @@ describe("configured skill agents", () => {
       recommendedAgent: "configured-agent", resolvedSkills: ["authorization"], strategyHints: [],
       signal: "object_identifier_detected", signalConfidence: 0.9, reason: "override precedence",
     }, { agentByRole: { "primary-hunter": "role-agent" } })
-    expect(result.agent).toBe("configured-agent")
+    expect(result.agent).toBe("role-agent")
   })
 })
 
