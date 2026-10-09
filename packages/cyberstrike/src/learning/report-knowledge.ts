@@ -165,21 +165,22 @@ export namespace ReportKnowledge {
       const key = fingerprint(input)
       if (!key) return null
 
-      const existing = Database.use((db) => {
+      // The lookup and update/insert must be one transaction. Separate reads
+      // and writes let concurrent crawlers race through "not found" and one
+      // duplicate then fails the unique fingerprint constraint instead of
+      // resolving to the already-persisted record.
+      return Database.transaction((db) => {
         const matches = db
           .select()
           .from(ReportKnowledgeTable)
           .where(fingerprintCondition(input.sourceURL, key))
           .all()
-        return (
+        const existing =
           matches.find((row) => row.fingerprint === key) ??
           matches.find((row) => matchesSourceURLFingerprint(row.source_url, key))
-        )
-      })
 
-      if (existing) {
-        const now = Date.now()
-        Database.use((db) => {
+        if (existing) {
+          const now = Date.now()
           db.update(ReportKnowledgeTable)
             .set({
               times_seen: existing.times_seen + 1,
@@ -195,17 +196,17 @@ export namespace ReportKnowledge {
             })
             .where(eq(ReportKnowledgeTable.id, existing.id))
             .run()
-        })
-        return { id: existing.id, created: false }
-      }
+          return { id: existing.id, created: false }
+        }
 
-      const id = ingest({
-        ...input,
-        sourceKind: "external_report",
-        outcome: "observed",
-        sourceTrust: input.sourceTrust,
+        const id = ingest({
+          ...input,
+          sourceKind: "external_report",
+          outcome: "observed",
+          sourceTrust: input.sourceTrust,
+        })
+        return id ? { id, created: true } : null
       })
-      return id ? { id, created: true } : null
     } catch (error) {
       console.warn("[cyberstrike] external report knowledge persistence failed:", error)
       return null
