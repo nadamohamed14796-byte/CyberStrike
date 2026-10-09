@@ -110,3 +110,27 @@ test("rejects an initially out-of-scope URL without making a request", async () 
 
   expect(requests).toBe(0)
 })
+
+test("cancels bodies from unsupported content types", async () => {
+  let canceled = false
+  await withFetch(
+    (async () =>
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode("binary response"))
+          },
+          cancel() {
+            canceled = true
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/octet-stream" } },
+      )) as typeof fetch,
+    async () => {
+      await expect(fetchResearchText("https://research.example/binary", source)).rejects.toThrow(
+        "unsupported content type",
+      )
+    },
+  )
+  expect(canceled).toBe(true)
+})
