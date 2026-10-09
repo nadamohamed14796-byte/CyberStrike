@@ -378,7 +378,7 @@ function collectObservedJavaScriptAssets(
 }
 
 function sanitizeResponseHeaders(headers: Record<string, string>): Record<string, string> {
-  const sensitive = /^(?:set-cookie|cookie|authorization|proxy-authorization|www-authenticate|proxy-authenticate|x-api-key|api-key|x-auth-token|x-access-token|x-csrf-token)$/i
+  const sensitive = /(?:authorization|cookie|token|secret|api[-_]?key|password|credential|session[-_]?id|csrf|xsrf|private[-_]?key|signature)/i
   return Object.fromEntries(
     Object.entries(headers).map(([name, value]) => [name, sensitive.test(name) ? "[REDACTED]" : value]),
   )
