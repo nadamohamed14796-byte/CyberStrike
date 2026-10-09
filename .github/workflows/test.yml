@@ -45,6 +45,17 @@ jobs:
       - name: Run unit tests
         run: bun turbo test
 
+      # Run even when the workspace suite fails so package build health remains visible.
+      # Use the repository fixture rather than fetching live models.dev data.
+      - name: Build CyberStrike native Linux binary
+        if: always()
+        env:
+          MODELS_DEV_API_JSON: test/tool/fixtures/models-api.json
+        run: |
+          bun run --cwd packages/cyberstrike build --single --skip-install
+          test -x packages/cyberstrike/dist/cyberstrike-linux-x64/bin/cyberstrike
+          test -s packages/cyberstrike/dist/hackbrowser-worker/hackbrowser-worker.js
+
   required:
     name: test (linux)
     runs-on: ubuntu-24.04
