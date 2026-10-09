@@ -26,6 +26,9 @@ export namespace ReportKnowledge {
   }
 
   function fingerprint(input: FingerprintInput) {
+    // Reject blank titles at the persistence boundary. A session-scoped prefix
+    // must not make an otherwise-empty fingerprint look valid.
+    if (!input.title?.trim()) return ""
     if (input.sourceURL) return sourceFingerprints(input.sourceURL)[0]
     const legacy = legacyFingerprint(input)
     // Findings without a public source URL are local knowledge. Scope identity
