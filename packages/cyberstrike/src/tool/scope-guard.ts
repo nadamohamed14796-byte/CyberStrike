@@ -36,7 +36,7 @@ function parseTarget(value: string): ParsedTarget | undefined {
   if (!raw) return undefined
   try {
     const explicitScheme = /^[a-z][a-z\d+.-]*:\/\//i.test(raw)
-    const bareIPv6 = !explicitScheme && raw.includes(":") && !raw.startsWith("[") && !raw.includes("/") && !raw.includes("?") && !raw.includes("#") && !/^.+:\\d+$/.test(raw)
+    const bareIPv6 = !explicitScheme && (raw.match(/:/g)?.length ?? 0) >= 2 && !raw.startsWith("[") && !raw.includes("/") && !raw.includes("?") && !raw.includes("#")
     const urlInput = explicitScheme ? raw : `https://${bareIPv6 ? `[${raw}]` : raw}`
     const url = new URL(urlInput)
     if (url.protocol !== "http:" && url.protocol !== "https:") return undefined
@@ -249,7 +249,7 @@ export namespace ScopeGuard {
         : "unlisted asset does not meet the program's report-eligibility policy"
     }
     return { ...base, intent, activeTestingAuthorized: !base.excluded && activeTestingAuthorized && options.policyLoaded !== false,
-      reportEligible: !base.excluded && reportEligible, decision, reason }
+      reportEligible: !base.excluded && reportEligible && options.policyLoaded !== false, decision, reason }
   }
 
   export function hostFromTarget(target: string): string | undefined {
