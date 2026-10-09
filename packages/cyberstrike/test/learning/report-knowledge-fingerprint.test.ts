@@ -132,3 +132,36 @@ test("runtime recommendations never expose target-specific local findings", () =
     false,
   )
 })
+
+test("keeps equivalent local findings separate across sessions and targets", () => {
+  const common = {
+    title: "ScopedFingerprintMarker IDOR profile read",
+    vulnerabilityClass: "idor",
+    severity: "medium",
+    endpoint: "/api/profile",
+    sourceKind: "finding",
+    outcome: "confirmed" as const,
+    lesson: "Validate ownership before returning profile data.",
+  }
+
+  const first = ReportKnowledge.ingest({
+    ...common,
+    sessionID: "target-session-alpha",
+    targetPattern: "alpha.example",
+  })
+  const second = ReportKnowledge.ingest({
+    ...common,
+    sessionID: "target-session-beta",
+    targetPattern: "beta.example",
+  })
+
+  expect(first).not.toBeNull()
+  expect(second).not.toBeNull()
+  expect(first).not.toBe(second)
+
+  const alpha = ReportKnowledge.search({ query: "ScopedFingerprintMarker", targetPattern: "alpha.example", limit: 10 })
+  const beta = ReportKnowledge.search({ query: "ScopedFingerprintMarker", targetPattern: "beta.example", limit: 10 })
+
+  expect(alpha.map((row) => row.id)).toEqual([first])
+  expect(beta.map((row) => row.id)).toEqual([second])
+})
