@@ -323,6 +323,11 @@ export namespace ReportKnowledge {
     }
   }
 
+  function boundedLimit(value: number | undefined, fallback: number, minimum: number, maximum: number) {
+    const candidate = value === undefined || !Number.isFinite(value) ? fallback : value
+    return Math.max(minimum, Math.min(Math.floor(candidate), maximum))
+  }
+
   function queryTokens(query?: string) {
     return Array.from(
       new Set(
@@ -362,6 +367,8 @@ export namespace ReportKnowledge {
   export function search(
     input: { query?: string; vulnerabilityClass?: string; cweID?: string; targetPattern?: string; sourceKind?: string; limit?: number } = {},
   ) {
+    const limit = boundedLimit(input.limit, 20, 0, 100)
+    if (limit === 0) return []
     try {
       return Database.use((db) => {
         const conditions = []
@@ -394,7 +401,7 @@ export namespace ReportKnowledge {
         const query = db.select().from(ReportKnowledgeTable)
         const rows = (conditions.length ? query.where(and(...conditions)) : query)
           .orderBy(desc(ReportKnowledgeTable.time_updated))
-          .limit(Math.min(tokens.length ? 300 : (input.limit ?? 20), 300))
+          .limit(Math.min(tokens.length ? 300 : limit, 300))
           .all()
 
         return rows
@@ -407,7 +414,7 @@ export namespace ReportKnowledge {
               b.row.times_useful - a.row.times_useful ||
               b.row.time_updated - a.row.time_updated,
           )
-          .slice(0, Math.min(input.limit ?? 20, 100))
+          .slice(0, limit)
           .map(({ row }) => row)
       })
     } catch {
@@ -458,12 +465,13 @@ export namespace ReportKnowledge {
     // Runtime recommendations are reusable public references only. Local findings and
     // triage lessons can contain target-specific details, so they remain available to
     // explicit search but are never mixed into cross-target hunting context.
+    const limit = boundedLimit(input.limit, 8, 1, 50)
     const rows = search({
       query: input.signal,
       vulnerabilityClass: input.vulnerabilityClass,
       cweID: input.cweID,
       sourceKind: "external_report",
-      limit: Math.min((input.limit ?? 8) * 3, 100),
+      limit: Math.min(limit * 3, 100),
     })
     return rows
       // Public imports are advisory, not validated findings. Use the source's
@@ -482,6 +490,6 @@ export namespace ReportKnowledge {
       })
       // search() already ranks by query relevance, then confidence/usefulness.
       // Do not replace that ordering with a confidence-only sort.
-      .slice(0, Math.max(1, Math.min(input.limit ?? 8, 50)))
+      .slice(0, limit)
   }
 }
