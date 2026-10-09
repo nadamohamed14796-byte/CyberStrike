@@ -61,6 +61,7 @@ test("recommendations preserve relevance and label low-trust imports as advisory
     ...shared,
     title: "Low-trust external report about object authorization",
     sourceURL: "https://research.example/recommendations/LowTrust",
+    lesson: "LessonRankMarker appears in this unverified external reference; validate independently.",
     metadata: { source_trust: 20 },
   })
 
