@@ -467,14 +467,29 @@ fs.writeFileSync(
   ["file_id\tpath", ...orphanCode.map((file) => `${file.id}\t${file.path}`)].join("\n") + "\n",
 )
 
+// Vendored skill bundles are often distributed without every companion Markdown
+// page referenced by their instructions. Keep those links visible as advisory debt,
+// but do not let this imported documentation debt hide actionable code/config breaks.
+const advisorySkillDocs = broken.filter(
+  (item) => item.kind === "markdown-link" && item.sourcePath.startsWith(".cyberstrike/skill/"),
+)
+const blockingBroken = broken.filter((item) => !advisorySkillDocs.includes(item))
+
 console.log(
-  `runtime-audit: files=${files.length} relations=${relations.length + broken.length} broken=${broken.length} cycles=${cycles.length} code-orphans=${orphanCode.length}`,
+  `runtime-audit: files=${files.length} relations=${relations.length + broken.length} broken=${broken.length} blocking=${blockingBroken.length} advisory-skill-links=${advisorySkillDocs.length} cycles=${cycles.length} code-orphans=${orphanCode.length}`,
 )
 console.log(`file index: ${path.relative(ROOT, path.join(AUDIT_DIR, "files.tsv"))}`)
 console.log(`relation index: ${path.relative(ROOT, path.join(AUDIT_DIR, "relations.tsv"))}`)
-if (broken.length > 0) {
-  console.error("Broken repository-internal relationships detected:")
-  for (const item of broken.slice(0, 100))
+if (advisorySkillDocs.length > 0) {
+  console.warn(
+    `Warning: ${advisorySkillDocs.length} unresolved companion Markdown links in vendored .cyberstrike/skill documentation (advisory; review when refreshing those skill bundles).`,
+  )
+  for (const item of advisorySkillDocs.slice(0, 10))
+    console.warn(`  ${item.sourcePath} -> ${item.specifier}`)
+}
+if (blockingBroken.length > 0) {
+  console.error("Blocking broken repository-internal relationships detected:")
+  for (const item of blockingBroken.slice(0, 100))
     console.error(`${item.id} ${item.sourcePath} -> ${item.specifier}: ${item.reason}`)
   process.exitCode = 1
 }
