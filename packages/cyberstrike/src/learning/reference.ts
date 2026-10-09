@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm"
+import { eq, and, desc, isNull } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { SkillLearningEventTable, SkillLearningTable } from "./learning.sql"
@@ -33,7 +33,7 @@ export namespace ReferenceLearning {
       Database.transaction((db) => {
         const where = sessionID
           ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skill.name))
-          : eq(SkillLearningTable.skill_name, skill.name)
+          : and(isNull(SkillLearningTable.session_id), eq(SkillLearningTable.skill_name, skill.name))
 
         const existing = db.select().from(SkillLearningTable).where(where).get()
 
