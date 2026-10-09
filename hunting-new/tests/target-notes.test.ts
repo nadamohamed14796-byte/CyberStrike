@@ -25,6 +25,20 @@ describe("target knowledge notes", () => {
           observedAt: 10,
           source: "observed",
         }],
+        requests: [{
+          id: "req-2",
+          sessionId: "session-b",
+          method: "GET",
+          url: "https://api.example.test/api/profile",
+          host: "api.example.test",
+          path: "/api/profile",
+          credentialId: "cred-b",
+          accountLabel: "user-b",
+          headerNames: ["Accept", "X-Request-ID"],
+          cookieNames: ["session_id"],
+          observedAt: 12,
+          source: "observed",
+        }],
         responses: [{
           id: "resp-1",
           requestId: "req-1",
@@ -67,6 +81,8 @@ describe("target knowledge notes", () => {
 
       const notes = await renderTargetNotes(root, "example.test")
       expect(notes).toContain("api.example.test")
+      expect(notes).toContain("- Captured observations: 2")
+      expect(notes.split("#### GET /api/profile").length - 1).toBe(1)
       expect(notes).toContain("loadProfile")
       expect(notes).toContain("Authorization, Cookie, Accept")
       expect(notes).toContain("session_id")
