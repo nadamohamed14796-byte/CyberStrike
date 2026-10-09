@@ -79,6 +79,21 @@ function linksOf(html: string, base: URL, source: ResearchSource) {
       if (links.size >= MAX_LINKS_PER_PAGE) break
     } catch {}
   }
+
+  // RSS 2.0 uses <link>https://... </link> rather than an HTML href attribute.
+  // Accept feed item links, but never treat the feed's own self-link as a candidate.
+  for (const match of html.matchAll(/<link(?:\s[^>]*)?>\s*(https?:\/\/[^<\s]+)\s*<\/link>/gi)) {
+    const value = normalizeUrl(match[1], base)
+    if (!value) continue
+    try {
+      const url = new URL(value)
+      if (url.protocol !== "https:" || !hostAllowed(url, source)) continue
+      if (url.href === base.href) continue
+      if (/\.(png|jpe?g|gif|svg|webp|css|js|zip|pdf|woff2?|mp4|mp3)$/i.test(url.pathname)) continue
+      links.add(value)
+      if (links.size >= MAX_LINKS_PER_PAGE) break
+    } catch {}
+  }
   return [...links]
 }
 
@@ -272,7 +287,7 @@ async function fetchText(url: string, source: ResearchSource) {
       }
       if (!response.ok) throw new Error("HTTP " + response.status)
       const contentType = response.headers.get("content-type") ?? ""
-      if (!/text\/html|application\/xhtml\+xml|text\/plain|application\/xml/i.test(contentType)) {
+      if (!/text\/html|application\/xhtml\+xml|text\/plain|application\/(?:rss\+xml|atom\+xml|xml)|text\/xml/i.test(contentType)) {
         throw new Error("unsupported content type: " + contentType)
       }
       const length = Number(response.headers.get("content-length") ?? 0)
