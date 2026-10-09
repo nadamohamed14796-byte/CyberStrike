@@ -21,7 +21,7 @@ export async function persistDiscovery(root: string, input: PersistDiscoveryInpu
     jsAssets: [
       ...graphAssets,
       ...input.assets.map(asset => ({
-        ...(graph.assets.get(asset.js_asset_id) ?? {}),
+        ...(input.graph.assets.get(asset.js_asset_id) ?? {}),
         id: asset.js_asset_id,
         url: asset.url,
         sha256: asset.content_hash,
