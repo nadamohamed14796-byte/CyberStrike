@@ -1,5 +1,5 @@
 import path from "node:path"
-import { ensureDir, targetDir, writeJson } from "./store"
+import { ensureDir, targetDir, writeJson, withTargetMutationLock } from "./store"
 import { loadTargetIntelligence } from "./target-intelligence"
 
 function unique(values: Array<string | undefined>): string[] {
@@ -16,7 +16,7 @@ function safe(value: unknown): string {
 }
 
 /** Rebuild readable target notes from canonical structured intelligence. */
-export async function renderTargetNotes(root: string, target: string): Promise<string> {
+async function renderTargetNotesUnlocked(root: string, target: string): Promise<string> {
   const state = await loadTargetIntelligence(root, target)
   const requests = state.requests ?? []
   const responses = state.responses ?? []
@@ -160,4 +160,9 @@ export async function renderTargetNotes(root: string, target: string): Promise<s
     counts: { requests: requests.length, assets: assets.length, functions: functions.length, parameters: params.length, edges: edges.length, relatedHosts: hosts.length },
   })
   return markdown
+}
+
+/** Serialize note regeneration with target mutations to prevent stale concurrent writes. */
+export async function renderTargetNotes(root: string, target: string): Promise<string> {
+  return withTargetMutationLock(root, target, () => renderTargetNotesUnlocked(root, target))
 }
