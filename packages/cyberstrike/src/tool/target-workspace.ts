@@ -23,9 +23,8 @@ export namespace TargetWorkspace {
       .filter((scope) => ScopeGuard.check(target, [scope]).inScope)
 
     const isWildcard = (scope: string) => {
-      const withoutScheme = scope.startsWith("https://") || scope.startsWith("http://")
-        ? scope.slice(scope.indexOf("://") + 3)
-        : scope
+      const withoutScheme =
+        scope.startsWith("https://") || scope.startsWith("http://") ? scope.slice(scope.indexOf("://") + 3) : scope
       return withoutScheme.startsWith("*.")
     }
     matches.sort((a, b) => {

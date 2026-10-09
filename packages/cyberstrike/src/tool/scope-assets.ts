@@ -33,9 +33,18 @@ export type ScopeAssetEvaluation = {
 }
 
 const REQUIRED_COLUMNS = [
-  "identifier", "asset_type", "instruction", "eligible_for_bounty",
-  "eligible_for_submission", "availability_requirement", "confidentiality_requirement",
-  "integrity_requirement", "max_severity", "system_tags", "created_at", "updated_at",
+  "identifier",
+  "asset_type",
+  "instruction",
+  "eligible_for_bounty",
+  "eligible_for_submission",
+  "availability_requirement",
+  "confidentiality_requirement",
+  "integrity_requirement",
+  "max_severity",
+  "system_tags",
+  "created_at",
+  "updated_at",
 ] as const
 
 function parseCSVRows(input: string): string[][] {
@@ -46,15 +55,20 @@ function parseCSVRows(input: string): string[][] {
   for (let i = 0; i < input.length; i++) {
     const char = input[i]
     if (quoted) {
-      if (char === '"' && input[i + 1] === '"') { field += '"'; i++ }
-      else if (char === '"') quoted = false
+      if (char === '"' && input[i + 1] === '"') {
+        field += '"'
+        i++
+      } else if (char === '"') quoted = false
       else field += char
     } else if (char === '"' && field.length === 0) quoted = true
-    else if (char === ",") { row.push(field); field = "" }
-    else if (char === "\n") {
+    else if (char === ",") {
+      row.push(field)
+      field = ""
+    } else if (char === "\n") {
       row.push(field.replace(/\r$/, ""))
       if (row.some((cell) => cell.trim() !== "")) rows.push(row)
-      row = []; field = ""
+      row = []
+      field = ""
     } else field += char
   }
   if (quoted) throw new Error("Malformed scope CSV: unterminated quoted field")
@@ -81,10 +95,11 @@ export function parseScopeAssetCSV(input: string): ScopeAssetRecord[] {
   if (missing.length) throw new Error(`Scope CSV is missing required columns: ${missing.join(", ")}`)
   const indexes = new Map(headers.map((header, index) => [header, index]))
   return rows.slice(1).map((cells, rowIndex) => {
-    if (cells.length !== headers.length) throw new Error(`Scope CSV row ${rowIndex + 2} has ${cells.length} fields; expected ${headers.length}`)
+    if (cells.length !== headers.length)
+      throw new Error(`Scope CSV row ${rowIndex + 2} has ${cells.length} fields; expected ${headers.length}`)
     const raw: Record<string, string> = {}
     for (const header of headers) raw[header] = (cells[indexes.get(header) ?? -1] ?? "").trim()
-    const get = (key: typeof REQUIRED_COLUMNS[number]) => (cells[indexes.get(key) ?? -1] ?? "").trim()
+    const get = (key: (typeof REQUIRED_COLUMNS)[number]) => (cells[indexes.get(key) ?? -1] ?? "").trim()
     const identifier = get("identifier")
     const asset_type = get("asset_type").toUpperCase()
     if (!identifier) throw new Error(`Scope CSV row ${rowIndex + 2} has an empty identifier`)
@@ -99,7 +114,10 @@ export function parseScopeAssetCSV(input: string): ScopeAssetRecord[] {
       confidentiality_requirement: get("confidentiality_requirement"),
       integrity_requirement: get("integrity_requirement"),
       max_severity: get("max_severity").toLowerCase(),
-      system_tags: get("system_tags").split(/[;,]/).map((tag) => tag.trim()).filter(Boolean),
+      system_tags: get("system_tags")
+        .split(/[;,]/)
+        .map((tag) => tag.trim())
+        .filter(Boolean),
       created_at: get("created_at"),
       updated_at: get("updated_at"),
       raw,
@@ -114,8 +132,10 @@ function splitAlternatives(identifier: string): string[] {
   for (const char of identifier) {
     if (char === "{") braceDepth++
     if (char === "}") braceDepth = Math.max(0, braceDepth - 1)
-    if (char === "," && braceDepth === 0) { parts.push(current.trim()); current = "" }
-    else current += char
+    if (char === "," && braceDepth === 0) {
+      parts.push(current.trim())
+      current = ""
+    } else current += char
   }
   if (current.trim()) parts.push(current.trim())
   const cleaned = parts.filter(Boolean)
@@ -123,30 +143,58 @@ function splitAlternatives(identifier: string): string[] {
   const first = cleaned[0]
   if (!first.startsWith("*.")) return cleaned
   const labels = first.slice(2).split(".")
-  const commonTwoLabelSuffixes = new Set(["co.uk", "org.uk", "ac.uk", "com.au", "net.au", "org.au", "com.br", "com.cn", "com.mx", "co.jp", "co.kr", "com.sg", "com.tr", "com.pl"])
+  const commonTwoLabelSuffixes = new Set([
+    "co.uk",
+    "org.uk",
+    "ac.uk",
+    "com.au",
+    "net.au",
+    "org.au",
+    "com.br",
+    "com.cn",
+    "com.mx",
+    "co.jp",
+    "co.kr",
+    "com.sg",
+    "com.tr",
+    "com.pl",
+  ])
   const lastTwo = labels.slice(-2).join(".")
   const base = "*." + labels.slice(0, commonTwoLabelSuffixes.has(lastTwo) ? -2 : -1).join(".")
   const isSuffixShorthand = (part: string) => {
     const suffix = part.replace(/^\./, "")
-    return /^[a-z]{2,}(?:\.[a-z]{2,})?$/i.test(suffix) &&
+    return (
+      /^[a-z]{2,}(?:\.[a-z]{2,})?$/i.test(suffix) &&
       (suffix.split(".").length === 1 || commonTwoLabelSuffixes.has(suffix.toLowerCase()))
+    )
   }
   if (!cleaned.slice(1).every(isSuffixShorthand)) return cleaned
-  return cleaned.map((part, index) => index === 0 ? part : `${base}.${part.replace(/^\./, "")}`)
+  return cleaned.map((part, index) => (index === 0 ? part : `${base}.${part.replace(/^\./, "")}`))
 }
 
 function expandBraces(pattern: string): string[] {
   const match = pattern.match(/\{([^{}]+)\}/)
   if (!match) return [pattern]
-  return match[1].split(",").map((item) => pattern.replace(match[0], item.trim())).flatMap(expandBraces)
+  return match[1]
+    .split(",")
+    .map((item) => pattern.replace(match[0], item.trim()))
+    .flatMap(expandBraces)
 }
 
 function hostOf(target: string): { host: string; url: URL } | undefined {
   try {
     const url = new URL(/^[a-z][a-z\d+.-]*:\/\//i.test(target) ? target : `https://${target}`)
     if (url.protocol !== "http:" && url.protocol !== "https:") return undefined
-    return { host: url.hostname.toLowerCase().replace(/^\[|\]$/g, "").replace(/\.$/, ""), url }
-  } catch { return undefined }
+    return {
+      host: url.hostname
+        .toLowerCase()
+        .replace(/^\[|\]$/g, "")
+        .replace(/\.$/, ""),
+      url,
+    }
+  } catch {
+    return undefined
+  }
 }
 
 function wildcardTldMatch(host: string, pattern: string): boolean {
@@ -183,7 +231,8 @@ function matchIdentifier(target: string, record: ScopeAssetRecord): { matched: b
       const pattern = raw.trim().toLowerCase()
       if (!pattern) continue
       if (pattern.startsWith("*.") && pattern.endsWith(".*")) {
-        if (parsed.url.protocol === "https:" && parsed.url.port === "" && wildcardTldMatch(parsed.host, pattern)) return { matched: true, pattern: raw }
+        if (parsed.url.protocol === "https:" && parsed.url.port === "" && wildcardTldMatch(parsed.host, pattern))
+          return { matched: true, pattern: raw }
         continue
       }
       if (pattern.includes("*") && !pattern.startsWith("*.")) continue
@@ -224,11 +273,13 @@ export namespace ScopeAssets {
       .filter((entry) => entry.match.matched)
       .sort((a, b) => recordSpecificity(b.asset) - recordSpecificity(a.asset))
     const found = matches[0]
-    if (!found) return {
-      matched: false,
-      active_testing_authorized: false,
-      reason: "no structured asset identifier matched; do not actively test without a separate verified policy decision",
-    }
+    if (!found)
+      return {
+        matched: false,
+        active_testing_authorized: false,
+        reason:
+          "no structured asset identifier matched; do not actively test without a separate verified policy decision",
+      }
     const { asset } = found
     return {
       matched: true,

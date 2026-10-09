@@ -199,7 +199,10 @@ function packageExportTargets(packageRoot: string, request: string): string[] {
       const [prefix, suffix = ""] = key.split("*", 2)
       return { key, prefix, suffix, score: prefix.length + suffix.length }
     })
-    .filter(({ prefix, suffix }) => request.startsWith(prefix) && request.endsWith(suffix) && request.length >= prefix.length + suffix.length)
+    .filter(
+      ({ prefix, suffix }) =>
+        request.startsWith(prefix) && request.endsWith(suffix) && request.length >= prefix.length + suffix.length,
+    )
     .sort((a, b) => b.score - a.score)
   const selected = patterns[0]
   if (!selected) return []
@@ -224,7 +227,11 @@ function resolveWorkspacePackage(packageRoot: string, subpath: string) {
   return resolveExisting(path.posix.join(packageRoot, subpath))
 }
 
-function aliasMatches(sourcePath: string, specifier: string, tsconfigs: Array<{ path: string; aliases: ReturnType<typeof collectAliases> }>) {
+function aliasMatches(
+  sourcePath: string,
+  specifier: string,
+  tsconfigs: Array<{ path: string; aliases: ReturnType<typeof collectAliases> }>,
+) {
   return nearestAliases(sourcePath, tsconfigs).some(({ pattern }) => {
     if (pattern.endsWith("/*")) return specifier.startsWith(pattern.slice(0, -1))
     return specifier === pattern
@@ -585,8 +592,7 @@ if (advisorySkillDocs.length > 0) {
   console.warn(
     `Warning: ${advisorySkillDocs.length} unresolved companion Markdown links in vendored .cyberstrike/skill documentation (advisory; review when refreshing those skill bundles).`,
   )
-  for (const item of advisorySkillDocs.slice(0, 10))
-    console.warn(`  ${item.sourcePath} -> ${item.specifier}`)
+  for (const item of advisorySkillDocs.slice(0, 10)) console.warn(`  ${item.sourcePath} -> ${item.specifier}`)
 }
 if (blockingBroken.length > 0) {
   console.error("Blocking broken repository-internal relationships detected:")

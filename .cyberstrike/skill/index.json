@@ -4291,6 +4291,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "BLOODHOUND_PATHS.md",
         "SKILL.md"
       ]
     },
@@ -4303,6 +4304,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "ADCS_ESC_MATRIX.md",
         "SKILL.md"
       ]
     },
@@ -4315,6 +4317,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "KERBEROS_ATTACK_CHAINS.md",
         "SKILL.md"
       ]
     },
@@ -4592,6 +4595,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "FRIDA_SCRIPTS.md",
         "SKILL.md"
       ]
     },
@@ -4604,6 +4608,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "ANTI_DEBUG_MATRIX.md",
         "SKILL.md"
       ]
     },
@@ -5540,7 +5545,8 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
-        "SKILL.md"
+        "SKILL.md",
+        "SURFACE_PATTERNS.md"
       ]
     },
     {
@@ -7919,6 +7925,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "PROTECTION_BYPASS_MATRIX.md",
         "SKILL.md"
       ]
     },
@@ -7961,7 +7968,8 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
-        "SKILL.md"
+        "SKILL.md",
+        "V8_EXPLOITATION_PATTERNS.md"
       ]
     },
     {
@@ -8048,6 +8056,9 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "CHECKLIST.md",
+        "METHODOLOGY.md",
+        "SCENARIOS.md",
         "SKILL.md"
       ]
     },
@@ -128574,6 +128585,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "DOCKER_ESCAPE_CHAINS.md",
         "SKILL.md"
       ]
     },
@@ -128673,6 +128685,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "SCENARIOS.md",
         "SKILL.md"
       ]
     },
@@ -131028,6 +131041,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "JAVA_GADGET_CHAINS.md",
         "SKILL.md"
       ]
     },
@@ -131653,6 +131667,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "PAYLOAD_COOKBOOK.md",
         "SKILL.md"
       ]
     },
@@ -132510,6 +132525,8 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "HOUSE_OF_TECHNIQUES.md",
+        "IO_FILE_EXPLOITATION.md",
         "SKILL.md"
       ]
     },
@@ -137815,6 +137832,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "EXTRA_INJECTION_TYPES.md",
         "SKILL.md"
       ]
     },
@@ -137839,6 +137857,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "IOS_RUNTIME_TRICKS.md",
         "SKILL.md"
       ]
     },
@@ -138968,6 +138987,8 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "KERNEL_HEAP_TECHNIQUES.md",
+        "KERNEL_MITIGATION_BYPASS.md",
         "SKILL.md"
       ]
     },
@@ -139214,7 +139235,9 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
-        "SKILL.md"
+        "KERNEL_EXPLOITS_CHECKLIST.md",
+        "SKILL.md",
+        "SUID_CAPABILITIES_TRICKS.md"
       ]
     },
     {
@@ -139279,6 +139302,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "JAILBREAK_PATTERNS.md",
         "SKILL.md"
       ]
     },
@@ -140079,6 +140103,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "DYLIB_XPC_TECHNIQUES.md",
         "SKILL.md"
       ]
     },
@@ -140109,7 +140134,8 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
-        "SKILL.md"
+        "SKILL.md",
+        "TCC_BYPASS_MATRIX.md"
       ]
     },
     {
@@ -140389,7 +140415,8 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
-        "SKILL.md"
+        "SKILL.md",
+        "VOLATILITY_CHEATSHEET.md"
       ]
     },
     {
@@ -141361,6 +141388,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "NAME_RESOLUTION_POISONING.md",
         "SKILL.md"
       ]
     },
@@ -141462,6 +141490,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "COERCION_METHODS.md",
         "SKILL.md"
       ]
     },
@@ -147204,6 +147233,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "KNOWN_GADGETS.md",
         "SKILL.md"
       ]
     },
@@ -149742,6 +149772,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "JAILBREAK_PATTERNS.md",
         "SKILL.md"
       ]
     },
@@ -150027,6 +150058,7 @@
       "tech_stack": [],
       "cwe_ids": [],
       "files": [
+        "SHELL_CHEATSHEET.md",
         "SKILL.md"
       ]
     },

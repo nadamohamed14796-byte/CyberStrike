@@ -34,12 +34,7 @@ if (testFiles.length === 0) {
   process.exit(0)
 }
 
-const args = [
-  "test",
-  "--preload",
-  "./happydom.ts",
-  ...testFiles.map((file) => path.relative(packageRoot, file)),
-]
+const args = ["test", "--preload", "./happydom.ts", ...testFiles.map((file) => path.relative(packageRoot, file))]
 const result = spawnSync(process.execPath, args, { cwd: packageRoot, stdio: "inherit" })
 if (result.error) {
   console.error("Could not start Bun unit tests:", result.error.message)

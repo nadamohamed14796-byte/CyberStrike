@@ -21,7 +21,13 @@ export type ScopePolicyDecision = ScopeDecision & {
   intent: "active_test" | "report"
   activeTestingAuthorized: boolean
   reportEligible: boolean
-  decision: "IN_SCOPE" | "ACTIVE_TEST_AUTHORIZED_BY_POLICY" | "OUT_OF_SCOPE" | "EXCLUDED" | "REPORT_ELIGIBLE_ONLY" | "REQUIRES_REVIEW"
+  decision:
+    | "IN_SCOPE"
+    | "ACTIVE_TEST_AUTHORIZED_BY_POLICY"
+    | "OUT_OF_SCOPE"
+    | "EXCLUDED"
+    | "REPORT_ELIGIBLE_ONLY"
+    | "REQUIRES_REVIEW"
   reason: string
 }
 
@@ -36,7 +42,13 @@ function parseTarget(value: string): ParsedTarget | undefined {
   if (!raw) return undefined
   try {
     const explicitScheme = /^[a-z][a-z\d+.-]*:\/\//i.test(raw)
-    const bareIPv6 = !explicitScheme && (raw.match(/:/g)?.length ?? 0) >= 2 && !raw.startsWith("[") && !raw.includes("/") && !raw.includes("?") && !raw.includes("#")
+    const bareIPv6 =
+      !explicitScheme &&
+      (raw.match(/:/g)?.length ?? 0) >= 2 &&
+      !raw.startsWith("[") &&
+      !raw.includes("/") &&
+      !raw.includes("?") &&
+      !raw.includes("#")
     const urlInput = explicitScheme ? raw : `https://${bareIPv6 ? `[${raw}]` : raw}`
     const url = new URL(urlInput)
     if (url.protocol !== "http:" && url.protocol !== "https:") return undefined
@@ -72,7 +84,8 @@ function ipv6ToBigInt(input: string): bigint | undefined {
     if (lastColon < 0) return undefined
     const v4 = ipv4ToBigInt(ip.slice(lastColon + 1))
     if (v4 === undefined) return undefined
-    ip = ip.slice(0, lastColon + 1) + Number((v4 >> 16n) & 0xffffn).toString(16) + ":" + Number(v4 & 0xffffn).toString(16)
+    ip =
+      ip.slice(0, lastColon + 1) + Number((v4 >> 16n) & 0xffffn).toString(16) + ":" + Number(v4 & 0xffffn).toString(16)
   }
   const halves = ip.split("::")
   if (halves.length > 2) return undefined
@@ -115,7 +128,7 @@ function ipInCIDR(target: string, cidr: NonNullable<ReturnType<typeof parseCIDR>
   const address = isV6 ? ipv6ToBigInt(target) : ipv4ToBigInt(target)
   if (address === undefined) return false
   const shift = BigInt(cidr.width - cidr.bits)
-  return (address >> shift) === (cidr.address >> shift)
+  return address >> shift === cidr.address >> shift
 }
 
 function checkMatch(target: string, scope: string): ScopeMatch {
@@ -142,7 +155,13 @@ function checkMatch(target: string, scope: string): ScopeMatch {
 
   const wildcard = scopeValue.startsWith("*.")
   const parsedTarget = parseTarget(target)
-  if (wildcard && scopeValue.endsWith(".*") && parsedTarget && parsedTarget.port === "443" && wildcardTldMatch(parsedTarget.host, scopeValue)) {
+  if (
+    wildcard &&
+    scopeValue.endsWith(".*") &&
+    parsedTarget &&
+    parsedTarget.port === "443" &&
+    wildcardTldMatch(parsedTarget.host, scopeValue)
+  ) {
     return { matches: true, reason: "host matches wildcard-TLD scope " + scopeValue }
   }
   const parsedScope = parseTarget(wildcard ? scopeValue.slice(2) : scopeValue)
@@ -171,20 +190,39 @@ function checkMatch(target: string, scope: string): ScopeMatch {
   return {
     matches: true,
     reason: wildcard
-      ? parsedTarget.host === parsedScope.host ? `host matches wildcard root ${scopeValue}` : `subdomain matches wildcard ${scopeValue}`
+      ? parsedTarget.host === parsedScope.host
+        ? `host matches wildcard root ${scopeValue}`
+        : `subdomain matches wildcard ${scopeValue}`
       : "exact host/path/port match",
   }
 }
 
 const COMMON_TWO_LABEL_SUFFIXES = new Set([
-  "co.uk", "org.uk", "ac.uk", "com.au", "net.au", "org.au", "com.br", "com.cn",
-  "com.mx", "co.jp", "co.kr", "com.sg", "com.tr", "com.pl", "co.nz", "com.tw",
+  "co.uk",
+  "org.uk",
+  "ac.uk",
+  "com.au",
+  "net.au",
+  "org.au",
+  "com.br",
+  "com.cn",
+  "com.mx",
+  "co.jp",
+  "co.kr",
+  "com.sg",
+  "com.tr",
+  "com.pl",
+  "co.nz",
+  "com.tw",
 ])
 
 function expandBraces(pattern: string): string[] {
   const match = pattern.match(/\{([^{}]+)\}/)
   if (!match) return [pattern]
-  return match[1].split(",").map((item) => pattern.replace(match[0], item.trim())).flatMap(expandBraces)
+  return match[1]
+    .split(",")
+    .map((item) => pattern.replace(match[0], item.trim()))
+    .flatMap(expandBraces)
 }
 
 function splitTopLevelComma(value: string): string[] {
@@ -194,8 +232,10 @@ function splitTopLevelComma(value: string): string[] {
   for (const char of value) {
     if (char === "{") depth++
     if (char === "}") depth = Math.max(0, depth - 1)
-    if (char === "," && depth === 0) { parts.push(current.trim()); current = "" }
-    else current += char
+    if (char === "," && depth === 0) {
+      parts.push(current.trim())
+      current = ""
+    } else current += char
   }
   if (current.trim()) parts.push(current.trim())
   return parts.filter(Boolean)
@@ -213,11 +253,13 @@ function expandScopePattern(raw: string): string[] {
     const base = "*." + labels.slice(0, COMMON_TWO_LABEL_SUFFIXES.has(suffix2) ? -2 : -1).join(".")
     const suffixShorthand = (item: string) => {
       const suffix = item.replace(/^\./, "")
-      return /^[a-z]{2,}(?:\.[a-z]{2,})?$/i.test(suffix) &&
+      return (
+        /^[a-z]{2,}(?:\.[a-z]{2,})?$/i.test(suffix) &&
         (suffix.split(".").length === 1 || COMMON_TWO_LABEL_SUFFIXES.has(suffix.toLowerCase()))
+      )
     }
     if (parts.slice(1).every(suffixShorthand)) {
-      alternatives = parts.map((item, index) => index === 0 ? item : base + "." + item.replace(/^\./, ""))
+      alternatives = parts.map((item, index) => (index === 0 ? item : base + "." + item.replace(/^\./, "")))
     }
   }
   return alternatives.flatMap(expandBraces).map((item) => (exclusion ? "!" : "") + item)
@@ -287,11 +329,12 @@ export namespace ScopeGuard {
     const intent = options.intent ?? "active_test"
     const policy = options.policy ?? {}
     const explicitlyMatched = base.inScope
-    const openReport = policy.openScopeUnlistedReports === true &&
+    const openReport =
+      policy.openScopeUnlistedReports === true &&
       options.ownershipConfirmed === true &&
       options.impactMeetsPolicy === true
-    const activeTestingAuthorized = explicitlyMatched ||
-      (policy.activeTestingUnlistedAssets === true && options.ownershipConfirmed === true)
+    const activeTestingAuthorized =
+      explicitlyMatched || (policy.activeTestingUnlistedAssets === true && options.ownershipConfirmed === true)
     const reportEligible = explicitlyMatched || openReport
     let decision: ScopePolicyDecision["decision"] = explicitlyMatched ? "IN_SCOPE" : "OUT_OF_SCOPE"
     let reason = explicitlyMatched
@@ -314,12 +357,19 @@ export namespace ScopeGuard {
       reason = "no explicit active-testing authorization for this unlisted asset"
     } else if (!explicitlyMatched && intent === "report" && !reportEligible) {
       decision = options.ownershipConfirmed === undefined ? "REQUIRES_REVIEW" : "OUT_OF_SCOPE"
-      reason = options.ownershipConfirmed === undefined
-        ? "ownership and report eligibility have not been verified"
-        : "unlisted asset does not meet the program's report-eligibility policy"
+      reason =
+        options.ownershipConfirmed === undefined
+          ? "ownership and report eligibility have not been verified"
+          : "unlisted asset does not meet the program's report-eligibility policy"
     }
-    return { ...base, intent, activeTestingAuthorized: !base.excluded && activeTestingAuthorized && options.policyLoaded !== false,
-      reportEligible: !base.excluded && reportEligible && options.policyLoaded !== false, decision, reason }
+    return {
+      ...base,
+      intent,
+      activeTestingAuthorized: !base.excluded && activeTestingAuthorized && options.policyLoaded !== false,
+      reportEligible: !base.excluded && reportEligible && options.policyLoaded !== false,
+      decision,
+      reason,
+    }
   }
 
   export function hostFromTarget(target: string): string | undefined {

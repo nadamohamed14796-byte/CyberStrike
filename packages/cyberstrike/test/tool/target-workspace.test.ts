@@ -7,15 +7,15 @@ describe("TargetWorkspace scope routing", () => {
   })
 
   test("prefers an exact host over a matching wildcard", () => {
-    expect(
-      TargetWorkspace.scopeForTarget("https://api.example.com", ["*.example.com", "api.example.com"]),
-    ).toBe("api.example.com")
+    expect(TargetWorkspace.scopeForTarget("https://api.example.com", ["*.example.com", "api.example.com"])).toBe(
+      "api.example.com",
+    )
   })
 
   test("prefers the most specific matching path scope", () => {
-    expect(
-      TargetWorkspace.scopeForTarget("https://example.com/api/users", ["example.com", "example.com/api"]),
-    ).toBe("example.com/api")
+    expect(TargetWorkspace.scopeForTarget("https://example.com/api/users", ["example.com", "example.com/api"])).toBe(
+      "example.com/api",
+    )
   })
 
   test("does not route an out-of-scope host into a registered scope", () => {

@@ -45,7 +45,7 @@ export function normalizeScope(input: string): string {
   }
 
   while (s.endsWith(".")) s = s.slice(0, -1)
-  if (!s || s === "*" || s.startsWith("*.") && s.slice(2).length === 0) return ""
+  if (!s || s === "*" || (s.startsWith("*.") && s.slice(2).length === 0)) return ""
   return `${exclusion ? "!" : ""}${s}`
 }
 
@@ -67,14 +67,31 @@ export function deriveScope(targetUrl: string): string {
 }
 
 const COMMON_TWO_LABEL_SUFFIXES = new Set([
-  "co.uk", "org.uk", "ac.uk", "com.au", "net.au", "org.au", "com.br", "com.cn",
-  "com.mx", "co.jp", "co.kr", "com.sg", "com.tr", "com.pl", "co.nz", "com.tw",
+  "co.uk",
+  "org.uk",
+  "ac.uk",
+  "com.au",
+  "net.au",
+  "org.au",
+  "com.br",
+  "com.cn",
+  "com.mx",
+  "co.jp",
+  "co.kr",
+  "com.sg",
+  "com.tr",
+  "com.pl",
+  "co.nz",
+  "com.tw",
 ])
 
 function expandBraces(pattern: string): string[] {
   const match = pattern.match(/\{([^{}]+)\}/)
   if (!match) return [pattern]
-  return match[1].split(",").map((item) => pattern.replace(match[0], item.trim())).flatMap(expandBraces)
+  return match[1]
+    .split(",")
+    .map((item) => pattern.replace(match[0], item.trim()))
+    .flatMap(expandBraces)
 }
 
 function expandScopePattern(raw: string): string[] {
@@ -87,8 +104,10 @@ function expandScopePattern(raw: string): string[] {
   for (const char of value) {
     if (char === "{") depth++
     if (char === "}") depth = Math.max(0, depth - 1)
-    if (char === "," && depth === 0) { parts.push(current.trim()); current = "" }
-    else current += char
+    if (char === "," && depth === 0) {
+      parts.push(current.trim())
+      current = ""
+    } else current += char
   }
   if (current.trim()) parts.push(current.trim())
   let alternatives = parts.filter(Boolean)
@@ -98,11 +117,13 @@ function expandScopePattern(raw: string): string[] {
     const base = "*." + labels.slice(0, COMMON_TWO_LABEL_SUFFIXES.has(suffix2) ? -2 : -1).join(".")
     const isSuffix = (item: string) => {
       const suffix = item.replace(/^\./, "")
-      return /^[a-z]{2,}(?:\.[a-z]{2,})?$/i.test(suffix) &&
+      return (
+        /^[a-z]{2,}(?:\.[a-z]{2,})?$/i.test(suffix) &&
         (suffix.split(".").length === 1 || COMMON_TWO_LABEL_SUFFIXES.has(suffix.toLowerCase()))
+      )
     }
     if (alternatives.slice(1).every(isSuffix)) {
-      alternatives = alternatives.map((item, index) => index === 0 ? item : base + "." + item.replace(/^\./, ""))
+      alternatives = alternatives.map((item, index) => (index === 0 ? item : base + "." + item.replace(/^\./, "")))
     }
   }
   return alternatives.flatMap(expandBraces).map((item) => (exclusion ? "!" : "") + item)
@@ -141,7 +162,10 @@ export function makeMatcher(scopes: readonly string[]): ScopeMatcher {
   if (includePatterns.length === 0) return () => false
 
   const matches = (host: string, patterns: ReturnType<typeof toPattern>[]): boolean => {
-    const h = host.toLowerCase().replace(/\.+$/, "").replace(/^\[|\]$/g, "")
+    const h = host
+      .toLowerCase()
+      .replace(/\.+$/, "")
+      .replace(/^\[|\]$/g, "")
     return patterns.some(({ base, wildcard }) => {
       if (wildcard && base.endsWith(".*")) return wildcardTldMatches(h, "*." + base)
       return wildcard ? h === base || h.endsWith("." + base) : h === base

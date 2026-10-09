@@ -92,5 +92,4 @@ describe("ScopeGuard", () => {
     expect(allowed.activeTestingAuthorized).toBe(true)
     expect(allowed.decision).toBe("ACTIVE_TEST_AUTHORIZED_BY_POLICY")
   })
-
 })

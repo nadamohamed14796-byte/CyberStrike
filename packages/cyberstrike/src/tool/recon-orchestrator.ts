@@ -25,7 +25,9 @@ export const ReconOrchestratorTool = Tool.define("recon_orchestrator", {
     max_tools: z.number().int().min(1).max(8).default(3),
   }),
   async execute(params): Promise<{ title: string; output: string; metadata: ReconOrchestratorMetadata }> {
-    const workspaces = (await TargetWorkspace.ensureScopes(params.scope_items, params.sessionID)).map((workspace) => workspace.root)
+    const workspaces = (await TargetWorkspace.ensureScopes(params.scope_items, params.sessionID)).map(
+      (workspace) => workspace.root,
+    )
     const planned = SignalQueue.planNext({
       sessionID: params.sessionID,
       scope_items: params.scope_items,
