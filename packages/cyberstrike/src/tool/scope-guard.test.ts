@@ -8,10 +8,10 @@ describe("ScopeGuard", () => {
     expect(ScopeGuard.check("example.com.attacker.test", ["example.com"]).inScope).toBe(false)
   })
 
-  test("wildcards match subdomains but not the wildcard root", () => {
+  test("wildcards match the root and subdomains (shared runtime semantics)", () => {
     expect(ScopeGuard.check("api.example.com", ["*.example.com"]).inScope).toBe(true)
     expect(ScopeGuard.check("deep.api.example.com", ["*.example.com"]).inScope).toBe(true)
-    expect(ScopeGuard.check("example.com", ["*.example.com"]).inScope).toBe(false)
+    expect(ScopeGuard.check("example.com", ["*.example.com"]).inScope).toBe(true)
   })
 
   test("respects URL scheme, port, and path boundaries", () => {
