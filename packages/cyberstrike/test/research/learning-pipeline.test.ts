@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 import { ReportKnowledge } from "../../src/learning/report-knowledge"
+import { Learning } from "../../src/learning/learning"
 import { syncResearchSource } from "../../src/research/ingest"
 
 function article(title: string, link: string) {
@@ -88,6 +89,17 @@ test("runs source discovery through persistence and recommendations, is idempote
       })
       expect(recommendations).toHaveLength(2)
       expect(recommendations.every((row) => row.metadata?.source_trust === 90)).toBe(true)
+
+      const sessionID = "isolated-learning-pipeline-session"
+      const activated = Learning.activateResearch(sessionID, {
+        query: "PipelineE2EMarker",
+        vulnerabilityClass: "idor",
+        limit: 10,
+      })
+      expect(activated).toHaveLength(2)
+      expect(Learning.researchFor(sessionID, 10).map((row) => row.id).sort()).toEqual(
+        recommendations.map((row) => row.id).sort(),
+      )
 
       const repeat = await syncResearchSource(source, { limit: 10, pages: 10, depth: 1 })
       expect(repeat.failed).toBe(0)
