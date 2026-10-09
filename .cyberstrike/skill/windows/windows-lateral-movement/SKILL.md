@@ -14,8 +14,8 @@ Before going deep, consider loading:
 
 - [windows-privilege-escalation](../windows-privilege-escalation/SKILL.md) after landing on a new host for local escalation
 - [windows-av-evasion](../windows-av-evasion/SKILL.md) when EDR blocks lateral movement tools
-- [active-directory-kerberos-attacks](../active-directory-kerberos-attacks/SKILL.md) for Kerberos-based lateral (pass-the-ticket, delegation)
-- [active-directory-acl-abuse](../active-directory-acl-abuse/SKILL.md) for ACL-based paths to new hosts
+- [active-directory-kerberos-attacks](../../active-directory/active-directory-kerberos-attacks/SKILL.md) for Kerberos-based lateral (pass-the-ticket, delegation)
+- [active-directory-acl-abuse](../../active-directory/active-directory-acl-abuse/SKILL.md) for ACL-based paths to new hosts
 
 ### Advanced Reference
 
