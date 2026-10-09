@@ -107,3 +107,28 @@ test("uses one persisted identity for repeated concurrent ingestion attempts", a
   expect(rows).toHaveLength(1)
   expect(rows[0]?.times_seen).toBe(8)
 })
+
+test("runtime recommendations never expose target-specific local findings", () => {
+  const localID = ReportKnowledge.ingest({
+    sessionID: "target-isolation-session",
+    title: "TargetLeakMarker private.example profile authorization finding",
+    vulnerabilityClass: "idor",
+    severity: "high",
+    endpoint: "https://private.example/api/profile",
+    targetPattern: "private.example",
+    sourceKind: "finding",
+    outcome: "confirmed",
+    lesson: "TargetLeakMarker was confirmed only on private.example; do not reuse this target-specific result elsewhere.",
+  })
+
+  expect(localID).not.toBeNull()
+
+  // Explicit operator search may inspect its own persisted knowledge.
+  expect(ReportKnowledge.search({ query: "TargetLeakMarker", limit: 10 }).some((row) => row.id === localID)).toBe(true)
+
+  // The shared recommender used by hunting prompts must only return reusable
+  // public source records, not local reports from another target/session.
+  expect(ReportKnowledge.recommendations({ signal: "TargetLeakMarker", limit: 10 }).some((row) => row.id === localID)).toBe(
+    false,
+  )
+})
