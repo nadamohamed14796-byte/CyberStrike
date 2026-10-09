@@ -19,7 +19,7 @@ export namespace ToolLearning {
       const now = Date.now()
       const key = input.tool.trim().toLowerCase()
       const normalizedSignal = normalizeSignal(input.signal).signal
-      Database.use((db) => {
+      Database.transaction((db) => {
         const where = input.sessionID
           ? and(
               eq(ToolLearningTable.session_id, input.sessionID),
