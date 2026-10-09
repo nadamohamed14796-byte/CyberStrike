@@ -92,12 +92,17 @@ export async function fetchResearchText(url: string, source: ResearchSource) {
           }
 
           if (response.status === 429 || response.status >= 500) {
+            await response.body?.cancel().catch(() => undefined)
             throw new Error("HTTP " + response.status)
           }
-          if (!response.ok) throw new Error("HTTP " + response.status)
+          if (!response.ok) {
+            await response.body?.cancel().catch(() => undefined)
+            throw new Error("HTTP " + response.status)
+          }
 
           const contentType = response.headers.get("content-type") ?? ""
-          if (!/text\/html|application\/xhtml\+xml|text\/plain|application\/xml/i.test(contentType)) {
+          if (!/^(?:text\/html|application\/xhtml\+xml|text\/plain|application\/xml)(?:\s*;|$)/i.test(contentType)) {
+            await response.body?.cancel().catch(() => undefined)
             throw new NonRetryableResearchError("unsupported content type: " + contentType)
           }
           const length = Number(response.headers.get("content-length") ?? 0)
