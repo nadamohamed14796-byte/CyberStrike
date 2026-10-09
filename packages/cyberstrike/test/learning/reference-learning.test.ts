@@ -4,8 +4,10 @@ import { Database } from "../../src/storage/db"
 import { ReferenceLearning } from "../../src/learning/reference"
 import { Skill } from "../../src/skill/skill"
 import { SkillLearningTable } from "../../src/learning/learning.sql"
+import { createLearningTestSessions } from "./test-session"
 
 test("keeps unscoped skill observations and outcomes separate from session rows", () => {
+  const sessions = createLearningTestSessions("reference-learning", ["alpha", "beta"])
   const skill: Skill.Info = {
     name: "LearningSessionIsolationSkill",
     description: "Regression fixture for learning session isolation",
@@ -15,18 +17,18 @@ test("keeps unscoped skill observations and outcomes separate from session rows"
     tags: ["learning-audit"],
   }
 
-  ReferenceLearning.observeSkill(skill, "skill-session-alpha")
-  ReferenceLearning.observeSkill(skill, "skill-session-beta")
+  ReferenceLearning.observeSkill(skill, sessions.alpha)
+  ReferenceLearning.observeSkill(skill, sessions.beta)
   ReferenceLearning.observeSkill(skill)
 
-  ReferenceLearning.recordOutcome(skill.name, "useful", "skill-session-alpha", "alpha-only evidence")
+  ReferenceLearning.recordOutcome(skill.name, "useful", sessions.alpha, "alpha-only evidence")
   ReferenceLearning.recordOutcome(skill.name, "rejected", undefined, "unscoped feedback")
 
   const rows = Database.use((db) =>
     db.select().from(SkillLearningTable).where(eq(SkillLearningTable.skill_name, skill.name)).all(),
   )
-  const alpha = rows.find((row) => row.session_id === "skill-session-alpha")
-  const beta = rows.find((row) => row.session_id === "skill-session-beta")
+  const alpha = rows.find((row) => row.session_id === sessions.alpha)
+  const beta = rows.find((row) => row.session_id === sessions.beta)
   const unscoped = rows.find((row) => row.session_id === null)
 
   expect(alpha).toBeDefined()
