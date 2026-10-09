@@ -244,7 +244,7 @@ export namespace ReportKnowledge {
     metadata?: Record<string, unknown>
   }) {
     try {
-      Database.use((db) => {
+      Database.transaction((db) => {
         const row = db.select().from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.id, input.reportID)).get()
         if (!row) return
         const now = Date.now()
