@@ -107,8 +107,8 @@ export const ScopeCheckTool = Tool.define("scope_check", {
       `Active testing authorized: ${decision.activeTestingAuthorized ? "YES" : "NO"}`,
       `Report eligible: ${reportEligible ? "YES" : "NO"}`,
       `Bounty eligible: ${bountyEligible ? "YES" : recordBounty === false ? "NO" : "UNKNOWN"}`,
-      ...(params.reported_severity ? [`Proposed report severity: ${params.reported_severity}`, `Within asset severity cap: ${severityExceedsCap ? "NO" : severityCap ? "YES" : "UNKNOWN"}`] : []),
-      `Reason: ${assetMatch ? assetEvaluation?.reason : decision.reason}`,
+      ...(params.reported_severity ? [`Proposed report severity: ${params.reported_severity}`, `Within asset severity cap: ${!severityCapKnown ? "UNKNOWN" : severityExceedsCap ? "NO" : "YES"}`] : []),
+      `Reason: ${assetMatch ? decision.reason + "; structured asset inventory record matched" : decision.reason}`,
       "",
       "Scope check details:",
       ...decision.results
