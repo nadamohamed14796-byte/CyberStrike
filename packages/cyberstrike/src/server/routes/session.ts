@@ -1,3 +1,5 @@
+import path from "node:path"
+import type { ParamSlot } from "../../session/normalize/types"
 import { Hono } from "hono"
 import { stream } from "hono/streaming"
 import { describeRoute, validator, resolver } from "hono-openapi"
@@ -330,6 +332,8 @@ function inferScheme(rawText: string): "http" | "https" {
 async function feedHuntingLayerFromRequest(input:{
   sessionID:string
   target:string
+  pageUrl?:string
+  observedParams?:ParamSlot[]
   request:{
     id:string
     method:string
@@ -353,11 +357,20 @@ async function feedHuntingLayerFromRequest(input:{
 }):Promise<void>{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
   try{
-    const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
-    const { ingestCyberStrikeRequest }=await import("../../../../hunting-new/src/cyberstrike-intake")
-    await ingestCyberStrikeRequest(root,input)
+    const root=process.env.HUNT_ROOT ?? path.resolve(import.meta.dir,"../../../../../hunting-new")
+    const { ingestCyberStrikeRequest }=await import("../../../../../hunting-new/src/cyberstrike-intake")
+    await ingestCyberStrikeRequest(root,{
+      target:input.target,
+      sessionId:input.sessionID,
+      request:input.request,
+      response:input.response,
+      pageUrl:input.pageUrl,
+      observedParams:input.observedParams,
+      jsAssetIds:input.jsAssetIds,
+      functionIds:input.functionIds,
+    })
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
-      const { autoDispatchForTarget }=await import("../../../../hunting-new/src/auto-dispatch")
+      const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
       void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
         .catch(error=>log.warn("hunting auto-dispatch failed",{
           sessionID:input.sessionID,
@@ -1289,11 +1302,12 @@ export const SessionRoutes = lazy(() =>
                 url:normalized.origin + normalized.normalizedPath,
                 host:normalized.host,
                 path:normalized.normalizedPath,
-                credentialId,
+                credentialId: credentialID,
                 accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                 observedAt:Date.now(),
               },
               pageUrl:body.page_url,
+              observedParams:normalized.observedParams,
               response:body.response ? {
                 id:"obs_"+Bun.hash([
                   sessionID,
@@ -1372,11 +1386,12 @@ export const SessionRoutes = lazy(() =>
               url:normalized.origin + normalized.normalizedPath,
               host:normalized.host,
               path:normalized.normalizedPath,
-              credentialId,
+              credentialId: credentialID,
               accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
               observedAt:req.time.created,
             },
             pageUrl:body.page_url,
+              observedParams:normalized.observedParams,
             response:body.response ? {
               id:req.id+":response",
               status:body.response.status,
@@ -1460,7 +1475,7 @@ export const SessionRoutes = lazy(() =>
                       url:normalized.origin + normalized.normalizedPath,
                       host:normalized.host,
                       path:normalized.normalizedPath,
-                      credentialId,
+                      credentialId: credentialID,
                       accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                       observedAt:req.time.created,
                     },
@@ -1472,6 +1487,8 @@ export const SessionRoutes = lazy(() =>
                       bodyHash:normalized.bodyHash,
                       observedAt:req.time.created,
                     } : undefined,
+                    pageUrl:body.page_url,
+                    observedParams:normalized.observedParams,
                     functionIds:[learnedFunction.id],
                   })
                 }
