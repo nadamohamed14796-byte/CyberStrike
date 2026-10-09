@@ -37,7 +37,7 @@ jobs:
         run: bun run --cwd packages/cyberstrike src/index.ts -h
 
       - name: Run research ingestion regression tests
-        run: bun run --cwd packages/cyberstrike test test/research/safe-fetch.test.ts test/learning/source-fingerprint.test.ts test/learning/report-knowledge-fingerprint.test.ts
+        run: bun run --cwd packages/cyberstrike test test/research/safe-fetch.test.ts test/research/learning-pipeline.test.ts test/learning/source-fingerprint.test.ts test/learning/report-knowledge-fingerprint.test.ts
 
       - name: Typecheck CyberStrike package
         run: bun run --cwd packages/cyberstrike typecheck
