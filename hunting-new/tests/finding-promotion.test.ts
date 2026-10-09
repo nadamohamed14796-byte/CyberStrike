@@ -90,7 +90,7 @@ describe("persisted false-positive promotion gate", () => {
       }
       const result=await promoteValidatedHypothesis(root,target,{
         hypothesisId:"hyp-fp",title:"Known FP",severity:"medium",summary:"summary",impact:"impact",
-        validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,functionEvidence.id,...attempts]},
+        validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attempts]},
         signal:"access-control",skill:"idor",strategy:"identifier",endpoint:"/api/users/123",
       })
       expect(result.action).toBe("skip")
