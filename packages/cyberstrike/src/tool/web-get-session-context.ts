@@ -12,6 +12,7 @@ import { Vulnerability } from "../session/vulnerability"
 import { TargetMemory } from "../session/target-memory"
 import { Instance } from "../project/instance"
 import { TargetWorkspace } from "./target-workspace"
+import { ProxyWorkerContext } from "../session/proxy-worker-context"
 import path from "node:path"
 
 const description = `Get the bounded web-application context for this session — scoped to the endpoint you are testing, so it stays small no matter how large the session grows.
@@ -43,7 +44,8 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
 
     const allRequests = Request.get(sessionID)
     // The endpoint being tested now = the single request in 'processing' (serial queue).
-    const currentReq = allRequests.find((r) => r.status === "processing") ?? allRequests.at(-1)
+    const proxyRequestID = ProxyWorkerContext.get(ctx.sessionID)
+    const currentReq = (proxyRequestID ? allRequests.find((r) => r.id === proxyRequestID) : undefined) ?? allRequests.find((r) => r.status === "processing") ?? allRequests.at(-1)
 
     // 1. RECENT (inline): objects + functions linked to THIS request — bounded per-request,
     //    constant in session size. The substrate (schema + cross-credential values) inline so
@@ -123,11 +125,10 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
 
     // Cross-session target intelligence: bounded retrieval from the target-wide
     // graph, not a dump of the entire request/session history.
-    const targetInput = currentReq?.site ?? (currentReq ? requestURL(currentReq) : undefined)
+    const targetInput = currentReq?.site ?? currentReq?.host
     if (targetInput) {
       try {
-        const identity = TargetWorkspace.paths(targetInput).identity
-        const knowledgeTarget = identity.replace(/^https?:\/\//i, "").split("/")[0]
+        const knowledgeTarget = targetInput.replace(/^https?:\/\//i, "").split(/[/:]/)[0].toLowerCase()
         const root = process.env.HUNT_ROOT ?? path.resolve(process.cwd(), "hunting-new")
         const { loadTargetIntelligence } = await import("../../../../hunting-new/src/target-intelligence")
         const intelligence = await loadTargetIntelligence(root, knowledgeTarget)
