@@ -742,7 +742,7 @@ packages/cyberstrike/migration/20261008120000_signal_queue/migration.sql	U
 packages/cyberstrike/migration/20261008121000_tool_learning/migration.sql	U	
 packages/cyberstrike/migration/20261008130000_add_vulnerability_candidate/migration.sql	U	
 packages/cyberstrike/migration/20261009120000_research_queue/migration.sql	U	
-packages/cyberstrike/package.json	U	
+packages/cyberstrike/package.json	T	CyberStrike package scripts/workspaces inspected.
 packages/cyberstrike/parsers-config.ts	U	
 packages/cyberstrike/postman/cyberstrike-session-api.postman_collection.json	U	
 packages/cyberstrike/script/build.ts	U	
@@ -830,7 +830,7 @@ packages/cyberstrike/src/cli/cmd/debug/snapshot.ts	U
 packages/cyberstrike/src/cli/cmd/export.ts	U	
 packages/cyberstrike/src/cli/cmd/generate.ts	U	
 packages/cyberstrike/src/cli/cmd/github.ts	U	
-packages/cyberstrike/src/cli/cmd/hackbrowser.ts	U	
+packages/cyberstrike/src/cli/cmd/hackbrowser.ts	T	Hackbrowser command/session creation path inspected.
 packages/cyberstrike/src/cli/cmd/import.ts	U	
 packages/cyberstrike/src/cli/cmd/mcp.ts	U	
 packages/cyberstrike/src/cli/cmd/models.ts	U	
@@ -977,11 +977,11 @@ packages/cyberstrike/src/flag/flag.ts	U
 packages/cyberstrike/src/format/formatter.ts	U	
 packages/cyberstrike/src/format/index.ts	U	
 packages/cyberstrike/src/global/index.ts	U	
-packages/cyberstrike/src/hackbrowser-subprocess/hackbrowser-worker.ts	U	
-packages/cyberstrike/src/hackbrowser-subprocess/worker-ipc.ts	U	
+packages/cyberstrike/src/hackbrowser-subprocess/hackbrowser-worker.ts	T	Worker IPC, model reconstruction and crash handling inspected in part.
+packages/cyberstrike/src/hackbrowser-subprocess/worker-ipc.ts	T	Worker/parent JSON-lines message types inspected.
 packages/cyberstrike/src/id/id.ts	U	
 packages/cyberstrike/src/ide/index.ts	U	
-packages/cyberstrike/src/index.ts	U	
+packages/cyberstrike/src/index.ts	T	CLI entry point/middleware and command registration inspected in part.
 packages/cyberstrike/src/installation/index.ts	U	
 packages/cyberstrike/src/learning/index.ts	U	
 packages/cyberstrike/src/learning/learning.sql.ts	U	
@@ -1109,13 +1109,13 @@ packages/cyberstrike/src/server/routes/project.ts	U
 packages/cyberstrike/src/server/routes/provider.ts	U	
 packages/cyberstrike/src/server/routes/pty.ts	U	
 packages/cyberstrike/src/server/routes/question.ts	U	
-packages/cyberstrike/src/server/routes/session.ts	U	
+packages/cyberstrike/src/server/routes/session.ts	T	Session ingest route, Hunting Layer adapter and capture normalization path inspected in part; race-duplicate intake fix added.
 packages/cyberstrike/src/server/routes/skill.ts	U	
 packages/cyberstrike/src/server/routes/tui.ts	U	
-packages/cyberstrike/src/server/server.ts	U	
+packages/cyberstrike/src/server/server.ts	T	Server entry/middleware/routes inspected in part.
 packages/cyberstrike/src/session/compaction.ts	U	
 packages/cyberstrike/src/session/coverage-note.ts	U	
-packages/cyberstrike/src/session/hackbrowser-status.ts	U	
+packages/cyberstrike/src/session/hackbrowser-status.ts	T	Per-session status/event contract inspected.
 packages/cyberstrike/src/session/index.ts	U	
 packages/cyberstrike/src/session/ingest-queue.ts	U	
 packages/cyberstrike/src/session/ingest-summary.ts	U	
@@ -1265,7 +1265,7 @@ packages/cyberstrike/src/tool/glob.ts	U
 packages/cyberstrike/src/tool/glob.txt	U	
 packages/cyberstrike/src/tool/grep.ts	U	
 packages/cyberstrike/src/tool/grep.txt	U	
-packages/cyberstrike/src/tool/hackbrowser-launcher.ts	U	
+packages/cyberstrike/src/tool/hackbrowser-launcher.ts	T	Worker preparation, spawn, IPC lifecycle and per-session status inspected in part.
 packages/cyberstrike/src/tool/hackbrowser.ts	U	
 packages/cyberstrike/src/tool/http-replay.ts	U	
 packages/cyberstrike/src/tool/iachook.ts	U	
@@ -1492,16 +1492,16 @@ packages/hackbrowser/scripts/analyze-baseline.ts	U
 packages/hackbrowser/scripts/e2e-inspect.ts	U	
 packages/hackbrowser/scripts/regression-a13.ts	U	
 packages/hackbrowser/scripts/regression-report.ts	U	
-packages/hackbrowser/src/agent.ts	U	
-packages/hackbrowser/src/api.ts	U	
+packages/hackbrowser/src/agent.ts	T	Browser crawl/capture entry and lifecycle sections inspected in part.
+packages/hackbrowser/src/api.ts	T	CrawlOptions validation, config translation, run lifecycle and argv parsing inspected.
 packages/hackbrowser/src/auth.ts	U	
 packages/hackbrowser/src/capture.ts	U	
 packages/hackbrowser/src/executor.ts	U	
-packages/hackbrowser/src/index.ts	U	
-packages/hackbrowser/src/ingest.ts	U	
-packages/hackbrowser/src/log.ts	U	
+packages/hackbrowser/src/index.ts	T	Standalone Hackbrowser CLI shell inspected.
+packages/hackbrowser/src/ingest.ts	T	HTTP ingest payload construction and POST handling inspected in part.
+packages/hackbrowser/src/log.ts	T	Module-level log sink behavior inspected.
 packages/hackbrowser/src/navigator.ts	U	
-packages/hackbrowser/src/panel/emit.ts	U	
+packages/hackbrowser/src/panel/emit.ts	T	Module-level event sink behavior inspected.
 packages/hackbrowser/src/panel/inject.ts	U	
 packages/hackbrowser/src/prompt/planner.txt	U	
 packages/hackbrowser/src/scanner.ts	U	
