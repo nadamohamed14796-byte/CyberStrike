@@ -65,7 +65,7 @@ describe("hunting runtime end-to-end", () => {
       expect(engine.forTarget(target).some(x=>x.signal==="waf_signal_detected")).toBe(true)
 
       const prepared=await prepareMultiAgentPlan(root,engine,[{
-        name:"waf-check",
+        name:"waf-xss-bypass",
         confidence_threshold:.6,
         required_signals:["waf_signal_detected"],
         optional_signals:[],
