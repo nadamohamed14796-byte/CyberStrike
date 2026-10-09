@@ -406,14 +406,14 @@ async function feedHuntingLayerFromRequest(input:{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
   try{
     const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
-    const { ingestCyberStrikeRequest }=await import("../../../../hunting-new/src/cyberstrike-intake")
+    const { ingestCyberStrikeRequest }=await import("../../../../../hunting-new/src/cyberstrike-intake")
     const headerMetadata = extractRequestHeaderMetadata(input.rawRequest ?? "")
     await ingestCyberStrikeRequest(root,{
       ...input,
       request:{ ...input.request, ...headerMetadata },
     })
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
-      const { autoDispatchForTarget }=await import("../../../../hunting-new/src/auto-dispatch")
+      const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
       void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
         .catch(error=>log.warn("hunting auto-dispatch failed",{
           sessionID:input.sessionID,
