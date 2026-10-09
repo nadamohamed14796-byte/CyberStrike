@@ -18,6 +18,7 @@ export namespace ReportKnowledge {
     cweID?: string
     endpoint?: string
     sourceURL?: string
+    targetPattern?: string
   }
 
   function legacyFingerprint(input: FingerprintInput) {
@@ -27,10 +28,12 @@ export namespace ReportKnowledge {
   function fingerprint(input: FingerprintInput) {
     if (input.sourceURL) return sourceFingerprints(input.sourceURL)[0]
     const legacy = legacyFingerprint(input)
-    // Findings without a public source URL are target/session-specific. Scope
-    // their identity to the owning session to stop identical endpoints/titles
-    // from different targets being merged into one row.
-    return input.sessionID ? "scope:" + normalize(input.sessionID) + "|" + legacy : legacy
+    // Findings without a public source URL are local knowledge. Scope identity
+    // to the session and/or explicit target pattern so equivalent paths on
+    // separate targets cannot be merged into one record.
+    const sessionScope = normalize(input.sessionID)
+    const targetScope = normalize(input.targetPattern)
+    return sessionScope || targetScope ? "scope:" + sessionScope + "|" + targetScope + "|" + legacy : legacy
   }
 
   function fingerprintCondition(input: FingerprintInput, key: string) {
@@ -55,12 +58,15 @@ export namespace ReportKnowledge {
     }
 
     const legacy = legacyFingerprint(input)
-    // Legacy local records are reusable only inside the same session scope.
-    // A previously merged row from another target must not absorb this finding.
+    const targetScope = (value: string | null | undefined) => normalize(value) || undefined
+    // Legacy local records are reusable only when their stored session and
+    // target scope match exactly. Do not absorb rows that may have been merged
+    // by the older unscoped fingerprint implementation.
     return rows.find(
       (row) =>
         row.fingerprint === legacy &&
-        (row.session_id ?? undefined) === input.sessionID,
+        (row.session_id ?? undefined) === input.sessionID &&
+        targetScope(row.target_pattern) === targetScope(input.targetPattern),
     )
   }
 
