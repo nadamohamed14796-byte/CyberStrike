@@ -5,7 +5,8 @@ import { NativeCyberStrikeExecutor } from "./native-cyberstrike-executor"
 import { checkpointPhase } from "./runtime-persistence"
 import { coverageGate } from "./ledger"
 import { loadTaskStates } from "./task-state-store"
-import { updateMission } from "./mission"
+import { updateMission, loadMission } from "./mission"
+import { checkScope } from "./scope"
 import { loadPolicies } from "./policy"
 
 export interface NativeDispatchOptions {
@@ -22,6 +23,10 @@ export async function executePersistedDispatchWithNativeCyberStrike(
   target:string,
   options:NativeDispatchOptions={},
 ){
+  const mission=await loadMission(root,target)
+  if(!mission) throw new Error("MISSION_NOT_FOUND: initialize the target with an explicit configured scope first")
+  const scopeDecision=checkScope(target,mission.scope)
+  if(!scopeDecision.allowed) throw new Error("MISSION_BLOCKED: "+scopeDecision.reason)
   const plan=await loadAgentPlan(root,target)
   if(!plan) throw new Error("AGENT_PLAN_NOT_FOUND")
   const prepared:PreparedMultiAgentPlan={
