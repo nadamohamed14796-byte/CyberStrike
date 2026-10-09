@@ -324,7 +324,48 @@ function inferScheme(rawText: string): "http" | "https" {
   return "https"
 }
 
-0// Bridge between the ingest payload and Normalize.run. Returns null when the
+// Recognize a scope-only chat message and initialize the hunting workspace before
+// the agent starts working. Keep this deliberately strict: prose containing a
+// hostname must not silently create a target or widen scope.
+async function initializeHuntingScopeFromText(input: { sessionID: string; text: string }): Promise<boolean> {
+  if (process.env.HUNTING_LAYER_ENABLED === "false") return false
+  const lines = input.text
+    .split(/\r?\n/)
+    .map((line) => line.trim().replace(/^(?:[-*+]\s+|\d+[.)]\s+)/, "").replace(/^\x60|\x60$/g, ""))
+    .filter(Boolean)
+  if (!lines.length || lines.length > 100) return false
+
+  const validScopeEntry = (value: string) =>
+    /^(?:https?:\/\/)?(?:\*\.)?[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?(?::\d{1,5})?(?:\/[^\s]*)?$/.test(value) ||
+    /^(?:https?:\/\/)?[a-z0-9*.-]+\.\*(?:\/[^\s]*)?$/.test(value)
+  if (!lines.every(validScopeEntry)) return false
+
+  const scope = lines.map((value) => ({ value }))
+  const first = lines[0].replace(/^https?:\/\//i, "").replace(/^\*\./, "")
+  const target = first.split(/[/:]/, 1)[0]?.toLowerCase().replace(/\.$/, "")
+  if (!target || !target.includes(".") || target.includes("*")) return false
+
+  try {
+    const root = process.env.HUNT_ROOT ?? path.resolve(process.cwd(), "hunting-new")
+    const { initMission } = await import("../../../../hunting-new/src/mission")
+    const mission = await initMission(root, target, scope)
+    log.info("hunting scope initialized from chat message", {
+      sessionID: input.sessionID,
+      target: mission.target,
+      scopeRules: scope.length,
+      workspace: path.join(root, "targets"),
+    })
+    return true
+  } catch (error) {
+    log.warn("hunting scope initialization failed", {
+      sessionID: input.sessionID,
+      error: error instanceof Error ? error.message : String(error),
+    })
+    return false
+  }
+}
+
+// // Bridge between the ingest payload and Normalize.run. Returns null when the
 // raw text isn't a parseable HTTP request (the route then falls through to
 // the chat-style ingest path that handles plain text).
 async function feedHuntingLayerFromRequest(input:{
