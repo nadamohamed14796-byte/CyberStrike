@@ -37,7 +37,7 @@ test("persists case-sensitive source URLs as distinct records and deduplicates f
   expect(sameUpperWithoutFragment?.created).toBe(false)
 })
 
-test("recommendations rank by query relevance and do not promote low-trust imports", () => {
+test("recommendations preserve relevance and label low-trust imports as advisory", () => {
   const shared = {
     severity: "medium",
     vulnerabilityClass: "idor",
@@ -76,5 +76,7 @@ test("recommendations rank by query relevance and do not promote low-trust impor
 
   expect(recommendations[0]?.id).toBe(relevant!.id)
   expect(recommendations.some((row) => row.id === weakMatch?.id)).toBe(true)
-  expect(recommendations.some((row) => row.id === lowTrust?.id)).toBe(false)
+  const advisoryLowTrust = recommendations.find((row) => row.id === lowTrust?.id)
+  expect(advisoryLowTrust?.status).toBe("observed")
+  expect(advisoryLowTrust?.metadata?.source_trust).toBe(20)
 })
