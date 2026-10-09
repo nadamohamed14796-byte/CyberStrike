@@ -150,9 +150,10 @@ function checkMatch(target: string, scope: string): ScopeMatch {
     return { matches: false, reason: "scheme mismatch" }
   }
 
-  // Standard wildcard semantics: *.example.com matches subdomains, not example.com itself.
+  // Preserve CyberStrike network-scope semantics: *.example.com matches the root and subdomains.
+  // Programs differ on wildcard-root interpretation; callers should retain policy evidence.
   const hostMatches = wildcard
-    ? parsedTarget.host !== parsedScope.host && parsedTarget.host.endsWith("." + parsedScope.host)
+    ? parsedTarget.host === parsedScope.host || parsedTarget.host.endsWith("." + parsedScope.host)
     : parsedTarget.host === parsedScope.host
   if (!hostMatches) {
     return { matches: false, reason: wildcard ? `does not match wildcard ${scopeValue}` : "host mismatch" }
@@ -166,7 +167,9 @@ function checkMatch(target: string, scope: string): ScopeMatch {
   }
   return {
     matches: true,
-    reason: wildcard ? `subdomain matches wildcard ${scopeValue}` : "exact host/path/port match",
+    reason: wildcard
+      ? parsedTarget.host === parsedScope.host ? `host matches wildcard root ${scopeValue}` : `subdomain matches wildcard ${scopeValue}`
+      : "exact host/path/port match",
   }
 }
 
