@@ -142,7 +142,7 @@ function checkMatch(target: string, scope: string): ScopeMatch {
 
   const wildcard = scopeValue.startsWith("*.")
   const parsedTarget = parseTarget(target)
-  if (wildcard && scopeValue.endsWith(".*") && parsedTarget && wildcardTldMatch(parsedTarget.host, scopeValue)) {
+  if (wildcard && scopeValue.endsWith(".*") && parsedTarget && parsedTarget.port === "443" && wildcardTldMatch(parsedTarget.host, scopeValue)) {
     return { matches: true, reason: "host matches wildcard-TLD scope " + scopeValue }
   }
   const parsedScope = parseTarget(wildcard ? scopeValue.slice(2) : scopeValue)
