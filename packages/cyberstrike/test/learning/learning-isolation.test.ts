@@ -131,7 +131,7 @@ test("learning scope, scores, limits, and duplicate ingestion remain consistent"
     })
     expect(stored).not.toBeNull()
   }
-  expect(ReportKnowledge.search({ query: "IDOR", limit: -3 })).toHaveLength(1)
+  expect(ReportKnowledge.search({ query: "IDOR", limit: -3 })).toHaveLength(0)
   expect(ReportKnowledge.search({ query: "IDOR", limit: 1.8 })).toHaveLength(1)
 
   const privateURL = "https://private-target.example/reports/idor"

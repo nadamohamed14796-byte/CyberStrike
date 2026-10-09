@@ -464,7 +464,7 @@ export namespace ReportKnowledge {
   }
 
   export function recommendations(
-    input: { signal?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {},
+    input: { signal?: string; vulnerabilityClass?: string; cweID?: string; targetPattern?: string; sourceKind?: string; limit?: number } = {},
   ) {
     // Runtime recommendations are reusable public references only. Local findings and
     // triage lessons can contain target-specific details, so they remain available to
