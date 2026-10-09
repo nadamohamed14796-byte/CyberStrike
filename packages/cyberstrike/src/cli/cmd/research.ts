@@ -151,7 +151,7 @@ export const ResearchCommand = cmd({
             .positional("query", { type: "string", demandOption: true })
             .option("limit", { type: "number", default: 20 }),
         async handler(args) {
-          const rows = ReportKnowledge.search({ query: args.query, limit: args.limit })
+          const rows = ReportKnowledge.search({ query: args.query, sourceKind: "external_report", limit: args.limit })
           for (const row of rows)
             console.log(
               String(row.confidence) +
@@ -178,6 +178,7 @@ export const ResearchCommand = cmd({
             signal: args.query,
             vulnerabilityClass: args.class,
             cweID: args.cwe,
+            sourceKind: "external_report",
             limit: args.limit,
           })
           for (const row of rows) {

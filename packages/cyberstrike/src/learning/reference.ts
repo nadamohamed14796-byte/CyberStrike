@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm"
+import { eq, and, desc, isNull } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { SkillLearningEventTable, SkillLearningTable } from "./learning.sql"
@@ -33,7 +33,7 @@ export namespace ReferenceLearning {
       Database.use((db) => {
         const where = sessionID
           ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skill.name))
-          : eq(SkillLearningTable.skill_name, skill.name)
+          : and(isNull(SkillLearningTable.session_id), eq(SkillLearningTable.skill_name, skill.name))
 
         const existing = db.select().from(SkillLearningTable).where(where).get()
 
@@ -97,7 +97,7 @@ export namespace ReferenceLearning {
       Database.use((db) => {
         const where = sessionID
           ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skillName))
-          : eq(SkillLearningTable.skill_name, skillName)
+          : and(isNull(SkillLearningTable.session_id), eq(SkillLearningTable.skill_name, skillName))
 
         const row = db.select().from(SkillLearningTable).where(where).get()
         if (!row) return
@@ -134,7 +134,9 @@ export namespace ReferenceLearning {
       return Database.use((db) => {
         if (sessionID) {
           const where = and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skillName))
-          return db.select().from(SkillLearningTable).where(where).get()?.usefulness ?? 50
+          const row = db.select().from(SkillLearningTable).where(where).get()
+          if (!row || row.successes + row.rejections === 0) return 50
+          return row.usefulness
         }
 
         // Cross-session score: aggregate actual outcomes instead of reading one arbitrary session row.
