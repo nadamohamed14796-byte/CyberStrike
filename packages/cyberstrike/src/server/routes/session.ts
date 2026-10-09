@@ -421,6 +421,7 @@ async function feedHuntingLayerFromRequest(input:{
     const headerMetadata = extractRequestHeaderMetadata(input.rawRequest ?? "")
     await ingestCyberStrikeRequest(root,{
       ...input,
+      sessionId: input.sessionID,
       request:{ ...input.request, ...headerMetadata },
       observedParams: input.observedParams,
     })
