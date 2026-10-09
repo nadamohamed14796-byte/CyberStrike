@@ -92,7 +92,7 @@ export function discoverRequestParameters(request: RequestNode): ParameterCandid
     found.set(id, {
       id, name: clean, location, endpoint,
       requestIds: [...new Set([...(previous?.requestIds ?? []), request.id])],
-      sources: [...new Set([...(previous?.sources ?? []), "observed"])],
+      sources: [...new Set([...(previous?.sources ?? []), "observed" as const])],
       confidence: Math.max(previous?.confidence ?? 0, confidence),
       firstSeen: Math.min(previous?.firstSeen ?? now, now),
       lastSeen: Math.max(previous?.lastSeen ?? now, now),
