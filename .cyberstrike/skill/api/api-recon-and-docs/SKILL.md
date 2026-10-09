@@ -55,10 +55,10 @@ curl https://target/app.js | grep -oE '(/api|/rest|/graphql)[^"'\'' ]+' | sort -
 
 | Finding | Next Skill |
 |---|---|
-| object IDs everywhere | [api authorization and bola](../api-authorization-and-bola/SKILL.md) |
-| JWT, OAuth, role claims | [api auth and jwt abuse](../api-auth-and-jwt-abuse/SKILL.md) |
-| GraphQL or hidden fields | [graphql and hidden parameters](../graphql-and-hidden-parameters/SKILL.md) |
-| strong auth boundary but suspicious business flow | [business logic vulnerabilities](../business-logic-vulnerabilities/SKILL.md) |
+| object IDs everywhere | [api authorization and bola](../../idor/api-authorization-and-bola/SKILL.md) |
+| JWT, OAuth, role claims | [api auth and jwt abuse](../../jwt/api-auth-and-jwt-abuse/SKILL.md) |
+| GraphQL or hidden fields | [graphql and hidden parameters](../../graphql/graphql-and-hidden-parameters/SKILL.md) |
+| strong auth boundary but suspicious business flow | [business logic vulnerabilities](../../business-logic/business-logic-vuln/SKILL.md) |
 
 ---
 
@@ -187,10 +187,10 @@ Only route to a specialized skill when its own signal is present.
 
 | Signal | Route |
 |---|---|
-| object/resource identifiers with multiple authorization contexts | [api authorization and bola](../api-authorization-and-bola/SKILL.md) |
-| JWT/OAuth/token/role-claim evidence | [api auth and jwt abuse](../api-auth-and-jwt-abuse/SKILL.md) |
-| GraphQL endpoint/schema/introspection evidence | [graphql and hidden parameters](../graphql-and-hidden-parameters/SKILL.md) |
-| suspicious business-state transition | [business logic vulnerabilities](../business-logic-vulnerabilities/SKILL.md) |
+| object/resource identifiers with multiple authorization contexts | [api authorization and bola](../../idor/api-authorization-and-bola/SKILL.md) |
+| JWT/OAuth/token/role-claim evidence | [api auth and jwt abuse](../../jwt/api-auth-and-jwt-abuse/SKILL.md) |
+| GraphQL endpoint/schema/introspection evidence | [graphql and hidden parameters](../../graphql/graphql-and-hidden-parameters/SKILL.md) |
+| suspicious business-state transition | [business logic vulnerabilities](../../business-logic/business-logic-vuln/SKILL.md) |
 
 Do not fan out to every API skill after discovering one endpoint.
 
