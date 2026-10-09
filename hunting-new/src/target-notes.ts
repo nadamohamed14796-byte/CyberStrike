@@ -140,6 +140,7 @@ async function renderTargetNotesUnlocked(root: string, target: string): Promise<
     lines.push("- Request IDs: " + observations.map(item => safe(item.id)).join(", "))
     lines.push("- Accounts observed: " + (unique(observations.map(item => item.accountLabel ?? item.credentialId)).map(safe).join(", ") || "unknown"))
     lines.push("- Request header names: " + (unique(observations.flatMap(item => item.headerNames ?? [])).map(safe).join(", ") || "not captured"))
+    lines.push("- Response header names: " + (unique(endpointResponses.flatMap(item => Object.keys(item!.headers ?? {}))).map(safe).join(", ") || "not captured"))
     lines.push("- Cookie names: " + (unique(observations.flatMap(item => item.cookieNames ?? [])).map(safe).join(", ") || "not captured"))
     lines.push("- Observed parameters: " + (unique(endpointParams.map(param => param.name + " (" + param.location + ")")).map(safe).join(", ") || "none extracted"))
     lines.push("- Response status codes: " + (responseSummary || "not recorded"))
