@@ -4,14 +4,93 @@ import fsSync from "node:fs"
 import path from "path"
 import { Global } from "../global"
 import { normalizeTarget } from "./run-record"
+import { ScopeGuard } from "./scope-guard"
 
 export namespace TargetWorkspace {
   export const ROOT = process.env.CYBERSTRIKE_TARGETS_DIR
     ? path.resolve(process.env.CYBERSTRIKE_TARGETS_DIR)
     : path.join(Global.Path.data, "targets")
 
+  const SCOPE_REGISTRY = path.join(ROOT, "scope-registry.json")
+
+  type ScopeRegistry = { schema_version: 1; updated_at: string; scope_items: string[] }
+
+  /** Pick the most specific registered scope that contains a target. */
+  export function scopeForTarget(target: string, scopeItems: string[]): string | undefined {
+    const matches = scopeItems
+      .map((scope) => normalizeTarget(scope))
+      .filter(Boolean)
+      .filter((scope) => ScopeGuard.check(target, [scope]).inScope)
+
+    const isWildcard = (scope: string) => {
+      const withoutScheme = scope.startsWith("https://") || scope.startsWith("http://")
+        ? scope.slice(scope.indexOf("://") + 3)
+        : scope
+      return withoutScheme.startsWith("*.")
+    }
+    matches.sort((a, b) => {
+      const wildcardDelta = Number(isWildcard(a)) - Number(isWildcard(b))
+      return wildcardDelta || b.length - a.length
+    })
+    return matches[0]
+  }
+
+  function readScopeItemsSync(): string[] {
+    try {
+      const data = JSON.parse(fsSync.readFileSync(SCOPE_REGISTRY, "utf8")) as Partial<ScopeRegistry>
+      return Array.isArray(data.scope_items)
+        ? data.scope_items.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+        : []
+    } catch {
+      return []
+    }
+  }
+
+  function identityFor(target: string): string {
+    return scopeForTarget(target, readScopeItemsSync()) ?? normalizeTarget(target)
+  }
+
+  async function atomicWriteJSON(file: string, value: unknown): Promise<void> {
+    await fs.mkdir(path.dirname(file), { recursive: true })
+    const temporary = file + "." + process.pid + "." + crypto.randomUUID() + ".tmp"
+    try {
+      await fs.writeFile(temporary, JSON.stringify(value, null, 2) + "\n", { encoding: "utf8", flag: "wx" })
+      await fs.rename(temporary, file)
+    } catch (error) {
+      await fs.rm(temporary, { force: true }).catch(() => undefined)
+      throw error
+    }
+  }
+
+  async function ensureJSONFile(file: string, create: () => Record<string, unknown>): Promise<void> {
+    try {
+      await fs.access(file)
+      return
+    } catch {}
+    try {
+      const handle = await fs.open(file, "wx")
+      try {
+        await handle.writeFile(JSON.stringify(create(), null, 2) + "\n", "utf8")
+      } finally {
+        await handle.close()
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error
+    }
+  }
+
   export type Paths = {
+    identity: string
     root: string
+    scope: string
+    scopeFile: string
+    targetFile: string
+    assets: string
+    endpoints: string
+    javascript: string
+    relationships: string
+    findings: string
+    runs: string
     session: string
     recon: string
     artifacts: string
@@ -45,10 +124,22 @@ export namespace TargetWorkspace {
   }
 
   export function paths(target: string, sessionID?: string): Paths {
-    const root = path.join(ROOT, slug(target))
+    const identity = identityFor(target)
+    const root = path.join(ROOT, slug(identity))
+    const scope = path.join(root, "scope")
     const session = path.join(root, "sessions", sessionID ? safeSegment(sessionID, "session id") : "shared")
     return {
+      identity,
       root,
+      scope,
+      scopeFile: path.join(scope, "scope.json"),
+      targetFile: path.join(root, "target.json"),
+      assets: path.join(root, "assets"),
+      endpoints: path.join(root, "endpoints"),
+      javascript: path.join(root, "javascript"),
+      relationships: path.join(root, "relationships"),
+      findings: path.join(root, "findings"),
+      runs: path.join(root, "runs"),
       session,
       recon: path.join(session, "recon"),
       artifacts: path.join(session, "artifacts"),
@@ -64,6 +155,13 @@ export namespace TargetWorkspace {
     const result = paths(target, sessionID)
     await Promise.all([
       fs.mkdir(result.root, { recursive: true }),
+      fs.mkdir(result.scope, { recursive: true }),
+      fs.mkdir(result.assets, { recursive: true }),
+      fs.mkdir(result.endpoints, { recursive: true }),
+      fs.mkdir(result.javascript, { recursive: true }),
+      fs.mkdir(result.relationships, { recursive: true }),
+      fs.mkdir(result.findings, { recursive: true }),
+      fs.mkdir(result.runs, { recursive: true }),
       fs.mkdir(result.session, { recursive: true }),
       fs.mkdir(result.recon, { recursive: true }),
       fs.mkdir(result.artifacts, { recursive: true }),
@@ -72,8 +170,46 @@ export namespace TargetWorkspace {
       fs.mkdir(result.state, { recursive: true }),
       fs.mkdir(result.lessons, { recursive: true }),
     ])
+    const now = new Date().toISOString()
+    await Promise.all([
+      ensureJSONFile(result.scopeFile, () => ({
+        schema_version: 1,
+        scope: result.identity,
+        normalized_scope: normalizeTarget(result.identity),
+        created_at: now,
+        updated_at: now,
+      })),
+      ensureJSONFile(result.targetFile, () => ({
+        schema_version: 1,
+        identity: result.identity,
+        workspace_id: slug(result.identity),
+        created_at: now,
+        updated_at: now,
+      })),
+    ])
     await ensureLessonsFile(result.lessonsFile)
     return result
+  }
+
+  /**
+   * Register the explicitly entered scope set and create its workspaces immediately.
+   * Older workspace directories remain on disk; the registry only controls routing
+   * for the currently entered set.
+   */
+  export async function ensureScopes(scopeItems: string[], sessionID?: string): Promise<Paths[]> {
+    const normalized = Array.from(
+      new Set(scopeItems.map((item) => normalizeTarget(item)).filter((item) => Boolean(item))),
+    )
+    if (!normalized.length) return []
+
+    await fs.mkdir(ROOT, { recursive: true })
+    const registry: ScopeRegistry = {
+      schema_version: 1,
+      updated_at: new Date().toISOString(),
+      scope_items: normalized,
+    }
+    await atomicWriteJSON(SCOPE_REGISTRY, registry)
+    return Promise.all(normalized.map((scope) => ensure(scope, sessionID)))
   }
 
   export type LessonKind = "observation" | "mistake" | "pattern" | "finding" | "technique" | "note"

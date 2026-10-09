@@ -8,6 +8,7 @@ import { ToolArtifact } from "./artifact"
 import { TargetMemory } from "../session/target-memory"
 import { ingestParameterDiscovery } from "../methodology/parameter-ingest"
 import { Log } from "../util/log"
+import { TargetWorkspace } from "./target-workspace"
 
 const log = Log.create({ service: "tool" })
 const wrappedToolInfos = new WeakSet<object>()
@@ -132,6 +133,7 @@ export namespace Tool {
           const durableExecution = Boolean(ctx.sessionID && ctx.extra?.model)
           let scopeVerified: boolean | undefined
           let run: ReturnType<typeof ToolRunRecord.begin> | undefined
+          let targetWorkspace: TargetWorkspace.Paths | undefined
 
           try {
             scopeVerified = await verifyExecutionScope(args, id === "external_tool_runner")
@@ -162,6 +164,15 @@ export namespace Tool {
                 } as unknown as Result,
               }
             }
+
+            const scopeItems =
+              args && typeof args === "object" && Array.isArray((args as Record<string, unknown>).scope_items)
+                ? ((args as Record<string, unknown>).scope_items as unknown[]).filter(
+                    (item): item is string => typeof item === "string" && Boolean(item.trim()),
+                  )
+                : []
+            if (scopeItems.length) await TargetWorkspace.ensureScopes(scopeItems, ctx.sessionID)
+            if (identity.target) targetWorkspace = await TargetWorkspace.ensure(identity.target, ctx.sessionID)
 
             const result = await execute(args, ctx)
             const aborted = ctx.abort?.aborted === true
@@ -218,6 +229,8 @@ export namespace Tool {
                   ...(typeof result.metadata.session_workspace === "string"
                     ? { session_workspace: result.metadata.session_workspace }
                     : {}),
+                  ...(targetWorkspace ? { target_workspace: targetWorkspace.root } : {}),
+                  ...(targetWorkspace ? { session_workspace: targetWorkspace.session } : {}),
                 },
               })
               const { Learning } = await import("../learning/learning")
