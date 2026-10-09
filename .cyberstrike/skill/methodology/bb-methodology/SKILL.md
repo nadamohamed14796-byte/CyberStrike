@@ -1,37 +1,21 @@
 ---
 name: bb-methodology
-description: Use at the START of any bug bounty hunting session, when switching targets, or when feeling lost about what to do next. Master orchestrator that combines the 5-phase non-linear hunting workflow with the critical thinking framework (developer psychology, anomaly detection, What-If experiments). Routes to all other skills based on current hunting phase. Also use when asking 'what should I do next' or 'where am I in the process.
-tags: [bug-bounty, security-testing, methodology]
-version: "1.0-adapted"
-source: "Claude-BugHunter"
-category: reconnaissance
+description: Compatibility entry point for the unified methodology skill. Use at the start of a bug bounty hunt, when switching targets, or when deciding what to do next. The canonical workflow, scope gate, evidence gate, target-context correlation, and skill routing live in ../SKILL.md. Load security-arsenal separately only when concrete payloads or bypass references are needed.
+tags: [bug-bounty, security-testing, methodology, compatibility]
+version: "2.0"
+category: methodology
 ---
 
-# bb-methodology
+# Bug Bounty Methodology — Compatibility Entry Point
 
-## Purpose
-Adapted from the public Claude-BugHunter capability catalog for CyberStrike's signal-driven skill system.
+This skill name is retained so existing references and triggers continue to work.
 
-## Trigger
-Use at the START of any bug bounty hunting session, when switching targets, or when feeling lost about what to do next. Master orchestrator that combines the 5-phase non-linear hunting workflow with the critical thinking framework (developer psychology, anomaly detection, What-If experiments). Routes to all other skills based on current hunting phase. Also use when asking "what should I do next" or "where am I in the process.
+Use the canonical methodology at [../SKILL.md](../SKILL.md) for the complete workflow:
+- scope and authorization checks;
+- target-level context and cross-layer correlation;
+- phase selection and hypothesis-driven testing;
+- false-positive/evidence gates;
+- vulnerability-chain validation and reporting handoff;
+- safety and learning rules.
 
-## Workflow
-1. Confirm authorization and scope before testing.
-2. Identify the concrete signal that triggered this capability.
-3. Form a testable hypothesis from observed behavior, code, traffic, or technology fingerprints.
-4. Validate with the least-invasive reproducible test needed to establish the security boundary failure.
-5. Correlate related requests, responses, client code, identity state, and infrastructure when the issue crosses layers.
-6. Preserve reproducible evidence and route confirmed chains to the relevant validation/reporting skill.
-
-## False-Positive Gate
-A scanner alert, reflection, exposed endpoint, version string, or suspicious code pattern is not sufficient by itself. Require a reproducible behavior and demonstrated security impact before treating the result as a finding.
-
-## Routing
-Load this skill when its signal is stronger than generic scanning. Combine with another skill only when there is a concrete chain or shared data flow. Record useful negative results and confirmed observations in the learning layer.
-
-## Safety
-Use only on authorized targets. Prefer test accounts and synthetic data; avoid destructive actions, unnecessary access to third-party data, credential abuse, persistence, or disruption.
-
-## Provenance
-Adapted from **elementalsouls/Claude-BugHunter** under **CC BY 4.0**. This is an adapted CyberStrike skill, not a verbatim copy.
-Source: https://github.com/elementalsouls/Claude-BugHunter
+Do not duplicate the canonical workflow here. Follow it as the single source of truth. Load `security-arsenal` only when a concrete test needs payloads, bypass tables, wordlists, or patterns.
