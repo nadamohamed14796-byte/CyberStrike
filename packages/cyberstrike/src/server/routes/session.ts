@@ -365,7 +365,7 @@ async function initializeHuntingScopeFromText(input: { sessionID: string; text: 
   }
 }
 
-// // Bridge between the ingest payload and Normalize.run. Returns null when the
+// Bridge between the ingest payload and Normalize.run. Returns null when the
 // raw text isn't a parseable HTTP request (the route then falls through to
 // the chat-style ingest path that handles plain text).
 async function feedHuntingLayerFromRequest(input:{
