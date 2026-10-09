@@ -14,6 +14,13 @@ describe("ScopeGuard", () => {
     expect(ScopeGuard.check("example.com", ["*.example.com"]).inScope).toBe(true)
   })
 
+  test("expands comma suffixes, braces, and constrained wildcard TLDs", () => {
+    expect(ScopeGuard.check("https://shop.nymhair.uk", ["*.nymhair.co.uk,.com,.uk"]).inScope).toBe(true)
+    expect(ScopeGuard.check("https://shop.wc-frisch.ch", ["*.wc-frisch.{de,ch}"]).inScope).toBe(true)
+    expect(ScopeGuard.check("https://shop.natturalabs.co.uk", ["*.natturalabs.*"]).inScope).toBe(true)
+    expect(ScopeGuard.check("https://natturalabs.attacker.test", ["*.natturalabs.*"]).inScope).toBe(false)
+  })
+
   test("respects URL scheme, port, and path boundaries", () => {
     expect(ScopeGuard.check("https://example.com:8443/api/v1", ["https://example.com:8443/api"]).inScope).toBe(true)
     expect(ScopeGuard.check("https://example.com:8443/apix", ["https://example.com:8443/api"]).inScope).toBe(false)
