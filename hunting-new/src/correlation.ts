@@ -9,6 +9,8 @@ export interface RequestNode {
   path?: string
   credentialId?: string
   accountLabel?: string
+  headerNames?: string[]
+  cookieNames?: string[]
   observedAt: number
   source: EvidenceSource
 }
