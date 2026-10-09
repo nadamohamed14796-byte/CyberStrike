@@ -1,7 +1,8 @@
-import { and, desc, eq, or, like, count } from "drizzle-orm"
+import { and, desc, eq, or, like, count, sql } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { ReportKnowledgeEventTable, ReportKnowledgeTable } from "./report-knowledge.sql"
+import { matchesSourceURLFingerprint, sourceFingerprints } from "./source-fingerprint"
 
 export namespace ReportKnowledge {
   export type Outcome = "observed" | "useful" | "confirmed" | "rejected" | "duplicate" | "disproven"
@@ -10,15 +11,70 @@ export namespace ReportKnowledge {
     return value?.trim().toLowerCase().replace(/\s+/g, " ") || ""
   }
 
-  function fingerprint(input: {
+  type FingerprintInput = {
+    sessionID?: string
     title: string
     vulnerabilityClass?: string
     cweID?: string
     endpoint?: string
     sourceURL?: string
-  }) {
-    if (input.sourceURL) return "url:" + normalize(input.sourceURL)
+    targetPattern?: string
+  }
+
+  function legacyFingerprint(input: FingerprintInput) {
     return [input.vulnerabilityClass, input.cweID, input.endpoint, input.title].map(normalize).filter(Boolean).join("|")
+  }
+
+  function fingerprint(input: FingerprintInput) {
+    // Reject blank titles at the persistence boundary. A session-scoped prefix
+    // must not make an otherwise-empty fingerprint look valid.
+    if (!input.title?.trim()) return ""
+    if (input.sourceURL) return sourceFingerprints(input.sourceURL)[0]
+    const legacy = legacyFingerprint(input)
+    // Findings without a public source URL are local knowledge. Scope identity
+    // to the session and/or explicit target pattern so equivalent paths on
+    // separate targets cannot be merged into one record.
+    // Session identifiers are case-sensitive keys; do not lowercase them.
+    const sessionScope = input.sessionID?.trim() ?? ""
+    const targetScope = normalize(input.targetPattern)
+    return sessionScope || targetScope ? "scope:" + sessionScope + "|" + targetScope + "|" + legacy : legacy
+  }
+
+  function fingerprintCondition(input: FingerprintInput, key: string) {
+    const keys = input.sourceURL
+      ? sourceFingerprints(input.sourceURL)
+      : Array.from(new Set([key, legacyFingerprint(input)]))
+    return keys.length > 1
+      ? or(...keys.map((value) => eq(ReportKnowledgeTable.fingerprint, value)))!
+      : eq(ReportKnowledgeTable.fingerprint, keys[0])
+  }
+
+  function findFingerprintMatch(
+    rows: (typeof ReportKnowledgeTable.$inferSelect)[],
+    input: FingerprintInput,
+    key: string,
+  ) {
+    const exact = rows.find((row) => row.fingerprint === key)
+    if (exact && (!input.sourceURL || matchesSourceURLFingerprint(exact.source_url, key))) return exact
+
+    if (input.sourceURL) {
+      // Even when a legacy lowercase fingerprint happens to equal the incoming
+      // URL text, only reuse it when the original stored URL canonicalizes to
+      // the same case-preserving v2 identity.
+      return rows.find((row) => matchesSourceURLFingerprint(row.source_url, key))
+    }
+
+    const legacy = legacyFingerprint(input)
+    const targetScope = (value: string | null | undefined) => normalize(value) || undefined
+    // Legacy local records are reusable only when their stored session and
+    // target scope match exactly. Do not absorb rows that may have been merged
+    // by the older unscoped fingerprint implementation.
+    return rows.find(
+      (row) =>
+        row.fingerprint === legacy &&
+        (row.session_id ?? undefined) === input.sessionID &&
+        targetScope(row.target_pattern) === targetScope(input.targetPattern),
+    )
   }
 
   function confidence(row: typeof ReportKnowledgeTable.$inferSelect, outcome?: Outcome) {
@@ -55,8 +111,13 @@ export namespace ReportKnowledge {
       const now = Date.now()
       const key = fingerprint(input)
       if (!key) return null
-      return Database.use((db) => {
-        const existing = db.select().from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.fingerprint, key)).get()
+      return Database.transaction((db) => {
+        const matches = db
+          .select()
+          .from(ReportKnowledgeTable)
+          .where(fingerprintCondition(input, key))
+          .all()
+        const existing = findFingerprintMatch(matches, input, key)
         if (existing) {
           db.update(ReportKnowledgeTable)
             .set({
@@ -95,7 +156,7 @@ export namespace ReportKnowledge {
             source_kind: input.sourceKind ?? "finding",
             source_url: input.sourceURL ?? null,
             program: input.program ?? null,
-            target_pattern: input.targetPattern ?? null,
+            target_pattern: input.targetPattern ? normalize(input.targetPattern) : null,
             endpoint: input.endpoint ?? null,
             attack_vector: input.attackVector ?? null,
             impact: input.impact ?? null,
@@ -148,13 +209,20 @@ export namespace ReportKnowledge {
       const key = fingerprint(input)
       if (!key) return null
 
-      const existing = Database.use((db) =>
-        db.select().from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.fingerprint, key)).get(),
-      )
+      // The lookup and update/insert must be one transaction. Separate reads
+      // and writes let concurrent crawlers race through "not found" and one
+      // duplicate then fails the unique fingerprint constraint instead of
+      // resolving to the already-persisted record.
+      return Database.transaction((db) => {
+        const matches = db
+          .select()
+          .from(ReportKnowledgeTable)
+          .where(fingerprintCondition(input, key))
+          .all()
+        const existing = findFingerprintMatch(matches, input, key)
 
-      if (existing) {
-        const now = Date.now()
-        Database.use((db) => {
+        if (existing) {
+          const now = Date.now()
           db.update(ReportKnowledgeTable)
             .set({
               times_seen: existing.times_seen + 1,
@@ -170,17 +238,17 @@ export namespace ReportKnowledge {
             })
             .where(eq(ReportKnowledgeTable.id, existing.id))
             .run()
-        })
-        return { id: existing.id, created: false }
-      }
+          return { id: existing.id, created: false }
+        }
 
-      const id = ingest({
-        ...input,
-        sourceKind: "external_report",
-        outcome: "observed",
-        sourceTrust: input.sourceTrust,
+        const id = ingest({
+          ...input,
+          sourceKind: "external_report",
+          outcome: "observed",
+          sourceTrust: input.sourceTrust,
+        })
+        return id ? { id, created: true } : null
       })
-      return id ? { id, created: true } : null
     } catch (error) {
       console.warn("[cyberstrike] external report knowledge persistence failed:", error)
       return null
@@ -218,7 +286,7 @@ export namespace ReportKnowledge {
     metadata?: Record<string, unknown>
   }) {
     try {
-      Database.use((db) => {
+      Database.transaction((db) => {
         const row = db.select().from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.id, input.reportID)).get()
         if (!row) return
         const now = Date.now()
@@ -253,6 +321,11 @@ export namespace ReportKnowledge {
     } catch (error) {
       console.warn("[cyberstrike] report knowledge outcome persistence failed:", error)
     }
+  }
+
+  function boundedLimit(value: number | undefined, fallback: number, minimum: number, maximum: number) {
+    const candidate = value === undefined || !Number.isFinite(value) ? fallback : value
+    return Math.max(minimum, Math.min(Math.floor(candidate), maximum))
   }
 
   function queryTokens(query?: string) {
@@ -294,6 +367,8 @@ export namespace ReportKnowledge {
   export function search(
     input: { query?: string; vulnerabilityClass?: string; cweID?: string; targetPattern?: string; sourceKind?: string; limit?: number } = {},
   ) {
+    const limit = boundedLimit(input.limit, 20, 0, 100)
+    if (limit === 0) return []
     try {
       const requestedLimit = input.limit ?? 20
       const limit = Number.isFinite(requestedLimit)
@@ -389,30 +464,40 @@ export namespace ReportKnowledge {
   }
 
   export function recommendations(
-    input: {
-      signal?: string
-      vulnerabilityClass?: string
-      cweID?: string
-      targetPattern?: string
-      sourceKind?: string
-      limit?: number
-    } = {},
+    input: { signal?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {},
   ) {
+    // Runtime recommendations are reusable public references only. Local findings and
+    // triage lessons can contain target-specific details, so they remain available to
+    // explicit search but are never mixed into cross-target hunting context.
+    const limit = boundedLimit(input.limit, 8, 1, 50)
     const rows = search({
       query: input.signal,
       vulnerabilityClass: input.vulnerabilityClass,
       cweID: input.cweID,
-      targetPattern: input.targetPattern,
-      sourceKind: input.sourceKind,
-      limit: Math.min((input.limit ?? 8) * 3, 100),
+      sourceKind: "external_report",
+      limit: Math.min(limit * 3, 100),
     })
     return rows
-      .filter((row) => row.confidence >= 50)
-      .sort((a, b) => {
-        const aScore = a.confidence + Math.min(a.times_useful * 3, 15) + (a.source_kind === "external_report" ? 5 : 0)
-        const bScore = b.confidence + Math.min(b.times_useful * 3, 15) + (b.source_kind === "external_report" ? 5 : 0)
-        return bScore - aScore
+      // Public imports are advisory, not validated findings. Use the source's
+      // explicit trust metadata for those records; use outcome confidence for
+      // locally triaged/validated knowledge and never recommend terminal rejects.
+      .filter((row) => {
+        // A public-source kind alone is not sufficient: some external records
+        // may be attached to one session or an explicit target pattern. Keep
+        // those out of shared hunting context to prevent cross-target leakage.
+        if (row.session_id || normalize(row.target_pattern)) return false
+        if (["rejected", "disproven", "duplicate"].includes(row.status)) return false
+        if (row.source_kind === "external_report" && row.status === "observed") {
+          const trust = row.metadata?.source_trust
+          // Keep externally imported material advisory regardless of trust;
+          // require a valid score to disclose provenance, but never promote it
+          // into a validated finding based on source reputation alone.
+          return typeof trust === "number" && Number.isFinite(trust) && trust >= 0 && trust <= 100
+        }
+        return row.confidence >= 50
       })
-      .slice(0, Math.max(1, Math.min(input.limit ?? 8, 50)))
+      // search() already ranks by query relevance, then confidence/usefulness.
+      // Do not replace that ordering with a confidence-only sort.
+      .slice(0, limit)
   }
 }

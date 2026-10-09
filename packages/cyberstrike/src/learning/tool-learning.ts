@@ -5,6 +5,10 @@ import { ToolLearningEventTable, ToolLearningTable } from "./tool-learning.sql"
 import { normalizeSignal } from "../tool/signal-normalizer"
 
 export namespace ToolLearning {
+  function boundedLimit(value: number, fallback: number, maximum = 100) {
+    const candidate = Number.isFinite(value) ? value : fallback
+    return Math.max(0, Math.min(Math.floor(candidate), maximum))
+  }
   export type Outcome = "useful" | "finding" | "rejected" | "disproven" | "empty" | "error"
 
   export function observe(input: {
@@ -19,7 +23,7 @@ export namespace ToolLearning {
       const now = Date.now()
       const key = input.tool.trim().toLowerCase()
       const normalizedSignal = normalizeSignal(input.signal).signal
-      Database.use((db) => {
+      Database.transaction((db) => {
         const where = input.sessionID
           ? and(
               eq(ToolLearningTable.session_id, input.sessionID),
@@ -89,6 +93,7 @@ export namespace ToolLearning {
     const key = tool.trim().toLowerCase()
     try {
       return Database.use((db) => {
+        const key = tool.trim().toLowerCase()
         const normalized = normalizeSignal(signal).signal
         const sessionRows = sessionID
           ? db
@@ -137,9 +142,10 @@ export namespace ToolLearning {
   }
 
   export function recent(limit = 30) {
+    const size = boundedLimit(limit, 30)
     try {
       return Database.use((db) =>
-        db.select().from(ToolLearningEventTable).orderBy(desc(ToolLearningEventTable.time_created)).limit(limit).all(),
+        db.select().from(ToolLearningEventTable).orderBy(desc(ToolLearningEventTable.time_created)).limit(size).all(),
       )
     } catch {
       return []
