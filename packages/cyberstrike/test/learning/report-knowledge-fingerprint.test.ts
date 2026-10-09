@@ -165,6 +165,6 @@ test("keeps equivalent local findings separate across sessions and targets", () 
   const alpha = ReportKnowledge.search({ query: "ScopedFingerprintMarker", targetPattern: "alpha.example", limit: 10 })
   const beta = ReportKnowledge.search({ query: "ScopedFingerprintMarker", targetPattern: "beta.example", limit: 10 })
 
-  expect(alpha.map((row) => row.id)).toEqual([first])
-  expect(beta.map((row) => row.id)).toEqual([second])
+  expect(alpha.map((row) => row.id)).toEqual([first!])
+  expect(beta.map((row) => row.id)).toEqual([second!])
 })
