@@ -1,0 +1,279 @@
+# source-tree-snapshot	7e34d99ae2c6ce3fda8be5bbd5320c02c9445056
+# status: U=full Phase 2 row incomplete; T=bounded CI triage only; M=audit metadata only
+path	status	note
+.claude/settings.json	U	
+.editorconfig	U	
+.github/CODEOWNERS	U	
+.github/FUNDING.yml	U	
+.github/ISSUE_TEMPLATE/bug-report.yml	U	
+.github/ISSUE_TEMPLATE/config.yml	U	
+.github/ISSUE_TEMPLATE/feature-request.yml	U	
+.github/ISSUE_TEMPLATE/security-tool-request.yml	U	
+.github/VOUCHED.td	U	
+.github/actions/setup-bun/action.yml	U	
+.github/actions/setup-git-committer/action.yml	U	
+.github/codeql/codeql-config.yml	U	
+.github/publish-python-sdk.yml	U	
+.github/pull_request_template.md	U	
+.github/workflows/beta.yml	U	
+.github/workflows/codeql.yml	U	
+.github/workflows/cyberstrike.yml	U	
+.github/workflows/deploy.yml	U	
+.github/workflows/duplicate-issues.yml	U	
+.github/workflows/generate.yml	U	
+.github/workflows/hunting-layer.yml	U	
+.github/workflows/integrity-audit.yml	U	
+.github/workflows/nix-hashes.yml	U	
+.github/workflows/pr-management.yml	U	
+.github/workflows/pr-standards.yml	U	
+.github/workflows/publish.yml	U	
+.github/workflows/release-github-action.yml	U	
+.github/workflows/review.yml	U	
+.github/workflows/sign-cli.yml	U	
+.github/workflows/skills-audit.yml	U	
+.github/workflows/stats.yml	U	
+.github/workflows/test.yml	U	
+.github/workflows/typecheck.yml	U	
+.gitignore	U	
+.husky/pre-push	U	
+.prettierignore	U	
+.signpath/policies/cyberstrike/test-signing.yml	U	
+.vscode/launch.example.json	U	
+.vscode/settings.example.json	U	
+AGENTS.md	U	
+ARCHITECTURE.md	U	
+CHANGELOG.md	U	
+CODE_OF_CONDUCT.md	U	
+CONTRIBUTING.md	U	
+IMPLEMENTATION_STATUS.md	U	
+LICENSE	U	
+OPERATIONS.md	U	
+SECURITY.md	U	
+STATS.md	U	
+TROUBLESHOOTING.md	U	
+assets/hero-dark.png	U	
+assets/hero-dark.webp	U	
+assets/hero-light.webp	U	
+assets/social-preview-dark.svg	U	
+assets/social-preview-light.svg	U	
+audit/coverage/README.md	M	Inventory/checkpoint artifact; not production-source coverage.
+audit/coverage/checklist-cyberstrike.tsv	M	Inventory/checkpoint artifact; not production-source coverage.
+audit/coverage/checklist-other.tsv	M	Inventory/checkpoint artifact; not production-source coverage.
+audit/coverage/checklist-packages.tsv	M	Inventory/checkpoint artifact; not production-source coverage.
+audit/coverage/directory-counts-cyberstrike.tsv	M	Inventory/checkpoint artifact; not production-source coverage.
+audit/coverage/directory-counts-other.tsv	M	Inventory/checkpoint artifact; not production-source coverage.
+audit/coverage/directory-counts-packages.tsv	M	Inventory/checkpoint artifact; not production-source coverage.
+audit/coverage/triage-findings.md	M	Inventory/checkpoint artifact; not production-source coverage.
+bun.lock	U	
+bunfig.toml	U	
+docs/bug-bounty-scope-taxonomy.md	U	
+docs/http-replay-engine-design.md	U	
+docs/parallel-research-pipeline.md	U	
+docs/prompts/reference-and-learning.md	U	
+docs/skill-signing.md	U	
+flake.lock	U	
+flake.nix	U	
+github/.gitignore	U	
+github/action.yml	U	
+github/bun.lock	U	
+github/index.ts	U	
+github/package.json	U	
+github/script/publish	U	
+github/script/release	U	
+github/sst-env.d.ts	U	
+github/tsconfig.json	U	
+hunting-new/AGENTS.md	U	
+hunting-new/FINAL_IMPLEMENTATION_STATUS.md	U	
+hunting-new/PRIORITIZATION.md	U	
+hunting-new/README.md	U	
+hunting-new/agent-briefing.md	U	
+hunting-new/config/agents.yaml	T	Partial triage: agent role/input/output/constraint definitions inspected.
+hunting-new/config/policies.yaml	U	
+hunting-new/config/reference-sources.yaml	U	
+hunting-new/config/scope.yaml	U	
+hunting-new/config/skills.yaml	U	
+hunting-new/config/sources.yaml	U	
+hunting-new/findings/dedupe/index.ts	U	
+hunting-new/findings/evidence/index.ts	U	
+hunting-new/findings/validation/index.ts	U	
+hunting-new/intelligence/js_db/index.ts	U	
+hunting-new/intelligence/target_db/index.ts	U	
+hunting-new/orchestration/signal_engine/index.ts	U	
+hunting-new/package.json	U	
+hunting-new/runtime/registry/registry.json	U	
+hunting-new/runtime_preflight.py	U	
+hunting-new/skill_registry.py	U	
+hunting-new/src/account-context.ts	U	
+hunting-new/src/adaptive-attempts.ts	U	
+hunting-new/src/agent-plan-store.ts	U	
+hunting-new/src/agent-task-runtime.ts	T	Contract triage: persisted task transitions inspected.
+hunting-new/src/api-diff.ts	U	
+hunting-new/src/api-document.ts	U	
+hunting-new/src/attempt-learning-feedback.ts	U	
+hunting-new/src/attempt-lifecycle.ts	U	
+hunting-new/src/attempt-store.ts	U	
+hunting-new/src/auto-dispatch.ts	U	
+hunting-new/src/browser.ts	U	
+hunting-new/src/canonical-signals.ts	U	
+hunting-new/src/chain-board.ts	U	
+hunting-new/src/chain-store.ts	U	
+hunting-new/src/cli.ts	U	
+hunting-new/src/context.ts	U	
+hunting-new/src/correlated-validation.ts	U	
+hunting-new/src/correlation.ts	T	Partial triage: graph node and edge interfaces inspected.
+hunting-new/src/coverage.ts	U	
+hunting-new/src/cross-host-graph.ts	U	
+hunting-new/src/cyberstrike-intake.ts	U	
+hunting-new/src/cyberstrike.ts	U	
+hunting-new/src/dedupe-engine.ts	U	
+hunting-new/src/discovery-persistence.ts	U	
+hunting-new/src/evidence-store.ts	U	
+hunting-new/src/evidence.ts	T	Contract triage: evidence record and deduplication identity inspected.
+hunting-new/src/execution-result.ts	T	CI triage: duplicate parsed result object keys fixed.
+hunting-new/src/external-tool-runner.ts	U	
+hunting-new/src/false-positive-intelligence.ts	U	
+hunting-new/src/false-positive-store.ts	U	
+hunting-new/src/finding-feedback.ts	U	
+hunting-new/src/finding-promotion.ts	T	CI triage: omit undefined optional report sections.
+hunting-new/src/finding-store.ts	U	
+hunting-new/src/findings.ts	U	
+hunting-new/src/fp-store.ts	U	
+hunting-new/src/hunting-state.ts	U	
+hunting-new/src/hypotheses.ts	U	
+hunting-new/src/hypothesis-store.ts	U	
+hunting-new/src/intake.ts	T	Contract triage: capture ingestion and persistence path inspected.
+hunting-new/src/intelligence-pipeline.ts	U	
+hunting-new/src/js-correlation.ts	U	
+hunting-new/src/js.ts	U	
+hunting-new/src/learned-prioritization.ts	U	
+hunting-new/src/learning-engine.ts	U	
+hunting-new/src/learning-store.ts	U	
+hunting-new/src/learning.ts	U	
+hunting-new/src/ledger.ts	T	Contract triage: persisted entity lifecycle and stable IDs inspected.
+hunting-new/src/mission-coordinator.ts	U	
+hunting-new/src/mission-orchestrator.ts	U	
+hunting-new/src/mission.ts	U	
+hunting-new/src/multi-agent-planner.ts	T	CI triage: runtime registry import and role dependency type fixed.
+hunting-new/src/multi-agent-runtime.ts	T	CI triage: LearningEngine import, terminal task state and endpoint ledger helper fixed.
+hunting-new/src/native-cyberstrike-executor.ts	U	
+hunting-new/src/native-dispatch.ts	U	
+hunting-new/src/oob.ts	U	
+hunting-new/src/parameter-discovery.ts	U	
+hunting-new/src/persistent-attempt-ledger.ts	T	Contract triage: attempt persistence wrapper inspected.
+hunting-new/src/persistent-validation.ts	U	
+hunting-new/src/reference-store.ts	U	
+hunting-new/src/report-intelligence.ts	U	
+hunting-new/src/report.ts	T	Contract triage: report validation and state transitions inspected.
+hunting-new/src/runtime-checkpoint.ts	U	
+hunting-new/src/runtime-persistence.ts	U	
+hunting-new/src/scope.ts	U	
+hunting-new/src/signals.ts	T	CI triage: guard absent/blank HTTP method in signal correlation.
+hunting-new/src/skill-execution-adapter.ts	T	Contract triage: executor invocation payload inspected.
+hunting-new/src/skill-registry-loader.ts	U	
+hunting-new/src/skill-registry.ts	T	Contract triage: skill metadata and dependency resolution inspected.
+hunting-new/src/skill-router.ts	U	
+hunting-new/src/store.ts	U	
+hunting-new/src/target-intelligence.ts	T	Contract triage: parameter location and source union fixed.
+hunting-new/src/target.ts	U	
+hunting-new/src/task-state-store.ts	U	
+hunting-new/src/task-state.ts	U	
+hunting-new/src/validation-gate.ts	T	Contract triage: finding eligibility checks inspected.
+hunting-new/src/validation-runner.ts	U	
+hunting-new/src/validation.ts	U	
+hunting-new/src/wordlist.ts	U	
+hunting-new/src/writeup-store.ts	U	
+hunting-new/tests/adaptive-attempts.test.ts	U	
+hunting-new/tests/api-document.test.ts	U	
+hunting-new/tests/attempt-lifecycle.test.ts	U	
+hunting-new/tests/auto-dispatch.test.ts	U	
+hunting-new/tests/chain-board.test.ts	U	
+hunting-new/tests/core.test.ts	U	
+hunting-new/tests/correlated-validation.test.ts	U	
+hunting-new/tests/correlation.test.ts	U	
+hunting-new/tests/cross-host-graph.test.ts	U	
+hunting-new/tests/dedupe-engine.test.ts	U	
+hunting-new/tests/discovery-persistence.test.ts	U	
+hunting-new/tests/end-to-end-runtime.test.ts	T	Test triage: executor supplied as object with execute() method.
+hunting-new/tests/evidence-report.test.ts	U	
+hunting-new/tests/execution-result.test.ts	U	
+hunting-new/tests/false-positive-intelligence.test.ts	U	
+hunting-new/tests/false-positive-store.test.ts	U	
+hunting-new/tests/finding-dedupe.test.ts	U	
+hunting-new/tests/finding-promotion.test.ts	T	Test triage: fixture now proves distinct response behavior.
+hunting-new/tests/hypotheses.test.ts	U	
+hunting-new/tests/intake.test.ts	U	
+hunting-new/tests/js-correlation.test.ts	U	
+hunting-new/tests/learned-prioritization-fp.test.ts	U	
+hunting-new/tests/learned-prioritization.test.ts	U	
+hunting-new/tests/learned-skill-routing.test.ts	U	
+hunting-new/tests/learned-validation-order.test.ts	U	
+hunting-new/tests/learning-engine.test.ts	U	
+hunting-new/tests/learning-store.test.ts	U	
+hunting-new/tests/oob.test.ts	U	
+hunting-new/tests/persistent-attempt-ledger.test.ts	U	
+hunting-new/tests/persistent-state.test.ts	U	
+hunting-new/tests/reference-store.test.ts	U	
+hunting-new/tests/report.test.ts	U	
+hunting-new/tests/resume-context.test.ts	U	
+hunting-new/tests/runtime-persistence.test.ts	U	
+hunting-new/tests/signals.test.ts	U	
+hunting-new/tests/skill-execution-adapter.test.ts	U	
+hunting-new/tests/skill-registry-loader.test.ts	U	
+hunting-new/tests/skill-registry.test.ts	U	
+hunting-new/tests/skill-router-context.test.ts	U	
+hunting-new/tests/target-intelligence.test.ts	U	
+hunting-new/tests/validation-gate.test.ts	U	
+hunting-new/tests/validation-reservation.test.ts	U	
+hunting-new/tests/validation-runner.test.ts	U	
+hunting-new/tests/writeup-store.test.ts	U	
+hunting-new/tsconfig.json	U	
+infra/app.ts	U	
+infra/console.ts	U	
+infra/enterprise.ts	U	
+infra/secret.ts	U	
+infra/stage.ts	U	
+install	U	
+nix/cyberstrike.nix	U	
+nix/hashes.json	U	
+nix/node_modules.nix	U	
+nix/scripts/canonicalize-node-modules.ts	U	
+nix/scripts/normalize-bun-binaries.ts	U	
+package.json	T	Root scripts and workspace configuration read for CI triage.
+patches/@openrouter%2Fai-sdk-provider@1.5.4.patch	U	
+patches/@standard-community%2Fstandard-openapi@0.2.9.patch	U	
+patches/ghostty-web@0.3.0.patch	U	
+script/beta.ts	U	
+script/changelog.ts	U	
+script/duplicate-pr.ts	U	
+script/format.ts	U	
+script/generate.ts	U	
+script/hooks	U	
+script/publish.ts	U	
+script/rebrand.ts	U	
+script/release	U	
+script/runtime-audit.ts	U	
+script/shorten-skill-paths.sh	U	
+script/stats.ts	U	
+script/sync-zed.ts	U	
+script/version.ts	U	
+sdks/vscode/.gitignore	U	
+sdks/vscode/.vscode-test.mjs	U	
+sdks/vscode/.vscodeignore	U	
+sdks/vscode/bun.lock	U	
+sdks/vscode/esbuild.js	U	
+sdks/vscode/eslint.config.mjs	U	
+sdks/vscode/images/button-dark.svg	U	
+sdks/vscode/images/button-light.svg	U	
+sdks/vscode/images/icon.png	U	
+sdks/vscode/package.json	U	
+sdks/vscode/script/publish	U	
+sdks/vscode/script/release	U	
+sdks/vscode/src/extension.ts	U	
+sdks/vscode/sst-env.d.ts	U	
+sdks/vscode/tsconfig.json	U	
+specs/project.md	U	
+square-logos.patch	U	
+sst-env.d.ts	U	
+sst.config.ts	U	
+tsconfig.json	U	
+turbo.json	U	

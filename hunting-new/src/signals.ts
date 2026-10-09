@@ -68,6 +68,16 @@ function requestSourceValue(request:CorrelationSignalInput["requests"][number]):
   return request.source==="js" ? "js" : request.source==="observed" ? "observed" : "other"
 }
 
+function apiEndpoint(request:CorrelationSignalInput["requests"][number]):string{
+  try{
+    const base=new URL(request.url)
+    const endpoint=new URL(request.path ?? base.pathname,base.origin)
+    return endpoint.origin+endpoint.pathname
+  }catch{
+    return request.path ?? request.url
+  }
+}
+
 export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] {
   const out: Signal[] = []
   const responseByRequest = new Map(input.responses.map(response => [response.requestId, response]))
@@ -307,6 +317,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
     const source=requestSourceValue(request)
     if(source!=="js" && source!=="observed")continue
     const methods=apiMethods.get(key) ?? new Map<"js"|"observed",Set<string>>()
+    if(typeof request.method!=="string" || !request.method.trim()) continue
     const values=methods.get(source) ?? new Set<string>()
     values.add(request.method.toUpperCase())
     methods.set(source,values)
@@ -336,7 +347,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   if(input.apiSources?.length){
     const observedSources:ApiSource[]=input.requests
       .filter(request=>requestSourceValue(request)==="js" || requestSourceValue(request)==="observed")
-      .map(request=>({endpoint:request.path??request.url,method:(request.method??"GET").toUpperCase(),source:requestSourceValue(request) as "js"|"observed"}))
+      .map(request=>({endpoint:apiEndpoint(request),method:(request.method??"GET").toUpperCase(),source:requestSourceValue(request) as "js"|"observed"}))
     for(const diff of diffApiSources([...(input.apiSources??[]),...observedSources])){
       const separator=diff.indexOf(":")
       const kind=separator>0 ? diff.slice(0,separator) : diff

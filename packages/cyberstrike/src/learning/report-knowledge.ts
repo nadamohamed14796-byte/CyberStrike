@@ -380,7 +380,7 @@ export namespace ReportKnowledge {
           conditions.push(eq(ReportKnowledgeTable.vulnerability_class, normalize(input.vulnerabilityClass)))
         if (input.cweID) conditions.push(eq(ReportKnowledgeTable.cwe_id, input.cweID))
         if (input.targetPattern)
-          conditions.push(eq(ReportKnowledgeTable.target_pattern, normalize(input.targetPattern)))
+          conditions.push(sql`lower(${ReportKnowledgeTable.target_pattern}) = ${normalize(input.targetPattern)}`)
         if (input.sourceKind) conditions.push(eq(ReportKnowledgeTable.source_kind, input.sourceKind))
 
         const tokens = queryTokens(input.query)

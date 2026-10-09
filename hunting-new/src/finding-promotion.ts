@@ -91,12 +91,11 @@ export async function promoteValidatedHypothesis(
     {type:"hypothesis",id:validated.hypothesisId,evidence_refs:validated.evidenceIds,reason:"hypothesis promoted to validated finding"},
     ...(input.endpoint ? [{type:"endpoint",id:stableLedgerId("endpoint",input.skill ? input.skill+"|"+input.endpoint : input.endpoint),evidence_refs:validated.evidenceIds}] : []),
   ])
-  const reportFile=await writeReport(root,validated,{
-    asset:target,
-    endpoint:input.endpoint ?? undefined,
-    root_cause:input.rootCause,
-    steps:input.reproduction,
-  })
+  const reportSections:Record<string,string>={asset:target}
+  if(input.endpoint) reportSections.endpoint=input.endpoint
+  if(input.rootCause) reportSections.root_cause=input.rootCause
+  if(input.reproduction) reportSections.steps=input.reproduction
+  const reportFile=await writeReport(root,validated,reportSections)
   await createReportRecord(root,validated,reportFile)
   return {finding:validated,reportable:true,missing:[],action:"create",reason:"validated finding passed report evidence gate and report was created"}
 }

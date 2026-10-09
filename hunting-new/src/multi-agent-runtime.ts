@@ -4,7 +4,6 @@ import { persistAgentPlan, recoverStaleAgentTasks } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import { signalEngineFromCorrelation, type SignalEngine, type SkillRule } from "./signals"
-import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
 import { loadTargetIntelligence } from "./target-intelligence"
@@ -15,6 +14,7 @@ import { createValidationPlan } from "./validation-runner"
 import { checkpointPhase } from "./runtime-persistence"
 import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type SkillExecutionInvocation } from "./skill-execution-adapter"
 import { loadLearning } from "./learning-store"
+import { ledgers, stableLedgerId } from "./ledger"
 import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
 import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
@@ -515,21 +515,19 @@ export async function executeAndRecordDispatchedTask(
       ? "completed"
       : "running"
   if(terminal){
-    await finishAgentTask(root,plan.target,taskId,taskState)
+    const terminalTaskState=effectiveState==="blocked" ? "blocked" : "completed"
+    await finishAgentTask(root,plan.target,taskId,terminalTaskState)
     if(context.endpoint){
       const endpointLedger=ledgers(root,plan.target).endpoint
-      const endpointId="endpoint_"+Bun.hash([
-        context.endpoint.trim(),
-        context.requestId??"",
-      ].join("|")).toString(16)
+      const endpointId=stableLedgerId("endpoint",context.endpoint)
       await endpointLedger.upsert({
         item_id:endpointId,
         type:"endpoint",
-        status:taskState==="blocked"?"BLOCKED":taskState==="completed"?"VALIDATED":"IN_PROGRESS",
+        status:terminalTaskState==="blocked" ? "BLOCKED" : "VALIDATED",
         assigned_task:taskId,
         last_tested:new Date().toISOString(),
         evidence_refs:evidenceIds,
-        next_action:taskState==="completed" ? null : "revisit validation",
+        next_action:terminalTaskState==="completed" ? null : "revisit validation",
       })
     }
   }

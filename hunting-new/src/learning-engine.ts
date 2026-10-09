@@ -21,6 +21,19 @@ export interface LearningScore {
 export class LearningEngine {
   private readonly observations: LearningObservation[] = []
 
+  static fromObservations(observations: LearningObservation[]): LearningEngine {
+    const engine = new LearningEngine()
+    for (const observation of observations) {
+      engine.observations.push({
+        ...observation,
+        confidence: Number.isFinite(observation.confidence)
+          ? Math.max(0, Math.min(1, observation.confidence))
+          : 0,
+      })
+    }
+    return engine
+  }
+
   record(observation: Omit<LearningObservation, "timestamp">): LearningObservation {
     const item = { ...observation, confidence: Math.max(0, Math.min(1, observation.confidence)), timestamp: new Date().toISOString() }
     this.observations.push(item)
