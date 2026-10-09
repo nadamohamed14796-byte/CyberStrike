@@ -66,6 +66,62 @@ export function deriveScope(targetUrl: string): string {
   return `*.${parsed.domain}`
 }
 
+const COMMON_TWO_LABEL_SUFFIXES = new Set([
+  "co.uk", "org.uk", "ac.uk", "com.au", "net.au", "org.au", "com.br", "com.cn",
+  "com.mx", "co.jp", "co.kr", "com.sg", "com.tr", "com.pl", "co.nz", "com.tw",
+])
+
+function expandBraces(pattern: string): string[] {
+  const match = pattern.match(/\{([^{}]+)\}/)
+  if (!match) return [pattern]
+  return match[1].split(",").map((item) => pattern.replace(match[0], item.trim())).flatMap(expandBraces)
+}
+
+function expandScopePattern(raw: string): string[] {
+  const trimmed = raw.trim()
+  const exclusion = trimmed.startsWith("!")
+  const value = (exclusion ? trimmed.slice(1) : trimmed).trim()
+  const parts: string[] = []
+  let current = ""
+  let depth = 0
+  for (const char of value) {
+    if (char === "{") depth++
+    if (char === "}") depth = Math.max(0, depth - 1)
+    if (char === "," && depth === 0) { parts.push(current.trim()); current = "" }
+    else current += char
+  }
+  if (current.trim()) parts.push(current.trim())
+  let alternatives = parts.filter(Boolean)
+  if (alternatives.length > 1 && alternatives[0].startsWith("*.")) {
+    const labels = alternatives[0].slice(2).split(".")
+    const suffix2 = labels.slice(-2).join(".")
+    const base = "*." + labels.slice(0, COMMON_TWO_LABEL_SUFFIXES.has(suffix2) ? -2 : -1).join(".")
+    const isSuffix = (item: string) => {
+      const suffix = item.replace(/^\./, "")
+      return /^[a-z]{2,}(?:\.[a-z]{2,})?$/i.test(suffix) &&
+        (suffix.split(".").length === 1 || COMMON_TWO_LABEL_SUFFIXES.has(suffix.toLowerCase()))
+    }
+    if (alternatives.slice(1).every(isSuffix)) {
+      alternatives = alternatives.map((item, index) => index === 0 ? item : base + "." + item.replace(/^\./, ""))
+    }
+  }
+  return alternatives.flatMap(expandBraces).map((item) => (exclusion ? "!" : "") + item)
+}
+
+function wildcardTldMatches(host: string, pattern: string): boolean {
+  const base = pattern.slice(2, -2)
+  if (!base) return false
+  const marker = "." + base + "."
+  const index = host.indexOf(marker)
+  const isRoot = host.startsWith(base + ".")
+  const suffix = isRoot ? host.slice(base.length + 1) : index >= 0 ? host.slice(index + marker.length) : ""
+  const prefix = isRoot ? "" : index >= 0 ? host.slice(0, index) : ""
+  if (!suffix || !/^[a-z0-9-]+(?:\.[a-z0-9-]+)?$/i.test(suffix)) return false
+  const labels = suffix.toLowerCase().split(".")
+  if (labels.length === 2 && !COMMON_TWO_LABEL_SUFFIXES.has(labels.join("."))) return false
+  return !prefix || prefix.split(".").every((label) => /^[a-z0-9-]+$/i.test(label))
+}
+
 /**
  * Build a host matcher from scope patterns. Positive patterns use OR semantics;
  * any matching !exclusion overrides all inclusions. A wildcard matches its root
@@ -73,7 +129,7 @@ export function deriveScope(targetUrl: string): string {
  * Empty/unsupported input rejects everything.
  */
 export function makeMatcher(scopes: readonly string[]): ScopeMatcher {
-  const normalized = scopes.map(normalizeScope).filter(Boolean)
+  const normalized = scopes.flatMap(expandScopePattern).map(normalizeScope).filter(Boolean)
   const includes = normalized.filter((s) => !s.startsWith("!"))
   const excludes = normalized.filter((s) => s.startsWith("!")).map((s) => s.slice(1))
   const toPattern = (value: string) => ({
@@ -86,9 +142,10 @@ export function makeMatcher(scopes: readonly string[]): ScopeMatcher {
 
   const matches = (host: string, patterns: ReturnType<typeof toPattern>[]): boolean => {
     const h = host.toLowerCase().replace(/\.+$/, "").replace(/^\[|\]$/g, "")
-    return patterns.some(({ base, wildcard }) =>
-      wildcard ? h === base || h.endsWith("." + base) : h === base,
-    )
+    return patterns.some(({ base, wildcard }) => {
+      if (wildcard && base.endsWith(".*")) return wildcardTldMatches(h, "*." + base)
+      return wildcard ? h === base || h.endsWith("." + base) : h === base
+    })
   }
 
   return (host: string) => matches(host, includePatterns) && !matches(host, excludePatterns)
