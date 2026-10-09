@@ -28,9 +28,9 @@ This is the routing entry point for business-logic and state-machine issues.
 
 ## Related Categories
 
-- [api-sec](../api-sec/SKILL.md)
-- [auth-sec](../auth-sec/SKILL.md)
-- [file-access-vuln](../file-access-vuln/SKILL.md)
+- [api-sec](../../api/api-sec/SKILL.md)
+- [auth-sec](../../auth/auth-sec/SKILL.md)
+- [file-access-vuln](../../file-access-vuln/SKILL.md)
 
 ---
 
