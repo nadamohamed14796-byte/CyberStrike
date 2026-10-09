@@ -35,6 +35,7 @@ export interface CyberStrikeIntakeRecord{
   jsAssetIds?:string[]
   jsAssets?:Array<{id:string;url:string;pageUrl?:string;observedAt:number}>
   functionIds?:string[]
+  functions?:Array<{id:string;name:string;assetId?:string;sourceLocation?:string}>
 }
 
 export async function ingestCyberStrikeRequest(
@@ -64,6 +65,7 @@ export async function ingestCyberStrikeRequest(
     jsAssetIds:input.jsAssetIds,
     jsAssets:input.jsAssets,
     functionIds:input.functionIds,
+    functions:input.functions,
     parameters,
   })
   await renderTargetNotes(root,input.target)
