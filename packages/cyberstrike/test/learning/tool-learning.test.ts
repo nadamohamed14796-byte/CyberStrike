@@ -40,6 +40,6 @@ test("keeps unscoped tool feedback out of existing session scores", () => {
   // than mutating whichever session-specific row SQLite happens to return first.
   ToolLearning.observe({ tool: "ScopeProbe", signal, outcome: "rejected" })
 
-  expect(ToolLearning.score("ScopeProbe", signal, "learning-session-alpha")).toBe(100)
-  expect(ToolLearning.score("ScopeProbe", signal, "learning-session-beta")).toBe(0)
+  expect(ToolLearning.score("ScopeProbe", signal, sessions.alpha)).toBe(100)
+  expect(ToolLearning.score("ScopeProbe", signal, sessions.beta)).toBe(0)
 })
