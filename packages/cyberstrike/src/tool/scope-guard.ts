@@ -36,7 +36,9 @@ function parseTarget(value: string): ParsedTarget | undefined {
   if (!raw) return undefined
   try {
     const explicitScheme = /^[a-z][a-z\d+.-]*:\/\//i.test(raw)
-    const url = new URL(explicitScheme ? raw : `https://${raw}`)
+    const bareIPv6 = !explicitScheme && raw.includes(":") && !raw.startsWith("[") && !raw.includes("/") && !raw.includes("?") && !raw.includes("#") && !/^.+:\\d+$/.test(raw)
+    const urlInput = explicitScheme ? raw : `https://${bareIPv6 ? `[${raw}]` : raw}`
+    const url = new URL(urlInput)
     if (url.protocol !== "http:" && url.protocol !== "https:") return undefined
     return {
       host: stripBrackets(url.hostname.toLowerCase()).replace(/\.$/, ""),
