@@ -217,3 +217,26 @@ test("reuses a legacy lowercase URL fingerprint without merging a different URL 
   expect(caseDifferent?.id).not.toBe(legacyID)
   expect(ReportKnowledge.search({ query: "LegacyFingerprintCompatibilityMarker", limit: 10 }).length).toBe(2)
 })
+
+test("rejects blank source titles before creating fingerprinted records", () => {
+  const sessions = createLearningTestSessions("blank-title", ["local"])
+
+  const local = ReportKnowledge.ingest({
+    sessionID: sessions.local,
+    title: "   ",
+    severity: "low",
+    outcome: "observed",
+    endpoint: "/api/profile",
+  })
+  const external = ReportKnowledge.ingestExternalDetailed({
+    title: " ",
+    severity: "low",
+    sourceURL: "https://research.example/blank-title",
+    sourceTrust: 80,
+    metadata: { source_trust: 80 },
+  })
+
+  expect(local).toBeNull()
+  expect(external).toBeNull()
+  expect(ReportKnowledge.search({ query: "blank-title", limit: 10 })).toHaveLength(0)
+})
