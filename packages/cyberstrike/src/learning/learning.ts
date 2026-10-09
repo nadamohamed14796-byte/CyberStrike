@@ -289,7 +289,7 @@ export namespace Learning {
         signal: input?.query ?? latest?.signal,
         vulnerabilityClass: input?.vulnerabilityClass ?? latest?.category ?? researchClass,
         cweID: input?.cweID ?? (typeof latest?.metadata?.cwe_id === "string" ? latest.metadata.cwe_id : undefined),
-        limit,
+        limit: boundedLimit,
       })
 
       // Keep research explicitly activated by /update available to the next
