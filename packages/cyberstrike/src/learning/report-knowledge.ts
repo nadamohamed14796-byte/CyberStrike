@@ -66,18 +66,14 @@ export namespace ReportKnowledge {
       const key = fingerprint(input)
       if (!key) return null
       return Database.use((db) => {
-        const existing = db
+        const matches = db
           .select()
           .from(ReportKnowledgeTable)
           .where(fingerprintCondition(input.sourceURL, key))
           .all()
-          .find((row) => row.fingerprint === key) ??
-        db
-          .select()
-          .from(ReportKnowledgeTable)
-          .where(fingerprintCondition(input.sourceURL, key))
-          .all()
-          .find((row) => matchesSourceURLFingerprint(row.source_url, key))
+        const existing =
+          matches.find((row) => row.fingerprint === key) ??
+          matches.find((row) => matchesSourceURLFingerprint(row.source_url, key))
         if (existing) {
           db.update(ReportKnowledgeTable)
             .set({
@@ -169,20 +165,17 @@ export namespace ReportKnowledge {
       const key = fingerprint(input)
       if (!key) return null
 
-      const existing = Database.use((db) =>
-        db
+      const existing = Database.use((db) => {
+        const matches = db
           .select()
           .from(ReportKnowledgeTable)
           .where(fingerprintCondition(input.sourceURL, key))
           .all()
-          .find((row) => row.fingerprint === key) ??
-        db
-          .select()
-          .from(ReportKnowledgeTable)
-          .where(fingerprintCondition(input.sourceURL, key))
-          .all()
-          .find((row) => matchesSourceURLFingerprint(row.source_url, key)),
-      )
+        return (
+          matches.find((row) => row.fingerprint === key) ??
+          matches.find((row) => matchesSourceURLFingerprint(row.source_url, key))
+        )
+      })
 
       if (existing) {
         const now = Date.now()
