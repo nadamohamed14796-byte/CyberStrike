@@ -1,0 +1,1 @@
+Analyzes JavaScript bundles and chunks that the target page loads (captured in the proxy session or fetched from in-scope URLs) to extract routes, API endpoints, parameters, hardcoded secrets, auth/role logic, feature flags, and admin or upload functionality. Records results as intel for the vulnerability testing agents. Never calls the discovered APIs.
