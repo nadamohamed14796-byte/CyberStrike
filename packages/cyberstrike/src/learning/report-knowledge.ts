@@ -2,6 +2,7 @@ import { and, desc, eq, or, like, count } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { ReportKnowledgeEventTable, ReportKnowledgeTable } from "./report-knowledge.sql"
+import { sourceFingerprints } from "./source-fingerprint"
 
 export namespace ReportKnowledge {
   export type Outcome = "observed" | "useful" | "confirmed" | "rejected" | "duplicate" | "disproven"
@@ -17,8 +18,17 @@ export namespace ReportKnowledge {
     endpoint?: string
     sourceURL?: string
   }) {
-    if (input.sourceURL) return "url:" + normalize(input.sourceURL)
+    if (input.sourceURL) return sourceFingerprints(input.sourceURL)[0]
     return [input.vulnerabilityClass, input.cweID, input.endpoint, input.title].map(normalize).filter(Boolean).join("|")
+  }
+
+  function fingerprintCondition(sourceURL: string | undefined, key: string) {
+    // Match both the case-preserving key and the legacy lowercased key so
+    // existing databases are reused without a destructive migration.
+    const keys = sourceURL ? sourceFingerprints(sourceURL) : [key]
+    return keys.length > 1
+      ? or(...keys.map((value) => eq(ReportKnowledgeTable.fingerprint, value)))!
+      : eq(ReportKnowledgeTable.fingerprint, keys[0])
   }
 
   function confidence(row: typeof ReportKnowledgeTable.$inferSelect, outcome?: Outcome) {
@@ -56,7 +66,7 @@ export namespace ReportKnowledge {
       const key = fingerprint(input)
       if (!key) return null
       return Database.use((db) => {
-        const existing = db.select().from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.fingerprint, key)).get()
+        const existing = db.select().from(ReportKnowledgeTable).where(fingerprintCondition(input.sourceURL, key)).get()
         if (existing) {
           db.update(ReportKnowledgeTable)
             .set({
@@ -149,7 +159,7 @@ export namespace ReportKnowledge {
       if (!key) return null
 
       const existing = Database.use((db) =>
-        db.select().from(ReportKnowledgeTable).where(eq(ReportKnowledgeTable.fingerprint, key)).get(),
+        db.select().from(ReportKnowledgeTable).where(fingerprintCondition(input.sourceURL, key)).get(),
       )
 
       if (existing) {
