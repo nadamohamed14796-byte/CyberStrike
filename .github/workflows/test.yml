@@ -36,6 +36,12 @@ jobs:
       - name: Verify CLI help
         run: bun run --cwd packages/cyberstrike src/index.ts -h
 
+      - name: Run research ingestion regression tests
+        run: bun run --cwd packages/cyberstrike test test/research/safe-fetch.test.ts
+
+      - name: Typecheck CyberStrike package
+        run: bun run --cwd packages/cyberstrike typecheck
+
       - name: Run unit tests
         run: bun turbo test
 
