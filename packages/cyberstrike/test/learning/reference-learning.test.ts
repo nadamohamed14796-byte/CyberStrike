@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { and, eq, isNull } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { Database } from "../../src/storage/db"
 import { ReferenceLearning } from "../../src/learning/reference"
 import { Skill } from "../../src/skill/skill"
