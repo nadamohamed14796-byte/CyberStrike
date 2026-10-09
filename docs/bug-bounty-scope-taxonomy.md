@@ -1,6 +1,6 @@
 # Bug Bounty Scope Taxonomy
 
-This document defines a normalized scope model for CyberStrike. It is a taxonomy and implementation contract; it does not itself authorize testing or imply that every matcher is implemented.
+This document defines the normalized scope model for CyberStrike. The `scope_check` tool now accepts either string patterns, normalized `asset_records`, or a raw `asset_csv` export with the 12-column asset schema below. Matching support does not replace verification of the program policy or authorize actions outside that policy.
 
 ## 1. Separate four independent dimensions
 
@@ -49,7 +49,7 @@ Asset kind does not decide authorization by itself.
 - Multiple include patterns with higher-priority exclusions
 - No pattern / unlisted asset: must be resolved by policy and ownership evidence, not by a permissive wildcard fallback
 
-Potentially ambiguous patterns such as `example.*`, `*.example.*`, suffix-based matching, regexes, and bare IP ranges must be treated as unsupported until a parser and tests explicitly define their semantics.
+The structured inventory parser supports comma shorthand alternatives such as `*.nymhair.co.uk,.com,.uk`, brace alternatives such as `*.wc-frisch.{de,ch}`, and the tested `*.brand.*` wildcard-TLD form. Wildcard-TLD matching is intentionally constrained; unrecognized forms fail closed. General regexes, arbitrary suffix matching, and bare IP ranges are not inferred.
 
 ## 4. Program authorization modes
 
@@ -65,7 +65,7 @@ Represent authorization separately from asset matching:
 - `UNKNOWN_REQUIRES_REVIEW`: ownership, scope, or policy is unclear.
 - `POLICY_CONFLICT`: an inclusion and exclusion conflict; fail closed and request review.
 
-## 5. Report eligibility and reward policies
+## 5. Structured asset CSV schema\n\nThe parser preserves and interprets all fields below rather than reducing a row to its identifier:\n\n- `identifier`: the asset matcher text.\n- `asset_type`: controls matching (`URL`, `WILDCARD`, IP/CIDR/network types, or exact identity matching for non-web IDs). Unknown/non-web identifiers are never converted into host-only matches.\n- `instruction`: surfaced to the agent as asset-specific guidance; it does not override authorization boundaries.\n- `eligible_for_bounty`: reward eligibility; `false` means no bounty is assumed even when submission is allowed.\n- `eligible_for_submission`: report submission eligibility; `false` suppresses report eligibility for that matched asset.\n- `availability_requirement`, `confidentiality_requirement`, `integrity_requirement`: preserved and surfaced as asset impact/security requirements, not interpreted as permission to cause impact.\n- `max_severity`: surfaced as a severity cap; an optional proposed severity above it produces a policy warning.\n- `system_tags`: split into tags and surfaced for context/classification.\n- `created_at`, `updated_at`: preserved and surfaced so freshness can be reviewed; timestamps alone do not prove the policy is current.\n\nThe CSV header must contain all 12 fields shown in the user-provided schema. Quoted commas are supported. `scope_check` accepts the CSV string directly as `asset_csv`, or equivalent structured objects as `asset_records`.\n\n## 6. Report eligibility and reward policies
 
 Store these as policy metadata, not as scope matchers:
 
@@ -81,7 +81,7 @@ Store these as policy metadata, not as scope matchers:
 
 A program can accept a report without authorizing further probing. Reward eligibility is not proof of scope.
 
-## 6. Required policy record
+## 7. Required policy record
 
 For every program, preserve:
 
@@ -96,7 +96,7 @@ For every program, preserve:
 - Parser/matcher version and validation status
 - Review state: confirmed, ambiguous, conflicting, or stale
 
-## 7. Decision order (fail closed)
+## 8. Decision order (fail closed)
 
 1. Normalize the candidate without losing the original value.
 2. Resolve the exact asset kind and matcher result.
@@ -106,7 +106,7 @@ For every program, preserve:
 6. If ownership, exclusions, policy text, or matcher semantics are uncertain, return `UNKNOWN_REQUIRES_REVIEW` and do not actively test.
 7. Record the matching rule, evidence, and reason in the result.
 
-## 8. Minimum test matrix
+## 9. Minimum test matrix
 
 Test exact hosts; root vs subdomain behavior for wildcards; nested subdomains; lookalike/suffix attacks (for example, `notexample.com`); case and trailing-dot normalization; IDNs/punycode; scheme and default/non-default ports; path boundaries (`/api` must not accidentally match `/apix`); IPv4/IPv6 and CIDR boundaries; include/exclude conflicts; stale or missing policy text; unlisted owned assets; third-party hosted assets; and report-eligible-but-not-authorized cases.
 
