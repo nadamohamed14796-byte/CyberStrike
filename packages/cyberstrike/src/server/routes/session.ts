@@ -324,6 +324,29 @@ function inferScheme(rawText: string): "http" | "https" {
   return "https"
 }
 
+function extractRequestHeaderMetadata(rawText: string): { headerNames: string[]; cookieNames: string[] } {
+  const lines = rawText.split(/\r?\n/)
+  const headerLines = lines.slice(1, lines.findIndex((line) => line.trim() === "") < 0 ? undefined : lines.findIndex((line) => line.trim() === ""))
+  const headerNames: string[] = []
+  const cookieNames = new Set<string>()
+  for (const line of headerLines) {
+    const separator = line.indexOf(":")
+    if (separator <= 0) continue
+    const name = line.slice(0, separator).trim()
+    const value = line.slice(separator + 1).trim()
+    if (!name) continue
+    headerNames.push(name)
+    if (name.toLowerCase() === "cookie") {
+      for (const pair of value.split(";")) {
+        const equals = pair.indexOf("=")
+        const cookieName = (equals < 0 ? pair : pair.slice(0, equals)).trim()
+        if (cookieName) cookieNames.add(cookieName)
+      }
+    }
+  }
+  return { headerNames: [...new Set(headerNames)], cookieNames: [...cookieNames] }
+}
+
 // Bridge between the ingest payload and Normalize.run. Returns null when the
 // raw text isn't a parseable HTTP request (the route then falls through to
 // the chat-style ingest path that handles plain text).
@@ -350,12 +373,17 @@ async function feedHuntingLayerFromRequest(input:{
   }
   jsAssetIds?:string[]
   functionIds?:string[]
+  rawRequest?:string
 }):Promise<void>{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
   try{
     const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
     const { ingestCyberStrikeRequest }=await import("../../../../hunting-new/src/cyberstrike-intake")
-    await ingestCyberStrikeRequest(root,input)
+    const headerMetadata = extractRequestHeaderMetadata(input.rawRequest ?? "")
+    await ingestCyberStrikeRequest(root,{
+      ...input,
+      request:{ ...input.request, ...headerMetadata },
+    })
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
       const { autoDispatchForTarget }=await import("../../../../hunting-new/src/auto-dispatch")
       void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
@@ -1294,6 +1322,7 @@ export const SessionRoutes = lazy(() =>
                 observedAt:Date.now(),
               },
               pageUrl:body.page_url,
+              rawRequest:body.text,
               response:body.response ? {
                 id:"obs_"+Bun.hash([
                   sessionID,
@@ -1473,6 +1502,7 @@ export const SessionRoutes = lazy(() =>
                       observedAt:req.time.created,
                     } : undefined,
                     functionIds:[learnedFunction.id],
+                    rawRequest:body.text,
                   })
                 }
                 const model = body.model ?? (await SessionPrompt.lastModel(sessionID))
