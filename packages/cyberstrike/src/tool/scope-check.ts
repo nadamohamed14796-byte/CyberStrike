@@ -6,7 +6,7 @@ export { ScopeGuard, type ScopeMatch, type ScopePolicy, type ScopePolicyDecision
 
 export const ScopeCheckTool = Tool.define("scope_check", {
   description:
-    "Check authorization before testing. Supports exact hosts/domains, strict *.subdomain wildcards, HTTP(S) scheme/port/path, IPv4/IPv6 literals and CIDRs, and !pattern exclusions (exclusions always win). Optional policy fields keep open-scope report eligibility separate from permission to actively test an unlisted asset.",
+    "Check authorization before testing. Supports exact hosts/domains, wildcards (*.example.com matches the root and subdomains), HTTP(S) scheme/port/path, IPv4/IPv6 literals and CIDRs, and !pattern exclusions (exclusions always win). Optional policy fields keep open-scope report eligibility separate from permission to actively test an unlisted asset.",
   parameters: z.object({
     target: z.string().describe("Target domain, hostname, IP address, or HTTP(S) URL"),
     scope_items: z.array(z.string()).describe(
