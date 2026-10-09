@@ -126,14 +126,13 @@ function splitAlternatives(identifier: string): string[] {
   const commonTwoLabelSuffixes = new Set(["co.uk", "org.uk", "ac.uk", "com.au", "net.au", "org.au", "com.br", "com.cn", "com.mx", "co.jp", "co.kr", "com.sg", "com.tr", "com.pl"])
   const lastTwo = labels.slice(-2).join(".")
   const base = "*." + labels.slice(0, commonTwoLabelSuffixes.has(lastTwo) ? -2 : -1).join(".")
-  return cleaned.map((part, index) => {
-    if (index === 0) return part
+  const isSuffixShorthand = (part: string) => {
     const suffix = part.replace(/^\./, "")
-    if (/^[a-z0-9-]+(?:\.[a-z0-9-]+)*$/i.test(suffix) && !part.includes("*") && !part.includes("{")) {
-      return `${base}.${suffix}`
-    }
-    return part
-  })
+    return /^[a-z]{2,}(?:\.[a-z]{2,})?$/i.test(suffix) &&
+      (suffix.split(".").length === 1 || commonTwoLabelSuffixes.has(suffix.toLowerCase()))
+  }
+  if (!cleaned.slice(1).every(isSuffixShorthand)) return cleaned
+  return cleaned.map((part, index) => index === 0 ? part : `${base}.${part.replace(/^\./, "")}`)
 }
 
 function expandBraces(pattern: string): string[] {
