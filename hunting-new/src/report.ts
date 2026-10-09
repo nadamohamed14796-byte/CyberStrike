@@ -153,8 +153,8 @@ export async function transitionReport(
   })
 
   if(!unchanged && (status==="accepted" || status==="rejected")){
-    const findings=await loadFindings(root,target)
-    const finding=findings.find(x=>x.id===report.findingId)
+    const findingState=await loadFindings(root,target)
+    const finding=findingState.findings.find(x=>x.id===report.findingId)
     if(finding){
       const hypotheses=await loadHypotheses(root,target)
       const hypothesis=hypotheses.hypotheses.find(x=>x.id===finding.hypothesisId)
