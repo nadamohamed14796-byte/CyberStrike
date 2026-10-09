@@ -8,7 +8,7 @@ export function sourceFingerprints(value: string) {
   try {
     const url = new URL(value.trim())
     url.hash = ""
-    return Array.from(new Set(["url:" + url.toString(), legacy]))
+    return Array.from(new Set(["url:v2:" + url.toString(), legacy]))
   } catch {
     return [legacy]
   }
