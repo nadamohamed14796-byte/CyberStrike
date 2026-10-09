@@ -123,7 +123,7 @@ export const WebGetSessionContextTool = Tool.define("web_get_session_context", {
 
     // Cross-session target intelligence: bounded retrieval from the target-wide
     // graph, not a dump of the entire request/session history.
-    const targetInput = currentReq ? requestURL(currentReq) : undefined
+    const targetInput = currentReq?.site ?? (currentReq ? requestURL(currentReq) : undefined)
     if (targetInput) {
       try {
         const identity = TargetWorkspace.paths(targetInput).identity
