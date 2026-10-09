@@ -31,6 +31,7 @@ export interface CyberStrikeIntakeRecord{
     observedAt?:number
   }
   pageUrl?:string
+  observedParams?:ParamSlot[]
   jsAssetIds?:string[]
   functionIds?:string[]
   observedParams?:ParamSlot[]
