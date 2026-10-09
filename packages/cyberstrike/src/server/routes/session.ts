@@ -1587,7 +1587,6 @@ export const SessionRoutes = lazy(() =>
                     sessionID,
                     target: normalized.site || normalized.host,
                     pageUrl: req.page_url,
-                    jsAssets: collectObservedJavaScriptAssets(sessionID, req.page_url, normalized.host),
                     request: {
                       id: req.id,
                       method: req.method,
