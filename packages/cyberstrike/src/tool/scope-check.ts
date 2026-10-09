@@ -111,7 +111,9 @@ export const ScopeCheckTool = Tool.define("scope_check", {
       `Reason: ${assetMatch ? assetEvaluation?.reason : decision.reason}`,
       "",
       "Scope check details:",
-      ...decision.results\n        .filter((r) => !(assetMatch && r.scope === target && !params.scope_items.includes(target)))\n        .map((r) => `  ${r.matches ? "[MATCH]" : "[NO]"} ${r.scope} — ${r.reason}`),\n      ...(assetMatch && assetEvaluation?.matchedAsset ? [`  [MATCH] ${assetEvaluation.matchedAsset.identifier} — structured asset inventory (${assetEvaluation.matchedAsset.asset_type})`] : []),
+      ...decision.results
+        .filter((r) => !(assetMatch && r.scope === target && !params.scope_items.includes(target)))\n        .map((r) => `  ${r.matches ? "[MATCH]" : "[NO]"} ${r.scope} — ${r.reason}`),
+      ...(assetMatch && assetEvaluation?.matchedAsset ? [`  [MATCH] ${assetEvaluation.matchedAsset.identifier} — structured asset inventory (${assetEvaluation.matchedAsset.asset_type})`] : []),
     ]
 
     if (!decision.activeTestingAuthorized) {
