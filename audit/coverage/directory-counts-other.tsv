@@ -1,1 +1,49 @@
-# directory\tdirect-file-count\textension=count;extension=count
+# source-tree-snapshot	7e34d99ae2c6ce3fda8be5bbd5320c02c9445056
+# directory	direct-file-count	direct-file-count-by-extension
+.	25	.editorconfig=1;.gitignore=1;.json=3;.lock=2;.md=10;.nix=1;.patch=1;.prettierignore=1;.toml=1;.ts=2;[no extension]=2
+.claude	1	.json=1
+.github	5	.md=1;.td=1;.yml=2;[no extension]=1
+.github/actions	0	
+.github/actions/setup-bun	1	.yml=1
+.github/actions/setup-git-committer	1	.yml=1
+.github/codeql	1	.yml=1
+.github/ISSUE_TEMPLATE	4	.yml=4
+.github/workflows	19	.yml=19
+.husky	1	[no extension]=1
+.signpath	0	
+.signpath/policies	0	
+.signpath/policies/cyberstrike	1	.yml=1
+.vscode	2	.json=2
+assets	5	.png=1;.svg=2;.webp=2
+audit	0	
+audit/coverage	8	.md=2;.tsv=6
+docs	4	.md=4
+docs/prompts	1	.md=1
+github	7	.gitignore=1;.json=2;.lock=1;.ts=2;.yml=1
+github/script	2	[no extension]=2
+hunting-new	9	.json=2;.md=5;.py=2
+hunting-new/config	6	.yaml=6
+hunting-new/findings	0	
+hunting-new/findings/dedupe	1	.ts=1
+hunting-new/findings/evidence	1	.ts=1
+hunting-new/findings/validation	1	.ts=1
+hunting-new/intelligence	0	
+hunting-new/intelligence/js_db	1	.ts=1
+hunting-new/intelligence/target_db	1	.ts=1
+hunting-new/orchestration	0	
+hunting-new/orchestration/signal_engine	1	.ts=1
+hunting-new/runtime	0	
+hunting-new/runtime/registry	1	.json=1
+hunting-new/src	79	.ts=79
+hunting-new/tests	44	.ts=44
+infra	5	.ts=5
+nix	3	.json=1;.nix=2
+nix/scripts	2	.ts=2
+patches	3	.patch=3
+script	14	.sh=1;.ts=11;[no extension]=2
+sdks	0	
+sdks/vscode	9	.gitignore=1;.js=1;.json=2;.lock=1;.mjs=2;.ts=1;.vscodeignore=1
+sdks/vscode/images	3	.png=1;.svg=2
+sdks/vscode/script	2	[no extension]=2
+sdks/vscode/src	1	.ts=1
+specs	1	.md=1
