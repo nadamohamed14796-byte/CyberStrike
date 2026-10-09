@@ -1,3 +1,4 @@
+import path from "node:path"
 import { Hono } from "hono"
 import { stream } from "hono/streaming"
 import { describeRoute, validator, resolver } from "hono-openapi"
@@ -401,6 +402,7 @@ async function feedHuntingLayerFromRequest(input:{
   }
   jsAssetIds?:string[]
   functionIds?:string[]
+  pageUrl?:string
   rawRequest?:string
 }):Promise<void>{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
@@ -1345,7 +1347,7 @@ export const SessionRoutes = lazy(() =>
                 url:normalized.origin + normalized.normalizedPath,
                 host:normalized.host,
                 path:normalized.normalizedPath,
-                credentialId,
+                credentialId: credentialID,
                 accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                 observedAt:Date.now(),
               },
@@ -1429,7 +1431,7 @@ export const SessionRoutes = lazy(() =>
               url:normalized.origin + normalized.normalizedPath,
               host:normalized.host,
               path:normalized.normalizedPath,
-              credentialId,
+              credentialId: credentialID,
               accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
               observedAt:req.time.created,
             },
@@ -1512,7 +1514,7 @@ export const SessionRoutes = lazy(() =>
                     url: normalized.origin + normalized.normalizedPath,
                     host: normalized.host,
                     path: normalized.normalizedPath,
-                    credentialId,
+                    credentialId: credentialID,
                     accountLabel: credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                     observedAt: req.time.created,
                   },
@@ -1546,7 +1548,7 @@ export const SessionRoutes = lazy(() =>
                       url: normalized.origin + normalized.normalizedPath,
                       host: normalized.host,
                       path: normalized.normalizedPath,
-                      credentialId,
+                      credentialId: credentialID,
                       accountLabel: credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                       observedAt: req.time.created,
                     },
