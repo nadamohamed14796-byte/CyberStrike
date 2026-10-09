@@ -1,6 +1,7 @@
 import { AttemptLedger, type Attempt, type AttemptPolicy, type AttemptState, type StrategyClass } from "./adaptive-attempts"
 import { appendAttempt, loadAttempts } from "./attempt-store"
 import { checkpointPhase } from "./runtime-persistence"
+import { loadPolicies } from "./policy"
 
 export class PersistentAttemptLedger {
   readonly ledger: AttemptLedger
@@ -21,6 +22,8 @@ export class PersistentAttemptLedger {
   }
 
   async plan(hypothesisId:string,strategy:StrategyClass,variant:string,reason:string):Promise<Attempt|undefined>{
+    const policies=await loadPolicies(this.root)
+    if(policies.validation.require_reason_for_attempt && !reason.trim()) throw new Error("ATTEMPT_BLOCKED: a non-empty reason is required by policy")
     const attempt=this.ledger.plan(hypothesisId,strategy,variant,reason)
     if(!attempt) return undefined
     await appendAttempt(this.root,this.target,attempt)
