@@ -20,6 +20,11 @@ describe("scope asset inventory import and evaluation", () => {
     expect(assets[1].instruction).toContain("verify ownership")
     expect(assets[1].system_tags).toEqual(["prod", "web"])
     expect(assets[1].max_severity).toBe("critical")
+    expect(assets[1].availability_requirement).toBe("high")
+    expect(assets[1].confidentiality_requirement).toBe("high")
+    expect(assets[1].integrity_requirement).toBe("high")
+    expect(assets[1].created_at).toBe("2026-07-07 09:44:06 UTC")
+    expect(assets[1].updated_at).toBe("2026-07-07 09:44:06 UTC")
   })
 
   test("matches exact URL-type assets without turning them into wildcard assets", () => {
