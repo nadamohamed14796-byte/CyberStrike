@@ -1,9 +1,8 @@
 ---
 name: methodology-sec
-description: Signal-driven security methodology orchestration for scoped research and assessment workflows.
+description: Compatibility router for methodology and assessment-planning requests. The canonical scope, workflow, evidence, and safety gates are defined in ../SKILL.md. Route payload-specific needs to security-arsenal only when indicated.
 category: methodology
-verified: official
-tags: [methodology, bug-bounty, assessment, signal-driven]
+tags: [methodology, bug-bounty, assessment, signal-driven, compatibility]
 chains_with:
   - bb-methodology
   - bug-bounty
@@ -13,17 +12,14 @@ files: [SKILL.md]
 
 # Methodology Security Router
 
-Activate for concrete methodology, assessment-planning, or workflow-governance needs rather than generic security keywords.
+Use [../SKILL.md](../SKILL.md) as the single source of truth for methodology, assessment planning, workflow governance, scope confirmation, evidence requirements, stop conditions, and negative-result handling.
 
-## Routing
-- bb-methodology
-- bug-bounty
-- security-arsenal
+Routing:
+- General hunting workflow, phase selection, hypothesis, target context, validation gates: `methodology`.
+- Existing legacy references to `bb-methodology` or `bug-bounty`: follow their compatibility entry points, which delegate here.
+- Concrete payloads, bypass tables, wordlists, and pattern references: `security-arsenal`, only when needed.
+- Submission eligibility and final report structure: dedicated validation/triage and reporting skills.
 
-## Evidence gate
-signal -> scope-confirmed -> methodology-selected -> workflow-applied -> outcome-validated
+Evidence sequence: signal -> scope-confirmed -> hypothesis -> minimal safe test -> reproducible outcome -> impact validated -> specialist handoff.
 
-Preserve scope, assumptions, source provenance, evidence requirements, stop conditions, and negative results. Do not treat methodology checklists as vulnerability evidence.
-
-## Safety
-Apply only to authorized CTFs, labs, owned systems, or explicitly scoped engagements.
+A methodology checklist is not vulnerability evidence. Apply only to authorized and explicitly scoped targets.
