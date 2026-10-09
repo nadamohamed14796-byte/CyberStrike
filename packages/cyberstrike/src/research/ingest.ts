@@ -295,6 +295,10 @@ export async function syncResearchSource(
   const queued = new Set<string>()
   const visited = new Set<string>()
   const add = (url: string, depth: number) => {
+    // Seeds are depth 0. Do not enqueue links or sitemap entries beyond the
+    // caller's requested depth budget; without this guard the CLI depth option
+    // was calculated but had no effect on crawl expansion.
+    if (depth > maxDepth) return
     const normalized = normalizeUrl(url)
     if (!normalized || queued.has(normalized) || visited.has(normalized)) return
     try {
