@@ -1,0 +1,51 @@
+name: skill-link-repair
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".cyberstrike/skill/**/*.md"
+      - ".cyberstrike/skill/**/*.mdx"
+      - "packages/cyberstrike/script/repair-skill-links.ts"
+      - ".github/workflows/skill-link-repair.yml"
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  repair:
+    name: Repair unambiguous local skill links
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+      - name: Repair uniquely resolvable Markdown links
+        id: repair
+        run: bun run packages/cyberstrike/script/repair-skill-links.ts --apply | tee skill-link-repair-report.json
+      - name: Commit safe repairs to PR branch
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          if git diff --quiet -- .cyberstrike/skill; then
+            echo "No safe unambiguous link repairs were found."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .cyberstrike/skill
+          git commit -m "Fix unambiguous local skill Markdown links [skip ci]"
+          git push origin "HEAD:${BRANCH}"
+      - name: Upload repair report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-link-repair-report
+          path: skill-link-repair-report.json
+          if-no-files-found: warn
