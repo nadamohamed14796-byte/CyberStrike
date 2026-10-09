@@ -81,8 +81,9 @@ export const ScopeCheckTool = Tool.define("scope_check", {
     const bountyEligible = reportEligible && recordBounty === true
     const severityRank: Record<string, number> = { informational: 0, info: 0, low: 1, medium: 2, high: 3, critical: 4 }
     const severityCap = (assetEvaluation?.max_severity ?? "").toLowerCase()
-    const severityExceedsCap = Boolean(params.reported_severity && severityCap &&
-      severityRank[params.reported_severity] !== undefined && severityRank[severityCap] !== undefined &&
+    const severityCapKnown = severityRank[severityCap] !== undefined
+    const severityExceedsCap = Boolean(params.reported_severity && severityCapKnown &&
+      severityRank[params.reported_severity] !== undefined &&
       severityRank[params.reported_severity] > severityRank[severityCap])
 
     const output = [
