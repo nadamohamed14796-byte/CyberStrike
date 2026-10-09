@@ -33,6 +33,7 @@ export interface CyberStrikeIntakeRecord{
   pageUrl?:string
   observedParams?:ParamSlot[]
   jsAssetIds?:string[]
+  jsAssets?:Array<{id:string;url:string;pageUrl?:string;observedAt:number}>
   functionIds?:string[]
 }
 
@@ -61,6 +62,7 @@ export async function ingestCyberStrikeRequest(
     response:input.response,
     pageUrl:input.pageUrl,
     jsAssetIds:input.jsAssetIds,
+    jsAssets:input.jsAssets,
     functionIds:input.functionIds,
     parameters,
   })
