@@ -5,7 +5,7 @@ import { markDiscovered, stableLedgerId } from "./ledger"
 
 export interface NetworkObservation {
   sessionId: string
-  request: { id: string; method: string; url: string; host?: string; path?: string; credentialId?: string; accountLabel?: string; observedAt?: number }
+  request: { id: string; method: string; url: string; host?: string; path?: string; credentialId?: string; accountLabel?: string; headerNames?: string[]; cookieNames?: string[]; observedAt?: number }
   response?: { id: string; status: number; headers?: Record<string,string>; contentType?: string; bodyHash?: string; observedAt?: number }
   pageUrl?: string
   jsAssetIds?: string[]
