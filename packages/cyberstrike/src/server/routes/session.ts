@@ -1363,6 +1363,44 @@ export const SessionRoutes = lazy(() =>
           // record the observation (the values are evidence regardless).
           if (!req) {
             recordObservation()
+            // The atomic Request.add upsert can lose a race after exists() checked.
+            // Keep the Hunting Layer intake symmetric with the ordinary duplicate
+            // branch: the request was observed even though no new Request row exists.
+            void feedHuntingLayerFromRequest({
+              sessionID,
+              target:normalized.site || normalized.host,
+              request:{
+                id:"obs_"+Bun.hash([
+                  sessionID,
+                  credentialID ?? "anonymous",
+                  normalized.method,
+                  normalized.origin,
+                  normalized.normalizedPath,
+                  normalized.keyHash ?? normalized.bodyHash ?? "",
+                ].join("|")).toString(16),
+                method:normalized.method,
+                url:normalized.origin + normalized.normalizedPath,
+                host:normalized.host,
+                path:normalized.normalizedPath,
+                credentialId:credentialID,
+                accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+                observedAt:Date.now(),
+              },
+              pageUrl:body.page_url,
+              response:body.response ? {
+                id:"obs_"+Bun.hash([
+                  sessionID,
+                  credentialID ?? "anonymous",
+                  normalized.keyHash ?? normalized.bodyHash ?? "",
+                  "response",
+                ].join("|")).toString(16),
+                status:body.response.status,
+                headers:body.response.headers,
+                contentType:body.response.headers["content-type"],
+                bodyHash:normalized.bodyHash,
+                observedAt:Date.now(),
+              } : undefined,
+            })
             c.status(202)
             return c.json({ sessionID, skipped: true })
           }
