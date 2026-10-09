@@ -240,3 +240,34 @@ test("rejects blank source titles before creating fingerprinted records", () => 
   expect(external).toBeNull()
   expect(ReportKnowledge.search({ query: "blank-title", limit: 10 })).toHaveLength(0)
 })
+
+test("clamps search and recommendation limits at invalid boundaries", () => {
+  const inputs = [
+    {
+      title: "LimitBoundaryMarker IDOR report one",
+      severity: "medium",
+      vulnerabilityClass: "idor",
+      sourceURL: "https://research.example/limits/one",
+      sourceTrust: 80,
+      metadata: { source_trust: 80 },
+    },
+    {
+      title: "LimitBoundaryMarker IDOR report two",
+      severity: "medium",
+      vulnerabilityClass: "idor",
+      sourceURL: "https://research.example/limits/two",
+      sourceTrust: 80,
+      metadata: { source_trust: 80 },
+    },
+  ]
+  for (const input of inputs) expect(ReportKnowledge.ingestExternalDetailed(input)).not.toBeNull()
+
+  expect(ReportKnowledge.search({ query: "LimitBoundaryMarker", limit: -1 })).toHaveLength(0)
+  expect(ReportKnowledge.search({ query: "LimitBoundaryMarker", limit: 0 })).toHaveLength(0)
+  expect(ReportKnowledge.search({ query: "LimitBoundaryMarker", limit: Number.NaN })).toHaveLength(2)
+  expect(ReportKnowledge.search({ query: "LimitBoundaryMarker", limit: Number.POSITIVE_INFINITY })).toHaveLength(2)
+
+  expect(ReportKnowledge.recommendations({ signal: "LimitBoundaryMarker", limit: -1 })).toHaveLength(1)
+  expect(ReportKnowledge.recommendations({ signal: "LimitBoundaryMarker", limit: Number.NaN })).toHaveLength(2)
+  expect(ReportKnowledge.recommendations({ signal: "LimitBoundaryMarker", limit: Number.POSITIVE_INFINITY })).toHaveLength(2)
+})
