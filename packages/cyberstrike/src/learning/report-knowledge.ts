@@ -65,7 +65,7 @@ export namespace ReportKnowledge {
       const now = Date.now()
       const key = fingerprint(input)
       if (!key) return null
-      return Database.use((db) => {
+      return Database.transaction((db) => {
         const matches = db
           .select()
           .from(ReportKnowledgeTable)
