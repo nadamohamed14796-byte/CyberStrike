@@ -66,8 +66,20 @@ function normalizeRepoPath(value: string) {
 function resolveExisting(repoRelative: string) {
   const clean = normalizeRepoPath(path.posix.normalize(repoRelative))
   if (clean.startsWith("../") || clean === "..") return
-  for (const suffix of RESOLVE_EXTENSIONS) {
-    const candidate = suffix ? clean + suffix : clean
+
+  const candidates = new Set<string>([clean])
+  const importExtension = path.posix.extname(clean)
+  if ([".js", ".jsx", ".mjs", ".cjs"].includes(importExtension)) {
+    // TypeScript source routinely imports "./module.js" while the tracked source is
+    // "./module.ts"; generated ESM clients use this pattern extensively.
+    const stem = clean.slice(0, -importExtension.length)
+    for (const extension of [".ts", ".tsx", ".mts", ".cts", ".js", ".jsx", ".mjs", ".cjs"]) {
+      candidates.add(stem + extension)
+    }
+  }
+  for (const suffix of RESOLVE_EXTENSIONS.slice(1)) candidates.add(clean + suffix)
+
+  for (const candidate of candidates) {
     const absolute = path.join(ROOT, candidate)
     if (fs.existsSync(absolute) && fs.statSync(absolute).isFile()) return candidate
   }
@@ -226,7 +238,12 @@ function isRepositorySpecifier(
   packageNames: Map<string, string>,
   tsconfigs: Array<{ path: string; aliases: ReturnType<typeof collectAliases> }>,
 ) {
-  if (specifier.startsWith(".") || specifier.startsWith("/")) return true
+  if (specifier.startsWith(".") || specifier.startsWith("/")) {
+    // This provider snapshot is produced by the build pipeline and is intentionally
+    // not checked into Git; packages/cyberstrike/script/build.ts generates it.
+    if (sourcePath === "packages/cyberstrike/src/provider/models.ts" && specifier === "./models-snapshot") return false
+    return true
+  }
   if (aliasMatches(sourcePath, specifier, tsconfigs)) return true
   return packageNames.has(packageNameAndSubpath(specifier).packageName)
 }
