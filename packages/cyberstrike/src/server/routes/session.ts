@@ -18,6 +18,7 @@ import { Request } from "../../session/request"
 import { Observation } from "../../session/observation"
 import { CoverageNote } from "../../session/coverage-note"
 import { Normalize } from "../../session/normalize"
+import { ProxyWorkerContext } from "../../session/proxy-worker-context"
 import type { ParamSlot } from "../../session/normalize/types"
 import { IngestSummary } from "../../session/ingest-summary"
 import { IngestQueue } from "../../session/ingest-queue"
@@ -1566,13 +1567,18 @@ export const SessionRoutes = lazy(() =>
                   rawRequest: body.text,
                 })
 
-                await SessionPrompt.prompt({
-                  sessionID: promptSessionID,
-                  agent: agentName,
-                  model: body.model,
-                  excludeHistory: true,
-                  parts: [{ type: "text", text: promptText }],
-                })
+                if (agentName === "proxy-agent") ProxyWorkerContext.set(promptSessionID, req.id)
+                try {
+                  await SessionPrompt.prompt({
+                    sessionID: promptSessionID,
+                    agent: agentName,
+                    model: body.model,
+                    excludeHistory: true,
+                    parts: [{ type: "text", text: promptText }],
+                  })
+                } finally {
+                  if (agentName === "proxy-agent") ProxyWorkerContext.clear(promptSessionID, req.id)
+                }
 
                 const learnedFunction = WebFunction.getByRequest(req.id)
                 if (learnedFunction) {
