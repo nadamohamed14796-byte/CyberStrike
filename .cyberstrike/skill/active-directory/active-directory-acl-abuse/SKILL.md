@@ -15,7 +15,7 @@ Before going deep, consider loading:
 - [active-directory-kerberos-attacks](../active-directory-kerberos-attacks/SKILL.md) for Kerberos attacks often chained with ACL abuse
 - [active-directory-certificate-services](../active-directory-certificate-services/SKILL.md) for certificate-based attacks after ACL exploitation
 - [ntlm-relay-coercion](../ntlm-relay-coercion/SKILL.md) for relay attacks that can set ACLs (LDAP relay)
-- [windows-lateral-movement](../windows-lateral-movement/SKILL.md) after gaining elevated AD access
+- [windows-lateral-movement](../../windows/windows-lateral-movement/SKILL.md) after gaining elevated AD access
 
 ### Advanced Reference
 
