@@ -2,7 +2,7 @@ import { and, desc, eq, or, like, count } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { ReportKnowledgeEventTable, ReportKnowledgeTable } from "./report-knowledge.sql"
-import { sourceFingerprints } from "./source-fingerprint"
+import { matchesSourceURLFingerprint, sourceFingerprints } from "./source-fingerprint"
 
 export namespace ReportKnowledge {
   export type Outcome = "observed" | "useful" | "confirmed" | "rejected" | "duplicate" | "disproven"
@@ -66,7 +66,18 @@ export namespace ReportKnowledge {
       const key = fingerprint(input)
       if (!key) return null
       return Database.use((db) => {
-        const existing = db.select().from(ReportKnowledgeTable).where(fingerprintCondition(input.sourceURL, key)).get()
+        const existing = db
+          .select()
+          .from(ReportKnowledgeTable)
+          .where(fingerprintCondition(input.sourceURL, key))
+          .all()
+          .find((row) => row.fingerprint === key) ??
+        db
+          .select()
+          .from(ReportKnowledgeTable)
+          .where(fingerprintCondition(input.sourceURL, key))
+          .all()
+          .find((row) => matchesSourceURLFingerprint(row.source_url, key))
         if (existing) {
           db.update(ReportKnowledgeTable)
             .set({
@@ -159,7 +170,18 @@ export namespace ReportKnowledge {
       if (!key) return null
 
       const existing = Database.use((db) =>
-        db.select().from(ReportKnowledgeTable).where(fingerprintCondition(input.sourceURL, key)).get(),
+        db
+          .select()
+          .from(ReportKnowledgeTable)
+          .where(fingerprintCondition(input.sourceURL, key))
+          .all()
+          .find((row) => row.fingerprint === key) ??
+        db
+          .select()
+          .from(ReportKnowledgeTable)
+          .where(fingerprintCondition(input.sourceURL, key))
+          .all()
+          .find((row) => matchesSourceURLFingerprint(row.source_url, key)),
       )
 
       if (existing) {
