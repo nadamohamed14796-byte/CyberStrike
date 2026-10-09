@@ -324,6 +324,34 @@ function inferScheme(rawText: string): "http" | "https" {
   return "https"
 }
 
+const proxyWorkerSessions = new Map<string, Promise<string>>()
+
+async function getProxyWorkerSession(parentSessionID: string): Promise<string> {
+  const rootSessionID = Session.root(parentSessionID)
+  const existing = proxyWorkerSessions.get(rootSessionID)
+  if (existing) {
+    try {
+      const workerID = await existing
+      await Session.get(workerID)
+      return workerID
+    } catch {
+      proxyWorkerSessions.delete(rootSessionID)
+    }
+  }
+
+  const creating = Session.create({
+    parentID: rootSessionID,
+    title: "Proxy analysis worker",
+  }).then((session) => session.id)
+  proxyWorkerSessions.set(rootSessionID, creating)
+  try {
+    return await creating
+  } catch (error) {
+    if (proxyWorkerSessions.get(rootSessionID) === creating) proxyWorkerSessions.delete(rootSessionID)
+    throw error
+  }
+}
+
 function extractRequestHeaderMetadata(rawText: string): { headerNames: string[]; cookieNames: string[] } {
   const lines = rawText.split(/\r?\n/)
   const headerLines = lines.slice(1, lines.findIndex((line) => line.trim() === "") < 0 ? undefined : lines.findIndex((line) => line.trim() === ""))
@@ -1462,50 +1490,80 @@ export const SessionRoutes = lazy(() =>
             Request.updateStatus({ id: req.id, status: "processed" })
           } else {
             const agentName = body.agent ?? "proxy-agent"
-            const source = `${normalized.method} ${normalized.normalizedPath}`
-            IngestQueue.enqueue(sessionID, async () => {
+            const source = normalized.method + " " + normalized.normalizedPath
+            // Proxy observations run in a dedicated child session/queue. The main
+            // hunting session remains free to continue its own prompt and tasks.
+            const promptSessionID = agentName === "proxy-agent"
+              ? await getProxyWorkerSession(sessionID)
+              : sessionID
+            IngestQueue.enqueue(promptSessionID, async () => {
               Request.updateStatus({ id: req.id, status: "processing" })
               const before = IngestSummary.snapshot(sessionID)
-              // Render at dequeue (send time) so `## Observed Values` includes observations
-              // that accrued while this prompt waited in the queue — other credentials and
-              // other values seen on the same endpoint shape in the meantime.
               const promptText = buildPrompt()
               try {
-                await SessionPrompt.prompt({
+                // Persist the observation and target relationships before analysis,
+                // so the proxy worker can retrieve the latest bounded target graph.
+                await feedHuntingLayerFromRequest({
                   sessionID,
+                  target: normalized.site || normalized.host,
+                  request: {
+                    id: req.id,
+                    method: req.method,
+                    url: normalized.origin + normalized.normalizedPath,
+                    host: normalized.host,
+                    path: normalized.normalizedPath,
+                    credentialId,
+                    accountLabel: credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+                    observedAt: req.time.created,
+                  },
+                  response: body.response ? {
+                    id: req.id + ":response",
+                    status: body.response.status,
+                    headers: body.response.headers,
+                    contentType: body.response.headers["content-type"],
+                    bodyHash: normalized.bodyHash,
+                    observedAt: req.time.created,
+                  } : undefined,
+                  rawRequest: body.text,
+                })
+
+                await SessionPrompt.prompt({
+                  sessionID: promptSessionID,
                   agent: agentName,
                   model: body.model,
                   excludeHistory: true,
                   parts: [{ type: "text", text: promptText }],
                 })
-                const learnedFunction=WebFunction.getByRequest(req.id)
-                if(learnedFunction){
+
+                const learnedFunction = WebFunction.getByRequest(req.id)
+                if (learnedFunction) {
                   void feedHuntingLayerFromRequest({
                     sessionID,
-                    target:normalized.site || normalized.host,
-                    request:{
-                      id:req.id,
-                      method:req.method,
-                      url:normalized.origin + normalized.normalizedPath,
-                      host:normalized.host,
-                      path:normalized.normalizedPath,
+                    target: normalized.site || normalized.host,
+                    request: {
+                      id: req.id,
+                      method: req.method,
+                      url: normalized.origin + normalized.normalizedPath,
+                      host: normalized.host,
+                      path: normalized.normalizedPath,
                       credentialId,
-                      accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
-                      observedAt:req.time.created,
+                      accountLabel: credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+                      observedAt: req.time.created,
                     },
-                    response:body.response ? {
-                      id:req.id+":response",
-                      status:body.response.status,
-                      headers:body.response.headers,
-                      contentType:body.response.headers["content-type"],
-                      bodyHash:normalized.bodyHash,
-                      observedAt:req.time.created,
+                    response: body.response ? {
+                      id: req.id + ":response",
+                      status: body.response.status,
+                      headers: body.response.headers,
+                      contentType: body.response.headers["content-type"],
+                      bodyHash: normalized.bodyHash,
+                      observedAt: req.time.created,
                     } : undefined,
-                    functionIds:[learnedFunction.id],
-                    rawRequest:body.text,
+                    functionIds: [learnedFunction.id],
+                    rawRequest: body.text,
                   })
                 }
-                const model = body.model ?? (await SessionPrompt.lastModel(sessionID))
+
+                const model = body.model ?? (await SessionPrompt.lastModel(promptSessionID))
                 await IngestSummary.write({
                   sessionID,
                   agent: agentName,
