@@ -43,6 +43,7 @@ describe("scope asset inventory import and evaluation", () => {
     expect(ScopeAssets.evaluate("https://shop.natturalabs.es", assets).matched).toBe(true)
     expect(ScopeAssets.evaluate("https://shop.natturalabs.co.uk", assets).matched).toBe(true)
     expect(ScopeAssets.evaluate("https://natturalabs.attacker.test", assets).matched).toBe(false)
+    expect(ScopeAssets.evaluate("https://shop.natturalabs.es:8443", assets).matched).toBe(false)
   })
 
   test("report eligibility and bounty eligibility remain independent", () => {
