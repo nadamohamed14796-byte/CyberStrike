@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm"
+import { and, desc, eq, isNull } from "drizzle-orm"
 import { Database } from "../storage/db"
 import { Identifier } from "../id/id"
 import { ToolLearningEventTable, ToolLearningTable } from "./tool-learning.sql"
@@ -26,7 +26,7 @@ export namespace ToolLearning {
               eq(ToolLearningTable.tool, key),
               eq(ToolLearningTable.signal, normalizedSignal),
             )
-          : and(eq(ToolLearningTable.tool, key), eq(ToolLearningTable.signal, normalizedSignal))
+          : and(isNull(ToolLearningTable.session_id), eq(ToolLearningTable.tool, key), eq(ToolLearningTable.signal, normalizedSignal))
         const row = db.select().from(ToolLearningTable).where(where).get()
         const success = input.outcome === "useful" || input.outcome === "finding"
         const reject = input.outcome === "rejected" || input.outcome === "disproven" || input.outcome === "empty"
@@ -86,6 +86,7 @@ export namespace ToolLearning {
   }
 
   export function score(tool: string, signal: string, sessionID?: string) {
+    const key = tool.trim().toLowerCase()
     try {
       return Database.use((db) => {
         const normalized = normalizeSignal(signal).signal
@@ -96,7 +97,7 @@ export namespace ToolLearning {
               .where(
                 and(
                   eq(ToolLearningTable.session_id, sessionID),
-                  eq(ToolLearningTable.tool, tool),
+                  eq(ToolLearningTable.tool, key),
                   eq(ToolLearningTable.signal, normalized),
                 ),
               )
@@ -107,7 +108,7 @@ export namespace ToolLearning {
           : db
               .select()
               .from(ToolLearningTable)
-              .where(and(eq(ToolLearningTable.tool, tool), eq(ToolLearningTable.signal, normalized)))
+              .where(and(eq(ToolLearningTable.tool, key), eq(ToolLearningTable.signal, normalized)))
               .all()
         let success = 0
         let reject = 0

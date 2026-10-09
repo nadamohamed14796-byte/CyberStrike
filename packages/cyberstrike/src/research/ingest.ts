@@ -446,8 +446,11 @@ export async function syncResearchSource(
         continue
       }
 
-      if (ingested.created) result.learned++
-      if (!ingested.created) continue
+      if (!ingested.created) {
+        result.skipped++
+        continue
+      }
+      result.learned++
       await Learning.emit({
         hook: "after_finding",
         signal: vulnerabilityClass ? "research:" + vulnerabilityClass : "research:" + source.id,

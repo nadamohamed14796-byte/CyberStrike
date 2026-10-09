@@ -115,6 +115,7 @@ export namespace Learning {
       signal: signal.signal,
       vulnerabilityClass: signal.category ?? researchClass,
       cweID: signal.cwe_id ?? undefined,
+      sourceKind: "external_report",
       limit: 6,
     })
 
@@ -283,6 +284,7 @@ export namespace Learning {
         signal: input?.query ?? latest?.signal,
         vulnerabilityClass: input?.vulnerabilityClass ?? latest?.category ?? researchClass,
         cweID: input?.cweID ?? (typeof latest?.metadata?.cwe_id === "string" ? latest.metadata.cwe_id : undefined),
+        sourceKind: "external_report",
         limit,
       })
 

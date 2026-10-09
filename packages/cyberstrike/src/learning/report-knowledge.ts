@@ -292,9 +292,13 @@ export namespace ReportKnowledge {
   }
 
   export function search(
-    input: { query?: string; vulnerabilityClass?: string; cweID?: string; targetPattern?: string; limit?: number } = {},
+    input: { query?: string; vulnerabilityClass?: string; cweID?: string; targetPattern?: string; sourceKind?: string; limit?: number } = {},
   ) {
     try {
+      const requestedLimit = input.limit ?? 20
+      const limit = Number.isFinite(requestedLimit)
+        ? Math.max(1, Math.min(Math.trunc(requestedLimit), 100))
+        : 20
       return Database.use((db) => {
         const conditions = []
         if (input.vulnerabilityClass)
@@ -302,6 +306,7 @@ export namespace ReportKnowledge {
         if (input.cweID) conditions.push(eq(ReportKnowledgeTable.cwe_id, input.cweID))
         if (input.targetPattern)
           conditions.push(eq(ReportKnowledgeTable.target_pattern, normalize(input.targetPattern)))
+        if (input.sourceKind) conditions.push(eq(ReportKnowledgeTable.source_kind, input.sourceKind))
 
         const tokens = queryTokens(input.query)
         if (tokens.length) {
@@ -325,7 +330,7 @@ export namespace ReportKnowledge {
         const query = db.select().from(ReportKnowledgeTable)
         const rows = (conditions.length ? query.where(and(...conditions)) : query)
           .orderBy(desc(ReportKnowledgeTable.time_updated))
-          .limit(Math.min(tokens.length ? 300 : (input.limit ?? 20), 300))
+          .limit(tokens.length ? 300 : limit)
           .all()
 
         return rows
@@ -338,7 +343,7 @@ export namespace ReportKnowledge {
               b.row.times_useful - a.row.times_useful ||
               b.row.time_updated - a.row.time_updated,
           )
-          .slice(0, Math.min(input.limit ?? 20, 100))
+          .slice(0, limit)
           .map(({ row }) => row)
       })
     } catch {
@@ -384,12 +389,21 @@ export namespace ReportKnowledge {
   }
 
   export function recommendations(
-    input: { signal?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {},
+    input: {
+      signal?: string
+      vulnerabilityClass?: string
+      cweID?: string
+      targetPattern?: string
+      sourceKind?: string
+      limit?: number
+    } = {},
   ) {
     const rows = search({
       query: input.signal,
       vulnerabilityClass: input.vulnerabilityClass,
       cweID: input.cweID,
+      targetPattern: input.targetPattern,
+      sourceKind: input.sourceKind,
       limit: Math.min((input.limit ?? 8) * 3, 100),
     })
     return rows

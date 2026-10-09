@@ -116,6 +116,7 @@ export namespace SkillContext {
       const reportLessons = ReportKnowledge.recommendations({
         cweID: finding.cwe_id,
         signal: finding.skill_id,
+        sourceKind: "external_report",
         limit: 3,
       })
       const reportReason = reportLessons.length
