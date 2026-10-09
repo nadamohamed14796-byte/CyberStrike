@@ -21,6 +21,11 @@ const MAX_SESSION_ROUTES = 256
 const MAX_SESSION_CACHE = 256
 const log = Log.create({ service: "learning" })
 
+function boundedCount(value: number | undefined, fallback: number, minimum: number, maximum: number) {
+  const candidate = value === undefined || !Number.isFinite(value) ? fallback : value
+  return Math.max(minimum, Math.min(Math.floor(candidate), maximum))
+}
+
 export namespace Learning {
   export const Event = {
     Signal: BusEvent.define(
@@ -254,15 +259,15 @@ export namespace Learning {
   }
 
   export function nextToolsFor(sessionID: string, limit = 8) {
-    return (sessionNextTools.get(sessionID) ?? []).slice(0, limit)
+    return (sessionNextTools.get(sessionID) ?? []).slice(0, boundedCount(limit, 8, 0, 50))
   }
 
   export function routesFor(sessionID: string, limit = 8): RoutedSkill[] {
-    return (sessionRoutes.get(sessionID) ?? []).slice(0, limit)
+    return (sessionRoutes.get(sessionID) ?? []).slice(0, boundedCount(limit, 8, 0, 50))
   }
 
   export function researchFor(sessionID: string, limit = 6) {
-    return (sessionResearch.get(sessionID) ?? []).slice(0, limit)
+    return (sessionResearch.get(sessionID) ?? []).slice(0, boundedCount(limit, 6, 0, 50))
   }
 
   /**
@@ -276,6 +281,7 @@ export namespace Learning {
     limit = 6,
     input?: { query?: string; vulnerabilityClass?: string; cweID?: string },
   ) {
+    const boundedLimit = boundedCount(limit, 6, 1, 50)
     try {
       const latest = recent({ sessionID, limit: 1 })[0]
       const researchClass = latest?.signal ? /^research:([a-z0-9-]+)$/i.exec(latest.signal)?.[1] : undefined
@@ -293,7 +299,7 @@ export namespace Learning {
       const merged = [
         ...recommendations,
         ...existing.filter((row) => !recommendations.some((item) => item.id === row.id)),
-      ].slice(0, Math.max(1, Math.min(limit, 50)))
+      ].slice(0, boundedLimit)
 
       sessionResearch.delete(sessionID)
       sessionResearch.set(sessionID, merged)
@@ -313,10 +319,10 @@ export namespace Learning {
     sessionID: string,
     input: { query?: string; vulnerabilityClass?: string; cweID?: string; limit?: number } = {},
   ) {
-    return primeResearch(sessionID, input.limit ?? 6, input)
+    return primeResearch(sessionID, boundedCount(input.limit, 6, 1, 50), input)
   }
   export function recent(input?: { sessionID?: string; hook?: LearningHook; limit?: number }) {
-    const limit = input?.limit ?? 50
+    const limit = boundedCount(input?.limit, 50, 0, 500)
     return Database.use((db) => {
       const conditions = []
       if (input?.sessionID) conditions.push(eq(LearningSignalTable.session_id, input.sessionID))
