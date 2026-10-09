@@ -125,7 +125,7 @@ test("cancels bodies from unsupported content types", async () => {
           },
         }),
         { status: 200, headers: { "content-type": "application/octet-stream" } },
-      )) as typeof fetch,
+      )) as unknown as typeof fetch,
     async () => {
       await expect(fetchResearchText("https://research.example/binary", source)).rejects.toThrow(
         "unsupported content type",
