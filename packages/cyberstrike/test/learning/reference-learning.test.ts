@@ -21,6 +21,10 @@ test("keeps unscoped skill observations and outcomes separate from session rows"
   ReferenceLearning.observeSkill(skill, sessions.beta)
   ReferenceLearning.observeSkill(skill)
 
+  expect(ReferenceLearning.score(skill.name, sessions.alpha)).toBe(50)
+  expect(ReferenceLearning.score(skill.name, sessions.beta)).toBe(50)
+  expect(ReferenceLearning.score(skill.name)).toBe(50)
+
   ReferenceLearning.recordOutcome(skill.name, "useful", sessions.alpha, "alpha-only evidence")
   ReferenceLearning.recordOutcome(skill.name, "rejected", undefined, "unscoped feedback")
 
@@ -43,4 +47,7 @@ test("keeps unscoped skill observations and outcomes separate from session rows"
   expect(unscoped?.observations).toBe(1)
   expect(unscoped?.successes).toBe(0)
   expect(unscoped?.rejections).toBe(1)
+  expect(ReferenceLearning.score(skill.name, sessions.alpha)).toBe(100)
+  expect(ReferenceLearning.score(skill.name, sessions.beta)).toBe(50)
+  expect(ReferenceLearning.score(skill.name)).toBe(50)
 })
