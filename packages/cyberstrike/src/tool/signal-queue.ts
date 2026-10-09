@@ -13,6 +13,11 @@ export namespace SignalQueue {
     return input.signal.trim().toLowerCase() + "::" + (input.target ?? "*").trim().toLowerCase()
   }
 
+  function boundedInteger(value: number | undefined, fallback: number, minimum: number, maximum: number) {
+    const candidate = value === undefined || !Number.isFinite(value) ? fallback : Math.floor(value)
+    return Math.max(minimum, Math.min(maximum, candidate))
+  }
+
   function priority(signal: string) {
     const s = signal.toLowerCase()
     if (/auth|idor|access|ssrf|sqli|rce|command/.test(s)) return 10
@@ -56,9 +61,9 @@ export namespace SignalQueue {
             parent_id: input.parentID,
             signal: normalized.signal,
             target: input.target,
-            depth: Math.max(0, input.depth ?? 0),
+            depth: boundedInteger(input.depth, 0, 0, 32),
             attempts: 0,
-            max_attempts: Math.max(1, Math.min(20, input.maxAttempts ?? 1)),
+            max_attempts: boundedInteger(input.maxAttempts, 1, 1, 20),
             priority: Math.min(priority(normalized.signal), normalized.priority),
             status: "pending",
             dedup_key: key,
@@ -274,12 +279,15 @@ export namespace SignalQueue {
     })
   }
 
+  // State transitions are conditional at the database boundary so late or
+  // duplicated callbacks cannot overwrite a terminal result or finalize work
+  // that was never claimed by a worker.
   export function complete(id: string) {
     return Database.use((db) =>
       db
         .update(SignalQueueTable)
         .set({ status: "completed", time_updated: Date.now() })
-        .where(eq(SignalQueueTable.id, id))
+        .where(and(eq(SignalQueueTable.id, id), eq(SignalQueueTable.status, "running")))
         .run(),
     )
   }
@@ -289,7 +297,7 @@ export namespace SignalQueue {
       db
         .update(SignalQueueTable)
         .set({ status: "skipped", time_updated: Date.now() })
-        .where(eq(SignalQueueTable.id, id))
+        .where(and(eq(SignalQueueTable.id, id), eq(SignalQueueTable.status, "pending")))
         .run(),
     )
   }
@@ -299,7 +307,7 @@ export namespace SignalQueue {
       db
         .update(SignalQueueTable)
         .set({ status: "failed", time_updated: Date.now() })
-        .where(eq(SignalQueueTable.id, id))
+        .where(and(eq(SignalQueueTable.id, id), eq(SignalQueueTable.status, "running")))
         .run(),
     )
   }
@@ -315,14 +323,15 @@ export namespace SignalQueue {
   }
 
   export function list(sessionID: string, limit = 100) {
+    const size = Number.isFinite(limit) ? Math.max(0, Math.min(Math.floor(limit), 500)) : 100
     return Database.use((db) =>
       db
         .select()
         .from(SignalQueueTable)
         .where(eq(SignalQueueTable.session_id, sessionID))
         .orderBy(asc(SignalQueueTable.priority), desc(SignalQueueTable.time_created))
-        .limit(limit)
-        .all(),
+        .limit(size)
+        .all()
     )
   }
 }

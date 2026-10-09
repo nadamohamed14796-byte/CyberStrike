@@ -48,8 +48,26 @@ jobs:
       - name: Run focused CyberStrike scope workspace tests
         run: cd packages/cyberstrike && bun test --timeout 30000 test/tool/target-workspace.test.ts
 
+      # Includes process-boundary persistence and runtime-cache coverage, not only isolated helpers.
+      - name: Run research and learning regression tests
+        run: bun run --cwd packages/cyberstrike test test/research/safe-fetch.test.ts test/research/learning-pipeline.test.ts test/learning/source-fingerprint.test.ts test/learning/report-knowledge-fingerprint.test.ts test/learning/tool-learning.test.ts test/learning/reference-learning.test.ts test/learning/signal-queue.test.ts
+
+      - name: Typecheck CyberStrike package
+        run: bun run --cwd packages/cyberstrike typecheck
+
       - name: Run unit tests
         run: bun turbo test
+
+      # Run even when the workspace suite fails so package build health remains visible.
+      # Use the repository fixture rather than fetching live models.dev data.
+      - name: Build CyberStrike native Linux binary
+        if: always()
+        run: |
+          # The test models fixture is intentionally empty; provide a valid disposable JSON snapshot.
+          printf '{}' > /tmp/cyberstrike-models-api.json
+          MODELS_DEV_API_JSON=/tmp/cyberstrike-models-api.json bun run --cwd packages/cyberstrike build --single --skip-install
+          test -x packages/cyberstrike/dist/cyberstrike-linux-x64/bin/cyberstrike
+          test -s packages/cyberstrike/dist/hackbrowser-worker/hackbrowser-worker.js
 
   required:
     name: test (linux)

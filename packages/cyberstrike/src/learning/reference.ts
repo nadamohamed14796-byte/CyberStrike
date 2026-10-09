@@ -5,6 +5,10 @@ import { SkillLearningEventTable, SkillLearningTable } from "./learning.sql"
 import { Skill } from "../skill/skill"
 
 export namespace ReferenceLearning {
+  function boundedLimit(value: number, fallback: number, maximum = 100) {
+    const candidate = Number.isFinite(value) ? value : fallback
+    return Math.max(0, Math.min(Math.floor(candidate), maximum))
+  }
   function concepts(content: string): string[] {
     return Array.from(
       new Set(
@@ -30,7 +34,7 @@ export namespace ReferenceLearning {
       const sourceMatch = skill.content.match(/(?:^|\n)Source:\s*(\S+)/i)
       const source = sourceMatch?.[1] ?? skill.author ?? skill.verified ?? "reference"
 
-      Database.use((db) => {
+      Database.transaction((db) => {
         const where = sessionID
           ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skill.name))
           : and(isNull(SkillLearningTable.session_id), eq(SkillLearningTable.skill_name, skill.name))
@@ -43,6 +47,9 @@ export namespace ReferenceLearning {
               observations: existing.observations + 1,
               concepts: learned,
               source,
+              // An observed skill with no outcome history should remain neutral,
+              // not be ranked as useless merely because feedback is absent.
+              usefulness: existing.successes + existing.rejections === 0 ? 50 : existing.usefulness,
               category: skill.category,
               tags: skill.tags ?? [],
               last_used_at: now,
@@ -61,6 +68,7 @@ export namespace ReferenceLearning {
               tags: skill.tags ?? [],
               concepts: learned,
               observations: 1,
+              usefulness: 50,
               last_used_at: now,
               time_created: now,
               time_updated: now,
@@ -94,7 +102,7 @@ export namespace ReferenceLearning {
   ): void {
     try {
       const now = Date.now()
-      Database.use((db) => {
+      Database.transaction((db) => {
         const where = sessionID
           ? and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skillName))
           : and(isNull(SkillLearningTable.session_id), eq(SkillLearningTable.skill_name, skillName))
@@ -136,7 +144,7 @@ export namespace ReferenceLearning {
           const where = and(eq(SkillLearningTable.session_id, sessionID), eq(SkillLearningTable.skill_name, skillName))
           const row = db.select().from(SkillLearningTable).where(where).get()
           if (!row || row.successes + row.rejections === 0) return 50
-          return row.usefulness
+          return Math.round((row.successes / (row.successes + row.rejections)) * 100)
         }
 
         // Cross-session score: aggregate actual outcomes instead of reading one arbitrary session row.
@@ -156,6 +164,7 @@ export namespace ReferenceLearning {
   }
 
   export function top(limit = 10) {
+    const size = boundedLimit(limit, 10)
     try {
       return Database.use((db) =>
         db
@@ -166,7 +175,7 @@ export namespace ReferenceLearning {
           })
           .from(SkillLearningTable)
           .orderBy(desc(SkillLearningTable.usefulness), desc(SkillLearningTable.observations))
-          .limit(limit)
+          .limit(size)
           .all(),
       )
     } catch {
@@ -175,6 +184,7 @@ export namespace ReferenceLearning {
   }
 
   export function recent(limit = 20) {
+    const size = boundedLimit(limit, 20)
     try {
       return Database.use((db) =>
         db
@@ -185,7 +195,7 @@ export namespace ReferenceLearning {
           })
           .from(SkillLearningEventTable)
           .orderBy(desc(SkillLearningEventTable.time_created))
-          .limit(limit)
+          .limit(size)
           .all(),
       )
     } catch {
