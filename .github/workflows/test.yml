@@ -37,7 +37,7 @@ jobs:
         run: bun run --cwd packages/cyberstrike src/index.ts -h
 
       - name: Run focused CyberStrike scope workspace tests
-        run: bun test --timeout 30000 packages/cyberstrike/test/tool/target-workspace.test.ts
+        run: cd packages/cyberstrike && bun test --timeout 30000 test/tool/target-workspace.test.ts
 
       - name: Run unit tests
         run: bun turbo test
