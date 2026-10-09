@@ -14,6 +14,11 @@ const MAX_PAGES = 1000
 const DEFAULT_DEPTH = 2
 const MAX_DEPTH = 4
 
+function boundedInteger(value: number | undefined, fallback: number, minimum: number, maximum: number) {
+  const candidate = value === undefined || !Number.isFinite(value) ? fallback : value
+  return Math.max(minimum, Math.min(Math.floor(candidate), maximum))
+}
+
 function hostAllowed(url: URL, source: ResearchSource) {
   return source.hosts.some((host) => url.hostname === host || url.hostname.endsWith("." + host))
 }
@@ -277,9 +282,9 @@ export async function syncResearchSource(
   options: ResearchSyncOptions = {},
 ): Promise<ResearchIngestResult> {
   const exhaustive = options.all === true
-  const limit = Math.max(1, Math.min(options.limit ?? DEFAULT_LIMIT, MAX_LIMIT))
-  const maxPages = Math.max(1, Math.min(options.pages ?? DEFAULT_PAGES, MAX_PAGES))
-  const maxDepth = Math.max(0, Math.min(options.depth ?? DEFAULT_DEPTH, MAX_DEPTH))
+  const limit = boundedInteger(options.limit, DEFAULT_LIMIT, 1, MAX_LIMIT)
+  const maxPages = boundedInteger(options.pages, DEFAULT_PAGES, 1, MAX_PAGES)
+  const maxDepth = boundedInteger(options.depth, DEFAULT_DEPTH, 0, MAX_DEPTH)
   const result: ResearchIngestResult = {
     source: source.id,
     fetched: 0,
