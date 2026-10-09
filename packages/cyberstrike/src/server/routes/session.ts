@@ -433,6 +433,7 @@ async function feedHuntingLayerFromRequest(input:{
   }
   jsAssetIds?:string[]
   functionIds?:string[]
+  functions?:Array<{id:string;name:string;assetId?:string;sourceLocation?:string}>
   pageUrl?:string
   jsAssets?:Array<{id:string;url:string;pageUrl?:string;observedAt:number}>
   observedParams?:ParamSlot[]
@@ -1606,6 +1607,9 @@ export const SessionRoutes = lazy(() =>
                       observedAt: req.time.created,
                     } : undefined,
                     functionIds: [learnedFunction.id],
+                    functions: [{ id: learnedFunction.id, name: learnedFunction.name }],
+                    pageUrl: req.page_url,
+                    jsAssets: collectObservedJavaScriptAssets(sessionID, req.page_url, normalized.host),
                     observedParams: normalized.observedParams,
                     rawRequest: body.text,
                   })
