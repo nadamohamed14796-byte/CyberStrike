@@ -111,7 +111,7 @@ export const ScopeCheckTool = Tool.define("scope_check", {
       `Reason: ${assetMatch ? assetEvaluation?.reason : decision.reason}`,
       "",
       "Scope check details:",
-      ...decision.results.map((r) => `  ${r.matches ? "[MATCH]" : "[NO]"} ${r.scope} — ${r.reason}`),
+      ...decision.results\n        .filter((r) => !(assetMatch && r.scope === target && !params.scope_items.includes(target)))\n        .map((r) => `  ${r.matches ? "[MATCH]" : "[NO]"} ${r.scope} — ${r.reason}`),\n      ...(assetMatch && assetEvaluation?.matchedAsset ? [`  [MATCH] ${assetEvaluation.matchedAsset.identifier} — structured asset inventory (${assetEvaluation.matchedAsset.asset_type})`] : []),
     ]
 
     if (!decision.activeTestingAuthorized) {
@@ -124,7 +124,7 @@ export const ScopeCheckTool = Tool.define("scope_check", {
     return {
       title: `${decision.activeTestingAuthorized ? "Authorized" : reportEligible ? "Report-eligible only" : "Not authorized"}: ${target}`,
       output: output.join("\n"),
-      metadata: { target, ...decision, assetEvaluation, reportEligible, bountyEligible, severityExceedsCap },
+      metadata: { target, ...decision, assetEvaluation: assetEvaluation ? { ...assetEvaluation, active_testing_authorized: decision.activeTestingAuthorized } : undefined, reportEligible, bountyEligible, severityExceedsCap },
     }
   },
 })
