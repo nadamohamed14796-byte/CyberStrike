@@ -24,8 +24,7 @@ describe("target knowledge notes", () => {
           cookieNames: ["session_id"],
           observedAt: 10,
           source: "observed",
-        }],
-        requests: [{
+        }, {
           id: "req-2",
           sessionId: "session-b",
           method: "GET",
