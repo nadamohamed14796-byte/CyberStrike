@@ -369,7 +369,7 @@ async function feedHuntingLayerFromRequest(input:{
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
       const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
       void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
-        .catch(error=>log.warn("hunting auto-dispatch failed",{
+        .catch((error:unknown)=>log.warn("hunting auto-dispatch failed",{
           sessionID:input.sessionID,
           target:input.target,
           error:error instanceof Error?error.message:String(error),
