@@ -11,8 +11,8 @@ description: >-
 ## 0. RELATED ROUTING
 
 - [prototype-pollution](../prototype-pollution/SKILL.md) — **LOAD FIRST** for PP fundamentals, merge-sink detection, basic probes
-- [ssti-server-side-template-injection](../ssti-server-side-template-injection/SKILL.md) — template engine RCE context (PP often triggers through template gadgets)
-- [xss-cross-site-scripting](../xss-cross-site-scripting/SKILL.md) — client-side PP gadgets ultimately achieve XSS
+- [ssti-server-side-template-injection](../../ssti/ssti-server-side-template-injection/SKILL.md) — template engine RCE context (PP often triggers through template gadgets)
+- [xss-cross-site-scripting](../../xss/xss-cross-site-scripting/SKILL.md) — client-side PP gadgets ultimately achieve XSS
 
 ### Advanced Reference
 
