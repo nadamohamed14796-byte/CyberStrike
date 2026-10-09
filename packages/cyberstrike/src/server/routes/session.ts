@@ -324,7 +324,7 @@ function inferScheme(rawText: string): "http" | "https" {
   return "https"
 }
 
-// Bridge between the ingest payload and Normalize.run. Returns null when the
+0// Bridge between the ingest payload and Normalize.run. Returns null when the
 // raw text isn't a parseable HTTP request (the route then falls through to
 // the chat-style ingest path that handles plain text).
 async function feedHuntingLayerFromRequest(input:{
@@ -1491,6 +1491,9 @@ export const SessionRoutes = lazy(() =>
           }
         } else {
           // Non-HTTP request (plain text message)
+          // A domain/wildcard-only message is treated as a scope declaration.
+          // Initialize the workspace before enqueueing the normal agent prompt.
+          await initializeHuntingScopeFromText({ sessionID, text: body.text })
           const promptText = buildPromptWithCredentialContext(body.text, credentialID)
           if (ingestDryRun) {
             log.info("ingest dry-run (text)", { sessionID })
