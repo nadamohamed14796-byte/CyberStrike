@@ -100,7 +100,7 @@ test("rejects an initially out-of-scope URL without making a request", async () 
     (async () => {
       requests++
       return new Response("should not be fetched")
-    }) as typeof fetch,
+    }) as unknown as typeof fetch,
     async () => {
       await expect(fetchResearchText("https://untrusted.example/private", source)).rejects.toThrow(
         "blocked research host",
