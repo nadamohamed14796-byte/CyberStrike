@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test"
-import { sourceFingerprints } from "../../src/learning/source-fingerprint"
+import { matchesSourceURLFingerprint, sourceFingerprints } from "../../src/learning/source-fingerprint"
 
 test("normalizes URL scheme and host while stripping fragments", () => {
   const first = sourceFingerprints("HTTPS://Research.Example/CaseSensitive/Report?id=AbC#section")
@@ -22,4 +22,11 @@ test("keeps the legacy lowercase key for compatibility with existing records", (
   const keys = sourceFingerprints("https://research.example/CaseSensitive?id=AbC")
 
   expect(keys).toContain("url:https://research.example/casesensitive?id=abc")
+})
+
+test("legacy lookup reuses only the same original case-sensitive URL", () => {
+  const requested = sourceFingerprints("https://research.example/CaseSensitive?id=AbC")[0]
+
+  expect(matchesSourceURLFingerprint("https://research.example/CaseSensitive?id=AbC", requested)).toBe(true)
+  expect(matchesSourceURLFingerprint("https://research.example/casesensitive?id=abc", requested)).toBe(false)
 })
