@@ -16,6 +16,7 @@ import { useKV } from "../context/kv"
 import { useCommandDialog } from "../component/dialog-command"
 import { useSDK } from "../context/sdk"
 import { DialogHackbrowserLaunch } from "../component/dialog-hackbrowser-launch"
+import { TargetWorkspace } from "@/tool/target-workspace"
 
 // TODO: what is the best way to do this?
 let once = false
@@ -162,6 +163,8 @@ export function Home() {
             toast.show({ message: "Failed to create session for recon", variant: "error" })
             return
           }
+          const workspace = await TargetWorkspace.ensure(targetURL, created.id)
+          toast.show({ message: "Target workspace ready: " + workspace.root, variant: "info" })
           homeRoute.navigate({ type: "session", sessionID: created.id })
           setTimeout(() => {
             promptRef.current?.set({ input: mission, parts: [] })
