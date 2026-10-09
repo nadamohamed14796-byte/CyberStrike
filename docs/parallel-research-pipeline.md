@@ -27,6 +27,24 @@ bun run dev research learn --limit 50 --watch --interval 10
 
 Stop either process with Ctrl+C. Both can run at the same time. The existing `research sync` command remains available as the legacy combined crawl-and-ingest path.
 
+## Added writeup sources
+
+The configured source registry includes these two additional sources:
+
+- `infosec-weekly` — [The Infosec Newsletter](https://weekly.infosecwriteups.com/), a weekly security roundup. Some material may require membership; the crawler only processes publicly accessible content.
+- `securitycipher-bounty-writeups` — [SecurityCipher Daily Bug Bounty Writeups](https://securitycipher.com/bounty-writeups/), filtered for security-relevant posts.
+
+Run discovery for either source independently:
+
+```bash
+bun run dev research sources
+bun run dev research discover infosec-weekly --pages 25 --depth 2
+bun run dev research discover securitycipher-bounty-writeups --pages 25 --depth 2
+bun run dev research learn --limit 50
+```
+
+The source-specific URL discovery allows article links with dated or slug-only paths, while the relevance gate still filters material before learning. Availability and extracted content depend on each site's public HTML, robots/rate limits, and any membership restrictions.
+
 ## Queue behavior
 
 - Queue state is stored in the `research_queue` table in the existing SQLite database.
