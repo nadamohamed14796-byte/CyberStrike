@@ -6,6 +6,10 @@ function unique(values: Array<string | undefined>): string[] {
   return [...new Set(values.filter((value): value is string => Boolean(value && value.trim())))]
 }
 
+function pathOf(request: { path?: string; url: string }): string {
+  try { return new URL(request.url).pathname || "/" } catch { return (request.path ?? request.url).split("?")[0] || "/" }
+}
+
 function hostOf(value?: string): string {
   if (!value) return "unknown-host"
   try { return new URL(value).hostname.toLowerCase() } catch { return value.toLowerCase() }
@@ -97,22 +101,56 @@ async function renderTargetNotesUnlocked(root: string, target: string): Promise<
     lines.push("  - Relationship evidence: " + (related.length ? unique(related.map(edge => edge.kind + " (" + edge.evidence + ", confidence " + edge.confidence + ")")).join("; ") : "none"))
   }
 
-  lines.push("", "## Observed Endpoints", "")
+  lines.push("", "## Observed Endpoints (Grouped by Canonical Endpoint)", "")
   if (!requests.length) lines.push("_No browser/proxy requests have been recorded yet._", "")
-  for (const [host, hostRequests] of [...requestsByHost.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-    lines.push("### " + safe(host), "")
-    for (const request of hostRequests.sort((a, b) => b.observedAt - a.observedAt)) {
-      const response = responseByRequest.get(request.id)
-      lines.push("#### " + safe(request.method.toUpperCase() + " " + (request.path ?? request.url)), "")
-      lines.push("- Request ID: " + request.id)
-      lines.push("- Observation timestamp: " + request.observedAt)
-      lines.push("- Account context: " + safe(request.accountLabel ?? request.credentialId ?? "unknown"))
-      lines.push("- Request header names: " + (request.headerNames?.length ? unique(request.headerNames).map(safe).join(", ") : "not captured"))
-      lines.push("- Cookie names: " + (request.cookieNames?.length ? unique(request.cookieNames).map(safe).join(", ") : "not captured"))
-      lines.push("- Observed parameters: " + (params.filter(param => param.requestIds.includes(request.id)).map(param => param.name + " (" + param.location + ")").join(", ") || "none extracted"))
-      lines.push("- Response: " + (response ? response.status + (response.contentType ? "; " + safe(response.contentType) : "") : "not recorded"))
-      lines.push("- Response header names: " + (response?.headers ? Object.keys(response.headers).join(", ") : "not captured"), "")
+
+  const endpointGroups = new Map<string, typeof requests>()
+  for (const request of requests) {
+    const host = (request.host ?? hostOf(request.url)).toLowerCase()
+    const endpointPath = pathOf(request)
+    const key = host + "|" + request.method.toUpperCase() + "|" + endpointPath
+    const list = endpointGroups.get(key) ?? []
+    list.push(request)
+    endpointGroups.set(key, list)
+  }
+
+  const sortedEndpoints = [...endpointGroups.entries()].sort(([, a], [, b]) => {
+    const left = a[0]
+    const right = b[0]
+    const leftHost = (left.host ?? hostOf(left.url)).toLowerCase()
+    const rightHost = (right.host ?? hostOf(right.url)).toLowerCase()
+    return leftHost.localeCompare(rightHost) || pathOf(left).localeCompare(pathOf(right)) || left.method.localeCompare(right.method)
+  })
+  let lastHost = ""
+  for (const [, observations] of sortedEndpoints) {
+    const first = observations[0]
+    const host = (first.host ?? hostOf(first.url)).toLowerCase()
+    const endpointPath = pathOf(first)
+    if (host !== lastHost) {
+      lines.push("### " + safe(host), "")
+      lastHost = host
     }
+    const requestIDs = new Set(observations.map(item => item.id))
+    const endpointParams = params.filter(param => param.requestIds.some(id => requestIDs.has(id)))
+    const endpointResponses = observations.map(item => responseByRequest.get(item.id)).filter(Boolean)
+    const responseSummary = [...new Set(endpointResponses.map(item => String(item!.status)))].join(", ")
+    lines.push("#### " + safe(first.method.toUpperCase() + " " + endpointPath), "")
+    lines.push("- Unique endpoint identity: " + safe(host + "|" + first.method.toUpperCase() + "|" + endpointPath))
+    lines.push("- Captured observations: " + observations.length)
+    lines.push("- Request IDs: " + observations.map(item => safe(item.id)).join(", "))
+    lines.push("- Accounts observed: " + (unique(observations.map(item => item.accountLabel ?? item.credentialId)).map(safe).join(", ") || "unknown"))
+    lines.push("- Request header names: " + (unique(observations.flatMap(item => item.headerNames ?? [])).map(safe).join(", ") || "not captured"))
+    lines.push("- Cookie names: " + (unique(observations.flatMap(item => item.cookieNames ?? [])).map(safe).join(", ") || "not captured"))
+    lines.push("- Observed parameters: " + (unique(endpointParams.map(param => param.name + " (" + param.location + ")")).map(safe).join(", ") || "none extracted"))
+    lines.push("- Response status codes: " + (responseSummary || "not recorded"))
+    lines.push("- Last observed: " + Math.max(...observations.map(item => item.observedAt)), "")
+    for (const request of [...observations].sort((a, b) => b.observedAt - a.observedAt)) {
+      const response = responseByRequest.get(request.id)
+      lines.push("- Observation " + safe(request.id) + ": " + request.observedAt +
+        "; account=" + safe(request.accountLabel ?? request.credentialId ?? "unknown") +
+        "; response=" + (response ? response.status + (response.contentType ? " (" + safe(response.contentType) + ")" : "") : "not recorded"))
+    }
+    lines.push("")
   }
 
   lines.push("## Cross-Asset Relationships", "")
