@@ -60,6 +60,30 @@ test("runs source discovery through persistence and recommendations, is idempote
           { status: 200, headers: { "content-type": "text/html; charset=utf-8" } },
         )
       }
+      if (url.pathname === "/writeups/depth-invalid-root") {
+        return new Response(
+          article("InvalidDepthMarker IDOR root", "/writeups/depth-invalid-1"),
+          { status: 200, headers: { "content-type": "text/html; charset=utf-8" } },
+        )
+      }
+      if (url.pathname === "/writeups/depth-invalid-1") {
+        return new Response(
+          article("InvalidDepthMarker IDOR first child", "/writeups/depth-invalid-2"),
+          { status: 200, headers: { "content-type": "text/html; charset=utf-8" } },
+        )
+      }
+      if (url.pathname === "/writeups/depth-invalid-2") {
+        return new Response(
+          article("InvalidDepthMarker IDOR second child", "/writeups/depth-invalid-3"),
+          { status: 200, headers: { "content-type": "text/html; charset=utf-8" } },
+        )
+      }
+      if (url.pathname === "/writeups/depth-invalid-3") {
+        return new Response(
+          article("InvalidDepthMarker IDOR over-budget page", "/writeups/depth-invalid-4"),
+          { status: 200, headers: { "content-type": "text/html; charset=utf-8" } },
+        )
+      }
       return new Response("not found", { status: 404 })
     }) as typeof fetch,
     async () => {
@@ -117,6 +141,21 @@ test("runs source discovery through persistence and recommendations, is idempote
       expect(bounded.learned).toBe(1)
       expect(requested).not.toContain("https://research.example/writeups/depth-child")
       expect(ReportKnowledge.search({ query: "DepthBudgetMarker", limit: 10 })).toHaveLength(1)
+
+      // Invalid numeric budgets must fall back to bounded defaults. NaN makes the depth comparison ineffective.
+      const invalidBudgetSource = {
+        ...source,
+        id: "learning-e2e-invalid-budget",
+        seedUrls: ["https://research.example/writeups/depth-invalid-root"],
+      }
+      const invalidBudget = await syncResearchSource(invalidBudgetSource, {
+        limit: 10,
+        pages: 10,
+        depth: Number.NaN,
+      })
+      expect(invalidBudget.failed).toBe(0)
+      expect(invalidBudget.pages_crawled).toBeGreaterThan(0)
+      expect(requested).not.toContain("https://research.example/writeups/depth-invalid-3")
     },
   )
 })
