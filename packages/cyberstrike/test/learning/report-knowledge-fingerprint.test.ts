@@ -70,7 +70,9 @@ test("recommendations preserve relevance and label low-trust imports as advisory
   expect(lowTrust).not.toBeNull()
 
   const recommendations = ReportKnowledge.recommendations({
-    signal: "LessonRankMarker",
+    // Multiple title tokens give the relevant record a strictly stronger
+    // relevance score than records matching only the shared marker.
+    signal: "LessonRankMarker validation methods",
     vulnerabilityClass: "idor",
     limit: 10,
   })
