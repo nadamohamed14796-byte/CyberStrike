@@ -13,3 +13,12 @@ export function sourceFingerprints(value: string) {
     return [legacy]
   }
 }
+
+/**
+ * Legacy fingerprint matches are safe only when the stored original URL has
+ * the same case-preserving canonical identity as the incoming URL.
+ */
+export function matchesSourceURLFingerprint(storedURL: string | null | undefined, requestedFingerprint: string) {
+  if (!storedURL) return false
+  return sourceFingerprints(storedURL)[0] === requestedFingerprint
+}
