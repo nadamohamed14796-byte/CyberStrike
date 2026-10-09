@@ -7,12 +7,13 @@ const csv = `"identifier","asset_type","instruction","eligible_for_bounty","elig
 "*.nymhair.co.uk,.com,.uk","WILDCARD","","false","true","","","","critical","","2026-05-23 16:45:00 UTC","2026-05-23 16:45:00 UTC"
 "*.wc-frisch.{de,ch}","WILDCARD","","false","true","","","","critical","","2026-05-23 16:45:00 UTC","2026-05-23 16:45:00 UTC"
 "*.natturalabs.*","WILDCARD","","false","true","","","","critical","","2026-01-11 11:53:54 UTC","2026-01-11 11:53:54 UTC"
+"com.example.mobile","ANDROID_APP","app package ID","","true","","","","high","mobile,android","2026-01-01 00:00:00 UTC","2026-01-02 00:00:00 UTC"
 `
 
 describe("scope asset inventory import and evaluation", () => {
   test("parses CSV columns, quoted values and preserves policy metadata", () => {
     const assets = parseScopeAssetCSV(csv)
-    expect(assets).toHaveLength(5)
+    expect(assets).toHaveLength(6)
     expect(assets[0].asset_type).toBe("WILDCARD")
     expect(assets[0].eligible_for_bounty).toBe(false)
     expect(assets[0].eligible_for_submission).toBe(true)
@@ -52,7 +53,7 @@ describe("scope asset inventory import and evaluation", () => {
     expect(result.active_testing_authorized).toBe(false)
   })
 
-  test("rejects malformed CSV with missing required columns", () => {
+  test("matches non-web asset identifiers by exact identity only", () => {\n    const assets = parseScopeAssetCSV(csv)\n    expect(ScopeAssets.evaluate("com.example.mobile", assets).matched).toBe(true)\n    expect(ScopeAssets.evaluate("https://play.google.com/store/apps/details?id=com.example.mobile", assets).matched).toBe(false)\n  })\n\n  test("rejects malformed CSV with missing required columns", () => {
     expect(() => parseScopeAssetCSV('"identifier","asset_type"\n"example.com","URL"')).toThrow()
   })
 })
