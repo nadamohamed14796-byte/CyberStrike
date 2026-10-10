@@ -357,16 +357,15 @@ export async function enrichAgentTaskExecutionContext(
     if(context.accountLabel && (request.accountLabel ?? request.credentialId)!==context.accountLabel) return false
     return true
   }).sort((a,b)=>b.observedAt-a.observedAt)
+  const accountIdentity=(request:typeof intelligence.requests[number])=>request.accountLabel ?? request.credentialId ?? "__anonymous__"
+  const oneAccountOnly=(items:typeof intelligence.requests)=>new Set(items.map(accountIdentity)).size===1
+  const linkedCandidates=candidates.filter(candidate=>linkedRequestIds.has(candidate.id))
+  const linkedRequest=linkedCandidates.length && oneAccountOnly(linkedCandidates) ? linkedCandidates[0] : undefined
+  const endpointRequest=context.endpoint && candidates.length && oneAccountOnly(candidates) ? candidates[0] : undefined
   // Only bind a request when the task supplies a request/response, an endpoint,
-  // or a graph edge linking its JS/function identity. Never borrow an unrelated
-  // "latest request" for a global JavaScript-asset signal.
-  const request=exact ?? responseRequest ?? (
-    linkedRequestIds.size
-      ? candidates.find(candidate=>linkedRequestIds.has(candidate.id))
-      : context.endpoint
-        ? candidates[0]
-        : undefined
-  )
+  // or an unambiguous graph edge linking its JS/function identity. Never borrow an
+  // unrelated or cross-account "latest request" for a global JavaScript signal.
+  const request=exact ?? responseRequest ?? linkedRequest ?? endpointRequest
   if(context.responseId && request && explicitResponse?.requestId!==request.id) {
     throw new Error("AGENT_CORRELATION_MISMATCH: response identity does not match selected request")
   }
