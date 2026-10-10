@@ -526,7 +526,7 @@ export async function executeAndRecordDispatchedTask(
       ? "completed"
       : "running"
   if(terminal){
-    await finishAgentTask(root,plan.target,taskId,taskState)
+    // recordAttemptLifecycle owns the persisted task-state transition.
     if(context.endpoint){
       const endpointLedger=ledgers(root,plan.target).endpoint
       const endpointId="endpoint_"+Bun.hash([
