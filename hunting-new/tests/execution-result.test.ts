@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { parseExecutionResult, verifiedEvidenceIds } from "../src/execution-result"
+import { parseExecutionResult, resolveExecutionResultCorrelation, verifiedEvidenceIds } from "../src/execution-result"
 
 describe("execution result", () => {
   test("parses structured output", () => {
@@ -55,5 +55,75 @@ describe("structured report fields", () => {
     }),{state:"inconclusive",outcome:"clean"})
     expect(result.rootCause).toBe("server authorization check is missing")
     expect(result.reproduction).toContain("Authenticate as account A")
+  })
+})
+
+
+describe("execution result correlation", () => {
+  const requests = [
+    { id: "request-a", url: "https://example.test/api/a", path: "/api/a", accountLabel: "account-a" },
+    { id: "request-b", url: "https://example.test/api/b", path: "/api/b", credentialId: "account-b" },
+  ]
+  const responses = [
+    { id: "response-a", requestId: "request-a" },
+    { id: "response-b", requestId: "request-b" },
+  ]
+
+  test("accepts a result whose request, response, endpoint and account agree", () => {
+    expect(resolveExecutionResultCorrelation({
+      expectedRequestId: "request-a",
+      expectedResponseId: "response-a",
+      endpoint: "/api/a",
+      accountLabel: "account-a",
+      executorRequestId: "request-a",
+      structuredResponseId: "response-a",
+      requests,
+      responses,
+    })).toEqual({ requestId: "request-a", responseId: "response-a", error: undefined })
+  })
+
+  test("rejects a response belonging to a different request", () => {
+    const result = resolveExecutionResultCorrelation({
+      expectedRequestId: "request-b",
+      executorResponseId: "response-a",
+      requests,
+      responses,
+    })
+    expect(result.error).toContain("different request")
+  })
+
+  test("rejects unknown IDs, endpoint mismatches and cross-account evidence", () => {
+    const unknown = resolveExecutionResultCorrelation({
+      executorRequestId: "request-missing",
+      requests,
+      responses,
+    })
+    expect(unknown.error).toContain("unknown request")
+
+    const endpoint = resolveExecutionResultCorrelation({
+      expectedRequestId: "request-a",
+      endpoint: "/api/other",
+      requests,
+      responses,
+    })
+    expect(endpoint.error).toContain("endpoint")
+
+    const account = resolveExecutionResultCorrelation({
+      expectedRequestId: "request-a",
+      accountLabel: "account-b",
+      requests,
+      responses,
+    })
+    expect(account.error).toContain("account")
+  })
+
+  test("allows a response to establish its request when no request ID was returned", () => {
+    expect(resolveExecutionResultCorrelation({
+      executorResponseId: "response-b",
+      endpoint: "/api/b",
+      accountLabel: "account-b",
+      requests,
+      responses,
+    })).toMatchObject({ requestId: "request-b", responseId: "response-b", error: undefined })
   })
 })
