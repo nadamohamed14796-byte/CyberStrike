@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { dispatchAgentTasks, type AgentTask, type MultiAgentPlan } from "../src/multi-agent-planner"
+import { buildMultiAgentPlan, dispatchAgentTasks, type AgentTask, type MultiAgentPlan } from "../src/multi-agent-planner"
+import { SignalEngine } from "../src/signals"
 
 const task = (id: string, role: AgentTask["role"], accountLabel: string): AgentTask => ({
   id,
@@ -70,4 +71,34 @@ describe("multi-agent correlation links", () => {
 
     expect(batch.tasks.map(item => item.id)).toContain("validator-a")
   })
+
+  test("keeps JavaScript asset signals separate in the planner", () => {
+    const engine = new SignalEngine()
+    engine.emit({
+      signal: "source_map_detected",
+      source: "correlation:js",
+      confidence: 0.9,
+      target: "app.example",
+      metadata: { jsAssetId: "asset-a", url: "https://app.example/a.js.map" },
+    })
+    engine.emit({
+      signal: "source_map_detected",
+      source: "correlation:js",
+      confidence: 0.9,
+      target: "app.example",
+      metadata: { jsAssetId: "asset-b", url: "https://app.example/b.js.map" },
+    })
+
+    const plan = buildMultiAgentPlan(engine, [{
+      name: "source-map-analysis",
+      confidence_threshold: 0.5,
+      required_signals: ["source_map_detected"],
+    }], "app.example")
+    const tasks = plan.tasks.filter(item => item.signal === "source-map-detected")
+
+    expect(tasks).toHaveLength(2)
+    expect(tasks.map(item => item.jsAssetId).sort()).toEqual(["asset-a", "asset-b"])
+    expect(new Set(tasks.map(item => item.id)).size).toBe(2)
+  })
+
 })
