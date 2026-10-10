@@ -278,30 +278,46 @@ async function loadConfiguredSkillMetadata(root:string):Promise<Map<string,Parti
   return result
 }
 
-async function resolveIndexedSkillSource(root:string,entry:SkillIndexEntry):Promise<string|undefined>{
+async function canonicalSkillIndex(root:string):Promise<SkillIndex|null>{
+  const candidates=[
+    path.join(root,".cyberstrike","skill","index.json"),
+    path.resolve(root,"..",".cyberstrike","skill","index.json"),
+  ]
+  for(const file of candidates){
+    if(!(await Bun.file(file).exists()))continue
+    const index=await readJson<SkillIndex|null>(file,null)
+    if(index && Array.isArray(index.skills))return index
+  }
+  return null
+}
+
+async function indexedSkillFiles(root:string):Promise<string[]>{
   const skillRoots=[
     path.join(root,".cyberstrike","skill"),
     path.resolve(root,"..",".cyberstrike","skill"),
     path.resolve(process.cwd(),".cyberstrike","skill"),
   ]
-  const candidates=new Set((await Promise.all(skillRoots.map(collectSkillFiles))).flat())
+  return [...new Set((await Promise.all(skillRoots.map(collectSkillFiles))).flat())]
+}
+
+function resolveIndexedSkillSource(entry:SkillIndexEntry,files:string[]):string|undefined{
   const suffixes=entry.files??["SKILL.md"]
-  for(const file of candidates){
+  for(const file of files){
     const basename=path.basename(path.dirname(file))
-    if(basename===entry.name && suffixes.some(s=>file.endsWith(path.sep+s))) return file
+    if(basename===entry.name && suffixes.some(s=>file.endsWith(path.sep+s)))return file
   }
   return undefined
 }
 
 export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
-  const file=path.join(root,".cyberstrike","skill","index.json")
-  const index=await readJson<SkillIndex|null>(file,null)
+  const index=await canonicalSkillIndex(root)
+  const skillFiles=await indexedSkillFiles(root)
   const merged=new Map<string,SkillMetadata>()
 
   for(const entry of index?.skills??[]){
     if(!entry.name)continue
     const metadata=indexMetadata(entry)
-    metadata.source_path=await resolveIndexedSkillSource(root,entry)
+    metadata.source_path=resolveIndexedSkillSource(entry,skillFiles)
     merged.set(entry.name,metadata)
   }
   for(const skill of WEB_SKILLS)merged.set(skill.name,skill)
