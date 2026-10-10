@@ -12,9 +12,12 @@ This document deliberately does **not** claim complete repository coverage. The 
 
 ### Session intake, scope and dispatch
 - `packages/cyberstrike/src/server/routes/session.ts`: corrected Hunting Layer import paths, adapted the session payload to the intake contract, fixed credential identifier aliases, added `node:path`, and typed the async error parameter.
-- `hunting-new/src/mission.ts`: reject targets not authorized by the supplied scope at initialization; verify persisted mission target identity on read/update to fail closed on target-slug collisions.
-- `hunting-new/src/cyberstrike-intake.ts`: require a matching initialized mission and re-check its current scope before persisting request/response intelligence.
-- `hunting-new/src/native-cyberstrike-executor.ts`: fail closed on absent mission, scope mismatch, an out-of-scope observed request URL, or an out-of-scope absolute endpoint; re-check just before native agent execution.
+- `hunting-new/src/mission.ts`: reject targets not authorized by the supplied scope at initialization; use a host-level gate to permit explicitly path-restricted rules; verify persisted mission target identity on read/update to fail closed on target-slug collisions.
+- `hunting-new/src/scope.ts`: added `checkTargetScope` and `resolveScopeUrl` so relative paths are resolved against the target origin and checked with host/protocol/port/path rules.
+- `hunting-new/src/cyberstrike-intake.ts`: require a matching initialized mission; validate both target authorization and the observed absolute request URL before persisting request/response intelligence.
+- `hunting-new/src/native-cyberstrike-executor.ts`: fail closed on absent mission, target mismatch, an out-of-scope linked request URL, invalid/relative endpoints that resolve outside path scope; re-check immediately before native agent execution.
+- `hunting-new/src/external-tool-runner.ts`: normalize and scope-check endpoints before cache reads and before Arjun/x8 spawn; use the canonical endpoint for cache and audit records, and reload authoritative mission scope before spawn.
+- `hunting-new/src/mission-orchestrator.ts`, `hunting-new/src/cross-host-graph.ts`, `hunting-new/src/finding-promotion.ts`, and `hunting-new/src/multi-agent-runtime.ts`: added host/path-aware scope checks in the orchestration, cross-host classification, validation and promotion paths.
 - `hunting-new/src/external-tool-runner.ts`: removed direct export of the low-level discovery runner and re-load the authoritative mission scope before Arjun/x8 spawn through the scoped wrapper.
 - `hunting-new/tests/scope-enforcement.test.ts` and `hunting-new/tests/cyberstrike-intake-scope.test.ts`: added regression coverage for missing mission, scope denial, persisted scope drift, target storage-key collision and out-of-scope linked request.
 
@@ -25,10 +28,12 @@ This document deliberately does **not** claim complete repository coverage. The 
 - `hunting-new/src/reference-store.ts`: account for repeated reference IDs when incrementing use counts.
 - `hunting-new/src/skill-router.ts`: enforce declared required-context conditions in registered-skill routing.
 - `hunting-new/src/report.ts`: read the array from the persisted FindingState object when applying report review feedback.
-- `hunting-new/src/signals.ts`: compare absolute observed request URLs against absolute documented API endpoints when deriving API differential signals.
-- `hunting-new/src/multi-agent-runtime.ts`: allow explicit, caller-provided skill rules whose primary name is not in the filesystem registry without trying to resolve that custom name; keep tasks alive while a confirmed hypothesis still fails validation, and only finish after validation is eligible and promotion resolves (unless blocked/rejected).
+- `hunting-new/src/signals.ts`: compare absolute observed request URLs against absolute documented API endpoints, default missing methods to `GET`, and align parameter location types (including `header`) across correlation and target-intelligence contracts.
+- `hunting-new/src/multi-agent-planner.ts`: import the runtime `SkillRegistry` as a value and guard arbitrary dependency role strings before indexing typed role lanes.
+- `hunting-new/src/multi-agent-runtime.ts`: keep caller-supplied unregistered skills from being incorrectly resolved against the filesystem registry; keep tasks active while a confirmed hypothesis remains unvalidated, require eligible validation before task terminal-completion, and check target/request/endpoint scope before execution. Removed duplicate task completion after lifecycle state transitions.
+- `hunting-new/src/attempt-lifecycle.ts` and `hunting-new/src/native-dispatch.ts`: preserve `blocked` as blocked and align completion with the validation/promotion gate.
 - Related test files changed: `hunting-new/tests/core.test.ts`, `end-to-end-runtime.test.ts`, `finding-promotion.test.ts`, `persistent-attempt-ledger.test.ts`, `signals.test.ts`, `skill-execution-adapter.test.ts`, `validation-gate.test.ts`. Test-only changes are fixture/assertion corrections, separate from production behavior fixes.
-- Added `hunting-new/tests/skill-router-context.test.ts`? No — no such file was created in this pass; required-context behavior has been inspected but dedicated new routing coverage remains outstanding.
+- `hunting-new/tests/skill-router-context.test.ts` is present and tests that account-context-dependent skills are not routed without account evidence, then route after authenticated-account context is observed. Re-run it on the latest head with CI.
 
 ### Learning, identifiers and audit tooling
 - `packages/cyberstrike/src/learning/report-knowledge.ts`: use case-insensitive matching for legacy target-pattern values.
@@ -45,7 +50,7 @@ An earlier Hunting Layer run on commit `94a3eb0a3698ad865f3ba0a45807eeb1abf7a68b
 
 A later run on commit `2f50c27d7320b697718ba91c3acf448e3571d804` still failed Hunting Layer: 85 passed, 2 failed. One remaining failure was the false-positive test expecting a skip with a mismatched account context; the other was premature task completion while validation was still ineligible. These were addressed in later commits `e197fe12d2240861ae29cd95f34661a21936f165` and `1d55465ba6d288912bd0e04c6f225be72fc92a08`. The result of the subsequent CI run on the latest branch head must be checked before claiming these changes are verified.
 
-At the time this document was prepared, checks had not all completed for the latest head. A queued or in-progress check is pending, not a pass. No local Bun install/build/typecheck was run from this environment; CI is the available execution evidence.
+Earlier typecheck on commit `a581aa7b32a96440ef785cba42a6f7b92c8c087f` reported only the `ParameterCandidate.location` union mismatch after the prior production/test fixes. The contract was aligned in `hunting-new/src/signals.ts` at commit `648e9d402103b5a48455b3c90c5bf8f90f1b5d0d`; however, the CI runs for that exact latest head are queued and must not be treated as verification. No local Bun install/build/typecheck was run from this environment; CI is the available execution evidence.
 
 ## Known remaining audit work (not complete)
 - Reconcile inventory and produce a truthful per-path checklist; write an individual review row for every path before claiming any percentage of full coverage.
