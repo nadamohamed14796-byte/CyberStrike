@@ -39,9 +39,11 @@ export async function ingestCyberStrikeRequest(
 ):Promise<void>{
   const mission=await loadMission(root,input.target)
   if(!mission)throw new Error("MISSION_NOT_INITIALIZED")
-  const {checkScope}=await import("./scope")
-  const scope=checkScope(input.target,mission.scope)
-  if(!scope.allowed)throw new Error("MISSION_BLOCKED: "+scope.reason)
+  const {checkScope,checkTargetScope}=await import("./scope")
+  const targetScope=checkTargetScope(input.target,mission.scope)
+  if(!targetScope.allowed)throw new Error("MISSION_BLOCKED: "+targetScope.reason)
+  const requestScope=checkScope(input.request.url,mission.scope)
+  if(!requestScope.allowed)throw new Error("REQUEST_SCOPE_BLOCKED: "+requestScope.reason)
   const intelligence=await loadTargetIntelligence(root,input.target)
   const graph=hydrateGraph({
     requests:intelligence.requests,
