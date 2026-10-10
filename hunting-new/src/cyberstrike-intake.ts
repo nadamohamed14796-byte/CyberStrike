@@ -43,7 +43,7 @@ export async function ingestCyberStrikeRequest(
   // Target authorization is host-level; path-scoped rules are enforced against
   // the concrete request URL below, so an allowed /api/* rule does not reject
   // the target merely because its root path is "/". Host-wide exclusions remain.
-  const targetRules=mission.scope.filter(rule=>!rule.exclude || !rule.path).map(rule=>({...rule,path:undefined}))
+  const targetRules=mission.scope.filter(rule=>!rule.exclude || !rule.path).map(rule=>({...rule,path:undefined,protocols:undefined,ports:undefined}))
   const scope=checkScope(input.target,targetRules)
   if(!scope.allowed)throw new Error("MISSION_BLOCKED: "+scope.reason)
   const requestScope=checkScope(input.request.url,mission.scope)
