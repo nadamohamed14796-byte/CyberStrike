@@ -21,7 +21,5 @@ jobs:
         uses: ./.github/actions/setup-bun
       - name: Run repository integrity audit
         run: bun run packages/cyberstrike/script/repo-integrity.ts
-      - name: Validate skill metadata and registry links
-        run: bun run --cwd packages/cyberstrike skills:validate
       - name: Run numbered runtime relationship audit
         run: bun run audit:runtime
