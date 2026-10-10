@@ -119,7 +119,7 @@ export async function prepareMultiAgentPlan(
 }
 
 import { dispatchAgentTasks } from "./multi-agent-planner"
-import { loadTaskStates } from "./task-state-store"
+import { loadTaskStates, saveTaskState, transitionTaskState } from "./task-state-store"
 import { claimAgentTask, finishAgentTask, setAgentTaskState } from "./agent-task-runtime"
 
 export async function dispatchPersistedTasks(
@@ -131,6 +131,19 @@ export async function dispatchPersistedTasks(
   const state=await loadTaskStates(root,prepared.plan.target)
   const states=new Map(state.tasks.map(task=>[task.taskId,task.state] as const))
   const batch=dispatchAgentTasks(prepared.plan,states,limit)
+  for(const task of batch.dependencyBlocked){
+    const current=state.tasks.find(item=>item.taskId===task.id)
+    if(current?.state==="pending"){
+      await transitionTaskState(root,prepared.plan.target,task.id,"blocked",undefined,["pending"])
+    }else if(!current){
+      await saveTaskState(root,prepared.plan.target,{
+        taskId:task.id,
+        state:"blocked",
+        attempts:0,
+        updatedAt:new Date().toISOString(),
+      })
+    }
+  }
   const claimed=[]
   for(const task of batch.tasks){
     claimed.push(await claimAgentTask(root,prepared.plan.target,task.id))
