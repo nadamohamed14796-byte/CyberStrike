@@ -222,7 +222,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.80,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
 
@@ -244,6 +244,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
           metadata: {
             requestId: request.id,
             accountLabel,
+            credentialId: request.credentialId,
             distinctAccounts: [...new Set(shared.map(other => other.accountLabel ?? other.credentialId).filter(Boolean))],
           },
         })
@@ -265,7 +266,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.82,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
 
@@ -276,7 +277,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.72,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
 
@@ -403,7 +404,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         target: input.target,
         endpoint,
         function_id: edge.from,
-        metadata: { requestId: request.id },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
   }
