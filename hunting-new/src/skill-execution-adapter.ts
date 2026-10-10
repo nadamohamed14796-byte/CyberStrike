@@ -15,6 +15,7 @@ export interface SkillExecutionInvocation {
   parameterName?:string
   parameterLocation?:"path"|"query"|"body"
   accountLabel?:string
+  relatedAccountLabels?:string[]
   jsAssetIds?:string[]
   jsAssetUrls?:string[]
   functionIds?:string[]
@@ -76,6 +77,7 @@ export function buildSkillExecutionInvocation(
     `parameter_location: ${context.parameterLocation ?? "(none)"}`,
     `attempt_id: ${context.attemptId ?? "(none)"}`,
     `account_label: ${context.accountLabel ?? "(none)"}`,
+    `related_account_labels: ${(context.relatedAccountLabels ?? []).join(", ") || "(none)"}`,
     `js_asset_ids: ${(context.jsAssetIds ?? []).join(", ") || "(none)"}`,
     `js_asset_urls: ${(context.jsAssetUrls ?? []).join(", ") || "(none)"}`,
     `function_ids: ${(context.functionIds ?? []).join(", ") || "(none)"}`,
@@ -101,6 +103,7 @@ export function buildSkillExecutionInvocation(
     parameterName:context.parameterName,
     parameterLocation:context.parameterLocation,
     accountLabel:context.accountLabel,
+    relatedAccountLabels:context.relatedAccountLabels,
     jsAssetIds:context.jsAssetIds,
     jsAssetUrls:context.jsAssetUrls,
     functionIds:context.functionIds,
