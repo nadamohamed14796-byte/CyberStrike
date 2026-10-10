@@ -15,6 +15,7 @@ export interface SkillExecutionInvocation {
 export interface SkillExecutionAdapterOptions {
   agentBySkill?:Record<string,string>
   agentByRole?:Record<string,string>
+  configuredAgentByRole?:Record<string,string>
   defaultAgent?:string
 }
 
@@ -31,8 +32,10 @@ export function buildSkillExecutionInvocation(
 ):SkillExecutionInvocation{
   const role=context.role ?? "primary-hunter"
   const agent=options.agentBySkill?.[context.primarySkill] ??
+    context.recommendedAgent ??
     options.agentByRole?.[role] ??
     process.env[`HUNT_AGENT_ROLE_${role.toUpperCase().replace(/-/g,"_")}`] ??
+    options.configuredAgentByRole?.[role] ??
     DEFAULT_ROLE_AGENTS[role] ??
     options.defaultAgent ??
     process.env.HUNT_DEFAULT_AGENT ??

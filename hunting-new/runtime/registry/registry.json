@@ -16,5 +16,14 @@
     "validation": "hunting-new/src/validation.ts",
     "javascript": "hunting-new/src/js.ts",
     "findings": "hunting-new/src/findings.ts"
+  },
+  "entrypoints": {
+    "session_ingest": "packages/cyberstrike/src/server/routes/session.ts",
+    "auto_dispatch": "hunting-new/src/auto-dispatch.ts",
+    "native_executor": "hunting-new/src/native-cyberstrike-executor.ts",
+    "skill_registry_loader": "hunting-new/src/skill-registry-loader.ts",
+    "config_loader": "hunting-new/src/runtime-config.ts",
+    "validation_runtime": "hunting-new/src/multi-agent-runtime.ts",
+    "reference_runtime": "hunting-new/src/reference-store.ts"
   }
 }

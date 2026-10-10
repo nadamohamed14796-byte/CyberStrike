@@ -18,7 +18,7 @@ import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
 import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
 import { loadMission } from "./mission"
-import { checkScope, checkTargetScope, resolveScopeUrl } from "./scope"
+import { checkConfiguredScope, checkConfiguredTargetScope, resolveScopeUrl } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
@@ -423,11 +423,11 @@ export async function executeAndRecordDispatchedTask(
     ? intelligence.requests.find(item=>item.id===context.requestId)
     : undefined
   const activeScope=exactRequest
-    ? checkScope(exactRequest.url,mission.scope)
-    : checkTargetScope(plan.target,mission.scope)
+    ? await checkConfiguredScope(root,exactRequest.url,mission.scope)
+    : await checkConfiguredTargetScope(root,plan.target,mission.scope)
   const endpointUrl=context.endpoint ? resolveScopeUrl(plan.target,context.endpoint) : undefined
   const endpointScope=context.endpoint
-    ? endpointUrl ? checkScope(endpointUrl,mission.scope) : {allowed:false,normalized:"",reason:"invalid-endpoint-url"}
+    ? endpointUrl ? await checkConfiguredScope(root,endpointUrl,mission.scope) : {allowed:false,normalized:"",reason:"invalid-endpoint-url"}
     : undefined
   const deniedScope=!activeScope.allowed ? activeScope : endpointScope && !endpointScope.allowed ? endpointScope : undefined
   if(deniedScope){

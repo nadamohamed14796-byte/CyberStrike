@@ -1,3 +1,4 @@
+import { loadHuntingRuntimeConfiguration } from "./runtime-config"
 export type ScopeRule={value:string;path?:string;protocols?:string[];ports?:number[];exclude?:boolean}
 export type ScopeDecision={allowed:boolean;normalized:string;reason:string}
 
@@ -123,4 +124,49 @@ export function checkScope(target:string,rules:ScopeRule[]):ScopeDecision{
   if(!matched)return{allowed:false,normalized:parsed.normalized,reason:"out-of-scope"}
   if(excluded)return{allowed:false,normalized:parsed.normalized,reason:"explicit-exclusion"}
   return{allowed:true,normalized:parsed.normalized,reason:"in-scope"}
+}
+
+
+function scopeExclusionMatch(target: string, rules: ScopeRule[]): ScopeDecision | undefined {
+  for (const rule of rules) {
+    const decision = checkScope(target, [{ ...rule, exclude: true }])
+    if (decision.reason === "explicit-exclusion") return decision
+  }
+  return undefined
+}
+
+/** Apply mission rules and configured repository policy before intake or execution. */
+export async function checkConfiguredTargetScope(root: string, target: string, missionRules: ScopeRule[]): Promise<ScopeDecision> {
+  const missionDecision = checkTargetScope(target, missionRules)
+  if (!missionDecision.allowed) return missionDecision
+  const config = await loadHuntingRuntimeConfiguration(root)
+  const allowRules = config.scope.rules.filter(rule => !rule.exclude)
+  if (allowRules.length) {
+    const configuredDecision = checkTargetScope(target, allowRules)
+    if (!configuredDecision.allowed) return { ...configuredDecision, reason: "configured-scope:" + configuredDecision.reason }
+  }
+  const exclusion = scopeExclusionMatch(target, [
+    ...config.scope.exclusions,
+    ...config.scope.rules.filter(rule => rule.exclude && !rule.path),
+  ])
+  if (exclusion) return exclusion
+  return missionDecision
+}
+
+/** Validate concrete absolute URLs against mission scope, configured scope, and exclusions. */
+export async function checkConfiguredScope(root: string, url: string, missionRules: ScopeRule[]): Promise<ScopeDecision> {
+  const missionDecision = checkScope(url, missionRules)
+  if (!missionDecision.allowed) return missionDecision
+  const config = await loadHuntingRuntimeConfiguration(root)
+  const allowRules = config.scope.rules.filter(rule => !rule.exclude)
+  if (allowRules.length) {
+    const configuredDecision = checkScope(url, allowRules)
+    if (!configuredDecision.allowed) return { ...configuredDecision, reason: "configured-scope:" + configuredDecision.reason }
+  }
+  const exclusion = scopeExclusionMatch(url, [
+    ...config.scope.exclusions,
+    ...config.scope.rules.filter(rule => rule.exclude),
+  ])
+  if (exclusion) return exclusion
+  return missionDecision
 }

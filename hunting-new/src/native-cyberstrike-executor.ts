@@ -3,11 +3,12 @@ import { runHuntingTask } from "../../packages/cyberstrike/src/tool/task"
 import { Instance } from "../../packages/cyberstrike/src/project/instance"
 import type { AgentTaskExecutionContext, AgentTaskExecutor } from "./multi-agent-runtime"
 import { loadMission } from "./mission"
-import { checkScope, checkTargetScope, resolveScopeUrl } from "./scope"
+import { checkConfiguredScope, checkConfiguredTargetScope, resolveScopeUrl } from "./scope"
 import { loadTargetIntelligence } from "./target-intelligence"
 import { buildSkillExecutionInvocation } from "./skill-execution-adapter"
 import { parseExecutionResult } from "./execution-result"
 import { markReferencesUsed } from "./reference-store"
+import { loadHuntingRuntimeConfiguration } from "./runtime-config"
 
 export interface NativeCyberStrikeExecutorOptions {
   agentBySkill?:Record<string,string>
@@ -27,20 +28,20 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
     const checkActiveScope=async()=>{
       const mission=await loadMission(root,context.target)
       if(!mission)return {allowed:false,normalized:"",reason:"mission-not-initialized"}
-      const targetDecision=checkTargetScope(context.target,mission.scope)
+      const targetDecision=await checkConfiguredTargetScope(root,context.target,mission.scope)
       if(!targetDecision.allowed)return targetDecision
       const intelligence=await loadTargetIntelligence(root,context.target)
       const request=context.requestId
         ? intelligence.requests.find(item=>item.id===context.requestId)
         : undefined
       if(request){
-        const requestDecision=checkScope(request.url,mission.scope)
+        const requestDecision=await checkConfiguredScope(root,request.url,mission.scope)
         if(!requestDecision.allowed)return {...requestDecision,reason:request.url+": "+requestDecision.reason}
       }
       if(context.endpoint){
         const endpointUrl=resolveScopeUrl(context.target,context.endpoint)
         if(!endpointUrl)return {allowed:false,normalized:"",reason:"invalid-endpoint-url"}
-        const endpointDecision=checkScope(endpointUrl,mission.scope)
+        const endpointDecision=await checkConfiguredScope(root,endpointUrl,mission.scope)
         if(!endpointDecision.allowed)return {...endpointDecision,reason:endpointUrl+": "+endpointDecision.reason}
       }
       return targetDecision
@@ -55,9 +56,11 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
     const initialScope=await checkActiveScope()
     if(!initialScope.allowed)return blocked(initialScope.reason)
     if(context.referenceIds?.length) await markReferencesUsed(root,context.referenceIds)
+    const config=await loadHuntingRuntimeConfiguration(root)
     const invocation=buildSkillExecutionInvocation(context,{
       agentBySkill:this.options.agentBySkill,
       agentByRole:this.options.agentByRole,
+      configuredAgentByRole:config.agentByRole,
       defaultAgent:this.options.defaultAgent,
     })
     const finalScope=await checkActiveScope()

@@ -1,6 +1,6 @@
 import path from "node:path"
 import { readJson,writeJson,ensureDir,targetDir,withTargetMutationLock } from "./store"
-import { checkScope, checkTargetScope, type ScopeRule } from "./scope"
+import { checkConfiguredTargetScope, checkTargetScope, type ScopeRule } from "./scope"
 import { coverageGate } from "./ledger"
 import { loadTaskStates } from "./task-state-store"
 import { loadHypotheses } from "./hypothesis-store"
@@ -8,7 +8,7 @@ import { loadHuntingState } from "./hunting-state"
 export type MissionState="CREATED"|"SCOPING"|"MAPPING"|"DISCOVERY"|"TRIAGE"|"VALIDATION"|"VERIFICATION"|"REPORTING"|"COMPLETED"|"PAUSED"
 export type Mission={mission_id:string;target:string;state:MissionState;created_at:string;updated_at:string;scope:ScopeRule[];checkpoint?:string}
 export async function initMission(root:string,target:string,scope:ScopeRule[]){
-  const decision=checkTargetScope(target,scope)
+  const decision=await checkConfiguredTargetScope(root,target,scope)
   if(!decision.allowed)throw new Error("MISSION_BLOCKED: "+decision.reason)
   return withTargetMutationLock(root,target,async()=>{
     const dir=targetDir(root,target);await ensureDir(path.join(dir,"intelligence"))
@@ -62,4 +62,4 @@ export async function canComplete(root:string,target:string){
     plannedAttempts:plannedAttempts.map(x=>x.id),
   }
 }
-export async function scopeGate(target:string,rules:ScopeRule[]){const decision=checkScope(target,rules);if(!decision.allowed)throw new Error("MISSION_BLOCKED: "+decision.reason);return decision}
+export async function scopeGate(target:string,rules:ScopeRule[],root?:string){const decision=root?await checkConfiguredTargetScope(root,target,rules):checkTargetScope(target,rules);if(!decision.allowed)throw new Error("MISSION_BLOCKED: "+decision.reason);return decision}

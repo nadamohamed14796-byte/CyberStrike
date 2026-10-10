@@ -1,5 +1,6 @@
 import path from "node:path"
 import { ensureDir, readJson, writeJson, withTargetMutationLock } from "./store"
+import { loadHuntingRuntimeConfiguration } from "./runtime-config"
 
 export interface ReferenceRecord {
   id:string
@@ -38,23 +39,15 @@ function referenceFile(root:string){
   return path.join(root,"intelligence","references.json")
 }
 
-function catalogFile(root:string){
-  return path.join(root,"config","reference-sources.yaml")
-}
-
-async function configuredGlobalReferences(root:string):Promise<Array<{name:string;url:string}>>{
-  const file=catalogFile(root)
-  if(!(await Bun.file(file).exists()))return []
-  const lines=(await Bun.file(file).text()).split(/\r?\n/)
-  const out:Array<{name:string;url:string}>=[]
-  let current=""
-  for(const line of lines){
-    const name=line.match(/^\s+-\s+name:\s*(.+)$/)?.[1]?.trim()
-    if(name){current=name;continue}
-    const url=line.match(/^\s+url:\s*(\S+)$/)?.[1]?.trim()
-    if(url && current)out.push({name:current,url:cleanUrl(url)})
+async function configuredGlobalReferences(root:string):Promise<Array<{name:string;url:string;sourcePath:string}>>{
+  const config=await loadHuntingRuntimeConfiguration(root)
+  const sources=[...config.referenceSources,...config.researchSources.filter(source=>source.enabled)]
+  const byUrl=new Map<string,{name:string;url:string;sourcePath:string}>()
+  for(const source of sources){
+    const url=cleanUrl(source.url)
+    if(url && !byUrl.has(url))byUrl.set(url,{name:source.name,url,sourcePath:source.sourcePath})
   }
-  return out
+  return [...byUrl.values()]
 }
 
 export async function loadReferences(root:string):Promise<ReferenceState>{
@@ -103,7 +96,7 @@ export async function indexSkillReferences(
       const now=new Date().toISOString()
       byId.set(id,{
         id,url:source.url,skillName:"__global__",
-        sourcePath:catalogFile(root),
+        sourcePath:source.sourcePath,
         firstSeen:existing?.firstSeen??now,lastSeen:now,useCount:existing?.useCount??0,
       })
     }
