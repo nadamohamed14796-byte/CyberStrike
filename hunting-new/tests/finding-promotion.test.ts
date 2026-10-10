@@ -13,7 +13,7 @@ describe("finding promotion", () => {
   test("promotes a complete validated finding", async () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-promotion-"))
     const target="example.com"
-    await initMission(root,target,[{type:"host",value:target}])
+    await initMission(root,target,[{ value: target}])
     await upsertHypothesis(root,target,{
       id:"hyp-1",target,signal:"access-control",title:"validation",
       confidence:.95,status:"confirmed",evidenceIds:[],createdAt:new Date().toISOString(),
@@ -42,18 +42,18 @@ describe("finding promotion", () => {
       summary:"A reproducible security behavior was observed.",
       impact:"A separate account can access protected data.",
       remediation:"Enforce server-side authorization.",
-      validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attemptIds]},
+      validation:{decision:"eligible",reasons:[],checks:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attemptIds]},
     })
 
     expect(result.reportable).toBe(true)
-    expect(result.finding.status).toBe("validated")
+    expect(result.finding?.status).toBe("validated")
 
     const second=await promoteValidatedHypothesis(root,target,{
       hypothesisId:"hyp-1",title:"Same issue with a different title",severity:"high",
       summary:"A reproducible security behavior was observed with additional evidence.",
       impact:"A separate account can access protected data.",
       remediation:"Enforce server-side authorization.",
-      validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attemptIds]},
+      validation:{decision:"eligible",reasons:[],checks:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attemptIds]},
     })
     expect(second.action).toBe("skip")
     expect((await import("../src/finding-store")).loadFindings(root,target).then(x=>x.findings.length)).resolves.toBe(1)
@@ -66,7 +66,7 @@ describe("persisted false-positive promotion gate", () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-fp-promotion-"))
     const target="example.com"
     try{
-      await initMission(root,target,[{type:"host",value:target}])
+      await initMission(root,target,[{ value: target}])
       await upsertHypothesis(root,target,{
         id:"hyp-fp",target,signal:"access-control",title:"known false positive",
         confidence:.9,status:"confirmed",evidenceIds:[],createdAt:new Date().toISOString(),
@@ -91,7 +91,7 @@ describe("persisted false-positive promotion gate", () => {
       }
       const result=await promoteValidatedHypothesis(root,target,{
         hypothesisId:"hyp-fp",title:"Known FP",severity:"medium",summary:"summary",impact:"impact",
-        validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attempts]},
+        validation:{decision:"eligible",reasons:[],checks:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attempts]},
         signal:"access-control",skill:"idor",strategy:"identifier",endpoint:"/api/users/123",accountMode:"user",
       })
       expect(result.action).toBe("skip")

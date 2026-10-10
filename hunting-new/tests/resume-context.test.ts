@@ -11,7 +11,7 @@ describe("resume hunting context", () => {
   test("restores active hypothesis, chain and next attempt", async () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-resume-"))
     const target="example.com"
-    await initMission(root,target,[{type:"host",value:target}])
+    await initMission(root,target,[{ value: target}])
 
     await upsertHypothesis(root,target,{
       id:"hyp-1",target,signal:"idor",title:"IDOR requires validation",

@@ -9,7 +9,7 @@ describe("report lifecycle", () => {
   test("rejects skipping submission", async () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-report-"))
     try{
-      await initMission(root,"example.test",[{type:"host",value:"example.test"}])
+      await initMission(root,"example.test",[{ value: "example.test"}])
       const finding={
         id:"finding-1",fingerprint:"fp-1",target:"example.test",title:"Test",severity:"high" as const,status:"validated" as const,
         hypothesisId:"hyp-1",attemptIds:["a1"],evidenceIds:["e1"],requestIds:["r1"],responseIds:["s1"],jsAssetIds:[],functionIds:[],accountLabels:["user"],
