@@ -203,16 +203,31 @@ export async function prepareAgentTaskValidation(
   taskId:string,
 ):Promise<PreparedTaskValidation>{
   const context=buildAgentTaskExecutionContext(plan,taskId)
-  const reservationKey=plan.target+"|"+context.signal+"|"+context.primarySkill+"|"+(context.endpoint??"")+"|"+(context.functionId??"");
-  return withValidationReservation(reservationKey,async()=>{
   const accountSensitive=["multiple_accounts","object_identifier_detected","tenant_identifier_detected","authenticated_endpoint"].includes(context.signal)
+  const assetIdentity=[...(context.jsAssetIds??[])].sort().join(",")
+  const requestIdentity=accountSensitive ? "" : (context.requestId??"")
+  const reservationKey=[
+    plan.target,
+    context.signal,
+    context.primarySkill,
+    context.endpoint??"",
+    context.functionId??"",
+    requestIdentity,
+    context.responseId??"",
+    context.parameterId??"",
+    assetIdentity,
+  ].join("|")
+  return withValidationReservation(reservationKey,async()=>{
   const hypothesisId="hyp_"+Bun.hash([
     context.signal,
     context.target,
     context.primarySkill,
     context.endpoint??"",
     context.functionId??"",
-    accountSensitive ? "" : (context.requestId??""),
+    requestIdentity,
+    context.responseId??"",
+    context.parameterId??"",
+    assetIdentity,
   ].join("|")).toString(16)
   const storedHypotheses=await loadHypotheses(root,plan.target)
   await loadTargetIntelligence(root,plan.target)
