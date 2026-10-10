@@ -99,18 +99,25 @@ export namespace Identifier {
 
     now = descending ? ~now : now
 
-    const timeBytes = Buffer.alloc(6)
-    for (let i = 0; i < 6; i++) {
-      timeBytes[i] = Number((now >> BigInt(40 - 8 * i)) & BigInt(0xff))
+    // 7 bytes (56 bits) = 44 bits of ms timestamp + 12 bits of counter.
+    // 6 bytes (48 bits) was not enough: timestamp_ms * 4096 already needs
+    // 53 bits at current Unix time, so the top bits were silently dropped,
+    // which both broke timestamp() (wrong value for every ID) and wrapped
+    // the sortable encoding every ~2.18 years, breaking ascending/descending
+    // ordering across that boundary. 44 bits of timestamp gives headroom
+    // into the year ~557,000 AD, so this does not need to be revisited.
+    const timeBytes = Buffer.alloc(7)
+    for (let i = 0; i < 7; i++) {
+      timeBytes[i] = Number((now >> BigInt(48 - 8 * i)) & BigInt(0xff))
     }
 
-    return prefixes[prefix] + "_" + timeBytes.toString("hex") + randomBase62(LENGTH - 12)
+    return prefixes[prefix] + "_" + timeBytes.toString("hex") + randomBase62(LENGTH - 14)
   }
 
   /** Extract timestamp from an ascending ID. Does not work with descending IDs. */
   export function timestamp(id: string): number {
     const prefix = id.split("_")[0]
-    const hex = id.slice(prefix.length + 1, prefix.length + 13)
+    const hex = id.slice(prefix.length + 1, prefix.length + 15)
     const encoded = BigInt("0x" + hex)
     return Number(encoded / BigInt(0x1000))
   }
