@@ -18,7 +18,7 @@ import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
 import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
 import { loadMission } from "./mission"
-import { checkScope } from "./scope"
+import { checkScope, checkTargetScope, resolveScopeUrl } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
@@ -410,7 +410,7 @@ export async function executeAndRecordDispatchedTask(
   const base=buildAgentTaskExecutionContext(plan,taskId)
   const mission=await loadMission(root,plan.target)
   if(!mission) throw new Error("MISSION_NOT_FOUND")
-  const initialScope=checkScope(plan.target,mission.scope)
+  const initialScope=checkTargetScope(plan.target,mission.scope)
   if(!initialScope.allowed) throw new Error("VALIDATION_SCOPE_BLOCKED: "+initialScope.reason)
 
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
@@ -422,9 +422,15 @@ export async function executeAndRecordDispatchedTask(
   const exactRequest=context.requestId
     ? intelligence.requests.find(item=>item.id===context.requestId)
     : undefined
-  const activeScopeTarget=exactRequest?.url ?? plan.target
-  const activeScope=checkScope(activeScopeTarget,mission.scope)
-  if(!activeScope.allowed){
+  const activeScope=exactRequest
+    ? checkScope(exactRequest.url,mission.scope)
+    : checkTargetScope(plan.target,mission.scope)
+  const endpointUrl=context.endpoint ? resolveScopeUrl(plan.target,context.endpoint) : undefined
+  const endpointScope=context.endpoint
+    ? endpointUrl ? checkScope(endpointUrl,mission.scope) : {allowed:false,normalized:"",reason:"invalid-endpoint-url"}
+    : undefined
+  const deniedScope=!activeScope.allowed ? activeScope : endpointScope && !endpointScope.allowed ? endpointScope : undefined
+  if(deniedScope){
     const lifecycle=await recordAttemptLifecycle(
       root,
       plan.target,
@@ -436,7 +442,7 @@ export async function executeAndRecordDispatchedTask(
         endpoint:context.endpoint,
         confidence:context.signalConfidence,
         taskId:context.taskId,
-        resultSummary:"Active scope re-check blocked validation: "+activeScope.reason,
+        resultSummary:"Active scope re-check blocked validation: "+deniedScope.reason,
       },
     )
     return {
@@ -445,7 +451,7 @@ export async function executeAndRecordDispatchedTask(
         state:"blocked",
         attemptId:prepared.attempt.id,
         requestId:context.requestId,
-        resultSummary:"Active scope re-check blocked validation: "+activeScope.reason,
+        resultSummary:"Active scope re-check blocked validation: "+deniedScope.reason,
         resultText:"scope_blocked",
       },
       lifecycle,
