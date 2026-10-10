@@ -65,6 +65,22 @@ const WEB_SKILLS:SkillMetadata[]=[
   },
 ]
 
+const JAVASCRIPT_INTELLIGENCE_SKILL:SkillMetadata={
+  name:"javascript_intelligence",
+  category:"javascript-intelligence",
+  description:"Evidence-led JavaScript asset, route, source-map, and observed-request correlation for authorized web assessments.",
+  triggers:["javascript_intelligence","javascript_asset","source_map_detected","javascript_function_request_correlation"],
+  required_context:["authorized-scope"],
+  dependencies:[],
+  risk_level:"low",
+  scope_requirements:["authorized-scope"],
+  validation_requirements:["observed-request-response-correlation"],
+  confidence_threshold:0.5,
+  maximum_parallel_tasks:2,
+  agent:"proxy-analyzer",
+  agent_roles:["correlator"],
+}
+
 function indexMetadata(entry:SkillIndexEntry):SkillMetadata{
   const triggers=[
     entry.name,
@@ -345,6 +361,14 @@ export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
     const existing=merged.get(skill.name)
     merged.set(skill.name,{...skill,source_path:sourcePath??existing?.source_path})
   }
+
+  // The JS intelligence skill is a first-party runtime capability. Register it explicitly
+  // so routing remains reliable even if external skill discovery is disabled or unavailable.
+  const javascriptSkillPath=path.resolve(root,"skills","javascript_intelligence","SKILL.md")
+  merged.set(JAVASCRIPT_INTELLIGENCE_SKILL.name,{
+    ...JAVASCRIPT_INTELLIGENCE_SKILL,
+    source_path:javascriptSkillPath,
+  })
 
   for(const skill of await loadExternalSkills(root)){
     const existing=merged.get(skill.name)
