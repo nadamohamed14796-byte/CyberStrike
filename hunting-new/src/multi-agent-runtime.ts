@@ -17,7 +17,7 @@ import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type 
 import { loadLearning } from "./learning-store"
 import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
-import { parseExecutionResult, resolveExecutionResultCorrelation, verifiedEvidenceIds } from "./execution-result"
+import { parseExecutionResult, requestMatchesEndpoint, resolveExecutionResultCorrelation, verifiedEvidenceIds } from "./execution-result"
 import { loadMission } from "./mission"
 import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
@@ -341,7 +341,7 @@ export async function enrichAgentTaskExecutionContext(
   if(context.requestId && responseRequest && context.requestId!==responseRequest.id) {
     throw new Error("AGENT_CORRELATION_MISMATCH: response identity does not match request")
   }
-  if(exact && context.endpoint && exact.path!==context.endpoint && !exact.url.includes(context.endpoint)){
+  if(exact && context.endpoint && !requestMatchesEndpoint(exact,context.endpoint)){
     throw new Error("AGENT_CORRELATION_MISMATCH: endpoint identity does not match request")
   }
   if(context.accountLabel && exact){
@@ -379,7 +379,7 @@ export async function enrichAgentTaskExecutionContext(
   ).map(edge=>edge.to))
 
   const candidates=intelligence.requests.filter(request=>{
-    if(context.endpoint && request.path!==context.endpoint && !request.url.includes(context.endpoint)) return false
+    if(context.endpoint && !requestMatchesEndpoint(request,context.endpoint)) return false
     if(context.accountLabel && (request.accountLabel ?? request.credentialId)!==context.accountLabel) return false
     return true
   }).sort((a,b)=>b.observedAt-a.observedAt)
