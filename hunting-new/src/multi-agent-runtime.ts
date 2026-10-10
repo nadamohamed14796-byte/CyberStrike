@@ -422,7 +422,7 @@ export async function enrichAgentTaskExecutionContext(
     responseId:response?.id ?? context.responseId,
     responseStatus:response?.status ?? context.responseStatus,
     parameterName:parameter?.name ?? context.parameterName,
-    parameterLocation:parameter?.location === "header" ? undefined : parameter?.location ?? context.parameterLocation,
+    parameterLocation:parameter?.location ?? context.parameterLocation,
     accountLabel:context.accountLabel ?? request?.accountLabel ?? request?.credentialId,
     functionIds:[...functionIds],
     jsAssetIds:[...jsAssetIds],
