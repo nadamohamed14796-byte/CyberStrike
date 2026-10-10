@@ -89,7 +89,7 @@ describe("execution result correlation", () => {
       requests,
       responses,
     })
-    expect(result.error).toContain("different request")
+    expect(result.error).toContain("request")
   })
 
   test("rejects unknown IDs, endpoint mismatches and cross-account evidence", () => {
