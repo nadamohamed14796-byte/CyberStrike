@@ -67,11 +67,6 @@ describe("persisted false-positive promotion gate", () => {
     const target="example.com"
     try{
       await initMission(root,target,[{type:"host",value:target}])
-      await (await import("../src/false-positive-store")).recordFalsePositive(root,target,{
-        id:"fp-1",target,signal:"access-control",skill:"idor",strategy:"identifier",
-        endpoint:"/api/users/123",accountMode:"user",reason:"known false positive",
-        evidenceIds:["old"],confidence:.9,timestamp:new Date().toISOString(),count:1
-      } as any)
       await upsertHypothesis(root,target,{
         id:"hyp-fp",target,signal:"access-control",title:"known false positive",
         confidence:.9,status:"confirmed",evidenceIds:[],createdAt:new Date().toISOString(),
@@ -81,6 +76,12 @@ describe("persisted false-positive promotion gate", () => {
       const response2=createEvidence({kind:"response",sourceId:"res-2",requestId:"req",responseId:"res-2",confidence:.95,details:"different response under alternate validation"})
       const functionEvidence=createEvidence({kind:"function",sourceId:"fn",functionId:"fn",confidence:.95,details:"function"})
       await appendEvidence(root,target,request); await appendEvidence(root,target,response); await appendEvidence(root,target,response2); await appendEvidence(root,target,functionEvidence)
+      await (await import("../src/false-positive-store")).recordFalsePositive(root,target,{
+        id:"fp-1",target,signal:"access-control",skill:"idor",strategy:"identifier",
+        endpoint:"/api/users/123",accountMode:"user",reason:"known false positive",
+        evidenceIds:[request.id,response.id,response2.id,functionEvidence.id],confidence:.9,
+        timestamp:new Date().toISOString(),count:1
+      } as any)
       const ledger=await PersistentAttemptLedger.create(root,target)
       const attempts=[]
       for(let i=1;i<=20;i++){
