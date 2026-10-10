@@ -336,7 +336,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   if(input.apiSources?.length){
     const observedSources:ApiSource[]=input.requests
       .filter(request=>requestSourceValue(request)==="js" || requestSourceValue(request)==="observed")
-      .map(request=>({endpoint:request.path??request.url,method:(request.method??"GET").toUpperCase(),source:requestSourceValue(request) as "js"|"observed"}))
+      .map(request=>({endpoint:request.url,method:(request.method??"GET").toUpperCase(),source:requestSourceValue(request) as "js"|"observed"}))
     for(const diff of diffApiSources([...(input.apiSources??[]),...observedSources])){
       const separator=diff.indexOf(":")
       const kind=separator>0 ? diff.slice(0,separator) : diff
