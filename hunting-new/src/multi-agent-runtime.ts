@@ -313,8 +313,8 @@ export async function enrichAgentTaskExecutionContext(
   if(refs.length) await markReferencesUsed(root,refs.map(item=>item.id))
   return {
     ...context,
-    requestId:request?.id,
-    responseId:response?.id,
+    requestId:request?.id ?? context.requestId,
+    responseId:response?.id ?? context.responseId,
     accountLabel:context.accountLabel ?? request?.accountLabel,
     functionIds:[...functionIds],
     jsAssetIds:[...jsAssetIds],
