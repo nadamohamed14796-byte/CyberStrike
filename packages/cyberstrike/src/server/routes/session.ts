@@ -1,3 +1,4 @@
+import path from "node:path"
 import { Hono } from "hono"
 import { stream } from "hono/streaming"
 import { describeRoute, validator, resolver } from "hono-openapi"
@@ -350,14 +351,15 @@ async function feedHuntingLayerFromRequest(input:{
   }
   jsAssetIds?:string[]
   functionIds?:string[]
+  pageUrl?:string
 }):Promise<void>{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
   try{
     const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
-    const { ingestCyberStrikeRequest }=await import("../../../../hunting-new/src/cyberstrike-intake")
+    const { ingestCyberStrikeRequest }=await import("../../../../../hunting-new/src/cyberstrike-intake")
     await ingestCyberStrikeRequest(root,input)
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
-      const { autoDispatchForTarget }=await import("../../../../hunting-new/src/auto-dispatch")
+      const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
       void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
         .catch(error=>log.warn("hunting auto-dispatch failed",{
           sessionID:input.sessionID,
@@ -1289,7 +1291,7 @@ export const SessionRoutes = lazy(() =>
                 url:normalized.origin + normalized.normalizedPath,
                 host:normalized.host,
                 path:normalized.normalizedPath,
-                credentialId,
+                credentialId:credentialID,
                 accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                 observedAt:Date.now(),
               },
@@ -1460,7 +1462,7 @@ export const SessionRoutes = lazy(() =>
                       url:normalized.origin + normalized.normalizedPath,
                       host:normalized.host,
                       path:normalized.normalizedPath,
-                      credentialId,
+                      credentialId:credentialID,
                       accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                       observedAt:req.time.created,
                     },
