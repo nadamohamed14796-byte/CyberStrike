@@ -17,6 +17,7 @@ export interface AgentTask {
   responseId?: string
   jsAssetId?: string
   accountLabel?: string
+  relatedAccountLabels?: string[]
   parameterId?: string
   endpoint?: string
   functionId?: string
@@ -76,6 +77,7 @@ function stableTaskId(target:string,skill:SkillSelection,signal:{signal:string;e
     typeof signal.metadata?.responseId==="string" ? signal.metadata.responseId : "",
     typeof signal.metadata?.jsAssetId==="string" ? signal.metadata.jsAssetId : "",
     typeof signal.metadata?.accountLabel==="string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId==="string" ? signal.metadata.credentialId : "",
+    Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item):item is string=>typeof item==="string").sort().join(",") : "",
     typeof signal.metadata?.parameterId==="string" ? signal.metadata.parameterId : "",
   ].join("|")
   return "task-"+Bun.hash(identity).toString(16)
@@ -139,6 +141,7 @@ export function buildMultiAgentPlanFromRegistry(
         typeof signal.metadata?.responseId === "string" ? signal.metadata.responseId : "",
         typeof signal.metadata?.jsAssetId === "string" ? signal.metadata.jsAssetId : "",
         typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : "",
+        Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item):item is string => typeof item === "string").sort().join(",") : "",
         typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : "",
       ].join("|")
       if (seen.has(key)) continue
@@ -155,6 +158,7 @@ export function buildMultiAgentPlanFromRegistry(
         responseId: typeof signal.metadata?.responseId === "string" ? signal.metadata.responseId : undefined,
         jsAssetId: typeof signal.metadata?.jsAssetId === "string" ? signal.metadata.jsAssetId : undefined,
         accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : undefined,
+        relatedAccountLabels: Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item): item is string => typeof item === "string") : undefined,
         parameterId: typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
@@ -213,6 +217,7 @@ export function buildMultiAgentPlan(
         typeof signal.metadata?.responseId === "string" ? signal.metadata.responseId : "",
         typeof signal.metadata?.jsAssetId === "string" ? signal.metadata.jsAssetId : "",
         typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : "",
+        Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item):item is string => typeof item === "string").sort().join(",") : "",
         typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : "",
       ].join("|")
       if (seen.has(key)) continue
@@ -230,6 +235,7 @@ export function buildMultiAgentPlan(
         responseId: typeof signal.metadata?.responseId === "string" ? signal.metadata.responseId : undefined,
         jsAssetId: typeof signal.metadata?.jsAssetId === "string" ? signal.metadata.jsAssetId : undefined,
         accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : undefined,
+        relatedAccountLabels: Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item): item is string => typeof item === "string") : undefined,
         parameterId: typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
