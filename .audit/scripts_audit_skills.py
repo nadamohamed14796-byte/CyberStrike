@@ -4,10 +4,17 @@ Checks: frontmatter completeness, duplicate skill names, dangling
 chains_with references, lowercase-named skill.md files (loader risk),
 and files: references that don't exist on disk.
 """
-import os, re, sys, json
+import os, re, sys, json, argparse
+from pathlib import Path
 from collections import defaultdict
 
-ROOT = "/home/claude/cyberstrike/.cyberstrike/skill"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+parser = argparse.ArgumentParser(description="Audit CyberStrike SKILL.md metadata and references.")
+parser.add_argument("--root", type=Path, default=REPO_ROOT / ".cyberstrike" / "skill")
+parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parent / "skill_audit_raw_results.json")
+args = parser.parse_args()
+ROOT = args.root.resolve()
+OUT = args.output.resolve()
 
 def parse_frontmatter(text):
     m = re.match(r'^---\n(.*?)\n---\n', text, re.DOTALL)
@@ -43,12 +50,17 @@ def parse_frontmatter(text):
     return data, rest
 
 skill_files = []
+misnamed_files = []
 for dirpath, dirnames, filenames in os.walk(ROOT):
     for fn in filenames:
-        if fn == 'SKILL.md':
-            skill_files.append(os.path.join(dirpath, fn))
+        if fn.lower() == 'skill.md':
+            full_path = os.path.join(dirpath, fn)
+            skill_files.append(full_path)
+            if fn != 'SKILL.md':
+                misnamed_files.append(os.path.relpath(full_path, REPO_ROOT))
 
 print(f"Total SKILL.md files found: {len(skill_files)}")
+print(f"Misnamed skill.md files found: {len(misnamed_files)}")
 
 REQUIRED_FIELDS = ['name', 'description', 'category']
 names_seen = defaultdict(list)
@@ -58,7 +70,7 @@ all_names = set()
 records = {}
 
 for path in skill_files:
-    rel = os.path.relpath(path, "/home/claude/cyberstrike")
+    rel = os.path.relpath(path, REPO_ROOT)
     try:
         with open(path, 'r', encoding='utf-8', errors='replace') as f:
             text = f.read()
@@ -103,7 +115,7 @@ for rel, fm in records.items():
         fref = fref.strip()
         if not fref:
             continue
-        full = os.path.join("/home/claude/cyberstrike", skill_dir, fref)
+        full = os.path.join(str(REPO_ROOT), skill_dir, fref)
         if not os.path.exists(full):
             bad_files_refs.append((rel, fref))
 
@@ -139,7 +151,9 @@ out = {
     "duplicate_names": dupes,
     "dangling_chains_with": dangling,
     "bad_files_refs": bad_files_refs,
+    "misnamed_files": sorted(misnamed_files),
 }
-with open("/tmp/claude-0/-home-claude/a5797ea8-b7ee-53de-b4f4-41f45d49570a/scratchpad/skill_audit_results.json", "w") as f:
+OUT.parent.mkdir(parents=True, exist_ok=True)
+with open(OUT, "w", encoding="utf-8") as f:
     json.dump(out, f, indent=2)
-print("\nFull results written to skill_audit_results.json")
+print(f"\nFull results written to {OUT}")
