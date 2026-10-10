@@ -297,9 +297,15 @@ export interface AgentTaskExecutionContext {
   endpoint?:string
   functionId?:string
   requestId?:string
+  requestUrl?:string
+  requestMethod?:string
   parameterId?:string
+  parameterName?:string
+  parameterLocation?:"path"|"query"|"body"
   responseId?:string
+  responseStatus?:number
   jsAssetIds?:string[]
+  jsAssetUrls?:string[]
   functionIds?:string[]
   accountLabel?:string
   attemptId?:string
@@ -342,7 +348,24 @@ export async function enrichAgentTaskExecutionContext(
     }
   }
 
+  const parameter=context.parameterId
+    ? intelligence.parameters.find(item=>item.id===context.parameterId)
+    : undefined
+  if(context.parameterId && !parameter) {
+    throw new Error("AGENT_PARAMETER_NOT_FOUND: "+context.parameterId)
+  }
+  if(parameter && context.endpoint && parameter.endpoint!==context.endpoint) {
+    throw new Error("AGENT_CORRELATION_MISMATCH: parameter endpoint does not match task endpoint")
+  }
+  if(parameter && context.requestId && !parameter.requestIds.includes(context.requestId)) {
+    throw new Error("AGENT_CORRELATION_MISMATCH: parameter identity does not belong to request")
+  }
+
+  const knownAssetIds=new Set(intelligence.jsAssets.map(asset=>asset.id))
   const requestedAssets=new Set(context.jsAssetIds ?? [])
+  for(const id of requestedAssets){
+    if(!knownAssetIds.has(id)) throw new Error("AGENT_JS_ASSET_NOT_FOUND: "+id)
+  }
   const requestedFunctions=new Set([...(context.functionIds ?? []), ...(context.functionId ? [context.functionId] : [])])
   for(const fn of intelligence.functions){
     if(fn.assetId && requestedAssets.has(fn.assetId)) requestedFunctions.add(fn.id)
@@ -379,18 +402,31 @@ export async function enrichAgentTaskExecutionContext(
   const jsAssetIds=new Set<string>(context.jsAssetIds ?? [])
   for(const edge of relatedEdges){
     if(edge.kind==="triggered-by") functionIds.add(edge.from)
-    if(edge.kind==="observed-on") jsAssetIds.add(edge.from)
+    // "observed-on" is used by both JS-asset→request and parameter→request edges.
+    // Only graph nodes registered as JavaScript assets belong in jsAssetIds.
+    if(edge.kind==="observed-on" && knownAssetIds.has(edge.from)) jsAssetIds.add(edge.from)
   }
+  const resolvedAssets=new Set(jsAssetIds)
+  const assetUrls=[...new Set([
+    ...(context.jsAssetUrls ?? []),
+    ...intelligence.jsAssets.filter(asset=>resolvedAssets.has(asset.id)).map(asset=>asset.url),
+  ])]
   if(context.functionId) functionIds.add(context.functionId)
   const refs=await referencesForSkills(root,context.resolvedSkills,8)
   if(refs.length) await markReferencesUsed(root,refs.map(item=>item.id))
   return {
     ...context,
     requestId:request?.id ?? context.requestId,
+    requestUrl:request?.url ?? context.requestUrl,
+    requestMethod:request?.method ?? context.requestMethod,
     responseId:response?.id ?? context.responseId,
+    responseStatus:response?.status ?? context.responseStatus,
+    parameterName:parameter?.name ?? context.parameterName,
+    parameterLocation:parameter?.location === "header" ? undefined : parameter?.location ?? context.parameterLocation,
     accountLabel:context.accountLabel ?? request?.accountLabel ?? request?.credentialId,
     functionIds:[...functionIds],
     jsAssetIds:[...jsAssetIds],
+    jsAssetUrls:assetUrls,
     referenceIds:refs.map(item=>item.id),
     referenceUrls:refs.map(item=>item.url),
   }
