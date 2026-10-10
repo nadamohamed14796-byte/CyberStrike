@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test"
-import { mkdtemp } from "node:fs/promises"
+import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { initMission } from "../src/mission"
 import { upsertHypothesis } from "../src/hypothesis-store"
 import { upsertChain } from "../src/chain-store"
 import { checkpointPhase, resumeHuntingContext, selectNextHypothesis } from "../src/runtime-persistence"
+import { saveTaskState } from "../src/task-state-store"
 
 describe("resume hunting context", () => {
   test("restores active hypothesis, chain and next attempt", async () => {
@@ -30,5 +31,25 @@ describe("resume hunting context", () => {
     expect(context.activeChains.map(x=>x.id)).toContain("chain-1")
     expect(context.nextAttemptNumber["hyp-1"]).toBe(1)
     expect(selectNextHypothesis(context)?.id).toBe("hyp-1")
+  })
+
+  test("recovers stale running tasks at the shared resume boundary", async () => {
+    const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-resume-stale-"))
+    const target="resume-stale.example"
+    try{
+      await initMission(root,target,[{value:target}])
+      await saveTaskState(root,target,{
+        taskId:"stale-task",
+        state:"running",
+        attempts:3,
+        updatedAt:"2000-01-01T00:00:00.000Z",
+      })
+      const context=await resumeHuntingContext(root,target)
+      const task=context.activeTasks.find(item=>item.taskId==="stale-task")
+      expect(task?.state).toBe("pending")
+      expect(task?.attempts).toBe(3)
+    }finally{
+      await rm(root,{recursive:true,force:true})
+    }
   })
 })
