@@ -349,6 +349,7 @@ async function feedHuntingLayerFromRequest(input:{
     bodyHash?:string
     observedAt?:number
   }
+  pageUrl?:string
   jsAssetIds?:string[]
   functionIds?:string[]
 }):Promise<void>{
