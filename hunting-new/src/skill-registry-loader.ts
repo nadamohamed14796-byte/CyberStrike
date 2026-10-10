@@ -291,33 +291,37 @@ async function canonicalSkillIndex(root:string):Promise<SkillIndex|null>{
   return null
 }
 
-async function indexedSkillFiles(root:string):Promise<string[]>{
+async function indexedSkillFileMap(root:string):Promise<Map<string,string[]>>{
   const skillRoots=[
     path.join(root,".cyberstrike","skill"),
     path.resolve(root,"..",".cyberstrike","skill"),
     path.resolve(process.cwd(),".cyberstrike","skill"),
   ]
-  return [...new Set((await Promise.all(skillRoots.map(collectSkillFiles))).flat())]
+  const files=[...new Set((await Promise.all(skillRoots.map(collectSkillFiles))).flat())]
+  const byName=new Map<string,string[]>()
+  for(const file of files){
+    const name=path.basename(path.dirname(file))
+    const values=byName.get(name)??[]
+    values.push(file)
+    byName.set(name,values)
+  }
+  return byName
 }
 
-function resolveIndexedSkillSource(entry:SkillIndexEntry,files:string[]):string|undefined{
+function resolveIndexedSkillSource(entry:SkillIndexEntry,filesByName:Map<string,string[]>):string|undefined{
   const suffixes=entry.files??["SKILL.md"]
-  for(const file of files){
-    const basename=path.basename(path.dirname(file))
-    if(basename===entry.name && suffixes.some(s=>file.endsWith(path.sep+s)))return file
-  }
-  return undefined
+  return (filesByName.get(entry.name)??[]).find(file=>suffixes.some(s=>file.endsWith(path.sep+s)))
 }
 
 export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
   const index=await canonicalSkillIndex(root)
-  const skillFiles=await indexedSkillFiles(root)
+  const skillFilesByName=await indexedSkillFileMap(root)
   const merged=new Map<string,SkillMetadata>()
 
   for(const entry of index?.skills??[]){
     if(!entry.name)continue
     const metadata=indexMetadata(entry)
-    metadata.source_path=resolveIndexedSkillSource(entry,skillFiles)
+    metadata.source_path=resolveIndexedSkillSource(entry,skillFilesByName)
     merged.set(entry.name,metadata)
   }
   for(const skill of WEB_SKILLS)merged.set(skill.name,skill)
