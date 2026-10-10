@@ -287,6 +287,13 @@ export async function enrichAgentTaskExecutionContext(
   const exact=context.requestId
     ? intelligence.requests.find(request=>request.id===context.requestId)
     : undefined
+  if(context.requestId && !exact) throw new Error("AGENT_REQUEST_NOT_FOUND: "+context.requestId)
+  if(context.accountLabel && exact){
+    const observedAccount=exact.accountLabel ?? exact.credentialId
+    if(observedAccount && observedAccount!==context.accountLabel){
+      throw new Error("AGENT_CORRELATION_MISMATCH: account identity does not match request")
+    }
+  }
   const candidates=intelligence.requests.filter(request=>{
     if(context.endpoint && request.path) return request.path===context.endpoint || request.url.includes(context.endpoint)
     return true
