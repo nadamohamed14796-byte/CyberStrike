@@ -99,14 +99,18 @@ export async function prepareMultiAgentPlan(
 
   for(const task of plan.tasks){
     const primary=registry.get(task.skill)
-    const related=primary
-      ? registry.selectForTask(task.skill,[task.signal,...task.strategyHints],task.signalConfidence)
-      : registry.resolve(registry.select([task.signal,...task.strategyHints],task.signalConfidence).map(skill=>skill.name))
-    task.resolvedSkills=primary
-      ? related.map(skill=>skill.name)
-      : [task.skill,...related.map(skill=>skill.name)]
-    task.resolvedSkillPaths=related.map(skill=>skill.source_path).filter((value):value is string=>Boolean(value))
-    task.recommendedAgent=primary?.agent
+    if(!primary){
+      // Explicit rules are allowed to supply a task skill outside the filesystem
+      // registry. Do not attempt to resolve that name or infer registry dependencies.
+      task.resolvedSkills=[task.skill]
+      task.resolvedSkillPaths=[]
+      task.recommendedAgent=undefined
+      continue
+    }
+    const resolved=registry.selectForTask(task.skill,[task.signal,...task.strategyHints],task.signalConfidence)
+    task.resolvedSkills=resolved.map(skill=>skill.name)
+    task.resolvedSkillPaths=resolved.map(skill=>skill.source_path).filter((value):value is string=>Boolean(value))
+    task.recommendedAgent=primary.agent
   }
 
   await saveAgentPlan(root,plan)
