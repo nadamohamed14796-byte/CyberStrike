@@ -114,3 +114,31 @@ test("handles requests without an explicit method during API correlation", () =>
 
   expect(signals.length).toBeGreaterThan(0)
 })
+
+
+test("chooses the latest response by observation time, not array order", () => {
+  const signals = signalsFromCorrelation({
+    target: "app.example",
+    requests: [{
+      id: "request-a",
+      url: "https://app.example/api/profile",
+      path: "/api/profile",
+      method: "GET",
+      accountLabel: "account-a",
+      observedAt: 1,
+      source: "observed",
+    }],
+    responses: [
+      { id: "response-latest", requestId: "request-a", status: 403, headers: {}, observedAt: 20 },
+      { id: "response-old", requestId: "request-a", status: 200, headers: {}, observedAt: 10 },
+    ],
+    jsAssets: [],
+    functions: [],
+    edges: [],
+  })
+
+  const blocked = signals.filter(item => item.signal === "access_control_blocked")
+  expect(blocked).toHaveLength(1)
+  expect(blocked[0]?.metadata?.responseId).toBe("response-latest")
+  expect(blocked[0]?.metadata?.status).toBe(403)
+})
