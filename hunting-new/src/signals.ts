@@ -70,7 +70,12 @@ function requestSourceValue(request:CorrelationSignalInput["requests"][number]):
 
 export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] {
   const out: Signal[] = []
-  const responseByRequest = new Map(input.responses.map(response => [response.requestId, response]))
+  // Multiple observations can share a request identity. Resolve the latest
+  // response deterministically instead of trusting array insertion order.
+  const responseByRequest = new Map<string, CorrelationSignalInput["responses"][number]>()
+  for (const response of [...input.responses].sort((a, b) => a.observedAt - b.observedAt)) {
+    responseByRequest.set(response.requestId, response)
+  }
   const emitted = new Set<string>()
 
   const emit = (signal: Omit<Signal, "timestamp">) => {
