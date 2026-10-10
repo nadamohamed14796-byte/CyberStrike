@@ -163,7 +163,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.86,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, method },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, method },
       })
     }
 
@@ -174,7 +174,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.86,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, method },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, method },
       })
     }
 
@@ -187,7 +187,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.62,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, presenceOnly: true },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, presenceOnly: true },
       })
     }
 
@@ -200,7 +200,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.70,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, method },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, method },
       })
     }
 
@@ -211,7 +211,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.78,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, method },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, method },
       })
     }
 
@@ -254,7 +254,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.88,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, accountLabel: request.accountLabel ?? null },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
 
@@ -288,7 +288,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
           confidence: 0.72,
           target: input.target,
           endpoint,
-          metadata: { requestId: request.id, responseId: response.id, status: response.status },
+          metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, responseId: response.id, status: response.status },
         })
       }
 
@@ -304,7 +304,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
           confidence: wafHeader ? 0.86 : 0.68,
           target: input.target,
           endpoint,
-          metadata: { requestId: request.id, responseId: response.id, status: response.status, wafHeader },
+          metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, responseId: response.id, status: response.status, wafHeader },
         })
       }
     }
