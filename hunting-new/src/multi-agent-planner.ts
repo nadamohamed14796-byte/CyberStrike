@@ -277,6 +277,7 @@ export function nextAgentTasks(plan: MultiAgentPlan, limit = 4): AgentTask[] {
 export interface DispatchBatch {
   tasks: AgentTask[]
   blocked: AgentTask[]
+  dependencyBlocked: AgentTask[]
 }
 
 export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pending" | "claimed" | "running" | "completed" | "failed" | "blocked">, limit = 4): DispatchBatch {
