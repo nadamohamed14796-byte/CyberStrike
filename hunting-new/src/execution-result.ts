@@ -25,6 +25,77 @@ export interface StructuredExecutionResult {
   observations:string[]
 }
 
+export interface CorrelationRequest {
+  id:string
+  url:string
+  path?:string
+  accountLabel?:string
+  credentialId?:string
+}
+
+export interface CorrelationResponse {
+  id:string
+  requestId:string
+}
+
+export interface ExecutionCorrelationResolution {
+  requestId?:string
+  responseId?:string
+  error?:string
+}
+
+// Resolves agent-reported identities against authoritative target intelligence.
+// Returned IDs are safe to persist only when error is absent.
+export function resolveExecutionResultCorrelation(input:{
+  expectedRequestId?:string
+  expectedResponseId?:string
+  endpoint?:string
+  accountLabel?:string
+  executorRequestId?:string
+  structuredRequestId?:string
+  executorResponseId?:string
+  structuredResponseId?:string
+  requests:CorrelationRequest[]
+  responses:CorrelationResponse[]
+}):ExecutionCorrelationResolution{
+  let error:string|undefined
+  if(input.executorRequestId && input.structuredRequestId && input.executorRequestId!==input.structuredRequestId) {
+    error="executor and structured output disagree on request identity"
+  }
+  if(input.executorResponseId && input.structuredResponseId && input.executorResponseId!==input.structuredResponseId) {
+    error ??="executor and structured output disagree on response identity"
+  }
+  const reportedRequestId=input.executorRequestId ?? input.structuredRequestId
+  const reportedResponseId=input.executorResponseId ?? input.structuredResponseId
+  if(input.expectedRequestId && reportedRequestId && input.expectedRequestId!==reportedRequestId) {
+    error ??="execution result refers to a different request than the dispatched task"
+  }
+  if(input.expectedResponseId && reportedResponseId && input.expectedResponseId!==reportedResponseId) {
+    error ??="execution result refers to a different response than the dispatched task"
+  }
+
+  const responseId=input.expectedResponseId ?? reportedResponseId
+  const responseRecord=responseId ? input.responses.find(item=>item.id===responseId) : undefined
+  if(responseId && !responseRecord) error ??="execution result references an unknown response"
+
+  const requestId=input.expectedRequestId ?? reportedRequestId ?? responseRecord?.requestId
+  const requestRecord=requestId ? input.requests.find(item=>item.id===requestId) : undefined
+  if(requestId && !requestRecord) error ??="execution result references an unknown request"
+  if(responseRecord && requestId && responseRecord.requestId!==requestId) {
+    error ??="execution response does not belong to the selected request"
+  }
+  if(requestRecord && input.endpoint && requestRecord.path!==input.endpoint && !requestRecord.url.includes(input.endpoint)) {
+    error ??="execution result request does not match the dispatched endpoint"
+  }
+  if(requestRecord && input.accountLabel) {
+    const observedAccount=requestRecord.accountLabel ?? requestRecord.credentialId
+    if(!observedAccount || observedAccount!==input.accountLabel) {
+      error ??="execution result request does not match the dispatched account"
+    }
+  }
+  return {requestId,responseId,error}
+}
+
 export function buildExecutionContract():string{
   return [
     "EXECUTION RESULT CONTRACT",
