@@ -13,6 +13,7 @@ export interface ToolRunRequest {
   timeoutMs?: number
   maxOutputBytes?: number
   root?: string
+  missionTarget?: string
   requestId?: string
 }
 
@@ -83,8 +84,16 @@ function parseParameterNames(tool: DiscoveryTool, output: string): string[] {
   return [...names]
 }
 
-export async function runDiscoveryTool(input: ToolRunRequest): Promise<ToolRunResult> {
-  const decision = checkScope(input.target, input.scope)
+async function runDiscoveryTool(input: ToolRunRequest): Promise<ToolRunResult> {
+  // When invoked through the supported wrapper, reload the authoritative mission
+  // immediately before spawn rather than trusting a stale caller-supplied scope.
+  let activeScope=input.scope
+  if(input.root && input.missionTarget){
+    const mission=await loadMission(input.root,input.missionTarget)
+    if(!mission)throw new Error("MISSION_NOT_FOUND")
+    activeScope=mission.scope
+  }
+  const decision = checkScope(input.target, activeScope)
   if (!decision.allowed) {
     return { tool: input.tool, target: input.target, allowed: false, exitCode: null, timedOut: false, output: "", parameters: [] }
   }
@@ -157,7 +166,7 @@ export async function runScopedParameterDiscovery(
   }
 
   const startedAt=new Date().toISOString()
-  const result = await runDiscoveryTool({ tool, target: endpoint, scope: mission.scope, root, requestId })
+  const result = await runDiscoveryTool({ tool, target: endpoint, scope: mission.scope, root, missionTarget: target, requestId })
   const status:ToolRunRecord["status"]=!result.allowed ? "blocked" : result.timedOut ? "timed_out" : result.exitCode===0 ? "completed" : "failed"
   await withTargetMutationLock(root,target,async()=>{
     const state=await loadToolRuns(root,target)
