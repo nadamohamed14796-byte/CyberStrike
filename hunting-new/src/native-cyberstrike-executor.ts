@@ -3,7 +3,7 @@ import { runHuntingTask } from "../../packages/cyberstrike/src/tool/task"
 import { Instance } from "../../packages/cyberstrike/src/project/instance"
 import type { AgentTaskExecutionContext, AgentTaskExecutor } from "./multi-agent-runtime"
 import { loadMission } from "./mission"
-import { checkScope } from "./scope"
+import { checkScope, checkTargetScope, resolveScopeUrl } from "./scope"
 import { loadTargetIntelligence } from "./target-intelligence"
 import { buildSkillExecutionInvocation } from "./skill-execution-adapter"
 import { parseExecutionResult } from "./execution-result"
@@ -27,20 +27,23 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
     const checkActiveScope=async()=>{
       const mission=await loadMission(root,context.target)
       if(!mission)return {allowed:false,normalized:"",reason:"mission-not-initialized"}
+      const targetDecision=checkTargetScope(context.target,mission.scope)
+      if(!targetDecision.allowed)return targetDecision
       const intelligence=await loadTargetIntelligence(root,context.target)
       const request=context.requestId
         ? intelligence.requests.find(item=>item.id===context.requestId)
         : undefined
-      const candidates=[
-        context.target,
-        request?.url,
-        context.endpoint && /^https?:\/\//i.test(context.endpoint) ? context.endpoint : undefined,
-      ].filter((value):value is string=>Boolean(value))
-      for(const candidate of candidates){
-        const decision=checkScope(candidate,mission.scope)
-        if(!decision.allowed)return {...decision,reason:candidate+": "+decision.reason}
+      if(request){
+        const requestDecision=checkScope(request.url,mission.scope)
+        if(!requestDecision.allowed)return {...requestDecision,reason:request.url+": "+requestDecision.reason}
       }
-      return checkScope(context.target,mission.scope)
+      if(context.endpoint){
+        const endpointUrl=resolveScopeUrl(context.target,context.endpoint)
+        if(!endpointUrl)return {allowed:false,normalized:"",reason:"invalid-endpoint-url"}
+        const endpointDecision=checkScope(endpointUrl,mission.scope)
+        if(!endpointDecision.allowed)return {...endpointDecision,reason:endpointUrl+": "+endpointDecision.reason}
+      }
+      return targetDecision
     }
     const blocked=(reason:string)=>({
       state:"blocked" as const,
