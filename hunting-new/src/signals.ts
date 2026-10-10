@@ -75,17 +75,24 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
 
   const emit = (signal: Omit<Signal, "timestamp">) => {
     const metadata=signal.metadata ?? {}
-    const identity=String(
-      metadata.requestId ??
-      metadata.responseId ??
-      metadata.jsAssetId ??
-      metadata.parameterId ??
-      metadata.accountLabel ??
-      metadata.url ??
-      signal.function_id ??
-      signal.endpoint ??
-      "",
-    )
+    // Deduplicate only when the complete correlation identity matches. A single
+    // request can carry multiple parameters, so choosing requestId *instead of*
+    // parameterId here silently discarded all but the first parameter signal.
+    const identity = [
+      metadata.requestId,
+      metadata.responseId,
+      metadata.jsAssetId,
+      metadata.parameterId,
+      metadata.accountLabel,
+      metadata.credentialId,
+      metadata.url,
+      metadata.name,
+      metadata.location,
+      metadata.method,
+      metadata.status,
+      metadata.apiDiff,
+      signal.function_id,
+    ].map(value => value == null ? "" : String(value)).join("|")
     const key=[signal.signal,signal.endpoint ?? "",signal.function_id ?? "",signal.source,identity].join("|")
     if (emitted.has(key)) return
     emitted.add(key)
