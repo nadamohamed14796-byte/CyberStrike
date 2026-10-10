@@ -10,7 +10,7 @@ import { dedupeDecision, shouldRecheckAfterNewEvidence } from "./dedupe-engine"
 import type { ValidationResult, ValidationEvidence } from "./validation-gate"
 import { validateHypothesis, hasBaselineComparison, hasBehaviorChange, hasCrossAccountEvidence } from "./validation-gate"
 import { loadMission } from "./mission"
-import { checkScope } from "./scope"
+import { checkScope, checkTargetScope, resolveScopeUrl } from "./scope"
 import { writeReport, createReportRecord } from "./report"
 import { markValidated, stableLedgerId } from "./ledger"
 
@@ -45,13 +45,20 @@ export async function promoteValidatedHypothesis(
 ):Promise<FindingPromotionResult>{
   const mission=await loadMission(root,target)
   if(!mission) throw new Error("MISSION_NOT_FOUND")
-  const scope=checkScope(target,mission.scope)
+  const scope=checkTargetScope(target,mission.scope)
   if(!scope.allowed) throw new Error("FINDING_BLOCKED: "+scope.reason)
   const [hypotheses,evidenceState,attemptState,findingState]=await Promise.all([
     loadHypotheses(root,target),loadEvidence(root,target),loadAttempts(root,target),loadFindings(root,target),
   ])
   const hypothesis=hypotheses.hypotheses.find(x=>x.id===input.hypothesisId)
   if(!hypothesis) throw new Error("HYPOTHESIS_NOT_FOUND")
+  const endpoint=input.endpoint ?? hypothesis.endpoint
+  if(endpoint){
+    const endpointUrl=resolveScopeUrl(target,endpoint)
+    if(!endpointUrl)throw new Error("FINDING_BLOCKED: invalid endpoint URL")
+    const endpointScope=checkScope(endpointUrl,mission.scope)
+    if(!endpointScope.allowed)throw new Error("FINDING_BLOCKED: "+endpointScope.reason)
+  }
   if(hypothesis.status!=="confirmed") throw new Error("FINDING_BLOCKED: hypothesis is not confirmed")
   const linkedEvidence=evidenceState.evidence.filter(x=>input.validation.evidenceIds.includes(x.id)||hypothesis.evidenceIds.includes(x.id))
   const linkedAttempts=attemptState.attempts.filter(x=>x.hypothesisId===hypothesis.id&&["executed","confirmed","rejected","inconclusive"].includes(x.state))
