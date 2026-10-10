@@ -21,7 +21,6 @@ const task = (id: string, role: AgentTask["role"], accountLabel: string): AgentT
 
 describe("multi-agent correlation links", () => {
   test("does not satisfy a validator dependency using another account's completed task", () => {
-    const hunterA = task("hunter-a", "primary-hunter", "account-a")
     const hunterB = task("hunter-b", "primary-hunter", "account-b")
     const validatorA = task("validator-a", "validator", "account-a")
     const plan: MultiAgentPlan = {
