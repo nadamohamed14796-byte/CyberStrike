@@ -96,6 +96,7 @@ export function routeRegisteredSkills(
         canonicalSignal(signal.signal) === required,
       ),
     )) continue
+    if (metadata.required_context.some(requirement => !contextSatisfied(requirement, signals))) continue
     if (!matchedSignals.length) continue
     selected.push({
       name: metadata.name,
