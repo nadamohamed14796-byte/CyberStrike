@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test"
 import { buildMultiAgentPlan, dispatchAgentTasks, type AgentTask, type MultiAgentPlan } from "../src/multi-agent-planner"
 import { SignalEngine } from "../src/signals"
+import { mkdtemp, rm } from "node:fs/promises"
+import os from "node:os"
+import path from "node:path"
+import { enrichAgentTaskExecutionContext, type AgentTaskExecutionContext } from "../src/multi-agent-runtime"
+import { emptyTargetIntelligence, saveTargetIntelligence } from "../src/target-intelligence"
 
 const task = (id: string, role: AgentTask["role"], accountLabel: string): AgentTask => ({
   id,
@@ -100,5 +105,86 @@ describe("multi-agent correlation links", () => {
     expect(tasks.map(item => item.jsAssetId).sort()).toEqual(["asset-a", "asset-b"])
     expect(new Set(tasks.map(item => item.id)).size).toBe(2)
   })
+
+
+const contextPlan: MultiAgentPlan = {
+  target: "app.example",
+  mode: "targeted",
+  reason: "test",
+  tasks: [],
+  lanes: { "primary-hunter": [], validator: [], correlator: [], reviewer: [] },
+}
+
+function assetContext(jsAssetId: string): AgentTaskExecutionContext {
+  return {
+    taskId: "task-" + jsAssetId,
+    target: "app.example",
+    primarySkill: "analyze-js",
+    resolvedSkills: ["analyze-js"],
+    strategyHints: ["js-correlation"],
+    signal: "javascript_asset",
+    signalConfidence: 0.9,
+    jsAssetIds: [jsAssetId],
+    reason: "test",
+  }
+}
+
+test("resolves a JavaScript asset only through its actual graph correlation", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "cyberstrike-agent-correlation-"))
+  try {
+    const state = emptyTargetIntelligence("app.example")
+    state.requests = [
+      { id: "request-a", sessionId: "session-a", method: "GET", url: "https://app.example/api/a", path: "/api/a", observedAt: 10, source: "observed" },
+      { id: "request-b", sessionId: "session-b", method: "GET", url: "https://app.example/api/b", path: "/api/b", observedAt: 20, source: "observed" },
+    ]
+    state.responses = [
+      { id: "response-a", requestId: "request-a", status: 200, headers: {}, observedAt: 11 },
+      { id: "response-b", requestId: "request-b", status: 200, headers: {}, observedAt: 21 },
+    ]
+    state.jsAssets = [
+      { id: "asset-linked", url: "https://app.example/a.js", observedAt: 1 },
+      { id: "asset-unlinked", url: "https://app.example/b.js", observedAt: 2 },
+    ]
+    state.edges = [
+      { from: "asset-linked", to: "request-a", kind: "observed-on", confidence: 0.95, evidence: "observed" },
+    ]
+    await saveTargetIntelligence(root, state)
+
+    const linked = await enrichAgentTaskExecutionContext(root, contextPlan, assetContext("asset-linked"))
+    expect(linked.requestId).toBe("request-a")
+    expect(linked.responseId).toBe("response-a")
+    expect(linked.jsAssetIds).toContain("asset-linked")
+
+    const unlinked = await enrichAgentTaskExecutionContext(root, contextPlan, assetContext("asset-unlinked"))
+    expect(unlinked.requestId).toBeUndefined()
+    expect(unlinked.responseId).toBeUndefined()
+    expect(unlinked.jsAssetIds).toContain("asset-unlinked")
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+test("rejects an explicitly mismatched request and response pair", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "cyberstrike-agent-correlation-"))
+  try {
+    const state = emptyTargetIntelligence("app.example")
+    state.requests = [
+      { id: "request-a", sessionId: "session-a", method: "GET", url: "https://app.example/a", path: "/a", observedAt: 1, source: "observed" },
+      { id: "request-b", sessionId: "session-b", method: "GET", url: "https://app.example/b", path: "/b", observedAt: 2, source: "observed" },
+    ]
+    state.responses = [
+      { id: "response-a", requestId: "request-a", status: 200, headers: {}, observedAt: 3 },
+    ]
+    await saveTargetIntelligence(root, state)
+
+    await expect(enrichAgentTaskExecutionContext(root, contextPlan, {
+      ...assetContext("asset-any"),
+      requestId: "request-b",
+      responseId: "response-a",
+    })).rejects.toThrow("AGENT_CORRELATION_MISMATCH")
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
 
 })
