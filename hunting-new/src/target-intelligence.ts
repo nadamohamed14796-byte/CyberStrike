@@ -9,7 +9,7 @@ import type { ApiSource } from "./api-diff"
 export interface ParameterCandidate {
   id: string
   name: string
-  location: "path" | "query" | "body"
+  location: "path" | "query" | "body" | "header"
   endpoint: string
   requestIds: string[]
   sources: Array<"observed" | "js" | "tool">
@@ -92,7 +92,7 @@ export function discoverRequestParameters(request: RequestNode): ParameterCandid
     found.set(id, {
       id, name: clean, location, endpoint,
       requestIds: [...new Set([...(previous?.requestIds ?? []), request.id])],
-      sources: [...new Set([...(previous?.sources ?? []), "observed"])],
+      sources: [...new Set<ParameterCandidate["sources"][number]>([...(previous?.sources ?? []), "observed"])],
       confidence: Math.max(previous?.confidence ?? 0, confidence),
       firstSeen: Math.min(previous?.firstSeen ?? now, now),
       lastSeen: Math.max(previous?.lastSeen ?? now, now),
