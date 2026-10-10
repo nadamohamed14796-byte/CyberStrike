@@ -291,7 +291,9 @@ export async function enrichAgentTaskExecutionContext(
     if(context.endpoint && request.path) return request.path===context.endpoint || request.url.includes(context.endpoint)
     return true
   }).sort((a,b)=>b.observedAt-a.observedAt)
-  const request=exact ?? candidates[0]
+  // An explicit request identity is a hard correlation constraint. Never silently
+  // replace a missing request with the latest endpoint match from another account.
+  const request=context.requestId ? exact : candidates[0]
   const response=context.responseId
     ? intelligence.responses.find(item=>item.id===context.responseId)
     : request
