@@ -1,7 +1,7 @@
 // Rebuild agent-briefing.md from a local folder of write-ups.
 // Usage: bun run script/update-briefing.ts <writeups-dir> <output-file>
 import path from "path"
-import { update } from "../src/learning"
+import { update } from "../src/learning/update"
 
 const [dir, out] = process.argv.slice(2)
 if (!dir || !out) {

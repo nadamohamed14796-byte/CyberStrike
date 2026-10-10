@@ -1,6 +1,6 @@
 import { AttemptLedger, type StrategyClass } from "./adaptive-attempts"
 import { type CorrelationGraph } from "./correlation"
-import { checkScope } from "./scope"
+import { checkScope, resolveScopeUrl } from "./scope"
 
 export type MissionState = "blocked" | "active" | "paused" | "completed"
 
@@ -42,7 +42,8 @@ export function dispatch(ctx: OrchestratorContext, hypothesis: Hypothesis): Disp
   if (ctx.mission.state !== "active") return { hypothesisId: hypothesis.id, action: "skip", reason: `mission is ${ctx.mission.state}` }
   if (hypothesis.status !== "pending" && hypothesis.status !== "testing") return { hypothesisId: hypothesis.id, action: "skip", reason: `hypothesis is ${hypothesis.status}` }
 
-  const scope = checkScope(hypothesis.host, ctx.mission.scope.map(value => ({ value })))
+  const scopedUrl = resolveScopeUrl(hypothesis.host, hypothesis.path)
+  const scope = scopedUrl ? checkScope(scopedUrl, ctx.mission.scope.map(value => ({ value }))) : { allowed: false, normalized: "", reason: "invalid-hypothesis-url" }
   if (!scope.allowed) return { hypothesisId: hypothesis.id, action: "skip", reason: `scope gate rejected target: ${scope.reason}` }
 
   const used = new Set(ctx.attempts.list(hypothesis.id).map(a => a.strategy))

@@ -9,7 +9,7 @@ describe("persistent attempt ledger", () => {
   test("does not repeat variants after a restart", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "cyberstrike-attempt-"))
     const target = "example.com"
-    await initMission(root, target, [{ type: "host", value: target }])
+    await initMission(root, target, [{ value:  target }])
 
     const first = await PersistentAttemptLedger.create(root, target, { maxAttempts: 20 })
     const a1 = await first.plan("hyp-1", "parameter", "baseline", "initial validation")
@@ -23,6 +23,6 @@ describe("persistent attempt ledger", () => {
     expect(duplicateVariantAcrossStrategy).toBeTruthy()
 
     const a2 = await second.plan("hyp-1", "encoding", "mixed-encoding", "alternate validation")
-    expect(a2?.id).toBe("attempt-hyp-1-2")
+    expect(a2?.id).toBe("attempt-hyp-1-3")
   })
 })

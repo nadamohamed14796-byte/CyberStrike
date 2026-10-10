@@ -50,7 +50,7 @@ export interface CorrelationSignalInput {
   }>
   jsAssets: Array<{ id: string; url: string; observedAt: number }>
   functions: Array<{ id: string; name: string; assetId?: string }>
-  parameters?: Array<{ id:string; name:string; location:"path"|"query"|"body"; endpoint:string; requestIds:string[]; confidence:number; sources:string[] }>
+  parameters?: Array<{ id:string; name:string; location:"path"|"query"|"body"|"header"; endpoint:string; requestIds:string[]; confidence:number; sources:string[] }>
   apiSources?: ApiSource[]
   edges: Array<{
     from: string
@@ -308,7 +308,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
     if(source!=="js" && source!=="observed")continue
     const methods=apiMethods.get(key) ?? new Map<"js"|"observed",Set<string>>()
     const values=methods.get(source) ?? new Set<string>()
-    values.add(request.method.toUpperCase())
+    values.add((request.method??"GET").toUpperCase())
     methods.set(source,values)
     apiMethods.set(key,methods)
   }
@@ -336,7 +336,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   if(input.apiSources?.length){
     const observedSources:ApiSource[]=input.requests
       .filter(request=>requestSourceValue(request)==="js" || requestSourceValue(request)==="observed")
-      .map(request=>({endpoint:request.path??request.url,method:(request.method??"GET").toUpperCase(),source:requestSourceValue(request) as "js"|"observed"}))
+      .map(request=>({endpoint:request.url,method:(request.method??"GET").toUpperCase(),source:requestSourceValue(request) as "js"|"observed"}))
     for(const diff of diffApiSources([...(input.apiSources??[]),...observedSources])){
       const separator=diff.indexOf(":")
       const kind=separator>0 ? diff.slice(0,separator) : diff

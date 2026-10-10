@@ -1,5 +1,6 @@
 import { buildExecutionContract } from "./execution-result"
 import type { AgentTaskExecutionContext } from "./multi-agent-runtime"
+import type { ConfiguredAgentProfile } from "./runtime-config"
 
 export interface SkillExecutionInvocation {
   target:string
@@ -15,6 +16,8 @@ export interface SkillExecutionInvocation {
 export interface SkillExecutionAdapterOptions {
   agentBySkill?:Record<string,string>
   agentByRole?:Record<string,string>
+  configuredAgentByRole?:Record<string,string>
+  configuredAgentProfiles?:Record<string,ConfiguredAgentProfile>
   defaultAgent?:string
 }
 
@@ -25,6 +28,28 @@ const DEFAULT_ROLE_AGENTS:Record<string,string>={
   reviewer:"general",
 }
 
+function selectConfiguredAgentProfile(
+  context:AgentTaskExecutionContext,
+  role:string,
+  agent:string,
+  profiles:Record<string,ConfiguredAgentProfile>|undefined,
+):ConfiguredAgentProfile|undefined{
+  if(!profiles)return undefined
+  const taskText=(context.primarySkill+" "+context.signal+" "+context.strategyHints.join(" ")).toLowerCase()
+  let preferred:string
+  if(role==="validator")preferred="verifier"
+  else if(role==="reviewer")preferred="reporter"
+  else if(role==="correlator"||/(javascript|source.?map|function.?request)/.test(taskText))preferred="javascript"
+  else if(/(idor|authoriz|tenant|access.?control|object.?identifier)/.test(taskText))preferred="authorization"
+  else if(/(api|graphql|websocket|jwt|endpoint|parameter|waf|rate.?limit)/.test(taskText))preferred="api"
+  else preferred="recon"
+  const candidate=profiles[preferred]
+  if(candidate?.agentId===agent)return candidate
+  const sameAgent=Object.values(profiles).filter(profile=>profile.agentId===agent)
+  if(!sameAgent.length)return undefined
+  return sameAgent.find(profile=>profile.name===preferred)??sameAgent[0]
+}
+
 export function buildSkillExecutionInvocation(
   context:AgentTaskExecutionContext,
   options:SkillExecutionAdapterOptions={},
@@ -33,11 +58,28 @@ export function buildSkillExecutionInvocation(
   const agent=options.agentBySkill?.[context.primarySkill] ??
     options.agentByRole?.[role] ??
     process.env[`HUNT_AGENT_ROLE_${role.toUpperCase().replace(/-/g,"_")}`] ??
+    context.recommendedAgent ??
+    options.configuredAgentByRole?.[role] ??
     DEFAULT_ROLE_AGENTS[role] ??
     options.defaultAgent ??
     process.env.HUNT_DEFAULT_AGENT ??
     "web-application"
 
+  const agentProfile=selectConfiguredAgentProfile(context,role,agent,options.configuredAgentProfiles)
+  const profilePrompt=agentProfile?[
+    "",
+    "## Configured Agent Profile",
+    `configured_agent_profile: ${agentProfile.name}`,
+    `configured_agent_id: ${agentProfile.agentId}`,
+    `configured_agent_runtime: ${agentProfile.runtime||"(unspecified)"}`,
+    `configured_agent_role: ${agentProfile.role||"(unspecified)"}`,
+    `configured_agent_purpose: ${agentProfile.purpose||"(unspecified)"}`,
+    `configured_agent_inputs: ${agentProfile.inputs.join(", ")||"(none)"}`,
+    `configured_agent_outputs: ${agentProfile.outputs.join(", ")||"(none)"}`,
+    `configured_agent_constraints: ${agentProfile.constraints.join("; ")||"(none)"}`,
+    "Follow the configured constraints and return the stated outputs.",
+    "",
+  ]:[]
   const prompt=[
     "Execute one authorized bug-bounty validation task.",
     "Stay within the supplied target and scope.",
@@ -45,6 +87,7 @@ export function buildSkillExecutionInvocation(
     "Load and follow the resolved CyberStrike skills.",
     "Do not modify skill files or learning data.",
     "Do not declare a vulnerability without sufficient evidence.",
+    ...profilePrompt,
     "",
     `target: ${context.target}`,
     `role: ${role}`,

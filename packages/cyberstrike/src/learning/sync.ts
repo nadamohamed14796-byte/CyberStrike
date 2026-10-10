@@ -2,7 +2,7 @@ import path from "path"
 import os from "os"
 import fs from "fs/promises"
 import { existsSync } from "fs"
-import { update } from "./index"
+import { update } from "./update"
 
 // Internet sources for real write-ups. Each one is a public git repo, so
 // reads go through the normal git proxy, not through arbitrary web requests.

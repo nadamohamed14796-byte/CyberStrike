@@ -22,9 +22,18 @@ const canonicalTrigger=(value:string):string =>
 const SKILL_ALIASES:Record<string,string>={
   "waf-awareness":"waf-xss-bypass",
   "waf-aware":"waf-xss-bypass",
-  "javascript_intelligence":"analyze-js",
-  "javascript-intelligence":"analyze-js",
+  "javascript-intelligence":"javascript_intelligence",
+  "authorization":"attack-idor-automation",
   "idor":"attack-idor-automation",
+  "multi_tenant":"api-authorization-and-bola",
+  "graphql":"attack-graphql",
+  "websocket":"attack-websocket",
+  "jwt":"attack-jwt",
+  "file_upload":"hunt-file-upload",
+  "redirect":"hunt-open-redirect",
+  "oauth":"hunt-oauth",
+  "endpoint_discovery":"api-recon-and-docs",
+  "endpoint-discovery":"api-recon-and-docs",
   "rate-limit":"attack-rate-limit-bypass",
 }
 

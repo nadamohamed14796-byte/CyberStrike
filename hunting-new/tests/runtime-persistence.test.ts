@@ -8,7 +8,7 @@ import { checkpointPhase, resumeCheckpoint, transitionMissionAndCheckpoint } fro
 describe("runtime checkpoint lifecycle", () => {
   test("persists phase and resumes it", async () => {
     const root = await mkdtemp(path.join(tmpdir(), "cyberstrike-runtime-"))
-    await initMission(root, "example.com", [{ type: "host", value: "example.com" }])
+    await initMission(root, "example.com", [{ value:  "example.com" }])
 
     const result = await transitionMissionAndCheckpoint(root, "example.com", "MAPPING", "mapping")
     expect(result.mission.state).toBe("MAPPING")

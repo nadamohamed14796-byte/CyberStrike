@@ -21,6 +21,28 @@ export interface LearningScore {
 export class LearningEngine {
   private readonly observations: LearningObservation[] = []
 
+  static fromObservations(observations: LearningObservation[]): LearningEngine {
+    const engine = new LearningEngine()
+    for (const item of observations) {
+      if (
+        !item || typeof item.target !== "string" || typeof item.signal !== "string" ||
+        typeof item.skill !== "string" || typeof item.strategy !== "string" ||
+        !["useful", "false_positive", "inconclusive", "confirmed"].includes(item.outcome) ||
+        !Number.isFinite(item.confidence)
+      ) continue
+      engine.observations.push({
+        target: item.target,
+        signal: item.signal,
+        skill: item.skill,
+        strategy: item.strategy,
+        outcome: item.outcome,
+        confidence: Math.max(0, Math.min(1, item.confidence)),
+        timestamp: typeof item.timestamp === "string" ? item.timestamp : new Date(0).toISOString(),
+      })
+    }
+    return engine
+  }
+
   record(observation: Omit<LearningObservation, "timestamp">): LearningObservation {
     const item = { ...observation, confidence: Math.max(0, Math.min(1, observation.confidence)), timestamp: new Date().toISOString() }
     this.observations.push(item)

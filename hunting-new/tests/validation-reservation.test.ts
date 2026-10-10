@@ -12,7 +12,7 @@ describe("validation reservation", () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-reservation-"))
     try{
       const target="example.test"
-      await initMission(root,target,[{type:"host",value:target}])
+      await initMission(root,target,[{ value: target}])
       const engine=new SignalEngine()
       engine.emit({
         signal:"object_identifier_detected",

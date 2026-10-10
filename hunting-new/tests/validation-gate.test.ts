@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { validateHypothesis, hasCrossAccountEvidence } from "../src/validation-gate"
+import { validateHypothesis, hasCrossAccountEvidence, hasBehaviorChange } from "../src/validation-gate"
 
 describe("validation gate", () => {
   test("blocks inference-only claims", () => {
@@ -73,11 +73,11 @@ describe("correlated behavior change", () => {
   test("requires distinct observed response behavior", () => {
     const base={kind:"response" as const,observed:true,independent:true,requestId:"req-1"}
     expect(hasBehaviorChange([
-      {...base,responseId:"res-1",attemptId:"att-1",summary:"HTTP 200 application/json body_hash=a"},
-      {...base,responseId:"res-2",attemptId:"att-2",summary:"HTTP 200 application/json body_hash=b"},
+      {...base,id:"ev-1",responseId:"res-1",attemptId:"att-1",summary:"HTTP 200 application/json body_hash=a"},
+      {...base,id:"ev-2",responseId:"res-2",attemptId:"att-2",summary:"HTTP 200 application/json body_hash=b"},
     ])).toBe(true)
     expect(hasBehaviorChange([
-      {...base,responseId:"res-1",attemptId:"att-1",summary:"HTTP 200 application/json body_hash=a"},
+      {...base,id:"ev-1",responseId:"res-1",attemptId:"att-1",summary:"HTTP 200 application/json body_hash=a"},
     ])).toBe(false)
   })
 })

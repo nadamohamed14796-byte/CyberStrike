@@ -1,6 +1,7 @@
 import { loadHuntingState, type HuntingState } from "./hunting-state"
 import { loadCheckpoint, saveCheckpoint, type RuntimeCheckpoint } from "./runtime-checkpoint"
 import { loadTaskStates } from "./task-state-store"
+import { recoverStaleAgentTasks } from "./agent-task-runtime"
 import { updateMission, type MissionState } from "./mission"
 import type { HypothesisRecord } from "./hypotheses"
 import type { Chain } from "./chain-board"
@@ -21,6 +22,8 @@ export interface ResumeContext {
 }
 
 export async function resumeHuntingContext(root:string,target:string):Promise<ResumeContext>{
+  // Recovery belongs at the shared resume boundary, not only in CLI/dispatch callers.
+  await recoverStaleAgentTasks(root,target)
   const [state,checkpoint,tasks]=await Promise.all([
     loadHuntingState(root,target),
     loadCheckpoint(root,target),

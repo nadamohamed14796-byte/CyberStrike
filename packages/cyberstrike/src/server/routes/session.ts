@@ -1,4 +1,5 @@
 import { Hono } from "hono"
+import path from "node:path"
 import { stream } from "hono/streaming"
 import { describeRoute, validator, resolver } from "hono-openapi"
 import z from "zod"
@@ -17,6 +18,7 @@ import { Request } from "../../session/request"
 import { Observation } from "../../session/observation"
 import { CoverageNote } from "../../session/coverage-note"
 import { Normalize } from "../../session/normalize"
+import type { ParamSlot } from "../../session/normalize/types"
 import { IngestSummary } from "../../session/ingest-summary"
 import { IngestQueue } from "../../session/ingest-queue"
 import { WebCredential } from "../../session/web/web-credential"
@@ -348,18 +350,29 @@ async function feedHuntingLayerFromRequest(input:{
     bodyHash?:string
     observedAt?:number
   }
+  pageUrl?:string
   jsAssetIds?:string[]
   functionIds?:string[]
+  observedParams?:ParamSlot[]
 }):Promise<void>{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
   try{
     const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
-    const { ingestCyberStrikeRequest }=await import("../../../../hunting-new/src/cyberstrike-intake")
-    await ingestCyberStrikeRequest(root,input)
+    const { ingestCyberStrikeRequest }=await import("../../../../../hunting-new/src/cyberstrike-intake")
+    await ingestCyberStrikeRequest(root,{
+      target:input.target,
+      sessionId:input.sessionID,
+      request:input.request,
+      response:input.response,
+      pageUrl:input.pageUrl,
+      jsAssetIds:input.jsAssetIds,
+      functionIds:input.functionIds,
+      observedParams:input.observedParams,
+    })
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
-      const { autoDispatchForTarget }=await import("../../../../hunting-new/src/auto-dispatch")
+      const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
       void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
-        .catch(error=>log.warn("hunting auto-dispatch failed",{
+        .catch((error:unknown)=>log.warn("hunting auto-dispatch failed",{
           sessionID:input.sessionID,
           target:input.target,
           error:error instanceof Error?error.message:String(error),
@@ -1289,11 +1302,12 @@ export const SessionRoutes = lazy(() =>
                 url:normalized.origin + normalized.normalizedPath,
                 host:normalized.host,
                 path:normalized.normalizedPath,
-                credentialId,
+                credentialId:credentialID,
                 accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                 observedAt:Date.now(),
               },
               pageUrl:body.page_url,
+              observedParams:normalized.observedParams,
               response:body.response ? {
                 id:"obs_"+Bun.hash([
                   sessionID,
@@ -1372,11 +1386,12 @@ export const SessionRoutes = lazy(() =>
               url:normalized.origin + normalized.normalizedPath,
               host:normalized.host,
               path:normalized.normalizedPath,
-              credentialId,
+              credentialId:credentialID,
               accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
               observedAt:req.time.created,
             },
             pageUrl:body.page_url,
+            observedParams:normalized.observedParams,
             response:body.response ? {
               id:req.id+":response",
               status:body.response.status,
@@ -1460,7 +1475,7 @@ export const SessionRoutes = lazy(() =>
                       url:normalized.origin + normalized.normalizedPath,
                       host:normalized.host,
                       path:normalized.normalizedPath,
-                      credentialId,
+                      credentialId:credentialID,
                       accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                       observedAt:req.time.created,
                     },
@@ -1473,6 +1488,7 @@ export const SessionRoutes = lazy(() =>
                       observedAt:req.time.created,
                     } : undefined,
                     functionIds:[learnedFunction.id],
+                    observedParams:normalized.observedParams,
                   })
                 }
                 const model = body.model ?? (await SessionPrompt.lastModel(sessionID))

@@ -1,3 +1,4 @@
+import { loadHuntingRuntimeConfiguration } from "./runtime-config"
 export type ScopeRule={value:string;path?:string;protocols?:string[];ports?:number[];exclude?:boolean}
 export type ScopeDecision={allowed:boolean;normalized:string;reason:string}
 
@@ -70,6 +71,39 @@ function rulePathMatches(target:ParsedTarget,rule:ScopeRule):boolean{
   return globMatch(target.path||"/",rule.path)
 }
 
+/**
+ * Resolve an observed endpoint relative to the target's origin. Scope rules
+ * with path constraints must see the final URL, not a bare path that can skip
+ * host/path validation at a lower-level executor.
+ */
+export function resolveScopeUrl(target:string,candidate:string):string|null{
+  const value=candidate.trim()
+  if(!value)return null
+  try{
+    const baseValue=target.includes("://")?target:"https://"+target
+    const base=new URL(baseValue)
+    const url=/^[a-z][a-z0-9+.-]*:\/\//i.test(value)
+      ? new URL(value)
+      : new URL(value,base.origin+"/")
+    if(url.protocol!=="http:" && url.protocol!=="https:")return null
+    return url.toString()
+  }catch{
+    return null
+  }
+}
+
+/**
+ * Confirm that the target's host/protocol/port is authorized without requiring
+ * the bare target root (/) to match a path-restricted allow rule. Path-scoped
+ * exclusions stay path-specific and are enforced by checkScope on each URL.
+ */
+export function checkTargetScope(target:string,rules:ScopeRule[]):ScopeDecision{
+  const hostRules=rules
+    .filter(rule=>!(rule.exclude && rule.path))
+    .map(rule=>({...rule,path:undefined}))
+  return checkScope(target,hostRules)
+}
+
 export function checkScope(target:string,rules:ScopeRule[]):ScopeDecision{
   const parsed=parseTarget(target)
   if(!parsed)return{allowed:false,normalized:"",reason:"empty-target"}
@@ -90,4 +124,49 @@ export function checkScope(target:string,rules:ScopeRule[]):ScopeDecision{
   if(!matched)return{allowed:false,normalized:parsed.normalized,reason:"out-of-scope"}
   if(excluded)return{allowed:false,normalized:parsed.normalized,reason:"explicit-exclusion"}
   return{allowed:true,normalized:parsed.normalized,reason:"in-scope"}
+}
+
+
+function scopeExclusionMatch(target: string, rules: ScopeRule[]): ScopeDecision | undefined {
+  for (const rule of rules) {
+    const decision = checkScope(target, [{ ...rule, exclude: true }])
+    if (decision.reason === "explicit-exclusion") return decision
+  }
+  return undefined
+}
+
+/** Apply mission rules and configured repository policy before intake or execution. */
+export async function checkConfiguredTargetScope(root: string, target: string, missionRules: ScopeRule[]): Promise<ScopeDecision> {
+  const missionDecision = checkTargetScope(target, missionRules)
+  if (!missionDecision.allowed) return missionDecision
+  const config = await loadHuntingRuntimeConfiguration(root)
+  const allowRules = config.scope.rules.filter(rule => !rule.exclude)
+  if (allowRules.length) {
+    const configuredDecision = checkTargetScope(target, allowRules)
+    if (!configuredDecision.allowed) return { ...configuredDecision, reason: "configured-scope:" + configuredDecision.reason }
+  }
+  const exclusion = scopeExclusionMatch(target, [
+    ...config.scope.exclusions,
+    ...config.scope.rules.filter(rule => rule.exclude && !rule.path),
+  ])
+  if (exclusion) return exclusion
+  return missionDecision
+}
+
+/** Validate concrete absolute URLs against mission scope, configured scope, and exclusions. */
+export async function checkConfiguredScope(root: string, url: string, missionRules: ScopeRule[]): Promise<ScopeDecision> {
+  const missionDecision = checkScope(url, missionRules)
+  if (!missionDecision.allowed) return missionDecision
+  const config = await loadHuntingRuntimeConfiguration(root)
+  const allowRules = config.scope.rules.filter(rule => !rule.exclude)
+  if (allowRules.length) {
+    const configuredDecision = checkScope(url, allowRules)
+    if (!configuredDecision.allowed) return { ...configuredDecision, reason: "configured-scope:" + configuredDecision.reason }
+  }
+  const exclusion = scopeExclusionMatch(url, [
+    ...config.scope.exclusions,
+    ...config.scope.rules.filter(rule => rule.exclude),
+  ])
+  if (exclusion) return exclusion
+  return missionDecision
 }

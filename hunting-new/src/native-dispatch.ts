@@ -6,6 +6,7 @@ import { checkpointPhase } from "./runtime-persistence"
 import { coverageGate } from "./ledger"
 import { loadTaskStates } from "./task-state-store"
 import { updateMission } from "./mission"
+import { loadHuntingRuntimeConfiguration } from "./runtime-config"
 
 export interface NativeDispatchOptions {
   limit?:number
@@ -28,6 +29,8 @@ export async function executePersistedDispatchWithNativeCyberStrike(
     persistedTaskIds:plan.tasks.map(task=>task.id),
     resolvedSkillCount:plan.tasks.reduce((sum,task)=>sum+(task.resolvedSkills?.length??0),0),
   }
+  const runtimeConfig=await loadHuntingRuntimeConfiguration(root)
+  const attemptBudget=Math.max(1,Math.min(20,runtimeConfig.policy.defaultAttemptBudget))
   const batchLimit=Math.max(1,options.limit??4)
   const batches=[]
   const results=[]
@@ -49,7 +52,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
       const taskResults=[]
       let terminal=false
 
-      for(let attempt=0;attempt<20 && !terminal;attempt++){
+      for(let attempt=0;attempt<attemptBudget && !terminal;attempt++){
         try{
           const result=await executeAndRecordDispatchedTask(
             root,
@@ -59,7 +62,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
           )
           taskResults.push(result)
           const eligible=result.lifecycle?.validation?.decision==="eligible"
-          const promotionResolved=!eligible || Boolean(result.promotion?.reportable) || result.promotion?.action==="skip"
+          const promotionResolved=eligible && (Boolean(result.promotion?.reportable) || result.promotion?.action==="skip")
           terminal=result.lifecycle?.hypothesisStatus==="blocked" ||
             result.lifecycle?.hypothesisStatus==="rejected" ||
             (result.lifecycle?.hypothesisStatus==="confirmed" && promotionResolved)

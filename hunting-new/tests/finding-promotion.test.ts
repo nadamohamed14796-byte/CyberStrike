@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { mkdtemp } from "node:fs/promises"
+import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { initMission } from "../src/mission"
@@ -13,7 +13,7 @@ describe("finding promotion", () => {
   test("promotes a complete validated finding", async () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-promotion-"))
     const target="example.com"
-    await initMission(root,target,[{type:"host",value:target}])
+    await initMission(root,target,[{ value: target}])
     await upsertHypothesis(root,target,{
       id:"hyp-1",target,signal:"access-control",title:"validation",
       confidence:.95,status:"confirmed",evidenceIds:[],createdAt:new Date().toISOString(),
@@ -42,18 +42,18 @@ describe("finding promotion", () => {
       summary:"A reproducible security behavior was observed.",
       impact:"A separate account can access protected data.",
       remediation:"Enforce server-side authorization.",
-      validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attemptIds]},
+      validation:{decision:"eligible",reasons:[],checks:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attemptIds]},
     })
 
     expect(result.reportable).toBe(true)
-    expect(result.finding.status).toBe("validated")
+    expect(result.finding?.status).toBe("validated")
 
     const second=await promoteValidatedHypothesis(root,target,{
       hypothesisId:"hyp-1",title:"Same issue with a different title",severity:"high",
       summary:"A reproducible security behavior was observed with additional evidence.",
       impact:"A separate account can access protected data.",
       remediation:"Enforce server-side authorization.",
-      validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attemptIds]},
+      validation:{decision:"eligible",reasons:[],checks:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attemptIds]},
     })
     expect(second.action).toBe("skip")
     expect((await import("../src/finding-store")).loadFindings(root,target).then(x=>x.findings.length)).resolves.toBe(1)
@@ -66,31 +66,33 @@ describe("persisted false-positive promotion gate", () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-fp-promotion-"))
     const target="example.com"
     try{
-      await initMission(root,target,[{type:"host",value:target}])
-      await (await import("../src/false-positive-store")).recordFalsePositive(root,target,{
-        id:"fp-1",target,signal:"access-control",skill:"idor",strategy:"identifier",
-        endpoint:"/api/users/123",accountMode:"user",reason:"known false positive",
-        evidenceIds:["old"],confidence:.9,timestamp:new Date().toISOString(),count:1
-      } as any)
+      await initMission(root,target,[{ value: target}])
       await upsertHypothesis(root,target,{
         id:"hyp-fp",target,signal:"access-control",title:"known false positive",
         confidence:.9,status:"confirmed",evidenceIds:[],createdAt:new Date().toISOString(),
       })
       const request=createEvidence({kind:"request",sourceId:"req",requestId:"req",confidence:.95,details:"request"})
-      const response=createEvidence({kind:"response",sourceId:"res",requestId:"req",responseId:"res",confidence:.95,details:"response"})
+      const response=createEvidence({kind:"response",sourceId:"res",requestId:"req",responseId:"res",confidence:.95,details:"baseline response"})
+      const response2=createEvidence({kind:"response",sourceId:"res-2",requestId:"req",responseId:"res-2",confidence:.95,details:"different response under alternate validation"})
       const functionEvidence=createEvidence({kind:"function",sourceId:"fn",functionId:"fn",confidence:.95,details:"function"})
-      await appendEvidence(root,target,request); await appendEvidence(root,target,response); await appendEvidence(root,target,functionEvidence)
+      await appendEvidence(root,target,request); await appendEvidence(root,target,response); await appendEvidence(root,target,response2); await appendEvidence(root,target,functionEvidence)
+      await (await import("../src/false-positive-store")).recordFalsePositive(root,target,{
+        id:"fp-1",target,signal:"access-control",skill:"idor",strategy:"identifier",
+        endpoint:"/api/users/123",accountMode:"user",reason:"known false positive",
+        evidenceIds:[request.id,response.id,response2.id,functionEvidence.id],confidence:.9,
+        timestamp:new Date().toISOString(),count:1
+      } as any)
       const ledger=await PersistentAttemptLedger.create(root,target)
       const attempts=[]
       for(let i=1;i<=20;i++){
         const a=await ledger.plan("hyp-fp",i===1?"identifier":"parameter",`v-${i}`,`v-${i}`)
-        await ledger.record(a!.id,{state:"executed",evidenceIds:[request.id,response.id,functionEvidence.id]})
+        await ledger.record(a!.id,{state:"executed",evidenceIds:[request.id,response.id,response2.id,functionEvidence.id]})
         attempts.push(a!.id)
       }
       const result=await promoteValidatedHypothesis(root,target,{
         hypothesisId:"hyp-fp",title:"Known FP",severity:"medium",summary:"summary",impact:"impact",
-        validation:{decision:"eligible",reasons:[],evidenceIds:[request.id,response.id,functionEvidence.id,...attempts]},
-        signal:"access-control",skill:"idor",strategy:"identifier",endpoint:"/api/users/123",
+        validation:{decision:"eligible",reasons:[],checks:[],evidenceIds:[request.id,response.id,response2.id,functionEvidence.id,...attempts]},
+        signal:"access-control",skill:"idor",strategy:"identifier",endpoint:"/api/users/123",accountMode:"user",
       })
       expect(result.action).toBe("skip")
       expect(result.reportable).toBe(false)

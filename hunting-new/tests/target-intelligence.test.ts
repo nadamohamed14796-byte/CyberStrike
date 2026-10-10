@@ -1,6 +1,8 @@
-
 import { describe, expect, test } from "bun:test"
-import { discoverRequestParameters } from "../src/target-intelligence"
+import { mkdtemp, rm } from "node:fs/promises"
+import { tmpdir } from "node:os"
+import path from "node:path"
+import { discoverRequestParameters, loadTargetIntelligence, rememberTargetIntelligence } from "../src/target-intelligence"
 import type { RequestNode } from "../src/correlation"
 
 describe("target intelligence parameter extraction",()=>{
@@ -14,11 +16,6 @@ describe("target intelligence parameter extraction",()=>{
   })
 })
 
-import { describe, expect, test } from "bun:test"
-import { mkdtemp, rm } from "node:fs/promises"
-import { tmpdir } from "node:os"
-import path from "node:path"
-import { loadTargetIntelligence, rememberTargetIntelligence } from "../src/target-intelligence"
 
 describe("target intelligence persistence", () => {
   test("merges intelligence across sessions", async () => {
@@ -42,7 +39,6 @@ describe("target intelligence persistence", () => {
 })
 
 
-import { discoverRequestParameters } from "../src/target-intelligence"
 
 describe("request parameter discovery", () => {
   test("discovers query, path-template, and JSON body parameters", () => {

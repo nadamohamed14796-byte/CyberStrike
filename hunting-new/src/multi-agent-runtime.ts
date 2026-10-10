@@ -4,7 +4,6 @@ import { persistAgentPlan, recoverStaleAgentTasks } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import { signalEngineFromCorrelation, type SignalEngine, type SkillRule } from "./signals"
-import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
 import { loadTargetIntelligence } from "./target-intelligence"
@@ -19,12 +18,13 @@ import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
 import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
 import { loadMission } from "./mission"
-import { checkScope } from "./scope"
+import { checkConfiguredScope, checkConfiguredTargetScope, resolveScopeUrl } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
 import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool-runner"
 import { ensureAttemptEvidence } from "./evidence-store"
 import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
+import { ledgers } from "./ledger"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
@@ -98,10 +98,19 @@ export async function prepareMultiAgentPlan(
   const registry=await loadSkillRegistry(root)
 
   for(const task of plan.tasks){
+    const primary=registry.get(task.skill)
+    if(!primary){
+      // Explicit rules are allowed to supply a task skill outside the filesystem
+      // registry. Do not attempt to resolve that name or infer registry dependencies.
+      task.resolvedSkills=[task.skill]
+      task.resolvedSkillPaths=[]
+      task.recommendedAgent=undefined
+      continue
+    }
     const resolved=registry.selectForTask(task.skill,[task.signal,...task.strategyHints],task.signalConfidence)
     task.resolvedSkills=resolved.map(skill=>skill.name)
     task.resolvedSkillPaths=resolved.map(skill=>skill.source_path).filter((value):value is string=>Boolean(value))
-    task.recommendedAgent=registry.get(task.skill)?.agent
+    task.recommendedAgent=primary.agent
   }
 
   await saveAgentPlan(root,plan)
@@ -401,7 +410,7 @@ export async function executeAndRecordDispatchedTask(
   const base=buildAgentTaskExecutionContext(plan,taskId)
   const mission=await loadMission(root,plan.target)
   if(!mission) throw new Error("MISSION_NOT_FOUND")
-  const initialScope=checkScope(plan.target,mission.scope)
+  const initialScope=await checkConfiguredTargetScope(root,plan.target,mission.scope)
   if(!initialScope.allowed) throw new Error("VALIDATION_SCOPE_BLOCKED: "+initialScope.reason)
 
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
@@ -413,9 +422,15 @@ export async function executeAndRecordDispatchedTask(
   const exactRequest=context.requestId
     ? intelligence.requests.find(item=>item.id===context.requestId)
     : undefined
-  const activeScopeTarget=exactRequest?.url ?? plan.target
-  const activeScope=checkScope(activeScopeTarget,mission.scope)
-  if(!activeScope.allowed){
+  const activeScope=exactRequest
+    ? await checkConfiguredScope(root,exactRequest.url,mission.scope)
+    : await checkConfiguredTargetScope(root,plan.target,mission.scope)
+  const endpointUrl=context.endpoint ? resolveScopeUrl(plan.target,context.endpoint) : undefined
+  const endpointScope=context.endpoint
+    ? endpointUrl ? await checkConfiguredScope(root,endpointUrl,mission.scope) : {allowed:false,normalized:"",reason:"invalid-endpoint-url"}
+    : undefined
+  const deniedScope=!activeScope.allowed ? activeScope : endpointScope && !endpointScope.allowed ? endpointScope : undefined
+  if(deniedScope){
     const lifecycle=await recordAttemptLifecycle(
       root,
       plan.target,
@@ -427,7 +442,7 @@ export async function executeAndRecordDispatchedTask(
         endpoint:context.endpoint,
         confidence:context.signalConfidence,
         taskId:context.taskId,
-        resultSummary:"Active scope re-check blocked validation: "+activeScope.reason,
+        resultSummary:"Active scope re-check blocked validation: "+deniedScope.reason,
       },
     )
     return {
@@ -436,7 +451,7 @@ export async function executeAndRecordDispatchedTask(
         state:"blocked",
         attemptId:prepared.attempt.id,
         requestId:context.requestId,
-        resultSummary:"Active scope re-check blocked validation: "+activeScope.reason,
+        resultSummary:"Active scope re-check blocked validation: "+deniedScope.reason,
         resultText:"scope_blocked",
       },
       lifecycle,
@@ -505,7 +520,9 @@ export async function executeAndRecordDispatchedTask(
   }
 
   const validationEligible=lifecycle.validation?.decision==="eligible"
-  const promotionResolved=!validationEligible || Boolean(promotion?.reportable) || promotion?.action==="skip"
+  // A confirmed hypothesis is not a terminal finding while its evidence still
+  // fails validation. Keep the task alive so bounded attempts can continue.
+  const promotionResolved=validationEligible && (Boolean(promotion?.reportable) || promotion?.action==="skip")
   const terminal=effectiveState==="blocked" ||
     lifecycle.hypothesisStatus==="rejected" ||
     (lifecycle.hypothesisStatus==="confirmed" && promotionResolved)
@@ -515,7 +532,7 @@ export async function executeAndRecordDispatchedTask(
       ? "completed"
       : "running"
   if(terminal){
-    await finishAgentTask(root,plan.target,taskId,taskState)
+    // recordAttemptLifecycle owns the persisted task-state transition.
     if(context.endpoint){
       const endpointLedger=ledgers(root,plan.target).endpoint
       const endpointId="endpoint_"+Bun.hash([
@@ -560,7 +577,7 @@ export async function executeTaskUntilTerminal(
     const execution=await executeAndRecordDispatchedTask(root,plan,taskId,executor)
     results.push(execution.result)
     const eligible=execution.lifecycle?.validation?.decision==="eligible"
-    const promotionResolved=!eligible || Boolean(execution.promotion?.reportable) || execution.promotion?.action==="skip"
+    const promotionResolved=eligible && (Boolean(execution.promotion?.reportable) || execution.promotion?.action==="skip")
     if(
       execution.result.state==="blocked" ||
       execution.lifecycle?.hypothesisStatus==="rejected" ||

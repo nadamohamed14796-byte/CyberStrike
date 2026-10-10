@@ -12,9 +12,9 @@ describe("cross-host intake enrichment", () => {
     try{
       const target="example.test"
       await initMission(root,target,[
-        {type:"host",value:target},
-        {type:"host",value:"api.example.test"},
-        {type:"host",value:"cdn.example.test"},
+        {value:target},
+        {value:"api.example.test"},
+        {value:"cdn.example.test"},
       ])
       await rememberTargetIntelligence(root,target,{
         jsAssets:[{id:"js-1",url:"https://cdn.example.test/app.js",observedAt:1}],

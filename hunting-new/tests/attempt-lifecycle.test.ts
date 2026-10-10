@@ -12,7 +12,7 @@ describe("attempt lifecycle", () => {
   test("moves hypothesis and chain with attempt outcome", async () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-lifecycle-"))
     const target="example.com"
-    await initMission(root,target,[{type:"host",value:target}])
+    await initMission(root,target,[{value:target}])
     await upsertHypothesis(root,target,{
       id:"hyp-1",target,signal:"idor",title:"IDOR validation",
       confidence:.9,status:"pending",evidenceIds:[],createdAt:new Date().toISOString(),

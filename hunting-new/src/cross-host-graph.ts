@@ -1,4 +1,4 @@
-import { checkScope, type ScopeRule } from "./scope"
+import { checkTargetScope, type ScopeRule } from "./scope"
 
 export type AssetRelationKind="observed-request"|"observed-js"|"redirect"|"api-host"
 
@@ -23,7 +23,7 @@ export function buildAssetRelation(
   observedAt=Date.now(),
 ):AssetRelation{
   const normalizedHost=host.trim().toLowerCase().replace(/\.$/,"")
-  const decision=normalizedHost ? checkScope(normalizedHost,scopeRules) : {allowed:false,normalized:"",reason:"empty-target"}
+  const decision=normalizedHost ? checkTargetScope(normalizedHost,scopeRules) : {allowed:false,normalized:"",reason:"empty-target"}
   const scope=normalizedHost
     ? decision.allowed ? "in-scope" : "out-of-scope"
     : "unknown"

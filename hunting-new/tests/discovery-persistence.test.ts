@@ -13,8 +13,8 @@ describe("discovery persistence", () => {
       await persistDiscovery(root, {
         target: "example.test",
         graph: createGraph(),
-        assets: [{ js_asset_id: "asset-1", url: "https://example.test/app.js", content_hash: "h1", size: 10, discovered_at: new Date().toISOString(), endpoints: [], methods: [], parameters: [], headers: [], framework: [], build_system: [], graphql_operations: [], websockets: [], security_leads: [] }],
-        requests: [{ endpoint: "https://example.test/api/users", method: "GET", confidence: .8, source: "javascript" }],
+        assets: [{ js_asset_id: "asset-1", url: "https://example.test/app.js", content_hash: "h1", size: 10, source_map_available: false, first_seen: new Date().toISOString(), last_seen: new Date().toISOString() }],
+        requests: [{ endpoint: "https://example.test/api/users", method: "GET", parameters: [], headers: [], body: {}, confidence: .8 }],
         tags: ["javascript"],
       })
       const state = await loadTargetIntelligence(root, "example.test")

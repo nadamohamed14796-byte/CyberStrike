@@ -2,6 +2,7 @@ import { hydrateGraph } from "./correlation"
 import { ingestAndPersistObservation } from "./intake"
 import { loadTargetIntelligence } from "./target-intelligence"
 import { loadMission } from "./mission"
+import { checkConfiguredScope, checkConfiguredTargetScope } from "./scope"
 import { buildAssetRelation } from "./cross-host-graph"
 import type { ParamSlot } from "../../packages/cyberstrike/src/session/normalize/types"
 import { discoverParameters } from "./parameter-discovery"
@@ -37,8 +38,13 @@ export async function ingestCyberStrikeRequest(
   root:string,
   input:CyberStrikeIntakeRecord,
 ):Promise<void>{
-  const intelligence=await loadTargetIntelligence(root,input.target)
   const mission=await loadMission(root,input.target)
+  if(!mission)throw new Error("MISSION_NOT_INITIALIZED")
+  const targetScope=await checkConfiguredTargetScope(root,input.target,mission.scope)
+  if(!targetScope.allowed)throw new Error("MISSION_BLOCKED: "+targetScope.reason)
+  const requestScope=await checkConfiguredScope(root,input.request.url,mission.scope)
+  if(!requestScope.allowed)throw new Error("REQUEST_SCOPE_BLOCKED: "+requestScope.reason)
+  const intelligence=await loadTargetIntelligence(root,input.target)
   const graph=hydrateGraph({
     requests:intelligence.requests,
     responses:intelligence.responses,
@@ -62,7 +68,6 @@ export async function ingestCyberStrikeRequest(
     parameters,
   })
 
-  if(!mission)return
   const observedAt=input.request.observedAt ?? Date.now()
   const relations:ReturnType<typeof buildAssetRelation>[]=[]
   const addHost=(host:string|undefined,kind:"observed-request"|"observed-js"|"redirect"|"api-host",source:string,confidence=1)=>{

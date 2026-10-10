@@ -2,10 +2,15 @@ import type { SignalEngine, SkillRule, SkillSelection } from "./signals"
 import { routeSkills, routeRegisteredSkills, type RoutingDecision } from "./skill-router"
 import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
-import type { SkillRegistry, SkillMetadata } from "./skill-registry"
+import { SkillRegistry, type SkillMetadata } from "./skill-registry"
 import { canonicalSignal } from "./canonical-signals"
 
 export type HuntingAgentRole = "primary-hunter" | "validator" | "correlator" | "reviewer"
+
+const HUNTING_ROLES: readonly HuntingAgentRole[] = ["primary-hunter", "validator", "correlator", "reviewer"]
+function isHuntingAgentRole(value: string): value is HuntingAgentRole {
+  return HUNTING_ROLES.includes(value as HuntingAgentRole)
+}
 
 export interface AgentTask {
   id: string
@@ -247,7 +252,7 @@ export function nextAgentTasks(plan: MultiAgentPlan, limit = 4): AgentTask[] {
   while (selected.length < Math.max(1, limit) && remaining.length) {
     const index = remaining.findIndex(task =>
       !selectedSkills.has(task.skill) &&
-      task.dependencies.every(dep => selectedRoles.has(dep)),
+      task.dependencies.every(dep => isHuntingAgentRole(dep) && selectedRoles.has(dep)),
     )
 
     if (index === -1) break
@@ -279,13 +284,14 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
   const completed = new Set([...states.entries()].filter(([, state]) => state === "completed").map(([id]) => id))
   const dependenciesSatisfied = (task: AgentTask): boolean =>
     task.dependencies.every(role => {
-      const candidates = plan.lanes[role].filter(dep =>
-        dep.target === task.target &&
-        dep.signal === task.signal &&
-        (task.endpoint ? dep.endpoint === task.endpoint : true) &&
-        (task.functionId ? dep.functionId === task.functionId : true),
+      if (!isHuntingAgentRole(role)) return false
+      const candidates = plan.lanes[role].filter(dependency =>
+        dependency.target === task.target &&
+        dependency.signal === task.signal &&
+        (task.endpoint ? dependency.endpoint === task.endpoint : true) &&
+        (task.functionId ? dependency.functionId === task.functionId : true),
       )
-      return candidates.length === 0 || candidates.some(dep => completed.has(dep.id))
+      return candidates.length === 0 || candidates.some(dependency => completed.has(dependency.id))
     })
 
   for (const task of [...plan.tasks].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))) {

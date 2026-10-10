@@ -145,15 +145,10 @@ export async function recordAttemptLifecycle(
   )
 
   if(update.taskId){
-    const terminal=hypothesisStatus==="rejected" || hypothesisStatus==="blocked" ||
+    const terminal=hypothesisStatus==="rejected" ||
       (hypothesisStatus==="confirmed" && validation?.decision==="eligible")
-    await setAgentTaskState(
-      root,
-      target,
-      update.taskId,
-      terminal ? "completed" : "running",
-      attemptCount,
-    )
+    const taskState=hypothesisStatus==="blocked" ? "blocked" : terminal ? "completed" : "running"
+    await setAgentTaskState(root,target,update.taskId,taskState,attemptCount)
   }
 
   await markTested(root,target,[

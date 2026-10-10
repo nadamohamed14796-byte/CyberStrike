@@ -1,5 +1,6 @@
 agents:
   recon:
+    agent_id: web-application
     runtime: cyberstrike
     role: attack-surface-mapping
     purpose: >-
@@ -21,6 +22,7 @@ agents:
       - do_not_assume_scope_from_asset_relationships
 
   javascript:
+    agent_id: proxy-analyzer
     runtime: cyberstrike
     role: javascript-intelligence
     purpose: >-
@@ -45,6 +47,7 @@ agents:
       - do_not_report_unverified_patterns_as_findings
 
   api:
+    agent_id: web-application
     runtime: cyberstrike
     role: api-intelligence
     purpose: >-
@@ -69,6 +72,7 @@ agents:
       - respect_scope_and_rate_limits
 
   authorization:
+    agent_id: web-application
     runtime: cyberstrike
     role: authorization-analysis
     purpose: >-
@@ -93,6 +97,7 @@ agents:
       - do_not_infer_impact_from_identifier_presence_alone
 
   verifier:
+    agent_id: web-application
     runtime: cyberstrike
     role: evidence-verification
     purpose: >-
@@ -118,6 +123,7 @@ agents:
       - stop_when_sufficient_evidence_is_collected
 
   reporter:
+    agent_id: web-application
     runtime: cyberstrike
     role: professional-reporting
     purpose: >-

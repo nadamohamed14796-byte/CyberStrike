@@ -18,7 +18,7 @@ async function run(root:string,target:string,options:AutoDispatchOptions){
   if(!mission) return {enabled:true,started:false,reason:"mission not initialized"}
   const prepared=await prepareMultiAgentPlanFromTargetIntelligence(root,target)
   if(!prepared.plan.tasks.length) return {enabled:true,started:false,reason:"no routed tasks"}
-  return executePersistedDispatchWithNativeCyberStrike(root,target,{
+  const result=await executePersistedDispatchWithNativeCyberStrike(root,target,{
     limit:options.limit,
     agentBySkill:options.agentBySkill,
     agentByRole:options.agentByRole,
@@ -26,6 +26,7 @@ async function run(root:string,target:string,options:AutoDispatchOptions){
     parentSessionID:options.parentSessionID,
     model:options.model,
   })
+  return {...result,enabled:true,started:true}
 }
 
 export async function autoDispatchForTarget(
