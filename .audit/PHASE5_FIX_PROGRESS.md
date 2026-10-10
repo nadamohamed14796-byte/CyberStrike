@@ -6,8 +6,7 @@ Repository: `nadamohamed14796-byte/CyberStrike`
 Audit branch: `audit/full-repo-audit-2026-10-10`
 Pull request: https://github.com/nadamohamed14796-byte/CyberStrike/pull/23
 
-This document deliberately does **not** claim complete repository coverage. The pre-existing inventory reports 11,432 files and 8,676 directories, while `phase0_file_checklist.tsv` does not provide a reconciled per-file reviewed state and `PHASE2_BATCH01_src_foundational.md` claims 8,154 reviewed files but contains only a few individual file rows. Those artefacts disagree and cannot be used as evidence that 8,154 files received a file-by-file review. A reconciled 11,432-path checklist and one Phase 2 row per file are still outstanding.
-
+This document deliberately does **not** claim complete repository coverage. The recursive Git tree was reconciled for branch `audit/full-repo-audit-2026-10-10` at source SHA `66af27305c0a33f604c49eb18bf784d0126194c4`; the resulting snapshot has **11518 tracked paths** and **8684 directories**. The checklist has one row per path. Only **29 files** have individual Phase 2 rows (4 in Batch 1 and 25 in Batch 2); **11489 paths remain explicitly not reviewed**. This is a bounded partial audit, not an assertion that unvisited files are correct.
 ## Confirmed code paths examined and fixes pushed
 
 ### Session intake, scope and dispatch
@@ -52,13 +51,24 @@ A later run on commit `2f50c27d7320b697718ba91c3acf448e3571d804` still failed Hu
 
 Earlier typecheck on commit `a581aa7b32a96440ef785cba42a6f7b92c8c087f` reported only the `ParameterCandidate.location` union mismatch after the prior production/test fixes. The contract was aligned in `hunting-new/src/signals.ts` at commit `648e9d402103b5a48455b3c90c5bf8f90f1b5d0d`; however, the CI runs for that exact latest head are queued and must not be treated as verification. No local Bun install/build/typecheck was run from this environment; CI is the available execution evidence.
 
+
+## Latest verification snapshot (2026-10-10)
+
+Exact code head checked: `66af27305c0a33f604c49eb18bf784d0126194c4`.
+
+GitHub reports all **10/10 check runs succeeded** on that code head: Linux tests and unit tests, root typecheck, Hunting Layer tests/typecheck, skill-registry validation, repository integrity, CodeQL security alert gate (**“No new alerts in code changed by this pull request”**), CodeQL JavaScript/TypeScript analysis, CodeQL Python analysis, and PR standards.
+
+The two earlier incomplete-escaping alerts in `packages/cyberstrike/src/learning/update.ts` were fixed by escaping backslashes before pipes and adding a regression assertion in `packages/cyberstrike/test/learning/update.test.ts`. The GHAS gate had been `neutral` on `eadf417...` because the comparison workflow could not find a JS/TS configuration; on `66af273...` the gate is a real success and reports no new alerts.
+
+The audit-document commit created after this snapshot will trigger new CI; its exact-head status must be polled separately. Local build/test/start commands could not be run because a local checkout could not reach GitHub. CI is the available execution evidence; focused CI passes do not prove every CLI/UI/integration journey was run end-to-end.
+
 ## Known remaining audit work (not complete)
-- Reconcile inventory and produce a truthful per-path checklist; write an individual review row for every path before claiming any percentage of full coverage.
+- Continue file-by-file review of the 11489 explicit `not_reviewed` paths in `.audit/phase0_file_checklist.tsv`; mark a path reviewed only after its individual Phase 2 row is written.
 - Complete dependency/import graph, startup call chains, config/CI map, state lifecycle/race review and all core end-to-end workflow traces.
 - Finish per-file review of all workspaces, CLI/console/UI, SDK v1/v2/server/client, VS Code integration, Bun/Turbo/lock/config/patch files, workflows, docs, deployment configs and all skills.
 - Complete the secrets/credential audit, shell/path/URL construction review, tenant isolation analysis and all network-action scope gates. The current fixes are targeted, not proof that every action path has been reviewed.
-- Inspect remaining CI on the exact latest PR head: `test`, `typecheck`, `integrity-audit`, `hunting-layer`, `skills-audit`, `CodeQL`, and `pr-standards`. The PR must not be described as merge-ready unless every required check is green.
+- Recheck every required CI/security-gate result on the latest audit-document commit. The code head `66af273...` passed all 10 checks; this does not automatically apply to a later docs commit.
 - Run repository-level build/start and the defined core workflows on a runnable environment; no end-to-end “working” claim has been established by this pass.
 
 ## Review rule
-Only code actually inspected is listed above. Incidental or unvisited repository files are not assumed correct. Continue audit work in bounded directory batches and maintain a per-path reviewed/not-reviewed record.
+Only code actually inspected is listed above. Incidental or unvisited files are not assumed correct. Continue in bounded directory batches and maintain per-path status. Phase 0 is reconciled to the live branch tree; Phase 2 coverage remains partial.

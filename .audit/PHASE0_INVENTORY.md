@@ -1,61 +1,88 @@
-# Phase 0 — Full Repository Inventory
+# Phase 0 — Repository Inventory (reconciled branch snapshot)
 
-Generated: 2026-10-10 · Commit: a2574fa (shallow clone of `main`) · Branch: `audit/full-repo-audit-2026-10-10`
+- Repository: `https://github.com/nadamohamed14796-byte/CyberStrike`
+- Branch: `audit/full-repo-audit-2026-10-10`
+- Recursive Git tree SHA: `66af27305c0a33f604c49eb18bf784d0126194c4` (`truncated = false`); snapshot date: 2026-10-10 UTC.
+- The inventory includes `.audit/PHASE2_BATCH02_learning_hunting_tests.md`, the one new batch document to be committed with this refresh. Counts below are for that resulting snapshot; other paths are taken directly from the recursive Git tree.
+- Tracked paths only; untracked working-directory files and Git internals are not included.
 
-## Totals
+## Exact coverage counts
 
-- **Files (excluding `.git`):** 11,432
-- **Directories (excluding `.git`):** 8,676 (close to the ~11,504/~8,682 reference figures in the audit brief; exact match not expected since the live repo has moved since that estimate was written)
+- Tracked files: **11518**
+- Directories: **8684**
+- Tree entries after adding the Phase 2 document: **20202**
+- Files with individual Phase 2 rows: **29**
+- Explicitly not reviewed: **11489**
+- Coverage is **partial**. Inventory inclusion does not count as file review; a file is reviewed only when an individual row exists in a Phase 2 batch.
 
-## File counts by top-level directory
+## File counts by top-level directory and extension
 
-| Directory | Files | Notes |
+| Top-level path | Files | Extension counts |
 |---|---:|---|
-| `.cyberstrike/` | 8,156 | **Not application source.** This is CyberStrike's own skill/knowledge library — 8,126 `SKILL.md` files organized under `.cyberstrike/skill/<category>/<skill-name>/SKILL.md`, each a short YAML-frontmatter + markdown routing doc for the agent's offensive-security skill system. Near-templated structure (frontmatter: name/description/category/tags/chains_with/files, then a short "Routing" + "Evidence gate" body). |
-| `packages/` | 3,010 | **The actual monorepo source.** 17 sub-packages: `app`, `console`, `containers`, `cyberstrike`, `enterprise`, `extensions`, `function`, `hackbrowser`, `identity`, `plugin`, `script`, `sdk`, `slack`, `ui`, `util` (+2 more — see breakdown below). Real `.ts`/`.tsx` logic: ~1,122 files. `ui/` alone is 1,451 files, dominated by SVG icon assets. |
-| `.github/` | 31 | Workflows, issue/PR templates, CI config |
-| `hunting-new/` | 145 | Needs Phase 1 classification — not yet inspected |
-| `sdks/` | 12 | VS Code SDK per the brief's `sdks/vscode/` path |
-| `script/` | 14 | Root-level build/release scripts |
-| `assets/`, `docs/`, `github/`, `infra/`, `nix/` | 5/5/9/5/5 | Small, static |
-| `patches/` | 3 | Includes `square-logos.patch` content (one of the 3) |
-| `.vscode/`, `.husky/`, `.signpath/`, `.claude/`, `specs/` | 2/1/1/1/1 | Config/policy only |
-| Root-level loose files | 25 | `package.json`, `turbo.json`, `tsconfig.json`, `bunfig.toml`, `sst.config.ts`, `sst-env.d.ts`, `flake.nix`/`flake.lock`, `bun.lock`, `install`, `square-logos.patch`, `LICENSE`, and the `*.md` docs (`AGENTS.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `IMPLEMENTATION_STATUS.md`, `OPERATIONS.md`, `SECURITY.md`, `STATS.md`, `TROUBLESHOOTING.md`) |
+| `.cyberstrike` | 8156 | .md=8126; .txt=12; .py=8; .json=4; .sh=2; .gitignore=1; .gz=1; .jsonc=1; .ts=1 |
+| `packages` | 3083 | .svg=1213; .ts=855; .tsx=272; .json=153; .css=100; .sql=92; .txt=84; .png=82; .woff2=66; .aac=45; .py=38; .md=17; .html=11; .gitignore=10; .ico=8; .otf=7; (no extension)=7; .js=4; .ttf=4; .webmanifest=4; .toml=3; .mjs=2; .mp4=2; .zip=2; .example=1; .lock=1 |
+| `hunting-new` | 147 | .ts=131; .yaml=6; .md=5; .json=3; .py=2 |
+| `.github` | 31 | .yml=28; .md=1; .td=1; (no extension)=1 |
+| `(root)` | 25 | .md=10; .json=3; .lock=2; .ts=2; (no extension)=2; .editorconfig=1; .gitignore=1; .nix=1; .patch=1; .prettierignore=1; .toml=1 |
+| `sdks` | 15 | .json=2; .mjs=2; .svg=2; .ts=2; (no extension)=2; .gitignore=1; .js=1; .lock=1; .png=1; .vscodeignore=1 |
+| `script` | 14 | .ts=11; (no extension)=2; .sh=1 |
+| `.audit` | 9 | .md=6; .json=1; .py=1; .tsv=1 |
+| `github` | 9 | .json=2; .ts=2; (no extension)=2; .gitignore=1; .lock=1; .yml=1 |
+| `assets` | 5 | .svg=2; .webp=2; .png=1 |
+| `docs` | 5 | .md=5 |
+| `infra` | 5 | .ts=5 |
+| `nix` | 5 | .nix=2; .ts=2; .json=1 |
+| `patches` | 3 | .patch=3 |
+| `.vscode` | 2 | .json=2 |
+| `.claude` | 1 | .json=1 |
+| `.husky` | 1 | (no extension)=1 |
+| `.signpath` | 1 | .yml=1 |
+| `specs` | 1 | .md=1 |
 
-No `node_modules/` present (good — not inflating the count).
+## Whole-repository extension totals
 
-## File counts by extension (whole repo)
+| Extension | Files |
+|---|---:|
+| `.md` | 8171 |
+| `.svg` | 1217 |
+| `.ts` | 1011 |
+| `.tsx` | 272 |
+| `.json` | 172 |
+| `.css` | 100 |
+| `.txt` | 96 |
+| `.sql` | 92 |
+| `.png` | 84 |
+| `.woff2` | 66 |
+| `.py` | 49 |
+| `.aac` | 45 |
+| `.yml` | 30 |
+| `(no extension)` | 17 |
+| `.gitignore` | 14 |
+| `.html` | 11 |
+| `.ico` | 8 |
+| `.otf` | 7 |
+| `.yaml` | 6 |
+| `.js` | 5 |
+| `.lock` | 5 |
+| `.mjs` | 4 |
+| `.patch` | 4 |
+| `.toml` | 4 |
+| `.ttf` | 4 |
+| `.webmanifest` | 4 |
+| `.nix` | 3 |
+| `.sh` | 3 |
+| `.mp4` | 2 |
+| `.webp` | 2 |
+| `.zip` | 2 |
+| `.editorconfig` | 1 |
+| `.example` | 1 |
+| `.gz` | 1 |
+| `.jsonc` | 1 |
+| `.prettierignore` | 1 |
+| `.td` | 1 |
+| `.tsv` | 1 |
+| `.vscodeignore` | 1 |
 
-| Ext | Count | Primarily in |
-|---|---:|---|
-| `.md` | 8,165 | 8,126 in `.cyberstrike/skill/`; 17 in `packages/`; rest at root/docs |
-| `.svg` | 1,209 | `packages/ui/` icon set |
-| `.ts` | 1,004 | `packages/` |
-| `.tsx` | 272 | `packages/` (console, ui, app) |
-| `.json` | 171 | config + data |
-| `.css` | 100 | `packages/ui/` |
-| `.txt` | 96 | mixed (some under `.cyberstrike`) |
-| `.sql` | 92 | likely `packages/cyberstrike` or `console` migrations |
-| `.png` | 58 | assets |
-| `.py` | 48 | scripts/tooling |
-| `.aac`, `.woff2`, `.otf`, `.ttf` | 45/40/7/4 | fonts/audio assets |
-| `.yml`/`.yaml` | 36 | CI + config |
-| `.html`, `.js`, `.mjs`, `.sh`, `.toml`, `.patch`, `.nix`, `.lock` | ≤14 each | misc |
-| no extension | 15 | e.g. `install`, `.editorconfig`-style dotfiles |
+## Checklist contract
 
-## Scoping call (flagged for the user, not decided unilaterally)
-
-The brief's Phase 2 wants a bugs/logic row **per file**. Applied literally to all 11,432 files, **71% of that total (8,126 files) is the `.cyberstrike/skill/` content library** — short, near-identical markdown routing stubs, not executable logic. A per-file "off-by-one / unhandled promise / missing await" logic review doesn't apply to them; the meaningful QA for that corpus is schema/consistency validation (frontmatter completeness, broken `chains_with` references, duplicate skill names, dangling `files:` references) done as a batch, not 8,126 individual bug rows.
-
-**Proposed split (pending your confirmation):**
-1. **`packages/` (3,010 files, ~1,122 of them real `.ts`/`.tsx` logic)** — full Phase 2 file-by-file treatment as specified: purpose, exports, relations, logic trace, bugs.
-2. **`.cyberstrike/skill/` (8,126 `SKILL.md` files)** — automated structural audit (frontmatter schema, broken cross-references, orphaned `chains_with` targets, duplicate names) across the whole set, reported as an issue table, not 8,126 narrative rows.
-3. **Everything else (296 files: `.github/`, `hunting-new/`, `sdks/`, `script/`, `assets/`, `docs/`, `infra/`, `nix/`, `patches/`, `specs/`, root configs)** — full Phase 2 file-by-file treatment.
-
-This still leaves ~3,306 files for genuine per-file narrative rows, which will be worked in bounded batches (one package at a time) across multiple passes, per the brief's own large-repo checkpoint protocol — not attempted in one response.
-
-## Checklist
-
-Full per-file list persisted at [`.audit/phase0_file_checklist.tsv`](./phase0_file_checklist.tsv) (status column: `not_reviewed` / `reviewed`), 11,432 rows, committed to this branch so progress survives across sessions.
-
-**Reviewed so far: 0 / 11,432.**
+`.audit/phase0_file_checklist.tsv` contains one row per tracked file with `reviewed` or `not_reviewed` and a Phase 2 batch reference where applicable. It complements but does not replace per-file narrative. Regenerate after path-changing commits.
