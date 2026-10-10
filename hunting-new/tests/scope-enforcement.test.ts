@@ -91,4 +91,28 @@ describe("scope enforcement boundaries", () => {
     }
   })
 
+  test("relative endpoints are checked against path-restricted scope rules", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "cyberstrike-path-scope-"))
+    const target = "path-scope.example"
+    try {
+      await initMission(root, target, [{ value: target, path: "/api/*" }])
+      const context = {
+        taskId: "path-scope-test",
+        target,
+        endpoint: "/admin",
+        primarySkill: "authorization",
+        resolvedSkills: ["authorization"],
+        strategyHints: [],
+        signal: "object_identifier_detected",
+        signalConfidence: 0.9,
+        reason: "relative endpoint path-scope regression test",
+      } as AgentTaskExecutionContext
+      const result = await new NativeCyberStrikeExecutor({ root }).execute(context)
+      expect(result.state).toBe("blocked")
+      expect(result.resultSummary).toContain("https://path-scope.example/admin")
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
 })
