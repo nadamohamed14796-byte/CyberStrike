@@ -95,3 +95,22 @@ test("keeps distinct parameter identities for the same request and endpoint", ()
   ])
   expect(parameterSignals.map(item => item.metadata?.name)).toEqual(["user_id", "tenant_id"])
 })
+
+test("handles requests without an explicit method during API correlation", () => {
+  const signals = signalsFromCorrelation({
+    target: "app.example",
+    requests: [{
+      id: "request-without-method",
+      url: "https://app.example/api/profile",
+      path: "/api/profile",
+      observedAt: 1,
+      source: "observed",
+    }],
+    responses: [],
+    jsAssets: [],
+    functions: [],
+    edges: [],
+  })
+
+  expect(signals.length).toBeGreaterThan(0)
+})
