@@ -308,6 +308,7 @@ export interface AgentTaskExecutionContext {
   jsAssetUrls?:string[]
   functionIds?:string[]
   accountLabel?:string
+  relatedAccountLabels?:string[]
   attemptId?:string
   reason:string
 }
@@ -435,7 +436,7 @@ export async function enrichAgentTaskExecutionContext(
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
-  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, recommendedAgent:task.recommendedAgent, referenceIds:task.referenceIds, referenceUrls:task.referenceUrls, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, responseId:task.responseId, jsAssetIds:task.jsAssetId ? [task.jsAssetId] : undefined, accountLabel:task.accountLabel, parameterId:task.parameterId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
+  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, recommendedAgent:task.recommendedAgent, referenceIds:task.referenceIds, referenceUrls:task.referenceUrls, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, responseId:task.responseId, jsAssetIds:task.jsAssetId ? [task.jsAssetId] : undefined, accountLabel:task.accountLabel, relatedAccountLabels:task.relatedAccountLabels, parameterId:task.parameterId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
 }
 
 export async function prepareSkillExecutionInvocation(
