@@ -94,8 +94,8 @@ export async function promoteValidatedHypothesis(
   const reportFile=await writeReport(root,validated,{
     asset:target,
     endpoint:input.endpoint ?? undefined,
-    root_cause:input.rootCause,
-    steps:input.reproduction,
+    root_cause:input.rootCause ?? "Not captured during validation",
+    steps:input.reproduction ?? "Not captured during validation",
   })
   await createReportRecord(root,validated,reportFile)
   return {finding:validated,reportable:true,missing:[],action:"create",reason:"validated finding passed report evidence gate and report was created"}
