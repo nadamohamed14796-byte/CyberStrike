@@ -294,7 +294,7 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
         (task.accountLabel ? dep.accountLabel === task.accountLabel : true) &&
         (task.parameterId ? dep.parameterId === task.parameterId : true),
       )
-      return candidates.length === 0 || candidates.some(dep => completed.has(dep.id))
+      return candidates.length > 0 && candidates.some(dep => completed.has(dep.id))
     })
 
   for (const task of [...plan.tasks].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))) {
