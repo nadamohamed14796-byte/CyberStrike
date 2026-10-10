@@ -1382,7 +1382,7 @@ export const SessionRoutes = lazy(() =>
               url:normalized.origin + normalized.normalizedPath,
               host:normalized.host,
               path:normalized.normalizedPath,
-              credentialId,
+              credentialId:credentialID,
               accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
               observedAt:req.time.created,
             },
