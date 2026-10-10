@@ -70,6 +70,39 @@ function rulePathMatches(target:ParsedTarget,rule:ScopeRule):boolean{
   return globMatch(target.path||"/",rule.path)
 }
 
+/**
+ * Resolve an observed endpoint relative to the target's origin. Scope rules
+ * with path constraints must see the final URL, not a bare path that can skip
+ * host/path validation at a lower-level executor.
+ */
+export function resolveScopeUrl(target:string,candidate:string):string|null{
+  const value=candidate.trim()
+  if(!value)return null
+  try{
+    const baseValue=target.includes("://")?target:"https://"+target
+    const base=new URL(baseValue)
+    const url=/^[a-z][a-z0-9+.-]*:\/\//i.test(value)
+      ? new URL(value)
+      : new URL(value,base.origin+"/")
+    if(url.protocol!=="http:" && url.protocol!=="https:")return null
+    return url.toString()
+  }catch{
+    return null
+  }
+}
+
+/**
+ * Confirm that the target's host/protocol/port is authorized without requiring
+ * the bare target root (/) to match a path-restricted allow rule. Path-scoped
+ * exclusions stay path-specific and are enforced by checkScope on each URL.
+ */
+export function checkTargetScope(target:string,rules:ScopeRule[]):ScopeDecision{
+  const hostRules=rules
+    .filter(rule=>!(rule.exclude && rule.path))
+    .map(rule=>({...rule,path:undefined}))
+  return checkScope(target,hostRules)
+}
+
 export function checkScope(target:string,rules:ScopeRule[]):ScopeDecision{
   const parsed=parseTarget(target)
   if(!parsed)return{allowed:false,normalized:"",reason:"empty-target"}
