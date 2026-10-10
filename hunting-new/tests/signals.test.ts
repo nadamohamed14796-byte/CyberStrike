@@ -49,6 +49,7 @@ describe("API documentation differential signals", () => {
       requests:[
         {id:"js-1",url:"https://example.test/users",method:"GET",path:"/users",observedAt:1,source:"js"},
         {id:"obs-1",url:"https://example.test/admin",method:"POST",path:"/admin",observedAt:2,source:"observed"},
+        {id:"obs-2",url:"https://example.test/billing",method:"GET",path:"/billing",observedAt:3,source:"observed"},
       ],
       responses:[],
       jsAssets:[],
@@ -60,6 +61,6 @@ describe("API documentation differential signals", () => {
       edges:[],
     })
     expect(engine.list().some(x=>x.signal==="api_method_mismatch")).toBe(true)
-    expect(engine.list().some(x=>x.signal==="endpoint_discovery" && x.endpoint==="https://example.test/admin")).toBe(true)
+    expect(engine.list().some(x=>x.signal==="endpoint_discovery" && x.endpoint==="https://example.test/billing")).toBe(true)
   })
 })
