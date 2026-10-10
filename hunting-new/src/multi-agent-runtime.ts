@@ -1,6 +1,6 @@
 import { buildMultiAgentPlan, buildMultiAgentPlanFromRegistry, dispatchAgentTasks, type MultiAgentPlan } from "./multi-agent-planner"
 import { recordAttemptLifecycle, type AttemptLifecycleResult } from "./attempt-lifecycle"
-import { persistAgentPlan, recoverStaleAgentTasks } from "./agent-task-runtime"
+import { persistAgentPlan, recoverStaleAgentTasks, claimAgentTask, finishAgentTask, setAgentTaskState } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import { signalEngineFromCorrelation, type SignalEngine, type SkillRule } from "./signals"
@@ -118,7 +118,6 @@ export async function prepareMultiAgentPlan(
 }
 
 import { loadTaskStates, saveTaskState, transitionTaskState } from "./task-state-store"
-import { claimAgentTask, finishAgentTask, setAgentTaskState } from "./agent-task-runtime"
 
 export async function dispatchPersistedTasks(
   root:string,
