@@ -514,7 +514,9 @@ export async function executeAndRecordDispatchedTask(
   }
 
   const validationEligible=lifecycle.validation?.decision==="eligible"
-  const promotionResolved=!validationEligible || Boolean(promotion?.reportable) || promotion?.action==="skip"
+  // A confirmed hypothesis is not a terminal finding while its evidence still
+  // fails validation. Keep the task alive so bounded attempts can continue.
+  const promotionResolved=validationEligible && (Boolean(promotion?.reportable) || promotion?.action==="skip")
   const terminal=effectiveState==="blocked" ||
     lifecycle.hypothesisStatus==="rejected" ||
     (lifecycle.hypothesisStatus==="confirmed" && promotionResolved)
@@ -569,7 +571,7 @@ export async function executeTaskUntilTerminal(
     const execution=await executeAndRecordDispatchedTask(root,plan,taskId,executor)
     results.push(execution.result)
     const eligible=execution.lifecycle?.validation?.decision==="eligible"
-    const promotionResolved=!eligible || Boolean(execution.promotion?.reportable) || execution.promotion?.action==="skip"
+    const promotionResolved=eligible && (Boolean(execution.promotion?.reportable) || execution.promotion?.action==="skip")
     if(
       execution.result.state==="blocked" ||
       execution.lifecycle?.hypothesisStatus==="rejected" ||
