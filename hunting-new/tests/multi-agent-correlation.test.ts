@@ -77,6 +77,45 @@ describe("multi-agent correlation links", () => {
     expect(batch.tasks.map(item => item.id)).toContain("validator-a")
   })
 
+  test("does not satisfy a validator dependency using another asset identity", () => {
+    const hunterB: AgentTask = {
+      ...task("hunter-b", "primary-hunter", "account-b"),
+      requestId: undefined,
+      accountLabel: undefined,
+      parameterId: undefined,
+      endpoint: undefined,
+      jsAssetId: "asset-b",
+    }
+    const validatorA: AgentTask = {
+      ...task("validator-a", "validator", "account-a"),
+      requestId: undefined,
+      accountLabel: undefined,
+      parameterId: undefined,
+      endpoint: undefined,
+      jsAssetId: "asset-a",
+    }
+    const plan: MultiAgentPlan = {
+      target: "app.example",
+      mode: "targeted",
+      reason: "test",
+      tasks: [hunterB, validatorA],
+      lanes: {
+        "primary-hunter": [hunterB],
+        validator: [validatorA],
+        correlator: [],
+        reviewer: [],
+      },
+    }
+
+    const batch = dispatchAgentTasks(plan, new Map([
+      ["hunter-b", "completed"],
+      ["validator-a", "pending"],
+    ]), 4)
+
+    expect(batch.tasks.map(item => item.id)).not.toContain("validator-a")
+    expect(batch.dependencyBlocked.map(item => item.id)).toContain("validator-a")
+  })
+
   test("keeps JavaScript asset signals separate in the planner", () => {
     const engine = new SignalEngine()
     engine.emit({
