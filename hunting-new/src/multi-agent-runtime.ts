@@ -4,7 +4,6 @@ import { persistAgentPlan, recoverStaleAgentTasks } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import { signalEngineFromCorrelation, type SignalEngine, type SkillRule } from "./signals"
-import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
 import { loadTargetIntelligence } from "./target-intelligence"
@@ -25,6 +24,7 @@ import { runScopedParameterDiscovery, type DiscoveryTool } from "./external-tool
 import { ensureAttemptEvidence } from "./evidence-store"
 import { loadWriteups, strategyHintsFromWriteups } from "./writeup-store"
 import { indexSkillReferences, referencesForSkills, markReferencesUsed } from "./reference-store"
+import { ledgers } from "./ledger"
 
 export interface PreparedMultiAgentPlan {
   plan:MultiAgentPlan
