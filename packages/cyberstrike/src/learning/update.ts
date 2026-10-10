@@ -13,6 +13,18 @@ function normalize(value: string) {
   return value.toLowerCase().replace(/\s+/g, " ").trim()
 }
 
+// Prefer an active write-up over an archived/copy path when duplicate content
+// exists in more than one location.
+function writeupPathPenalty(relativePath: string) {
+  const segments = relativePath.replace(/\\/g, "/").split("/")
+  let penalty = segments.reduce((score, segment) =>
+    score + (["archive", "archives", "backup", "backups", "old", "duplicates"].includes(segment.toLowerCase()) ? 10 : 0),
+  0)
+  const basename = path.basename(relativePath, path.extname(relativePath)).toLowerCase().replace(/[-_.]+/g, " ")
+  if (/\b(duplicate|copy|backup|archived?)\b/.test(basename)) penalty += 10
+  return penalty
+}
+
 function cleanTitle(value: string) {
   return value.replace(/^\s*#+\s*/, "").replace(/\s+/g, " ").replace(/[\r\n]/g, " ").replace(/[\x60*_]/g, "").trim().slice(0, 180)
 }
@@ -71,7 +83,7 @@ export async function update(writeupsDir: string, notesDir?: string) {
   const root = path.resolve(writeupsDir)
   const rootReal = await realpath(root)
   const entries: Writeup[] = []
-  const seen = new Set<string>()
+  const seen = new Map<string, number>()
 
   for (const relativePath of await markdownFiles(root)) {
     const absolutePath = path.resolve(root, relativePath)
@@ -88,18 +100,32 @@ export async function update(writeupsDir: string, notesDir?: string) {
     if (isNavigationDocument(relativePath, title, content)) continue
     const category = categoryOf(title + " " + content.slice(0, 12000))
     const fingerprint = createHash("sha256").update(normalize(title) + "|" + normalize(content.slice(0, 4000))).digest("hex")
-    if (seen.has(fingerprint)) continue
-    seen.add(fingerprint)
-    entries.push({ title, category, path: relativePath.split(path.sep).join("/"), fingerprint })
+    const relative = relativePath.split(path.sep).join("/")
+    const existingIndex = seen.get(fingerprint)
+    if (existingIndex !== undefined) {
+      const existing = entries[existingIndex]
+      if (existing && writeupPathPenalty(relative) < writeupPathPenalty(existing.path)) {
+        entries[existingIndex] = { title, category, path: relative, fingerprint }
+      }
+      continue
+    }
+    seen.set(fingerprint, entries.length)
+    entries.push({ title, category, path: relative, fingerprint })
   }
 
   const byCategory: Record<string, number> = {}
   for (const entry of entries) byCategory[entry.category] = (byCategory[entry.category] ?? 0) + 1
-  const sortedCategories = Object.entries(byCategory).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
   const listedEntries = entries.slice(0, MAX_BRIEFING_ENTRIES)
   const personalFindings = notesDir ? await findings(path.resolve(notesDir)) : []
   const fpNotes = notesDir ? await falsePositives(path.resolve(notesDir)) : []
   const personalClasses = acceptedClasses(personalFindings)
+  const priorityCounts = { ...byCategory }
+  for (const [category, count] of Object.entries(personalClasses)) {
+    priorityCounts[category] = (priorityCounts[category] ?? 0) + count
+  }
+  const sortedCategories = Object.entries(priorityCounts).sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+  )
 
   const lines = [
     "# CyberStrike Research Briefing",
