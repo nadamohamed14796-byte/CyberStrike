@@ -53,3 +53,31 @@ describe("reference context", () => {
     expect(result.prompt).toContain("reference_urls: https://portswigger.net/web-security/access-control")
   })
 })
+
+describe("configured agent profile propagation", () => {
+  test("passes configured purpose, inputs, outputs, and constraints to the selected agent prompt", () => {
+    const result=buildSkillExecutionInvocation({
+      taskId:"task-agent-profile",target:"example.test",role:"primary-hunter",
+      primarySkill:"attack-idor-automation",recommendedAgent:"web-application",
+      resolvedSkills:["attack-idor-automation"],strategyHints:[],
+      signal:"object_identifier_detected",signalConfidence:0.9,reason:"profile routing test",
+    },{
+      configuredAgentProfiles:{
+        authorization:{
+          name:"authorization",agentId:"web-application",runtime:"cyberstrike",
+          role:"authorization-analysis",
+          purpose:"Verify object-level and tenant-boundary authorization.",
+          inputs:["identity_and_role_context","object_relationships"],
+          outputs:["authorization_test_results"],
+          constraints:["require_authorized_test_accounts","preserve_evidence_provenance"],
+        },
+      },
+    })
+    expect(result.agent).toBe("web-application")
+    expect(result.prompt).toContain("configured_agent_profile: authorization")
+    expect(result.prompt).toContain("configured_agent_purpose: Verify object-level and tenant-boundary authorization.")
+    expect(result.prompt).toContain("configured_agent_inputs: identity_and_role_context, object_relationships")
+    expect(result.prompt).toContain("configured_agent_outputs: authorization_test_results")
+    expect(result.prompt).toContain("configured_agent_constraints: require_authorized_test_accounts; preserve_evidence_provenance")
+  })
+})

@@ -3,6 +3,16 @@ import { readJson } from "./store"
 
 export type HuntingRole = "primary-hunter" | "validator" | "correlator" | "reviewer"
 export interface ConfiguredScopeRule { value: string; path?: string; protocols?: string[]; ports?: number[]; exclude?: boolean }
+export interface ConfiguredAgentProfile {
+  name: string
+  agentId: string
+  runtime: string
+  role: string
+  purpose: string
+  inputs: string[]
+  outputs: string[]
+  constraints: string[]
+}
 export interface ConfiguredSource {
   name: string; url: string; enabled: boolean; type?: string; frequency?: string; trust_level?: string; sourcePath: string
 }
@@ -18,6 +28,7 @@ export interface HuntingRuntimeConfiguration {
     neverStoreSecrets: boolean; rewriteSkills: boolean
   }
   agentByRole: Partial<Record<HuntingRole,string>>
+  agentProfiles: Record<string,ConfiguredAgentProfile>
   researchSources: ConfiguredSource[]; referenceSources: ConfiguredSource[]; registry: RuntimeRegistry | null
 }
 async function readText(file:string):Promise<string>{try{return await Bun.file(file).text()}catch{return ""}}
@@ -87,6 +98,46 @@ function namedSection(text:string,key:string):Map<string,Record<string,string>>{
   }
   return result
 }
+function parseAgentProfiles(text:string):Record<string,ConfiguredAgentProfile>{
+  const profiles:Record<string,ConfiguredAgentProfile>={}
+  let current:ConfiguredAgentProfile|undefined
+  let currentField=""
+  for(const line of section(text,"agents").split(/\r?\n/)){
+    const header=line.match(/^  ([A-Za-z0-9_-]+):\s*$/)
+    if(header){
+      current={
+        name:header[1],agentId:header[1],runtime:"",role:"",purpose:"",
+        inputs:[],outputs:[],constraints:[],
+      }
+      profiles[current.name]=current
+      currentField=""
+      continue
+    }
+    if(!current)continue
+    const field=line.match(/^    ([A-Za-z0-9_-]+):\s*(.*?)\s*$/)
+    if(field){
+      currentField=field[1]
+      const value=field[2].replace(/\s+#.*$/,"").trim().replace(/^["']|["']$/g,"")
+      if(currentField==="agent_id")current.agentId=value||current.name
+      else if(currentField==="runtime")current.runtime=value
+      else if(currentField==="role")current.role=value
+      else if(currentField==="purpose")current.purpose=/^[>|]/.test(value)?"":value
+      else if(currentField==="inputs"||currentField==="outputs"||currentField==="constraints"){
+        current[currentField]=parseInlineList(value)
+      }
+      continue
+    }
+    const item=line.match(/^      -\s*(.*?)\s*$/)
+    if(item&&(currentField==="inputs"||currentField==="outputs"||currentField==="constraints")){
+      current[currentField].push(item[1].trim().replace(/^["']|["']$/g,""))
+      continue
+    }
+    if(currentField==="purpose"&&line.trim()&&indentation(line)>=6){
+      current.purpose=(current.purpose+" "+line.trim()).trim()
+    }
+  }
+  return profiles
+}
 function parseScopeRule(record:Record<string,string>,forceExclude=false):ConfiguredScopeRule|null{
   const value=record.value??record.host??""
   if(!value)return null
@@ -118,10 +169,10 @@ export async function loadHuntingRuntimeConfiguration(root:string):Promise<Hunti
   const contextPolicy=section(policiesText,"context")
   const rules=listRecords(scopeBlock,"rules").flatMap(record=>{const rule=parseScopeRule(record);return rule?[rule]:[]})
   const exclusions=listRecords(scopeBlock,"exclusions").flatMap(record=>{const rule=parseScopeRule(record,true);return rule?[rule]:[]})
-  const agentSections=namedSection(agentsText,"agents")
+  const agentProfiles=parseAgentProfiles(agentsText)
   const agentByRole:Partial<Record<HuntingRole,string>>={}
   const roleSources:Array<[HuntingRole,string]>=[["primary-hunter","recon"],["validator","verifier"],["correlator","javascript"],["reviewer","reporter"]]
-  for(const [role,sectionName] of roleSources){const agentId=agentSections.get(sectionName)?.agent_id;if(agentId)agentByRole[role]=agentId}
+  for(const [role,sectionName] of roleSources){const agentId=agentProfiles[sectionName]?.agentId;if(agentId)agentByRole[role]=agentId}
   const registry=await readJson<RuntimeRegistry|null>(path.join(root,"runtime","registry","registry.json"),null)
   return {
     scope:{mode:scalar(scopeBlock,"mode","explicit"),unknownTarget:scalar(scopeBlock,"unknown_target","block"),rules,exclusions},
@@ -137,6 +188,7 @@ export async function loadHuntingRuntimeConfiguration(root:string):Promise<Hunti
       rewriteSkills:bool(learningPolicy,"rewrite_skills",false),
     },
     agentByRole,
+    agentProfiles,
     researchSources:parseSources(sourcesText,path.join(configDir,"sources.yaml")),
     referenceSources:parseSources(referencesText,path.join(configDir,"reference-sources.yaml")),
     registry,

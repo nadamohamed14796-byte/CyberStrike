@@ -23,6 +23,10 @@ describe("runtime configuration integration", () => {
       ].join("\n"))
       await writeFile(path.join(root, "config", "agents.yaml"), [
         "agents:", "  recon:", "    agent_id: explore", "    runtime: cyberstrike",
+        "    role: attack-surface-mapping", "    purpose: >-",
+        "      Discover authorized assets and routes.", "    inputs:",
+        "      - scope_context", "      - target_context", "    outputs:",
+        "      - discovered_assets", "    constraints:", "      - respect_scope_rules",
         "  javascript:", "    agent_id: proxy-analyzer", "    runtime: cyberstrike",
         "  verifier:", "    agent_id: general", "    runtime: cyberstrike",
         "  reporter:", "    agent_id: general", "    runtime: cyberstrike",
@@ -42,6 +46,10 @@ describe("runtime configuration integration", () => {
       }])
       expect(config.agentByRole["primary-hunter"]).toBe("explore")
       expect(config.agentByRole.correlator).toBe("proxy-analyzer")
+      expect(config.agentProfiles.recon.purpose).toContain("Discover authorized assets and routes.")
+      expect(config.agentProfiles.recon.inputs).toEqual(["scope_context", "target_context"])
+      expect(config.agentProfiles.recon.outputs).toEqual(["discovered_assets"])
+      expect(config.agentProfiles.recon.constraints).toEqual(["respect_scope_rules"])
       expect(config.researchSources.some(source => source.name === "test-feed" && source.enabled)).toBe(true)
       expect(config.referenceSources.some(source => source.name === "test-reference")).toBe(true)
     } finally { await rm(root, { recursive: true, force: true }) }

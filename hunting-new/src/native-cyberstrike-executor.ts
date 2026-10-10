@@ -61,6 +61,7 @@ export class NativeCyberStrikeExecutor implements AgentTaskExecutor {
       agentBySkill:this.options.agentBySkill,
       agentByRole:this.options.agentByRole,
       configuredAgentByRole:config.agentByRole,
+      configuredAgentProfiles:config.agentProfiles,
       defaultAgent:this.options.defaultAgent,
     })
     const finalScope=await checkActiveScope()
