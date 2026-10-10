@@ -73,6 +73,7 @@ describe("reference context", () => {
       parameterName: "invoice_id",
       parameterLocation: "query",
       accountLabel: "account-a",
+      relatedAccountLabels: ["account-b"],
       jsAssetIds: ["asset-a"],
       jsAssetUrls: ["https://example.test/assets/app.js"],
       functionIds: ["function-a"],
@@ -87,6 +88,8 @@ describe("reference context", () => {
     expect(result.prompt).toContain("response_status: 200")
     expect(result.prompt).toContain("parameter_name: invoice_id")
     expect(result.prompt).toContain("account_label: account-a")
+    expect(result.prompt).toContain("related_account_labels: account-b")
+    expect(result.relatedAccountLabels).toEqual(["account-b"])
     expect(result.prompt).toContain("js_asset_urls: https://example.test/assets/app.js")
     expect(result.prompt).toContain("function_ids: function-a")
   })
