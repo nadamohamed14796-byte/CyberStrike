@@ -18,6 +18,7 @@ import { Request } from "../../session/request"
 import { Observation } from "../../session/observation"
 import { CoverageNote } from "../../session/coverage-note"
 import { Normalize } from "../../session/normalize"
+import type { ParamSlot } from "../../session/normalize/types"
 import { IngestSummary } from "../../session/ingest-summary"
 import { IngestQueue } from "../../session/ingest-queue"
 import { WebCredential } from "../../session/web/web-credential"
@@ -352,6 +353,7 @@ async function feedHuntingLayerFromRequest(input:{
   pageUrl?:string
   jsAssetIds?:string[]
   functionIds?:string[]
+  observedParams?:ParamSlot[]
 }):Promise<void>{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
   try{
@@ -365,6 +367,7 @@ async function feedHuntingLayerFromRequest(input:{
       pageUrl:input.pageUrl,
       jsAssetIds:input.jsAssetIds,
       functionIds:input.functionIds,
+      observedParams:input.observedParams,
     })
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
       const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
@@ -1304,6 +1307,7 @@ export const SessionRoutes = lazy(() =>
                 observedAt:Date.now(),
               },
               pageUrl:body.page_url,
+              observedParams:normalized.observedParams,
               response:body.response ? {
                 id:"obs_"+Bun.hash([
                   sessionID,
@@ -1387,6 +1391,7 @@ export const SessionRoutes = lazy(() =>
               observedAt:req.time.created,
             },
             pageUrl:body.page_url,
+            observedParams:normalized.observedParams,
             response:body.response ? {
               id:req.id+":response",
               status:body.response.status,
@@ -1483,6 +1488,7 @@ export const SessionRoutes = lazy(() =>
                       observedAt:req.time.created,
                     } : undefined,
                     functionIds:[learnedFunction.id],
+                    observedParams:normalized.observedParams,
                   })
                 }
                 const model = body.model ?? (await SessionPrompt.lastModel(sessionID))
