@@ -8,6 +8,9 @@ describe("skill reference index", () => {
   test("indexes references and tracks usage without touching skills", async () => {
     const root=await mkdtemp(path.join(tmpdir(),"cyberstrike-ref-"))
     try{
+      await mkdir(path.join(root,"config"),{recursive:true})
+      // Keep this unit test isolated from repository-default reference sources.
+      await writeFile(path.join(root,"config","reference-sources.yaml"),"sources: []\n")
       const skillDir=path.join(root,"skills","idor")
       await mkdir(skillDir,{recursive:true})
       const skillFile=path.join(skillDir,"SKILL.md")

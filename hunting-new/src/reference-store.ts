@@ -41,7 +41,13 @@ function referenceFile(root:string){
 
 async function configuredGlobalReferences(root:string):Promise<Array<{name:string;url:string;sourcePath:string}>>{
   const config=await loadHuntingRuntimeConfiguration(root)
-  const sources=[...config.referenceSources,...config.researchSources.filter(source=>source.enabled)]
+  // An explicit reference catalog is an intentional override. Do not silently
+  // append the repository's full research feed list to a caller-supplied catalog.
+  const customCatalog=path.resolve(root,"config","reference-sources.yaml")
+  const isCustomCatalog=await Bun.file(customCatalog).exists()
+  const sources=isCustomCatalog
+    ? config.referenceSources
+    : [...config.referenceSources,...config.researchSources.filter(source=>source.enabled)]
   const byUrl=new Map<string,{name:string;url:string;sourcePath:string}>()
   for(const source of sources){
     const url=cleanUrl(source.url)
