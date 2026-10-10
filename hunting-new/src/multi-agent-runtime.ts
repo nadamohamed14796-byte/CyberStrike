@@ -388,7 +388,7 @@ export async function enrichAgentTaskExecutionContext(
     ...context,
     requestId:request?.id ?? context.requestId,
     responseId:response?.id ?? context.responseId,
-    accountLabel:context.accountLabel ?? request?.accountLabel,
+    accountLabel:context.accountLabel ?? request?.accountLabel ?? request?.credentialId,
     functionIds:[...functionIds],
     jsAssetIds:[...jsAssetIds],
     referenceIds:refs.map(item=>item.id),
