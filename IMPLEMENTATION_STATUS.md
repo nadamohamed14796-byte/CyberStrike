@@ -1,6 +1,6 @@
-# Implementation Status — CyberStrike Hunting Layer
+# Historical Baseline Audit — CyberStrike Hunting Layer
 
-> Baseline audited against `main` at `b7147f5d692908c43759f3324bf62fab8e798d40`.
+> Historical snapshot audited against `main` at `b7147f5d692908c43759f3324bf62fab8e798d40`. The table below records that earlier baseline, not the current repository state: later commits added hunting-layer source modules, persistence, intake adapters, and dedicated tests. Use the current source and CI workflows for present-day status.
 
 ## Audit summary
 
