@@ -93,7 +93,7 @@ export async function promoteValidatedHypothesis(
   ])
   const reportFile=await writeReport(root,validated,{
     asset:target,
-    endpoint:input.endpoint ?? undefined,
+    endpoint:input.endpoint ?? "Not captured during validation",
     root_cause:input.rootCause ?? "Not captured during validation",
     steps:input.reproduction ?? "Not captured during validation",
   })
