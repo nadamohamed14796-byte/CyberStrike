@@ -134,13 +134,18 @@ export async function markReferencesUsed(
   root:string,
   ids:string[],
 ):Promise<ReferenceState>{
-  const wanted=new Set(ids)
-  if(!wanted.size)return loadReferences(root)
+  const usageCounts=new Map<string,number>()
+  for(const id of ids)usageCounts.set(id,(usageCounts.get(id)??0)+1)
+  if(!usageCounts.size)return loadReferences(root)
   return withReferenceMutation(async()=>{
     const state=await loadReferences(root)
+    const now=new Date().toISOString()
     const next={
-      references:state.references.map(item=>wanted.has(item.id)?{...item,useCount:item.useCount+1,lastSeen:new Date().toISOString()}:item),
-      updatedAt:new Date().toISOString(),
+      references:state.references.map(item=>{
+        const uses=usageCounts.get(item.id)??0
+        return uses ? {...item,useCount:item.useCount+uses,lastSeen:now} : item
+      }),
+      updatedAt:now,
     }
     await ensureDir(path.dirname(referenceFile(root)))
     await writeJson(referenceFile(root),next)
