@@ -290,25 +290,41 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
 
   const selected: AgentTask[] = []
   const blocked: AgentTask[] = []
+  const dependencyBlocked: AgentTask[] = []
   const completed = new Set([...states.entries()].filter(([, state]) => state === "completed").map(([id]) => id))
+  const dependencyCandidates = (task: AgentTask, role: HuntingAgentRole) => {
+    const strongIdentity = Boolean(task.requestId || task.functionId || task.parameterId)
+    return plan.lanes[role].filter(dep =>
+      dep.target === task.target &&
+      (strongIdentity || dep.signal === task.signal) &&
+      (task.endpoint ? dep.endpoint === task.endpoint : true) &&
+      (task.functionId ? dep.functionId === task.functionId : true) &&
+      (task.requestId ? dep.requestId === task.requestId : true) &&
+      (task.accountLabel ? dep.accountLabel === task.accountLabel : true) &&
+      (task.parameterId ? dep.parameterId === task.parameterId : true),
+    )
+  }
   const dependenciesSatisfied = (task: AgentTask): boolean =>
     task.dependencies.every(role => {
-      const candidates = plan.lanes[role].filter(dep =>
-        dep.target === task.target &&
-        dep.signal === task.signal &&
-        (task.endpoint ? dep.endpoint === task.endpoint : true) &&
-        (task.functionId ? dep.functionId === task.functionId : true) &&
-        (task.requestId ? dep.requestId === task.requestId : true) &&
-        (task.accountLabel ? dep.accountLabel === task.accountLabel : true) &&
-        (task.parameterId ? dep.parameterId === task.parameterId : true),
-      )
+      const candidates = dependencyCandidates(task, role)
       return candidates.length > 0 && candidates.some(dep => completed.has(dep.id))
+    })
+  const dependencyCannotComplete = (task: AgentTask): boolean =>
+    task.dependencies.some(role => {
+      const candidates = dependencyCandidates(task, role)
+      return candidates.length === 0 || candidates.every(dep => {
+        const state = states.get(dep.id) ?? "pending"
+        return state === "failed" || state === "blocked"
+      })
     })
 
   for (const task of [...plan.tasks].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))) {
     const state = states.get(task.id) ?? "pending"
     if (state !== "pending") continue
-    if (!dependenciesSatisfied(task)) continue
+    if (!dependenciesSatisfied(task)) {
+      if (dependencyCannotComplete(task)) dependencyBlocked.push(task)
+      continue
+    }
 
     const activeForSkill = activeBySkill.get(task.skill) ?? 0
     if (activeForSkill >= task.maxParallelTasks) {
@@ -321,5 +337,5 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
     activeBySkill.set(task.skill, activeForSkill + 1)
   }
 
-  return { tasks: selected, blocked }
+  return { tasks: selected, blocked, dependencyBlocked }
 }
