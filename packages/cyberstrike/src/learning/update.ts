@@ -114,7 +114,11 @@ export async function update(writeupsDir: string, notesDir?: string) {
   ]
 
   if (sortedCategories.length) {
-    lines.push("### Topic counts", "")
+    lines.push("## Priorities", "")
+    sortedCategories.forEach(([category, count], index) => {
+      lines.push((index + 1) + ". " + category + " (" + count + " real cases)")
+    })
+    lines.push("", "### Topic counts", "")
     for (const [category, count] of sortedCategories) lines.push("- " + category + ": " + count)
     lines.push("")
   }
@@ -127,7 +131,7 @@ export async function update(writeupsDir: string, notesDir?: string) {
       lines.push("- [" + entry.category + "] " + title + " — " + file)
     }
   } else {
-    lines.push("No eligible Markdown or text write-ups were found.")
+    lines.push("No write-ups yet.")
   }
 
   if (notesDir) {
@@ -153,5 +157,5 @@ export async function update(writeupsDir: string, notesDir?: string) {
     }
   }
 
-  return { index: { count: entries.length, byCategory, entries }, briefing: lines.join("\n") + "\n" }
+  return { index: { count: entries.length, classes: byCategory, byCategory, entries }, briefing: lines.join("\n") + "\n" }
 }
