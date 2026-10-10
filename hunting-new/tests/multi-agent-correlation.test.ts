@@ -147,6 +147,31 @@ describe("multi-agent correlation links", () => {
   })
 
 
+  test("preserves related account labels from multiple-account signals", () => {
+    const engine = new SignalEngine()
+    engine.emit({
+      signal: "multiple_accounts",
+      source: "correlation:account",
+      confidence: 0.91,
+      target: "app.example",
+      endpoint: "/api/profile",
+      metadata: {
+        requestId: "request-account-a",
+        accountLabel: "account-a",
+        distinctAccounts: ["account-b"],
+      },
+    })
+
+    const plan = buildMultiAgentPlan(engine, [{
+      name: "account-comparison",
+      confidence_threshold: 0.5,
+      required_signals: ["multiple_accounts"],
+    }], "app.example")
+
+    expect(plan.tasks).toHaveLength(1)
+    expect(plan.tasks[0]?.relatedAccountLabels).toEqual(["account-b"])
+  })
+
 const contextPlan: MultiAgentPlan = {
   target: "app.example",
   mode: "targeted",
