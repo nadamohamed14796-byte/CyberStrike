@@ -655,6 +655,7 @@ export async function executeAndRecordDispatchedTask(
 
   let promotion:FindingPromotionResult|undefined
   if(
+    !correlationError &&
     lifecycle.hypothesisStatus==="confirmed" &&
     lifecycle.validation?.decision==="eligible" &&
     parsed?.impact
@@ -682,9 +683,11 @@ export async function executeAndRecordDispatchedTask(
 
   const validationEligible=lifecycle.validation?.decision==="eligible"
   const promotionResolved=!validationEligible || Boolean(promotion?.reportable) || promotion?.action==="skip"
-  const terminal=effectiveState==="blocked" ||
+  const terminal=!correlationError && (
+    effectiveState==="blocked" ||
     lifecycle.hypothesisStatus==="rejected" ||
     (lifecycle.hypothesisStatus==="confirmed" && promotionResolved)
+  )
   const taskState=effectiveState==="blocked"
     ? "blocked"
     : terminal
