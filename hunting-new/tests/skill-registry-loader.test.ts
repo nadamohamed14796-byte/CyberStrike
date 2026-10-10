@@ -63,3 +63,11 @@ describe("external skill metadata", () => {
     }
   })
 })
+
+describe("canonical repository skill index", () => {
+  test("loads the root index and resolves skills from the repository-level skill tree", async () => {
+    const root=path.resolve(import.meta.dir,"..")
+    const registry=await loadSkillRegistry(root)
+    expect(registry.list().length).toBeGreaterThan(3)
+  })
+})
