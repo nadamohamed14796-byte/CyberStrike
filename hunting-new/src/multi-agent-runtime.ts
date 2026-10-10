@@ -445,10 +445,10 @@ export async function prepareSkillExecutionInvocation(
   taskId:string,
   options:SkillExecutionAdapterOptions={},
 ):Promise<SkillExecutionInvocation>{
+  const base=buildAgentTaskExecutionContext(plan,taskId)
+  const enriched=await enrichAgentTaskExecutionContext(root,plan,base)
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
-  const base={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
-  const context=await enrichAgentTaskExecutionContext(root,plan,base)
-  return buildSkillExecutionInvocation(context,options)
+  return buildSkillExecutionInvocation({...enriched,attemptId:prepared.attempt.id},options)
 }
 
 export interface AgentTaskExecutor {
@@ -469,10 +469,10 @@ export async function prepareDispatchedTaskInvocation(
   taskId:string,
   options:SkillExecutionAdapterOptions={},
 ):Promise<SkillExecutionInvocation>{
+  const baseContext=buildAgentTaskExecutionContext(plan,taskId)
+  const enrichedContext=await enrichAgentTaskExecutionContext(root,plan,baseContext)
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
-  const baseContext={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
-  const context=await enrichAgentTaskExecutionContext(root,plan,baseContext)
-  return buildSkillExecutionInvocation(context,options)
+  return buildSkillExecutionInvocation({...enrichedContext,attemptId:prepared.attempt.id},options)
 }
 
 export interface ExternalToolDispatchResult {
@@ -517,9 +517,11 @@ export async function executeAndRecordDispatchedTask(
   const initialScope=checkScope(plan.target,mission.scope)
   if(!initialScope.allowed) throw new Error("VALIDATION_SCOPE_BLOCKED: "+initialScope.reason)
 
+  // Validate all supplied correlation IDs before creating a hypothesis or
+  // reserving an attempt. Invalid tasks must not leave orphaned validation state.
+  const enrichedBase=await enrichAgentTaskExecutionContext(root,plan,base)
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
-  const baseContext={...base,attemptId:prepared.attempt.id}
-  const context=await enrichAgentTaskExecutionContext(root,plan,baseContext)
+  const context={...enrichedBase,attemptId:prepared.attempt.id}
   if(context.referenceIds?.length) await markReferencesUsed(root,context.referenceIds)
 
   const intelligence=await loadTargetIntelligence(root,plan.target)
