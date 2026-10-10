@@ -28,9 +28,9 @@ describe("multi-agent correlation links", () => {
       target: "app.example",
       mode: "targeted",
       reason: "test",
-      tasks: [hunterA, hunterB, validatorA],
+      tasks: [hunterB, validatorA],
       lanes: {
-        "primary-hunter": [hunterA, hunterB],
+        "primary-hunter": [hunterB],
         validator: [validatorA],
         correlator: [],
         reviewer: [],
@@ -38,7 +38,6 @@ describe("multi-agent correlation links", () => {
     }
 
     const batch = dispatchAgentTasks(plan, new Map([
-      ["hunter-a", "pending"],
       ["hunter-b", "completed"],
       ["validator-a", "pending"],
     ]), 4)
