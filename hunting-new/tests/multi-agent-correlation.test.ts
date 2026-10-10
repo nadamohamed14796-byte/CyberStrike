@@ -42,6 +42,7 @@ describe("multi-agent correlation links", () => {
     ]), 4)
 
     expect(batch.tasks.map(item => item.id)).not.toContain("validator-a")
+    expect(batch.dependencyBlocked.map(item => item.id)).toContain("validator-a")
   })
 
   test("allows a validator after the matching account and request are completed", () => {
