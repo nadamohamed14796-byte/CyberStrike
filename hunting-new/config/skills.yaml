@@ -1,42 +1,42 @@
 signals:
   graphql_detected:
-    skills: [graphql]
+    skills: [attack-graphql]
   websocket_detected:
-    skills: [websocket]
+    skills: [attack-websocket]
   jwt_detected:
-    skills: [jwt]
+    skills: [attack-jwt]
   object_identifier_detected:
-    skills: [authorization, idor]
+    skills: [attack-idor-automation]
   tenant_identifier_detected:
-    skills: [authorization, multi_tenant]
+    skills: [api-authorization-and-bola, attack-idor-automation]
   file_upload_detected:
-    skills: [file_upload]
+    skills: [hunt-file-upload]
   redirect_parameter_detected:
-    skills: [redirect, oauth]
+    skills: [hunt-open-redirect, hunt-oauth]
   waf_signal_detected:
-    skills: [waf-awareness]
+    skills: [waf-xss-bypass]
   source_map_detected:
     skills: [javascript_intelligence]
   parameter_discovered:
-    skills: [endpoint_discovery, authorization]
+    skills: [api-recon-and-docs, attack-idor-automation]
   graphql_and_authorization_anomaly:
-    skills: [graphql, authorization]
+    skills: [attack-graphql, attack-idor-automation]
 
 skills:
-  authorization:
+  attack-idor-automation:
     agent: web-application
     confidence_threshold: 0.70
     required_signals: [authenticated_endpoint, object_identifier]
     optional_signals: [multiple_accounts, tenant_identifier]
-    dependencies: [endpoint_discovery]
+    dependencies: [api-recon-and-docs]
     maximum_parallel_tasks: 2
   javascript_intelligence:
     agent: proxy-analyzer
     confidence_threshold: 0.50
-    required_signals: [javascript_asset]
+    required_signals: [source_map_detected]
     dependencies: []
     maximum_parallel_tasks: 2
-  waf-awareness:
+  waf-xss-bypass:
     agent: web-application
     confidence_threshold: 0.60
     required_signals: [waf_signal_detected]

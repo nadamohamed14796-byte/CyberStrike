@@ -30,7 +30,7 @@ const WEB_SKILLS:SkillMetadata[]=[
     validation_requirements:["request-response-evidence","browser-validation"],
     confidence_threshold:0.6,
     maximum_parallel_tasks:1,
-    source_path:".cyberstrike/skill/WEB/waf-xss-bypass/SKILL.md",
+    source_path:".cyberstrike/skill/xss/waf-bypass/SKILL.md",
     agent_roles:["primary-hunter"],
   },
   {
@@ -45,7 +45,7 @@ const WEB_SKILLS:SkillMetadata[]=[
     validation_requirements:["request-response-evidence"],
     confidence_threshold:0.6,
     maximum_parallel_tasks:1,
-    source_path:".cyberstrike/skill/attack-rate-limit-bypass/SKILL.md",
+    source_path:".cyberstrike/skill/rate-limit/attack-rate-limit-bypass/SKILL.md",
     agent_roles:["primary-hunter"],
   },
   {
@@ -60,7 +60,7 @@ const WEB_SKILLS:SkillMetadata[]=[
     validation_requirements:["cross-account-evidence","request-response-evidence"],
     confidence_threshold:0.7,
     maximum_parallel_tasks:2,
-    source_path:".cyberstrike/skill/attack-idor-automation/SKILL.md",
+    source_path:".cyberstrike/skill/idor/attack-idor-automation/SKILL.md",
     agent_roles:["primary-hunter","correlator"],
   },
 ]
@@ -92,8 +92,20 @@ function indexMetadata(entry:SkillIndexEntry):SkillMetadata{
 
 const CONFIG_SKILL_ALIASES:Record<string,string>={
   "waf-awareness":"waf-xss-bypass",
-  "javascript-intelligence":"analyze-js",
-  "javascript_intelligence":"analyze-js",
+  "authorization":"attack-idor-automation",
+  "idor":"attack-idor-automation",
+  "multi_tenant":"api-authorization-and-bola",
+  "graphql":"attack-graphql",
+  "websocket":"attack-websocket",
+  "jwt":"attack-jwt",
+  "file_upload":"hunt-file-upload",
+  "redirect":"hunt-open-redirect",
+  "oauth":"hunt-oauth",
+  "endpoint_discovery":"api-recon-and-docs",
+  "javascript-intelligence":"javascript_intelligence",
+}
+function canonicalConfiguredSkillName(name:string):string{
+  return CONFIG_SKILL_ALIASES[name]??name
 }
   
 async function collectSkillFiles(root:string):Promise<string[]>{
@@ -228,7 +240,7 @@ async function loadConfiguredSignalMappings(root:string):Promise<Map<string,stri
     if(!match)continue
     const names=match[1].split(",").map(value=>value.trim().replace(/^["']|["']$/g,"")).filter(Boolean)
     for(const name of names){
-      const canonical=CONFIG_SKILL_ALIASES[name]??name
+      const canonical=canonicalConfiguredSkillName(name)
       const existing=mappings.get(canonical)??[]
       if(!existing.includes(signal))existing.push(signal)
       mappings.set(canonical,existing)
@@ -248,7 +260,7 @@ async function loadConfiguredRequiredSignals(root:string):Promise<Map<string,str
     if(/^skills:\s*$/.test(line)){section="skills";skill="";continue}
     if(section!=="skills")continue
     const header=line.match(/^  ([A-Za-z0-9_-]+):\s*$/)
-    if(header){skill=header[1];continue}
+    if(header){skill=canonicalConfiguredSkillName(header[1]);continue}
     const match=line.match(/^\s{4}required_signals:\s*\[([^\]]*)\]/)
     if(match && skill){
       result.set(skill,match[1].split(",").map(value=>value.trim().replace(/^["']|["']$/g,"")).filter(Boolean))
@@ -267,7 +279,7 @@ async function loadConfiguredSkillMetadata(root:string):Promise<Map<string,Parti
     if(/^skills:\s*$/.test(line)){section="skills";skill="";continue}
     if(section!=="skills")continue
     const header=line.match(/^  ([A-Za-z0-9_-]+):\s*$/)
-    if(header){skill=header[1];result.set(skill,{});continue}
+    if(header){skill=canonicalConfiguredSkillName(header[1]);result.set(skill,{});continue}
     const meta=result.get(skill); if(!meta)continue
     let m=line.match(/^\s{4}confidence_threshold:\s*([0-9.]+)/); if(m)meta.confidence_threshold=Number(m[1])
     m=line.match(/^\s{4}agent:\s*(.+)$/); if(m)meta.agent=m[1].trim().replace(/^['"]|['"]$/g,"")
@@ -324,7 +336,15 @@ export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
     metadata.source_path=resolveIndexedSkillSource(entry,skillFilesByName)
     merged.set(entry.name,metadata)
   }
-  for(const skill of WEB_SKILLS)merged.set(skill.name,skill)
+  for(const skill of WEB_SKILLS){
+    const sourceName=skill.name==="waf-xss-bypass" ? "waf-bypass" : skill.name
+    const candidates=skillFilesByName.get(sourceName)??[]
+    const sourcePath=skill.name==="waf-xss-bypass"
+      ? candidates.find(file=>file.endsWith(path.join("xss","waf-bypass","SKILL.md")))??candidates.find(file=>file.endsWith(path.sep+"SKILL.md"))
+      : candidates.find(file=>file.endsWith(path.sep+"SKILL.md"))
+    const existing=merged.get(skill.name)
+    merged.set(skill.name,{...skill,source_path:sourcePath??existing?.source_path})
+  }
 
   for(const skill of await loadExternalSkills(root)){
     const existing=merged.get(skill.name)
