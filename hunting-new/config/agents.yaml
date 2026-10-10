@@ -1,6 +1,6 @@
 agents:
   recon:
-    agent_id: explore
+    agent_id: web-application
     runtime: cyberstrike
     role: attack-surface-mapping
     purpose: >-
@@ -97,7 +97,7 @@ agents:
       - do_not_infer_impact_from_identifier_presence_alone
 
   verifier:
-    agent_id: general
+    agent_id: web-application
     runtime: cyberstrike
     role: evidence-verification
     purpose: >-
@@ -123,7 +123,7 @@ agents:
       - stop_when_sufficient_evidence_is_collected
 
   reporter:
-    agent_id: general
+    agent_id: web-application
     runtime: cyberstrike
     role: professional-reporting
     purpose: >-

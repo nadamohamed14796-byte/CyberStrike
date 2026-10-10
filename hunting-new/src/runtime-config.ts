@@ -32,6 +32,20 @@ export interface HuntingRuntimeConfiguration {
   researchSources: ConfiguredSource[]; referenceSources: ConfiguredSource[]; registry: RuntimeRegistry | null
 }
 async function readText(file:string):Promise<string>{try{return await Bun.file(file).text()}catch{return ""}}
+
+/** Resolve explicit HUNT_ROOT config overrides, otherwise use this checkout's config. */
+export async function resolveHuntingConfigFile(root:string,name:string):Promise<string>{
+  const local=path.resolve(root,"config",name)
+  if(await Bun.file(local).exists())return local
+  return path.resolve(import.meta.dir,"..","config",name)
+}
+
+/** Resolve the runtime registry independently from the per-target state directory. */
+export async function resolveHuntingRegistryFile(root:string):Promise<string>{
+  const local=path.resolve(root,"runtime","registry","registry.json")
+  if(await Bun.file(local).exists())return local
+  return path.resolve(import.meta.dir,"..","runtime","registry","registry.json")
+}
 function indentation(line:string):number{return line.match(/^\s*/)?.[0].length??0}
 function scalar(text:string,key:string,fallback=""):string{
   const match=text.match(new RegExp("^\\s*"+key+":\\s*(.*?)\\s*$","m"))
@@ -106,7 +120,7 @@ function parseAgentProfiles(text:string):Record<string,ConfiguredAgentProfile>{
     const header=line.match(/^  ([A-Za-z0-9_-]+):\s*$/)
     if(header){
       current={
-        name:header[1],agentId:header[1],runtime:"",role:"",purpose:"",
+        name:header[1],agentId:"",runtime:"",role:"",purpose:"",
         inputs:[],outputs:[],constraints:[],
       }
       profiles[current.name]=current
@@ -118,7 +132,7 @@ function parseAgentProfiles(text:string):Record<string,ConfiguredAgentProfile>{
     if(field){
       currentField=field[1]
       const value=field[2].replace(/\s+#.*$/,"").trim().replace(/^["']|["']$/g,"")
-      if(currentField==="agent_id")current.agentId=value||current.name
+      if(currentField==="agent_id")current.agentId=value
       else if(currentField==="runtime")current.runtime=value
       else if(currentField==="role")current.role=value
       else if(currentField==="purpose")current.purpose=/^[>|]/.test(value)?"":value
@@ -155,12 +169,18 @@ function parseSources(text:string,sourcePath:string):ConfiguredSource[]{
 }
 
 export async function loadHuntingRuntimeConfiguration(root:string):Promise<HuntingRuntimeConfiguration>{
-  const configDir=path.join(root,"config")
-  const policiesPath=path.join(configDir,"policies.yaml")
-  const [scopeText,policiesText,agentsText,sourcesText,referencesText]=await Promise.all([
-    readText(path.join(configDir,"scope.yaml")),readText(policiesPath),readText(path.join(configDir,"agents.yaml")),
-    readText(path.join(configDir,"sources.yaml")),readText(path.join(configDir,"reference-sources.yaml")),
+  const [scopeFile,policiesFile,agentsFile,sourcesFile,referencesFile,registryFile]=await Promise.all([
+    resolveHuntingConfigFile(root,"scope.yaml"),
+    resolveHuntingConfigFile(root,"policies.yaml"),
+    resolveHuntingConfigFile(root,"agents.yaml"),
+    resolveHuntingConfigFile(root,"sources.yaml"),
+    resolveHuntingConfigFile(root,"reference-sources.yaml"),
+    resolveHuntingRegistryFile(root),
   ])
+  const [scopeText,policiesText,agentsText,sourcesText,referencesText]=await Promise.all([
+    readText(scopeFile),readText(policiesFile),readText(agentsFile),readText(sourcesFile),readText(referencesFile),
+  ])
+  const configDir=path.dirname(scopeFile)
   const scopeBlock=section(scopeText,"scope")
   const missionPolicy=section(policiesText,"mission")
   const validationPolicy=section(policiesText,"validation")
@@ -173,7 +193,7 @@ export async function loadHuntingRuntimeConfiguration(root:string):Promise<Hunti
   const agentByRole:Partial<Record<HuntingRole,string>>={}
   const roleSources:Array<[HuntingRole,string]>=[["primary-hunter","recon"],["validator","verifier"],["correlator","javascript"],["reviewer","reporter"]]
   for(const [role,sectionName] of roleSources){const agentId=agentProfiles[sectionName]?.agentId;if(agentId)agentByRole[role]=agentId}
-  const registry=await readJson<RuntimeRegistry|null>(path.join(root,"runtime","registry","registry.json"),null)
+  const registry=await readJson<RuntimeRegistry|null>(registryFile,null)
   return {
     scope:{mode:scalar(scopeBlock,"mode","explicit"),unknownTarget:scalar(scopeBlock,"unknown_target","block"),rules,exclusions},
     policy:{
@@ -189,17 +209,18 @@ export async function loadHuntingRuntimeConfiguration(root:string):Promise<Hunti
     },
     agentByRole,
     agentProfiles,
-    researchSources:parseSources(sourcesText,path.join(configDir,"sources.yaml")),
-    referenceSources:parseSources(referencesText,path.join(configDir,"reference-sources.yaml")),
+    researchSources:parseSources(sourcesText,sourcesFile),
+    referenceSources:parseSources(referencesText,referencesFile),
     registry,
   }
 }
 
 export async function validateHuntingRuntimeRegistry(root:string):Promise<string[]>{
   const errors:string[]=[]
-  const repoRoot=path.resolve(root,"..")
+  const repoRoot=path.resolve(import.meta.dir,"../..")
   for(const file of ["agents.yaml","policies.yaml","scope.yaml","skills.yaml","sources.yaml","reference-sources.yaml"]){
-    if(!(await Bun.file(path.join(root,"config",file)).exists()))errors.push("missing-config:"+file)
+    const resolved=await resolveHuntingConfigFile(root,file)
+    if(!(await Bun.file(resolved).exists()))errors.push("missing-config:"+file)
   }
   const config=await loadHuntingRuntimeConfiguration(root)
   const registry=config.registry
@@ -221,6 +242,16 @@ export async function validateHuntingRuntimeRegistry(root:string):Promise<string
     if(!(await Bun.file(path.join(repoRoot,target)).exists()))errors.push("missing-entrypoint:"+name+":"+target)
   }
   for(const name of ["session","agents","skills","browser","mcp"])if(!registry.adapters?.[name])errors.push("missing-adapter:"+name)
+  for(const name of ["recon","javascript","api","authorization","verifier","reporter"]){
+    if(!config.agentProfiles[name])errors.push("missing-agent-profile:"+name)
+  }
+  const agentSource=await readText(path.join(repoRoot,"packages","cyberstrike","src","agent","agent.ts"))
+  for(const profile of Object.values(config.agentProfiles)){
+    if(!profile.agentId)errors.push("missing-agent-id:"+profile.name)
+    else if(!agentSource.includes('"'+profile.agentId+'": {'))errors.push("unknown-runtime-agent:"+profile.name+":"+profile.agentId)
+  }
+  if(!config.researchSources.some(source=>source.enabled))errors.push("missing-enabled-research-source")
+  if(!config.referenceSources.some(source=>source.enabled))errors.push("missing-enabled-reference-source")
   const policy=config.policy
   if(policy.requireScopeGate!==true)errors.push("unsafe-policy:require_scope_gate")
   if(policy.requireAuthorizationGate!==true)errors.push("unsafe-policy:require_authorization_gate")

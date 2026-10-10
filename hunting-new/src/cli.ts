@@ -1,6 +1,7 @@
 import path from "node:path"
-import { initMission,updateMission,canComplete } from "./mission"
-import { checkScope } from "./scope"
+import { initMission,loadMission,updateMission,canComplete } from "./mission"
+import { checkConfiguredTargetScope } from "./scope"
+import { loadHuntingRuntimeConfiguration } from "./runtime-config"
 import { coverageGate } from "./ledger"
 import { loadAgentPlan } from "./agent-plan-store"
 import { loadTaskStates } from "./task-state-store"
@@ -15,7 +16,18 @@ const root=process.env.HUNT_ROOT??path.resolve(import.meta.dir,"..")
 const [command,...args]=Bun.argv.slice(2)
 async function main(){
   if(command==="init"){const target=args[0];if(!target)throw new Error("usage: hunt init <target>");console.log(JSON.stringify(await initMission(root,target,[{value:target}]),null,2));return}
-  if(command==="scope"){const target=args[0];if(!target)throw new Error("usage: hunt scope <target>");console.log(JSON.stringify(checkScope(target,[{value:target}]),null,2));return}
+  if(command==="scope"){
+    const target=args[0]
+    if(!target)throw new Error("usage: hunt scope <target>")
+    const mission=await loadMission(root,target)
+    const config=await loadHuntingRuntimeConfiguration(root)
+    const rules=mission?.scope ?? config.scope.rules.filter(rule=>!rule.exclude)
+    const decision=rules.length
+      ? await checkConfiguredTargetScope(root,target,rules)
+      : {allowed:false,normalized:target,reason:mission ? "scope-not-configured" : "mission-not-initialized"}
+    console.log(JSON.stringify(decision,null,2))
+    return
+  }
   if(command==="status"){const target=args[0];if(!target)throw new Error("usage: hunt status <target>");console.log(JSON.stringify(await coverageGate(root,target),null,2));return}
   if(command==="resume"){const target=args[0];if(!target)throw new Error("usage: hunt resume <target>");const recovered=await recoverStaleAgentTasks(root,target);const context=await resumeHuntingContext(root,target);console.log(JSON.stringify({recovered,resumePhase:context.resumePhase,activeHypotheses:context.activeHypotheses.map(x=>x.id),activeTasks:context.activeTasks.map(x=>x.taskId),nextAttemptNumber:context.nextAttemptNumber},null,2));return}
   if(command==="plan-status"){const target=args[0];if(!target)throw new Error("usage: hunt plan-status <target>");const plan=await loadAgentPlan(root,target);const tasks=await loadTaskStates(root,target);console.log(JSON.stringify({plan,tasks},null,2));return}

@@ -1,6 +1,7 @@
 import path from "node:path"
 import { readdir, readFile } from "node:fs/promises"
 import { readJson } from "./store"
+import { resolveHuntingConfigFile } from "./runtime-config"
 import { SkillRegistry, type SkillMetadata } from "./skill-registry"
 
 interface SkillIndexEntry {
@@ -239,7 +240,7 @@ async function loadExternalSkills(root:string):Promise<SkillMetadata[]>{
   return skills
 }
 async function loadConfiguredSignalMappings(root:string):Promise<Map<string,string[]>>{
-  const file=path.join(root,"config","skills.yaml")
+  const file=await resolveHuntingConfigFile(root,"skills.yaml")
   if(!await Bun.file(file).exists())return new Map()
   const text=await Bun.file(file).text()
   const mappings=new Map<string,string[]>()
@@ -266,7 +267,7 @@ async function loadConfiguredSignalMappings(root:string):Promise<Map<string,stri
 }
 
 async function loadConfiguredRequiredSignals(root:string):Promise<Map<string,string[]>>{
-  const file=path.join(root,"config","skills.yaml")
+  const file=await resolveHuntingConfigFile(root,"skills.yaml")
   if(!await Bun.file(file).exists())return new Map()
   const text=await Bun.file(file).text()
   const result=new Map<string,string[]>()
@@ -286,7 +287,7 @@ async function loadConfiguredRequiredSignals(root:string):Promise<Map<string,str
 }
 
 async function loadConfiguredSkillMetadata(root:string):Promise<Map<string,Partial<SkillMetadata>>>{
-  const file=path.join(root,"config","skills.yaml")
+  const file=await resolveHuntingConfigFile(root,"skills.yaml")
   if(!await Bun.file(file).exists())return new Map()
   const result=new Map<string,Partial<SkillMetadata>>()
   let section=""
@@ -301,7 +302,11 @@ async function loadConfiguredSkillMetadata(root:string):Promise<Map<string,Parti
     m=line.match(/^\s{4}agent:\s*(.+)$/); if(m)meta.agent=m[1].trim().replace(/^['"]|['"]$/g,"")
     m=line.match(/^\s{4}maximum_parallel_tasks:\s*(\d+)/); if(m)meta.maximum_parallel_tasks=Number(m[1])
     m=line.match(/^\s{4}(?:dependencies|optional_signals|required_context|validation_requirements|scope_requirements|agent_roles):\s*\[([^\]]*)\]/)
-    if(m){const key=line.trim().split(":")[0] as keyof SkillMetadata; (meta as any)[key]=m[1].split(",").map(v=>v.trim().replace(/^['\"]|['\"]$/g,"")).filter(Boolean)}
+    if(m){
+      const key=line.trim().split(":")[0] as keyof SkillMetadata
+      const values=m[1].split(",").map(v=>v.trim().replace(/^['"]|['"]$/g,"")).filter(Boolean)
+      ;(meta as any)[key]=key==="dependencies" ? values.map(canonicalConfiguredSkillName) : values
+    }
   }
   return result
 }
@@ -310,6 +315,7 @@ async function canonicalSkillIndex(root:string):Promise<SkillIndex|null>{
   const candidates=[
     path.join(root,".cyberstrike","skill","index.json"),
     path.resolve(root,"..",".cyberstrike","skill","index.json"),
+    path.resolve(import.meta.dir,"../..",".cyberstrike","skill","index.json"),
   ]
   for(const file of candidates){
     if(!(await Bun.file(file).exists()))continue
@@ -323,6 +329,7 @@ async function indexedSkillFileMap(root:string):Promise<Map<string,string[]>>{
   const skillRoots=[
     path.join(root,".cyberstrike","skill"),
     path.resolve(root,"..",".cyberstrike","skill"),
+    path.resolve(import.meta.dir,"../..",".cyberstrike","skill"),
     path.resolve(process.cwd(),".cyberstrike","skill"),
   ]
   const files=[...new Set((await Promise.all(skillRoots.map(collectSkillFiles))).flat())]
@@ -364,7 +371,7 @@ export async function loadSkillRegistry(root:string):Promise<SkillRegistry>{
 
   // The JS intelligence skill is a first-party runtime capability. Register it explicitly
   // so routing remains reliable even if external skill discovery is disabled or unavailable.
-  const javascriptSkillPath=path.resolve(root,"skills","javascript_intelligence","SKILL.md")
+  const javascriptSkillPath=path.resolve(import.meta.dir,"..","skills","javascript_intelligence","SKILL.md")
   merged.set(JAVASCRIPT_INTELLIGENCE_SKILL.name,{
     ...JAVASCRIPT_INTELLIGENCE_SKILL,
     source_path:javascriptSkillPath,
