@@ -59,7 +59,7 @@ export async function executePersistedDispatchWithNativeCyberStrike(
           )
           taskResults.push(result)
           const eligible=result.lifecycle?.validation?.decision==="eligible"
-          const promotionResolved=!eligible || Boolean(result.promotion?.reportable) || result.promotion?.action==="skip"
+          const promotionResolved=eligible && (Boolean(result.promotion?.reportable) || result.promotion?.action==="skip")
           terminal=result.lifecycle?.hypothesisStatus==="blocked" ||
             result.lifecycle?.hypothesisStatus==="rejected" ||
             (result.lifecycle?.hypothesisStatus==="confirmed" && promotionResolved)
