@@ -1363,6 +1363,41 @@ export const SessionRoutes = lazy(() =>
           // record the observation (the values are evidence regardless).
           if (!req) {
             recordObservation()
+            // A concurrent insert won the dedupe race. Preserve this observation
+            // in the hunting graph too, under a credential-scoped ID; otherwise
+            // CyberStrike records the observation but the hunting layer never sees it.
+            const observedAt = Date.now()
+            const duplicateRequestId = "obs_" + Bun.hash([
+              sessionID,
+              credentialID ?? "anonymous",
+              normalized.method,
+              normalized.origin,
+              normalized.normalizedPath,
+              normalized.keyHash ?? normalized.bodyHash ?? "",
+            ].join("|")).toString(16)
+            void feedHuntingLayerFromRequest({
+              sessionID,
+              target: normalized.site || normalized.host,
+              request: {
+                id: duplicateRequestId,
+                method: normalized.method,
+                url: normalized.origin + normalized.normalizedPath,
+                host: normalized.host,
+                path: normalized.normalizedPath,
+                credentialId: credentialID,
+                accountLabel: credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+                observedAt,
+              },
+              pageUrl: body.page_url,
+              response: body.response ? {
+                id: duplicateRequestId + ":response",
+                status: body.response.status,
+                headers: body.response.headers,
+                contentType: body.response.headers["content-type"],
+                bodyHash: normalized.bodyHash,
+                observedAt,
+              } : undefined,
+            })
             c.status(202)
             return c.json({ sessionID, skipped: true })
           }
