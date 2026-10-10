@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process"
-import { checkScope, type ScopeRule } from "./scope"
+import { checkScope, resolveScopeUrl, type ScopeRule } from "./scope"
 import { rememberTargetIntelligence, type ParameterCandidate } from "./target-intelligence"
 import { loadMission } from "./mission"
 import path from "node:path"
@@ -150,15 +150,21 @@ export async function runScopedParameterDiscovery(
   const mission = await loadMission(root, target)
   if (!mission) throw new Error("MISSION_NOT_FOUND")
 
-  const key=toolRunKey(tool,target,endpoint,requestId)
+  const scopedEndpoint=resolveScopeUrl(target,endpoint)
+  const endpointDecision=scopedEndpoint ? checkScope(scopedEndpoint,mission.scope) : {allowed:false,normalized:"",reason:"invalid-endpoint-url"}
+  if(!scopedEndpoint || !endpointDecision.allowed){
+    return {tool,target:endpoint,allowed:false,exitCode:null,timedOut:false,output:"",parameters:[]}
+  }
+
+  const key=toolRunKey(tool,target,scopedEndpoint,requestId)
   const existingState=await loadToolRuns(root,target)
   const existing=existingState.runs.find(x=>x.id===key && x.status==="completed")
   if(existing){
     return {
       tool,target,allowed:true,exitCode:existing.exitCode,timedOut:false,output:"",
       parameters:existing.parameterNames.map(name=>({
-        id:"param_"+Bun.hash(endpoint+"|query|"+name).toString(16),
-        name,location:"query" as const,endpoint,
+        id:"param_"+Bun.hash(scopedEndpoint+"|query|"+name).toString(16),
+        name,location:"query" as const,endpoint:scopedEndpoint,
         requestIds:requestId?[requestId]:[],sources:["tool" as const],
         confidence:0.70,firstSeen:Date.now(),lastSeen:Date.now(),
       })),
@@ -166,13 +172,13 @@ export async function runScopedParameterDiscovery(
   }
 
   const startedAt=new Date().toISOString()
-  const result = await runDiscoveryTool({ tool, target: endpoint, scope: mission.scope, root, missionTarget: target, requestId })
+  const result = await runDiscoveryTool({ tool, target: scopedEndpoint, scope: mission.scope, root, missionTarget: target, requestId })
   const status:ToolRunRecord["status"]=!result.allowed ? "blocked" : result.timedOut ? "timed_out" : result.exitCode===0 ? "completed" : "failed"
   await withTargetMutationLock(root,target,async()=>{
     const state=await loadToolRuns(root,target)
     state.runs=state.runs.filter(x=>x.id!==key)
     state.runs.push({
-      id:key,tool,target,endpoint,requestId,status,exitCode:result.exitCode,
+      id:key,tool,target,endpoint:scopedEndpoint,requestId,status,exitCode:result.exitCode,
       parameterNames:result.parameters.map(x=>x.name),
       startedAt,finishedAt:new Date().toISOString(),
     })
