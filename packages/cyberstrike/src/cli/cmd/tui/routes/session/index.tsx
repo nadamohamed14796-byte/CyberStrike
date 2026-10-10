@@ -60,6 +60,7 @@ import { DialogTimeline } from "./dialog-timeline"
 import { DialogForkFromTimeline } from "./dialog-fork-from-timeline"
 import { DialogSessionRename } from "../../component/dialog-session-rename"
 import { DialogHackbrowserLaunch } from "../../component/dialog-hackbrowser-launch"
+import { TargetWorkspace } from "@/tool/target-workspace"
 import { DialogVulnerability } from "../../component/dialog-vulnerability"
 import { DialogWebContext } from "../../component/dialog-web-context"
 import { DialogMethodology } from "../../component/dialog-methodology"
@@ -319,6 +320,68 @@ export function Session() {
 
   const command = useCommandDialog()
   command.register(() => [
+    {
+      title: "Start target recon",
+      value: "session.recon.start",
+      category: "Recon",
+      description: "Initialize/reuse a target workspace, verify scope, then begin passive reconnaissance",
+      slash: {
+        name: "recon",
+      },
+      onSelect: async (dialog) => {
+        const current = promptRef.current?.current.input.trim() ?? ""
+        const match = current.match(/^\/recon(?:\s+(\S+))?/i)
+        const target = match?.[1]?.replace(/[),;]+$/, "")
+        dialog.clear()
+
+        if (!target) {
+          toast.show({
+            message: "Usage: /recon example.com — enter the target after /recon",
+            variant: "warning",
+            duration: 5000,
+          })
+          return
+        }
+
+        let normalizedTarget = target
+        if (!/^[a-z][a-z\d+.-]*:\/\//i.test(normalizedTarget)) {
+          normalizedTarget = "https://" + normalizedTarget
+        }
+        let parsed: URL
+        try {
+          parsed = new URL(normalizedTarget)
+        } catch {
+          toast.show({ message: "Invalid recon target. Use a domain or http(s) URL.", variant: "error" })
+          return
+        }
+        if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+          toast.show({ message: "Recon target must use HTTP or HTTPS.", variant: "error" })
+          return
+        }
+        const targetURL = parsed.origin
+        const mission = [
+          "Run the CyberStrike /recon workflow for this target: " + targetURL,
+          "",
+          "MANDATORY ORDER:",
+          "1. Initialize or reuse the persistent TargetWorkspace for this exact target before any recon command. Use the existing target-aware tool path so the workspace is created by CyberStrike's TargetWorkspace system. Report the actual workspace path; do not invent one.",
+          "2. Check the currently registered/explicitly supplied bounty scope and exclusions. A hostname entered here is not proof of authorization. If scope cannot be verified, stop before network enumeration and ask me to provide/confirm the program scope.",
+          "3. Load the existing web2-recon SKILL.md and its RECON-PIPELINE.md playbook. Execute it in stages: passive sources first, then scope-approved inventory. Do not run active probing, fuzzing, vulnerability tests, port scans, or intrusive checks unless the program scope and explicit authorization for those methods are verified.",
+          "4. Save outputs in the target's existing workspace, deduplicate them, and correlate subdomains, live hosts, URLs/endpoints, JavaScript files, and discovered relationships into the shared target knowledge. Update the shared target-notes.md and attack-surface.md incrementally; do not treat each request or session as a separate target.",
+          "5. Resume from existing artifacts where possible; do not overwrite prior results. Summarize what ran, what was skipped and why, output paths, and the next safe step.",
+          "",
+          "Target: " + targetURL,
+        ].join("\n")
+        try {
+          const workspace = await TargetWorkspace.ensure(targetURL, route.sessionID)
+          toast.show({ message: "Target workspace ready: " + workspace.root, variant: "info" })
+          promptRef.current?.set({ input: mission, parts: [] })
+          setTimeout(() => promptRef.current?.submit(), 0)
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : "Failed to initialize target workspace"
+          toast.show({ message: msg, variant: "error" })
+        }
+      },
+    },
     {
       title: session()?.share?.url ? "Copy share link" : "Share session",
       value: "session.share",

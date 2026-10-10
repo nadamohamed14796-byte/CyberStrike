@@ -1,3 +1,4 @@
+import path from "node:path"
 import { Hono } from "hono"
 import { stream } from "hono/streaming"
 import { describeRoute, validator, resolver } from "hono-openapi"
@@ -17,6 +18,8 @@ import { Request } from "../../session/request"
 import { Observation } from "../../session/observation"
 import { CoverageNote } from "../../session/coverage-note"
 import { Normalize } from "../../session/normalize"
+import { ProxyWorkerContext } from "../../session/proxy-worker-context"
+import type { ParamSlot } from "../../session/normalize/types"
 import { IngestSummary } from "../../session/ingest-summary"
 import { IngestQueue } from "../../session/ingest-queue"
 import { WebCredential } from "../../session/web/web-credential"
@@ -324,6 +327,86 @@ function inferScheme(rawText: string): "http" | "https" {
   return "https"
 }
 
+const proxyWorkerSessions = new Map<string, Promise<string>>()
+
+async function getProxyWorkerSession(parentSessionID: string): Promise<string> {
+  const rootSessionID = Session.root(parentSessionID)
+  const existing = proxyWorkerSessions.get(rootSessionID)
+  if (existing) {
+    try {
+      const workerID = await existing
+      await Session.get(workerID)
+      return workerID
+    } catch {
+      proxyWorkerSessions.delete(rootSessionID)
+    }
+  }
+
+  const creating = Session.create({
+    parentID: rootSessionID,
+    title: "Proxy analysis worker",
+  }).then((session) => session.id)
+  proxyWorkerSessions.set(rootSessionID, creating)
+  try {
+    return await creating
+  } catch (error) {
+    if (proxyWorkerSessions.get(rootSessionID) === creating) proxyWorkerSessions.delete(rootSessionID)
+    throw error
+  }
+}
+
+function collectObservedJavaScriptAssets(
+  sessionID: string,
+  pageUrl: string | undefined,
+  requestHost: string,
+): Array<{ id: string; url: string; pageUrl?: string; observedAt: number }> {
+  const assets = new Map<string, { id: string; url: string; pageUrl?: string; observedAt: number }>()
+  for (const request of Request.get(sessionID)) {
+    if (!request.response_content_type || !/(?:javascript|ecmascript)/i.test(request.response_content_type)) continue
+    if (pageUrl ? request.page_url !== pageUrl : request.host?.toLowerCase() !== requestHost.toLowerCase()) continue
+    if (!request.host) continue
+    try {
+      const origin = request.origin ?? ((request.scheme ?? "https") + "://" + request.host + (request.port ? ":" + request.port : ""))
+      const url = new URL(request.canonical_path ?? request.normalized_path, origin)
+      url.hash = ""
+      const assetURL = url.toString()
+      const id = "js_" + Bun.hash(assetURL).toString(16)
+      assets.set(assetURL, { id, url: assetURL, pageUrl: request.page_url, observedAt: request.time.created })
+    } catch {}
+  }
+  return [...assets.values()].slice(-20)
+}
+
+function sanitizeResponseHeaders(headers: Record<string, string>): Record<string, string> {
+  const sensitive = /(?:authorization|cookie|token|secret|api[-_]?key|password|credential|session[-_]?id|csrf|xsrf|private[-_]?key|signature)/i
+  return Object.fromEntries(
+    Object.entries(headers).map(([name, value]) => [name, sensitive.test(name) ? "[REDACTED]" : value]),
+  )
+}
+
+function extractRequestHeaderMetadata(rawText: string): { headerNames: string[]; cookieNames: string[] } {
+  const lines = rawText.split(/\r?\n/)
+  const headerLines = lines.slice(1, lines.findIndex((line) => line.trim() === "") < 0 ? undefined : lines.findIndex((line) => line.trim() === ""))
+  const headerNames: string[] = []
+  const cookieNames = new Set<string>()
+  for (const line of headerLines) {
+    const separator = line.indexOf(":")
+    if (separator <= 0) continue
+    const name = line.slice(0, separator).trim()
+    const value = line.slice(separator + 1).trim()
+    if (!name) continue
+    headerNames.push(name)
+    if (name.toLowerCase() === "cookie") {
+      for (const pair of value.split(";")) {
+        const equals = pair.indexOf("=")
+        const cookieName = (equals < 0 ? pair : pair.slice(0, equals)).trim()
+        if (cookieName) cookieNames.add(cookieName)
+      }
+    }
+  }
+  return { headerNames: [...new Set(headerNames)], cookieNames: [...cookieNames] }
+}
+
 // Bridge between the ingest payload and Normalize.run. Returns null when the
 // raw text isn't a parseable HTTP request (the route then falls through to
 // the chat-style ingest path that handles plain text).
@@ -350,14 +433,25 @@ async function feedHuntingLayerFromRequest(input:{
   }
   jsAssetIds?:string[]
   functionIds?:string[]
+  functions?:Array<{id:string;name:string;assetId?:string;sourceLocation?:string}>
+  pageUrl?:string
+  jsAssets?:Array<{id:string;url:string;pageUrl?:string;observedAt:number}>
+  observedParams?:ParamSlot[]
+  rawRequest?:string
 }):Promise<void>{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
   try{
     const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
-    const { ingestCyberStrikeRequest }=await import("../../../../hunting-new/src/cyberstrike-intake")
-    await ingestCyberStrikeRequest(root,input)
+    const { ingestCyberStrikeRequest }=await import("../../../../../hunting-new/src/cyberstrike-intake")
+    const headerMetadata = extractRequestHeaderMetadata(input.rawRequest ?? "")
+    await ingestCyberStrikeRequest(root,{
+      ...input,
+      sessionId: input.sessionID,
+      request:{ ...input.request, ...headerMetadata },
+      observedParams: input.observedParams,
+    })
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
-      const { autoDispatchForTarget }=await import("../../../../hunting-new/src/auto-dispatch")
+      const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
       void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
         .catch(error=>log.warn("hunting auto-dispatch failed",{
           sessionID:input.sessionID,
@@ -1289,11 +1383,12 @@ export const SessionRoutes = lazy(() =>
                 url:normalized.origin + normalized.normalizedPath,
                 host:normalized.host,
                 path:normalized.normalizedPath,
-                credentialId,
+                credentialId: credentialID,
                 accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                 observedAt:Date.now(),
               },
               pageUrl:body.page_url,
+              rawRequest:body.text,
               response:body.response ? {
                 id:"obs_"+Bun.hash([
                   sessionID,
@@ -1372,7 +1467,7 @@ export const SessionRoutes = lazy(() =>
               url:normalized.origin + normalized.normalizedPath,
               host:normalized.host,
               path:normalized.normalizedPath,
-              credentialId,
+              credentialId: credentialID,
               accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
               observedAt:req.time.created,
             },
@@ -1433,49 +1528,93 @@ export const SessionRoutes = lazy(() =>
             Request.updateStatus({ id: req.id, status: "processed" })
           } else {
             const agentName = body.agent ?? "proxy-agent"
-            const source = `${normalized.method} ${normalized.normalizedPath}`
-            IngestQueue.enqueue(sessionID, async () => {
+            const source = normalized.method + " " + normalized.normalizedPath
+            // Proxy observations run in a dedicated child session/queue. The main
+            // hunting session remains free to continue its own prompt and tasks.
+            const promptSessionID = agentName === "proxy-agent"
+              ? await getProxyWorkerSession(sessionID)
+              : sessionID
+            IngestQueue.enqueue(promptSessionID, async () => {
               Request.updateStatus({ id: req.id, status: "processing" })
               const before = IngestSummary.snapshot(sessionID)
-              // Render at dequeue (send time) so `## Observed Values` includes observations
-              // that accrued while this prompt waited in the queue — other credentials and
-              // other values seen on the same endpoint shape in the meantime.
               const promptText = buildPrompt()
               try {
-                await SessionPrompt.prompt({
+                // Persist the observation and target relationships before analysis,
+                // so the proxy worker can retrieve the latest bounded target graph.
+                await feedHuntingLayerFromRequest({
                   sessionID,
-                  agent: agentName,
-                  model: body.model,
-                  excludeHistory: true,
-                  parts: [{ type: "text", text: promptText }],
+                  target: normalized.site || normalized.host,
+                  pageUrl: req.page_url,
+                  jsAssets: collectObservedJavaScriptAssets(sessionID, req.page_url, normalized.host),
+                  request: {
+                    id: req.id,
+                    method: req.method,
+                    url: normalized.origin + normalized.normalizedPath,
+                    host: normalized.host,
+                    path: normalized.normalizedPath,
+                    credentialId: credentialID,
+                    accountLabel: credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+                    observedAt: req.time.created,
+                  },
+                  response: body.response ? {
+                    id: req.id + ":response",
+                    status: body.response.status,
+                    headers: sanitizeResponseHeaders(body.response.headers),
+                    contentType: body.response.headers["content-type"],
+                    bodyHash: normalized.bodyHash,
+                    observedAt: req.time.created,
+                  } : undefined,
+                  observedParams: normalized.observedParams,
+                  rawRequest: body.text,
                 })
-                const learnedFunction=WebFunction.getByRequest(req.id)
-                if(learnedFunction){
+
+                if (agentName === "proxy-agent") ProxyWorkerContext.set(promptSessionID, req.id)
+                try {
+                  await SessionPrompt.prompt({
+                    sessionID: promptSessionID,
+                    agent: agentName,
+                    model: body.model,
+                    excludeHistory: true,
+                    parts: [{ type: "text", text: promptText }],
+                  })
+                } finally {
+                  if (agentName === "proxy-agent") ProxyWorkerContext.clear(promptSessionID, req.id)
+                }
+
+                const learnedFunction = WebFunction.getByRequest(req.id)
+                if (learnedFunction) {
                   void feedHuntingLayerFromRequest({
                     sessionID,
-                    target:normalized.site || normalized.host,
-                    request:{
-                      id:req.id,
-                      method:req.method,
-                      url:normalized.origin + normalized.normalizedPath,
-                      host:normalized.host,
-                      path:normalized.normalizedPath,
-                      credentialId,
-                      accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
-                      observedAt:req.time.created,
+                    target: normalized.site || normalized.host,
+                    pageUrl: req.page_url,
+                    request: {
+                      id: req.id,
+                      method: req.method,
+                      url: normalized.origin + normalized.normalizedPath,
+                      host: normalized.host,
+                      path: normalized.normalizedPath,
+                      credentialId: credentialID,
+                      accountLabel: credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+                      observedAt: req.time.created,
                     },
-                    response:body.response ? {
-                      id:req.id+":response",
-                      status:body.response.status,
-                      headers:body.response.headers,
-                      contentType:body.response.headers["content-type"],
-                      bodyHash:normalized.bodyHash,
-                      observedAt:req.time.created,
+                    response: body.response ? {
+                      id: req.id + ":response",
+                      status: body.response.status,
+                      headers: sanitizeResponseHeaders(body.response.headers),
+                      contentType: body.response.headers["content-type"],
+                      bodyHash: normalized.bodyHash,
+                      observedAt: req.time.created,
                     } : undefined,
-                    functionIds:[learnedFunction.id],
+                    functionIds: [learnedFunction.id],
+                    functions: [{ id: learnedFunction.id, name: learnedFunction.name }],
+                    pageUrl: req.page_url,
+                    jsAssets: collectObservedJavaScriptAssets(sessionID, req.page_url, normalized.host),
+                    observedParams: normalized.observedParams,
+                    rawRequest: body.text,
                   })
                 }
-                const model = body.model ?? (await SessionPrompt.lastModel(sessionID))
+
+                const model = body.model ?? (await SessionPrompt.lastModel(promptSessionID))
                 await IngestSummary.write({
                   sessionID,
                   agent: agentName,

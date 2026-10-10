@@ -5,6 +5,7 @@ import { loadMission } from "./mission"
 import { buildAssetRelation } from "./cross-host-graph"
 import type { ParamSlot } from "../../packages/cyberstrike/src/session/normalize/types"
 import { discoverParameters } from "./parameter-discovery"
+import { renderTargetNotes } from "./target-notes"
 
 export interface CyberStrikeIntakeRecord{
   target:string
@@ -17,6 +18,8 @@ export interface CyberStrikeIntakeRecord{
     path?:string
     credentialId?:string
     accountLabel?:string
+    headerNames?:string[]
+    cookieNames?:string[]
     observedAt?:number
   }
   response?:{
@@ -28,9 +31,11 @@ export interface CyberStrikeIntakeRecord{
     observedAt?:number
   }
   pageUrl?:string
-  jsAssetIds?:string[]
-  functionIds?:string[]
   observedParams?:ParamSlot[]
+  jsAssetIds?:string[]
+  jsAssets?:Array<{id:string;url:string;pageUrl?:string;observedAt:number}>
+  functionIds?:string[]
+  functions?:Array<{id:string;name:string;assetId?:string;sourceLocation?:string}>
 }
 
 export async function ingestCyberStrikeRequest(
@@ -58,9 +63,12 @@ export async function ingestCyberStrikeRequest(
     response:input.response,
     pageUrl:input.pageUrl,
     jsAssetIds:input.jsAssetIds,
+    jsAssets:input.jsAssets,
     functionIds:input.functionIds,
+    functions:input.functions,
     parameters,
   })
+  await renderTargetNotes(root,input.target)
 
   if(!mission)return
   const observedAt=input.request.observedAt ?? Date.now()

@@ -61,6 +61,16 @@ export namespace TargetWorkspace {
     }
   }
 
+  async function ensureTextFile(file: string, content: string): Promise<void> {
+    await fs.mkdir(path.dirname(file), { recursive: true })
+    try {
+      const handle = await fs.open(file, "wx")
+      try { await handle.writeFile(content, "utf8") } finally { await handle.close() }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error
+    }
+  }
+
   async function ensureJSONFile(file: string, create: () => Record<string, unknown>): Promise<void> {
     try {
       await fs.access(file)
@@ -84,6 +94,8 @@ export namespace TargetWorkspace {
     scope: string
     scopeFile: string
     targetFile: string
+    targetNotesFile: string
+    attackSurfaceFile: string
     assets: string
     endpoints: string
     javascript: string
@@ -133,6 +145,8 @@ export namespace TargetWorkspace {
       scope,
       scopeFile: path.join(scope, "scope.json"),
       targetFile: path.join(root, "target.json"),
+      targetNotesFile: path.join(root, "target-notes.md"),
+      attackSurfaceFile: path.join(root, "attack-surface.md"),
       assets: path.join(root, "assets"),
       endpoints: path.join(root, "endpoints"),
       javascript: path.join(root, "javascript"),
@@ -185,6 +199,10 @@ export namespace TargetWorkspace {
         created_at: now,
         updated_at: now,
       })),
+    ])
+    await Promise.all([
+      ensureTextFile(result.targetNotesFile, "# Target Notes\n\n- Target: " + result.identity + "\n- Workspace ID: " + slug(result.identity) + "\n\n## System overview\n- Pending verified observations.\n\n## Applications and trust boundaries\n- Pending discovery.\n\n## Host, endpoint, and JavaScript relationships\n- Pending correlation.\n\n## Confirmed observations and negative results\n- Pending recon.\n\n## Next hypotheses\n- Pending evidence.\n"),
+      ensureTextFile(result.attackSurfaceFile, "# Attack Surface\n\n- Target: " + result.identity + "\n- Workspace ID: " + slug(result.identity) + "\n\n## Scope and authorization\n- Scope status: UNVERIFIED until matched against authoritative program scope.\n- Active testing: not authorized merely by entering a target.\n\n## Inventory\n### Domains and subdomains\n- Pending.\n### Live hosts and services\n- Pending.\n### URLs, API routes, and parameters\n- Pending.\n### JavaScript assets and client-side routes\n- Pending.\n### Identity and trust boundaries\n- Pending.\n\n## Evidence and provenance\n- Record source, timestamp, artifact path, scope decision, and confidence.\n- Deduplicate canonical assets but preserve separate observations.\n\n## Risk-ranked follow-up\n- Pending evidence.\n\n## Out-of-scope or blocked actions\n- Record excluded assets and missing authorization.\n"),
     ])
     await ensureLessonsFile(result.lessonsFile)
     return result

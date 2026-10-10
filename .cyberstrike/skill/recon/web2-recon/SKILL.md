@@ -10,7 +10,7 @@ category: reconnaissance
 # web2-recon
 
 ## Purpose
-Adapted from the public Claude-BugHunter capability catalog for CyberStrike's signal-driven skill system.
+Adapted from the public Claude-BugHunter capability catalog for CyberStrike's signal-driven skill system. For the full staged command playbook, load RECON-PIPELINE.md from this skill directory.
 
 ## Trigger
 Web2 recon pipeline — subdomain enumeration (subfinder, Chaos API, assetfinder), live host discovery (dnsx, httpx), URL crawling (katana, waybackurls, gau), directory fuzzing (ffuf), JS analysis (LinkFinder, SecretFinder), continuous monitoring (new subdomain alerts, JS change detection, GitHub commit watch). Use when starting recon on any web2 target or when asked about asset discovery, subdomain enum, or attack surface mapping.
