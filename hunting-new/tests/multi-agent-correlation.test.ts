@@ -138,7 +138,7 @@ describe("multi-agent correlation links", () => {
       confidence_threshold: 0.5,
       required_signals: ["source_map_detected"],
     }], "app.example")
-    const tasks = plan.tasks.filter(item => item.signal === "source-map-detected")
+    const tasks = plan.tasks.filter(item => item.signal === "source_map_detected")
 
     expect(tasks).toHaveLength(2)
     expect(tasks.map(item => item.jsAssetId).sort()).toEqual(["asset-a", "asset-b"])
