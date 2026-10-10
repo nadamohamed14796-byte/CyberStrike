@@ -132,7 +132,7 @@ export function buildMultiAgentPlanFromRegistry(
         signal.endpoint ?? "",
         signal.function_id ?? "",
         typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : "",
-        typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : "",
+        typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : "",
         typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : "",
       ].join("|")
       if (seen.has(key)) continue
@@ -146,7 +146,7 @@ export function buildMultiAgentPlanFromRegistry(
         signal: signal.signal,
         signalConfidence: signal.confidence,
         requestId: typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : undefined,
-        accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : undefined,
+        accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : undefined,
         parameterId: typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
@@ -209,7 +209,7 @@ export function buildMultiAgentPlan(
         signal: signal.signal,
         signalConfidence: signal.confidence,
         requestId: typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : undefined,
-        accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : undefined,
+        accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : undefined,
         parameterId: typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
