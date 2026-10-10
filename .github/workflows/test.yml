@@ -55,6 +55,12 @@ jobs:
       - name: Typecheck CyberStrike package
         run: bun run --cwd packages/cyberstrike typecheck
 
+      - name: Typecheck hunting layer
+        run: bun run --cwd hunting-new typecheck
+
+      - name: Run hunting layer regression tests
+        run: bun run --cwd hunting-new test
+
       - name: Run unit tests
         run: bun turbo test
 
