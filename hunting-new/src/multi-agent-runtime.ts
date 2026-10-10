@@ -410,7 +410,7 @@ export async function executeAndRecordDispatchedTask(
   const base=buildAgentTaskExecutionContext(plan,taskId)
   const mission=await loadMission(root,plan.target)
   if(!mission) throw new Error("MISSION_NOT_FOUND")
-  const initialScope=checkTargetScope(plan.target,mission.scope)
+  const initialScope=await checkConfiguredTargetScope(root,plan.target,mission.scope)
   if(!initialScope.allowed) throw new Error("VALIDATION_SCOPE_BLOCKED: "+initialScope.reason)
 
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)

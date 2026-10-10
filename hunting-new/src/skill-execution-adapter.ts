@@ -32,9 +32,9 @@ export function buildSkillExecutionInvocation(
 ):SkillExecutionInvocation{
   const role=context.role ?? "primary-hunter"
   const agent=options.agentBySkill?.[context.primarySkill] ??
-    context.recommendedAgent ??
     options.agentByRole?.[role] ??
     process.env[`HUNT_AGENT_ROLE_${role.toUpperCase().replace(/-/g,"_")}`] ??
+    context.recommendedAgent ??
     options.configuredAgentByRole?.[role] ??
     DEFAULT_ROLE_AGENTS[role] ??
     options.defaultAgent ??
