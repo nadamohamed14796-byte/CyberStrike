@@ -6,6 +6,7 @@ import os from "node:os"
 import path from "node:path"
 import { enrichAgentTaskExecutionContext, type AgentTaskExecutionContext } from "../src/multi-agent-runtime"
 import { emptyTargetIntelligence, saveTargetIntelligence } from "../src/target-intelligence"
+import { ensureAttemptEvidence, loadEvidence } from "../src/evidence-store"
 
 const task = (id: string, role: AgentTask["role"], accountLabel: string): AgentTask => ({
   id,
@@ -221,6 +222,46 @@ test("rejects an explicitly mismatched request and response pair", async () => {
       requestId: "request-b",
       responseId: "response-a",
     })).rejects.toThrow("AGENT_CORRELATION_MISMATCH")
+  } finally {
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
+
+test("never substitutes an unrelated response when exact response is required", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "cyberstrike-evidence-correlation-"))
+  try {
+    const state = emptyTargetIntelligence("app.example")
+    state.requests = [
+      { id: "request-a", sessionId: "session-a", method: "GET", url: "https://app.example/api/a", path: "/api/a", observedAt: 10, source: "observed" },
+      { id: "request-b", sessionId: "session-b", method: "GET", url: "https://app.example/api/b", path: "/api/b", observedAt: 20, source: "observed" },
+    ]
+    state.responses = [
+      { id: "response-a-old", requestId: "request-a", status: 200, headers: {}, observedAt: 11 },
+      { id: "response-a-new", requestId: "request-a", status: 201, headers: {}, observedAt: 12 },
+      { id: "response-b", requestId: "request-b", status: 200, headers: {}, observedAt: 21 },
+    ]
+    await saveTargetIntelligence(root, state)
+
+    await expect(ensureAttemptEvidence(root, "app.example", {
+      attemptId: "mismatched",
+      requestId: "request-b",
+      responseId: "response-a-new",
+    })).rejects.toThrow("EVIDENCE_CORRELATION_MISMATCH")
+
+    await expect(ensureAttemptEvidence(root, "app.example", {
+      attemptId: "missing",
+      requestId: "request-a",
+      responseId: "response-not-found",
+    })).rejects.toThrow("EVIDENCE_RESPONSE_NOT_FOUND")
+
+    await ensureAttemptEvidence(root, "app.example", {
+      attemptId: "valid",
+      requestId: "request-a",
+    })
+    const evidence = await loadEvidence(root, "app.example")
+    expect(evidence.evidence.filter(item => item.attemptId === "valid" && item.kind === "response").map(item => item.responseId))
+      .toEqual(["response-a-new"])
   } finally {
     await rm(root, { recursive: true, force: true })
   }
