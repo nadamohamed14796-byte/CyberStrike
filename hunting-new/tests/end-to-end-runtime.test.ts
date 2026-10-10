@@ -77,7 +77,7 @@ describe("hunting runtime end-to-end", () => {
       await dispatchPersistedTasks(root,prepared,1)
 
       let calls=0
-      const execution=await executeTaskUntilTerminal(root,prepared.plan,prepared.plan.tasks[0].id,async context=>{
+      const execution=await executeTaskUntilTerminal(root,prepared.plan,prepared.plan.tasks[0].id,{execute:async context=>{
         calls++
         const responseId="res-"+calls
         return {
@@ -100,7 +100,7 @@ describe("hunting runtime end-to-end", () => {
             observations:["The protected object response changed across validation variants."],
           }),
         }
-      })
+      }})
       
       expect(calls).toBe(20)
       expect(execution.terminal).toBe(true)
