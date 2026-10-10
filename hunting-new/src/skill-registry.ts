@@ -22,8 +22,7 @@ const canonicalTrigger=(value:string):string =>
 const SKILL_ALIASES:Record<string,string>={
   "waf-awareness":"waf-xss-bypass",
   "waf-aware":"waf-xss-bypass",
-  "javascript_intelligence":"analyze-js",
-  "javascript-intelligence":"analyze-js",
+  "javascript-intelligence":"javascript_intelligence",
   "idor":"attack-idor-automation",
   "rate-limit":"attack-rate-limit-bypass",
 }
