@@ -306,13 +306,15 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
   const dependencyBlocked: AgentTask[] = []
   const completed = new Set([...states.entries()].filter(([, state]) => state === "completed").map(([id]) => id))
   const dependencyCandidates = (task: AgentTask, role: HuntingAgentRole) => {
-    const strongIdentity = Boolean(task.requestId || task.functionId || task.parameterId)
+    const strongIdentity = Boolean(task.requestId || task.responseId || task.jsAssetId || task.functionId || task.parameterId)
     return plan.lanes[role].filter(dep =>
       dep.target === task.target &&
       (strongIdentity || dep.signal === task.signal) &&
       (task.endpoint ? dep.endpoint === task.endpoint : true) &&
       (task.functionId ? dep.functionId === task.functionId : true) &&
       (task.requestId ? dep.requestId === task.requestId : true) &&
+      (task.responseId ? dep.responseId === task.responseId : true) &&
+      (task.jsAssetId ? dep.jsAssetId === task.jsAssetId : true) &&
       (task.accountLabel ? dep.accountLabel === task.accountLabel : true) &&
       (task.parameterId ? dep.parameterId === task.parameterId : true),
     )
