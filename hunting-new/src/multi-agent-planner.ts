@@ -196,7 +196,15 @@ export function buildMultiAgentPlan(
     const matched = signalsForSkill(skill).sort((a, b) => b.confidence - a.confidence)
 
     for (const signal of matched) {
-      const key = `${skill.name}|${signal.signal}|${signal.endpoint ?? ""}|${signal.function_id ?? ""}`
+      const key = [
+        skill.name,
+        canonicalSignal(signal.signal),
+        signal.endpoint ?? "",
+        signal.function_id ?? "",
+        typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : "",
+        typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : "",
+        typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : "",
+      ].join("|")
       if (seen.has(key)) continue
       seen.add(key)
 
