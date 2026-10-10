@@ -42,6 +42,8 @@ export async function ingestCyberStrikeRequest(
   if(!mission)throw new Error("MISSION_NOT_INITIALIZED")
   const scope=checkScope(input.target,mission.scope)
   if(!scope.allowed)throw new Error("MISSION_BLOCKED: "+scope.reason)
+  const requestScope=checkScope(input.request.url,mission.scope)
+  if(!requestScope.allowed)throw new Error("MISSION_BLOCKED: request URL "+requestScope.reason)
   const intelligence=await loadTargetIntelligence(root,input.target)
   const graph=hydrateGraph({
     requests:intelligence.requests,
