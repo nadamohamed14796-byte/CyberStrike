@@ -627,13 +627,14 @@ export async function executeAndRecordDispatchedTask(
     !correlationError &&
     lifecycle.hypothesisStatus==="confirmed" &&
     lifecycle.validation?.decision==="eligible" &&
-    parsed?.impact
+    parsed?.severity &&
+    parsed?.impact?.trim()
   ){
     try{
       promotion=await promoteValidatedHypothesis(root,plan.target,{
         hypothesisId:prepared.hypothesis.id,
         title:parsed.title ?? (context.signal+" validated finding"),
-        severity:parsed.severity ?? "medium",
+        severity:parsed.severity,
         summary:parsed.resultSummary,
         impact:parsed.impact,
         remediation:parsed.remediation,
