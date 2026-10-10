@@ -152,8 +152,8 @@ export async function update(writeupsDir: string, notesDir?: string) {
   if (listedEntries.length) {
     lines.push("### Indexed write-ups (first " + listedEntries.length + " of " + entries.length + ")", "")
     for (const entry of listedEntries) {
-      const title = entry.title.replace(/\|/g, "\\|")
-      const file = entry.path.replace(/\|/g, "\\|")
+      const title = entry.title.replace(/\\/g, "\\\\").replace(/\|/g, "\\|")
+      const file = entry.path.replace(/\\/g, "\\\\").replace(/\|/g, "\\|")
       lines.push("- [" + entry.category + "] " + title + " — " + file)
     }
   } else {
