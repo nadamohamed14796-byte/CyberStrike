@@ -206,6 +206,7 @@ export async function prepareAgentTaskValidation(
   const accountSensitive=["multiple_accounts","object_identifier_detected","tenant_identifier_detected","authenticated_endpoint"].includes(context.signal)
   const assetIdentity=[...(context.jsAssetIds??[])].sort().join(",")
   const requestIdentity=accountSensitive ? "" : (context.requestId??"")
+  const accountIdentity=context.accountLabel??""
   const reservationKey=[
     plan.target,
     context.signal,
@@ -213,6 +214,7 @@ export async function prepareAgentTaskValidation(
     context.endpoint??"",
     context.functionId??"",
     requestIdentity,
+    accountIdentity,
     context.responseId??"",
     context.parameterId??"",
     assetIdentity,
@@ -225,6 +227,7 @@ export async function prepareAgentTaskValidation(
     context.endpoint??"",
     context.functionId??"",
     requestIdentity,
+    accountIdentity,
     context.responseId??"",
     context.parameterId??"",
     assetIdentity,
