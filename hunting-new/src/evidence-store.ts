@@ -1,7 +1,6 @@
 import path from "node:path"
 import { ensureDir, readJson, targetDir, writeJson, withTargetMutationLock } from "./store"
-import type { EvidenceRecord } from "./evidence"
-import { createEvidence, mergeEvidence } from "./evidence"
+import { createEvidence, mergeEvidence, type EvidenceRecord } from "./evidence"
 import { loadTargetIntelligence } from "./target-intelligence"
 
 export interface EvidenceState {
