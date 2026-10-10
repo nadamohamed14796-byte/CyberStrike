@@ -317,9 +317,12 @@ export async function enrichAgentTaskExecutionContext(
   if(context.requestId && responseRequest && context.requestId!==responseRequest.id) {
     throw new Error("AGENT_CORRELATION_MISMATCH: response identity does not match request")
   }
+  if(exact && context.endpoint && exact.path!==context.endpoint && !exact.url.includes(context.endpoint)){
+    throw new Error("AGENT_CORRELATION_MISMATCH: endpoint identity does not match request")
+  }
   if(context.accountLabel && exact){
     const observedAccount=exact.accountLabel ?? exact.credentialId
-    if(observedAccount && observedAccount!==context.accountLabel){
+    if(!observedAccount || observedAccount!==context.accountLabel){
       throw new Error("AGENT_CORRELATION_MISMATCH: account identity does not match request")
     }
   }
