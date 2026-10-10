@@ -567,11 +567,72 @@ export async function executeAndRecordDispatchedTask(
   const parsed=result.resultText
     ? parseExecutionResult(result.resultText,{state:result.state,outcome:"clean"})
     : undefined
-  const effectiveState=parsed?.state ?? result.state
+  const reportedRequestId=result.requestId ?? parsed?.requestId
+  const reportedResponseId=result.responseId ?? parsed?.responseId
+  let correlationError:string|undefined
+
+  if(result.requestId && parsed?.requestId && result.requestId!==parsed.requestId) {
+    correlationError="executor and structured output disagree on request identity"
+  }
+  if(result.responseId && parsed?.responseId && result.responseId!==parsed.responseId) {
+    correlationError="executor and structured output disagree on response identity"
+  }
+  if(context.requestId && reportedRequestId && context.requestId!==reportedRequestId) {
+    correlationError="execution result refers to a different request than the dispatched task"
+  }
+  if(context.responseId && reportedResponseId && context.responseId!==reportedResponseId) {
+    correlationError="execution result refers to a different response than the dispatched task"
+  }
+
+  // Re-check the identifiers returned by the agent against the authoritative
+  // intelligence graph before using them for evidence, lifecycle, or promotion.
+  const executionIntelligence=await loadTargetIntelligence(root,plan.target)
+  const responseId=context.responseId ?? reportedResponseId
+  const responseRecord=responseId
+    ? executionIntelligence.responses.find(item=>item.id===responseId)
+    : undefined
+  if(responseId && !responseRecord) correlationError ??="execution result references an unknown response"
+  const requestId=context.requestId ?? reportedRequestId ?? responseRecord?.requestId
+  const requestRecord=requestId
+    ? executionIntelligence.requests.find(item=>item.id===requestId)
+    : undefined
+  if(requestId && !requestRecord) correlationError ??="execution result references an unknown request"
+  if(responseRecord && requestId && responseRecord.requestId!==requestId) {
+    correlationError ??="execution response does not belong to the selected request"
+  }
+  if(requestRecord && context.endpoint && requestRecord.path!==context.endpoint && !requestRecord.url.includes(context.endpoint)) {
+    correlationError ??="execution result request does not match the dispatched endpoint"
+  }
+  if(requestRecord && context.accountLabel) {
+    const observedAccount=requestRecord.accountLabel ?? requestRecord.credentialId
+    if(!observedAccount || observedAccount!==context.accountLabel) {
+      correlationError ??="execution result request does not match the dispatched account"
+    }
+  }
+
+  // Correlation failures are not findings. Keep any evidence already attached to
+  // the known task context, but never let a mismatched output promote a result.
+  const effectiveState=correlationError ? "inconclusive" : (parsed?.state ?? result.state)
+  const effectiveRequestId=correlationError ? context.requestId : requestId
+  const effectiveResponseId=correlationError ? context.responseId : responseId
+  const effectiveSummary=correlationError
+    ? "Rejected execution result due to correlation mismatch: "+correlationError
+    : (parsed?.resultSummary || result.resultSummary)
   const attemptId=prepared.attempt.id
-  const executionEvidenceIds=await ensureAttemptEvidence(root,plan.target,{attemptId:prepared.attempt.id,requestId:result.requestId??context.requestId,responseId:result.responseId??context.responseId,accountLabel:context.accountLabel})
+  const executionEvidenceIds=await ensureAttemptEvidence(root,plan.target,{
+    attemptId:prepared.attempt.id,
+    requestId:effectiveRequestId,
+    responseId:effectiveResponseId,
+    accountLabel:context.accountLabel,
+  })
   const evidenceState=await (await import("./evidence-store")).loadEvidence(root,plan.target)
-  const evidenceIds=[...new Set([...executionEvidenceIds,...(result.evidenceIds ?? []),...(parsed ? verifiedEvidenceIds(parsed,new Set(evidenceState.evidence.map(item=>item.id))) : [])])]
+  const evidenceIds=correlationError
+    ? executionEvidenceIds
+    : [...new Set([
+        ...executionEvidenceIds,
+        ...(result.evidenceIds ?? []),
+        ...(parsed ? verifiedEvidenceIds(parsed,new Set(evidenceState.evidence.map(item=>item.id))) : []),
+      ])]
 
   const lifecycle=await recordAttemptLifecycle(
     root,
@@ -579,15 +640,15 @@ export async function executeAndRecordDispatchedTask(
     attemptId,
     {
       state:effectiveState,
-      requestId:result.requestId??context.requestId,
-      responseId:result.responseId??context.responseId,
+      requestId:effectiveRequestId,
+      responseId:effectiveResponseId,
       accountMode:context.accountLabel,
-      resultSummary:result.resultSummary,
+      resultSummary:effectiveSummary,
       evidenceIds,
       skill:context.primarySkill,
       endpoint:context.endpoint,
       confidence:context.signalConfidence,
-      impactObserved:Boolean(parsed?.impact?.trim()),
+      impactObserved:!correlationError && Boolean(parsed?.impact?.trim()),
       taskId:context.taskId,
     },
   )
@@ -653,7 +714,7 @@ export async function executeAndRecordDispatchedTask(
   }
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
-  return {context,result:{...result,state:effectiveState},lifecycle,promotion}
+  return {context,result:{...result,state:effectiveState,requestId:effectiveRequestId,responseId:effectiveResponseId,resultSummary:effectiveSummary,evidenceIds},lifecycle,promotion}
 }
 
 export interface MultiAttemptExecutionResult {
