@@ -357,7 +357,15 @@ async function feedHuntingLayerFromRequest(input:{
   try{
     const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
     const { ingestCyberStrikeRequest }=await import("../../../../../hunting-new/src/cyberstrike-intake")
-    await ingestCyberStrikeRequest(root,input)
+    await ingestCyberStrikeRequest(root,{
+      target:input.target,
+      sessionId:input.sessionID,
+      request:input.request,
+      response:input.response,
+      pageUrl:input.pageUrl,
+      jsAssetIds:input.jsAssetIds,
+      functionIds:input.functionIds,
+    })
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
       const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
       void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
