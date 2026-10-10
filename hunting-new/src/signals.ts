@@ -97,20 +97,29 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   }
 
   for (const parameter of input.parameters ?? []) {
-    emit({
-      signal: "parameter_discovered",
-      source: "correlation:parameter",
-      confidence: parameter.confidence,
-      target: input.target,
-      endpoint: parameter.endpoint,
-      metadata: {
-        parameterId: parameter.id,
-        name: parameter.name,
-        location: parameter.location,
-        requestIds: parameter.requestIds,
-        sources: parameter.sources,
-      },
-    })
+    // Fan out multi-request parameters into request-scoped signals so account
+    // identity survives the correlation -> planner -> execution boundary.
+    const requestIds = parameter.requestIds.length ? parameter.requestIds : [undefined]
+    for (const requestId of requestIds) {
+      const request = requestId ? input.requests.find(item => item.id === requestId) : undefined
+      emit({
+        signal: "parameter_discovered",
+        source: "correlation:parameter",
+        confidence: parameter.confidence,
+        target: input.target,
+        endpoint: parameter.endpoint,
+        metadata: {
+          parameterId: parameter.id,
+          requestId,
+          accountLabel: request?.accountLabel,
+          credentialId: request?.credentialId,
+          name: parameter.name,
+          location: parameter.location,
+          requestIds: parameter.requestIds,
+          sources: parameter.sources,
+        },
+      })
+    }
   }
 
   for (const request of input.requests) {
