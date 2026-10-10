@@ -1,10 +1,9 @@
-import { buildMultiAgentPlan, buildMultiAgentPlanFromRegistry, type MultiAgentPlan } from "./multi-agent-planner"
+import { buildMultiAgentPlan, buildMultiAgentPlanFromRegistry, dispatchAgentTasks, type MultiAgentPlan } from "./multi-agent-planner"
 import { recordAttemptLifecycle, type AttemptLifecycleResult } from "./attempt-lifecycle"
-import { persistAgentPlan, recoverStaleAgentTasks } from "./agent-task-runtime"
+import { persistAgentPlan, recoverStaleAgentTasks, claimAgentTask, finishAgentTask, setAgentTaskState } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import { signalEngineFromCorrelation, type SignalEngine, type SkillRule } from "./signals"
-import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
 import { loadTargetIntelligence } from "./target-intelligence"
@@ -17,7 +16,7 @@ import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type 
 import { loadLearning } from "./learning-store"
 import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
-import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
+import { parseExecutionResult, requestMatchesEndpoint, resolveExecutionResultCorrelation, verifiedEvidenceIds } from "./execution-result"
 import { loadMission } from "./mission"
 import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
@@ -118,9 +117,7 @@ export async function prepareMultiAgentPlan(
   }
 }
 
-import { dispatchAgentTasks } from "./multi-agent-planner"
-import { loadTaskStates } from "./task-state-store"
-import { claimAgentTask, finishAgentTask, setAgentTaskState } from "./agent-task-runtime"
+import { loadTaskStates, saveTaskState, transitionTaskState } from "./task-state-store"
 
 export async function dispatchPersistedTasks(
   root:string,
@@ -131,6 +128,19 @@ export async function dispatchPersistedTasks(
   const state=await loadTaskStates(root,prepared.plan.target)
   const states=new Map(state.tasks.map(task=>[task.taskId,task.state] as const))
   const batch=dispatchAgentTasks(prepared.plan,states,limit)
+  for(const task of batch.dependencyBlocked){
+    const current=state.tasks.find(item=>item.taskId===task.id)
+    if(current?.state==="pending"){
+      await transitionTaskState(root,prepared.plan.target,task.id,"blocked",undefined,["pending"])
+    }else if(!current){
+      await saveTaskState(root,prepared.plan.target,{
+        taskId:task.id,
+        state:"blocked",
+        attempts:0,
+        updatedAt:new Date().toISOString(),
+      })
+    }
+  }
   const claimed=[]
   for(const task of batch.tasks){
     claimed.push(await claimAgentTask(root,prepared.plan.target,task.id))
@@ -190,16 +200,34 @@ export async function prepareAgentTaskValidation(
   taskId:string,
 ):Promise<PreparedTaskValidation>{
   const context=buildAgentTaskExecutionContext(plan,taskId)
-  const reservationKey=plan.target+"|"+context.signal+"|"+context.primarySkill+"|"+(context.endpoint??"")+"|"+(context.functionId??"");
-  return withValidationReservation(reservationKey,async()=>{
   const accountSensitive=["multiple_accounts","object_identifier_detected","tenant_identifier_detected","authenticated_endpoint"].includes(context.signal)
+  const assetIdentity=[...(context.jsAssetIds??[])].sort().join(",")
+  const requestIdentity=accountSensitive ? "" : (context.requestId??"")
+  const accountIdentity=context.accountLabel??""
+  const reservationKey=[
+    plan.target,
+    context.signal,
+    context.primarySkill,
+    context.endpoint??"",
+    context.functionId??"",
+    requestIdentity,
+    accountIdentity,
+    context.responseId??"",
+    context.parameterId??"",
+    assetIdentity,
+  ].join("|")
+  return withValidationReservation(reservationKey,async()=>{
   const hypothesisId="hyp_"+Bun.hash([
     context.signal,
     context.target,
     context.primarySkill,
     context.endpoint??"",
     context.functionId??"",
-    accountSensitive ? "" : (context.requestId??""),
+    requestIdentity,
+    accountIdentity,
+    context.responseId??"",
+    context.parameterId??"",
+    assetIdentity,
   ].join("|")).toString(16)
   const storedHypotheses=await loadHypotheses(root,plan.target)
   await loadTargetIntelligence(root,plan.target)
@@ -269,10 +297,18 @@ export interface AgentTaskExecutionContext {
   endpoint?:string
   functionId?:string
   requestId?:string
+  requestUrl?:string
+  requestMethod?:string
+  parameterId?:string
+  parameterName?:string
+  parameterLocation?:"path"|"query"|"body"
   responseId?:string
+  responseStatus?:number
   jsAssetIds?:string[]
+  jsAssetUrls?:string[]
   functionIds?:string[]
   accountLabel?:string
+  relatedAccountLabels?:string[]
   attemptId?:string
   reason:string
 }
@@ -283,38 +319,115 @@ export async function enrichAgentTaskExecutionContext(
   context:AgentTaskExecutionContext,
 ):Promise<AgentTaskExecutionContext>{
   const intelligence=await loadTargetIntelligence(root,plan.target)
+  const explicitResponse=context.responseId
+    ? intelligence.responses.find(item=>item.id===context.responseId)
+    : undefined
+  if(context.responseId && !explicitResponse) {
+    throw new Error("AGENT_RESPONSE_NOT_FOUND: "+context.responseId)
+  }
+  const responseRequest=explicitResponse
+    ? intelligence.requests.find(request=>request.id===explicitResponse.requestId)
+    : undefined
+  if(explicitResponse && !responseRequest) {
+    throw new Error("AGENT_RESPONSE_REQUEST_NOT_FOUND: "+explicitResponse.requestId)
+  }
+
   const exact=context.requestId
     ? intelligence.requests.find(request=>request.id===context.requestId)
+    : responseRequest
+  if(context.requestId && !exact) throw new Error("AGENT_REQUEST_NOT_FOUND: "+context.requestId)
+  if(context.requestId && responseRequest && context.requestId!==responseRequest.id) {
+    throw new Error("AGENT_CORRELATION_MISMATCH: response identity does not match request")
+  }
+  if(exact && context.endpoint && !requestMatchesEndpoint(exact,context.endpoint)){
+    throw new Error("AGENT_CORRELATION_MISMATCH: endpoint identity does not match request")
+  }
+  if(context.accountLabel && exact){
+    const observedAccount=exact.accountLabel ?? exact.credentialId
+    if(!observedAccount || observedAccount!==context.accountLabel){
+      throw new Error("AGENT_CORRELATION_MISMATCH: account identity does not match request")
+    }
+  }
+
+  const parameter=context.parameterId
+    ? intelligence.parameters.find(item=>item.id===context.parameterId)
     : undefined
+  if(context.parameterId && !parameter) {
+    throw new Error("AGENT_PARAMETER_NOT_FOUND: "+context.parameterId)
+  }
+  if(parameter && context.endpoint && parameter.endpoint!==context.endpoint) {
+    throw new Error("AGENT_CORRELATION_MISMATCH: parameter endpoint does not match task endpoint")
+  }
+  if(parameter && context.requestId && !parameter.requestIds.includes(context.requestId)) {
+    throw new Error("AGENT_CORRELATION_MISMATCH: parameter identity does not belong to request")
+  }
+
+  const knownAssetIds=new Set(intelligence.jsAssets.map(asset=>asset.id))
+  const requestedAssets=new Set(context.jsAssetIds ?? [])
+  for(const id of requestedAssets){
+    if(!knownAssetIds.has(id)) throw new Error("AGENT_JS_ASSET_NOT_FOUND: "+id)
+  }
+  const requestedFunctions=new Set([...(context.functionIds ?? []), ...(context.functionId ? [context.functionId] : [])])
+  for(const fn of intelligence.functions){
+    if(fn.assetId && requestedAssets.has(fn.assetId)) requestedFunctions.add(fn.id)
+  }
+  const linkedRequestIds=new Set(intelligence.edges.filter(edge =>
+    (edge.kind==="observed-on" && requestedAssets.has(edge.from)) ||
+    (edge.kind==="triggered-by" && requestedFunctions.has(edge.from))
+  ).map(edge=>edge.to))
+
   const candidates=intelligence.requests.filter(request=>{
-    if(context.endpoint && request.path) return request.path===context.endpoint || request.url.includes(context.endpoint)
+    if(context.endpoint && !requestMatchesEndpoint(request,context.endpoint)) return false
+    if(context.accountLabel && (request.accountLabel ?? request.credentialId)!==context.accountLabel) return false
     return true
   }).sort((a,b)=>b.observedAt-a.observedAt)
-  const request=exact ?? candidates[0]
-  const response=context.responseId
-    ? intelligence.responses.find(item=>item.id===context.responseId)
-    : request
-      ? intelligence.responses.find(item=>item.requestId===request.id)
-      : undefined
+  const accountIdentity=(request:typeof intelligence.requests[number])=>request.accountLabel ?? request.credentialId ?? "__anonymous__"
+  const oneAccountOnly=(items:typeof intelligence.requests)=>new Set(items.map(accountIdentity)).size===1
+  const linkedCandidates=candidates.filter(candidate=>linkedRequestIds.has(candidate.id))
+  const linkedRequest=linkedCandidates.length && oneAccountOnly(linkedCandidates) ? linkedCandidates[0] : undefined
+  const endpointRequest=context.endpoint && candidates.length && oneAccountOnly(candidates) ? candidates[0] : undefined
+  // Only bind a request when the task supplies a request/response, an endpoint,
+  // or an unambiguous graph edge linking its JS/function identity. Never borrow an
+  // unrelated or cross-account "latest request" for a global JavaScript signal.
+  const request=exact ?? responseRequest ?? linkedRequest ?? endpointRequest
+  if(context.responseId && request && explicitResponse?.requestId!==request.id) {
+    throw new Error("AGENT_CORRELATION_MISMATCH: response identity does not match selected request")
+  }
+  const response=explicitResponse ?? (request
+    ? intelligence.responses.filter(item=>item.requestId===request.id).sort((a,b)=>b.observedAt-a.observedAt)[0]
+    : undefined)
   const relatedEdges=request
     ? intelligence.edges.filter(edge=>edge.from===request.id || edge.to===request.id)
     : []
-  const functionIds=new Set<string>()
-  const jsAssetIds=new Set<string>()
+  const functionIds=new Set<string>(context.functionIds ?? [])
+  const jsAssetIds=new Set<string>(context.jsAssetIds ?? [])
   for(const edge of relatedEdges){
     if(edge.kind==="triggered-by") functionIds.add(edge.from)
-    if(edge.kind==="observed-on") jsAssetIds.add(edge.from)
+    // "observed-on" is used by both JS-asset→request and parameter→request edges.
+    // Only graph nodes registered as JavaScript assets belong in jsAssetIds.
+    if(edge.kind==="observed-on" && knownAssetIds.has(edge.from)) jsAssetIds.add(edge.from)
   }
+  const resolvedAssets=new Set(jsAssetIds)
+  const assetUrls=[...new Set([
+    ...(context.jsAssetUrls ?? []),
+    ...intelligence.jsAssets.filter(asset=>resolvedAssets.has(asset.id)).map(asset=>asset.url),
+  ])]
   if(context.functionId) functionIds.add(context.functionId)
   const refs=await referencesForSkills(root,context.resolvedSkills,8)
   if(refs.length) await markReferencesUsed(root,refs.map(item=>item.id))
   return {
     ...context,
-    requestId:request?.id,
-    responseId:response?.id,
-    accountLabel:context.accountLabel ?? request?.accountLabel,
+    requestId:request?.id ?? context.requestId,
+    requestUrl:request?.url ?? context.requestUrl,
+    requestMethod:request?.method ?? context.requestMethod,
+    responseId:response?.id ?? context.responseId,
+    responseStatus:response?.status ?? context.responseStatus,
+    parameterName:parameter?.name ?? context.parameterName,
+    parameterLocation:parameter?.location ?? context.parameterLocation,
+    accountLabel:context.accountLabel ?? request?.accountLabel ?? request?.credentialId,
     functionIds:[...functionIds],
     jsAssetIds:[...jsAssetIds],
+    jsAssetUrls:assetUrls,
     referenceIds:refs.map(item=>item.id),
     referenceUrls:refs.map(item=>item.url),
   }
@@ -323,7 +436,7 @@ export async function enrichAgentTaskExecutionContext(
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
-  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, recommendedAgent:task.recommendedAgent, referenceIds:task.referenceIds, referenceUrls:task.referenceUrls, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
+  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, recommendedAgent:task.recommendedAgent, referenceIds:task.referenceIds, referenceUrls:task.referenceUrls, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, responseId:task.responseId, jsAssetIds:task.jsAssetId ? [task.jsAssetId] : undefined, accountLabel:task.accountLabel, relatedAccountLabels:task.relatedAccountLabels, parameterId:task.parameterId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
 }
 
 export async function prepareSkillExecutionInvocation(
@@ -332,10 +445,10 @@ export async function prepareSkillExecutionInvocation(
   taskId:string,
   options:SkillExecutionAdapterOptions={},
 ):Promise<SkillExecutionInvocation>{
+  const base=buildAgentTaskExecutionContext(plan,taskId)
+  const enriched=await enrichAgentTaskExecutionContext(root,plan,base)
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
-  const base={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
-  const context=await enrichAgentTaskExecutionContext(root,plan,base)
-  return buildSkillExecutionInvocation(context,options)
+  return buildSkillExecutionInvocation({...enriched,attemptId:prepared.attempt.id},options)
 }
 
 export interface AgentTaskExecutor {
@@ -356,10 +469,10 @@ export async function prepareDispatchedTaskInvocation(
   taskId:string,
   options:SkillExecutionAdapterOptions={},
 ):Promise<SkillExecutionInvocation>{
+  const baseContext=buildAgentTaskExecutionContext(plan,taskId)
+  const enrichedContext=await enrichAgentTaskExecutionContext(root,plan,baseContext)
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
-  const baseContext={...buildAgentTaskExecutionContext(plan,taskId),attemptId:prepared.attempt.id}
-  const context=await enrichAgentTaskExecutionContext(root,plan,baseContext)
-  return buildSkillExecutionInvocation(context,options)
+  return buildSkillExecutionInvocation({...enrichedContext,attemptId:prepared.attempt.id},options)
 }
 
 export interface ExternalToolDispatchResult {
@@ -397,16 +510,18 @@ export async function executeAndRecordDispatchedTask(
   plan:MultiAgentPlan,
   taskId:string,
   executor:AgentTaskExecutor,
-):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult; promotion?:FindingPromotionResult; refreshedPlan?:PreparedMultiAgentPlan}>{
+):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>> & {correlationError?:string}; lifecycle?:AttemptLifecycleResult; promotion?:FindingPromotionResult; refreshedPlan?:PreparedMultiAgentPlan}>{
   const base=buildAgentTaskExecutionContext(plan,taskId)
   const mission=await loadMission(root,plan.target)
   if(!mission) throw new Error("MISSION_NOT_FOUND")
   const initialScope=checkScope(plan.target,mission.scope)
   if(!initialScope.allowed) throw new Error("VALIDATION_SCOPE_BLOCKED: "+initialScope.reason)
 
+  // Validate all supplied correlation IDs before creating a hypothesis or
+  // reserving an attempt. Invalid tasks must not leave orphaned validation state.
+  const enrichedBase=await enrichAgentTaskExecutionContext(root,plan,base)
   const prepared=await prepareAgentTaskValidation(root,plan,taskId)
-  const baseContext={...base,attemptId:prepared.attempt.id}
-  const context=await enrichAgentTaskExecutionContext(root,plan,baseContext)
+  const context={...enrichedBase,attemptId:prepared.attempt.id}
   if(context.referenceIds?.length) await markReferencesUsed(root,context.referenceIds)
 
   const intelligence=await loadTargetIntelligence(root,plan.target)
@@ -452,11 +567,43 @@ export async function executeAndRecordDispatchedTask(
   const parsed=result.resultText
     ? parseExecutionResult(result.resultText,{state:result.state,outcome:"clean"})
     : undefined
-  const effectiveState=parsed?.state ?? result.state
+  const executionIntelligence=await loadTargetIntelligence(root,plan.target)
+  const correlation=resolveExecutionResultCorrelation({
+    expectedRequestId:context.requestId,
+    expectedResponseId:context.responseId,
+    endpoint:context.endpoint,
+    accountLabel:context.accountLabel,
+    executorRequestId:result.requestId,
+    structuredRequestId:parsed?.requestId,
+    executorResponseId:result.responseId,
+    structuredResponseId:parsed?.responseId,
+    requests:executionIntelligence.requests,
+    responses:executionIntelligence.responses,
+  })
+  const correlationError=correlation.error
+  // Correlation failures are not findings. Keep any evidence already attached to
+  // the known task context, but never let a mismatched output promote a result.
+  const effectiveState=correlationError ? "inconclusive" : (parsed?.state ?? result.state)
+  const effectiveRequestId=correlationError ? context.requestId : correlation.requestId
+  const effectiveResponseId=correlationError ? context.responseId : correlation.responseId
+  const effectiveSummary=correlationError
+    ? "Rejected execution result due to correlation mismatch: "+correlationError
+    : (parsed?.resultSummary || result.resultSummary)
   const attemptId=prepared.attempt.id
-  const executionEvidenceIds=await ensureAttemptEvidence(root,plan.target,{attemptId:prepared.attempt.id,requestId:result.requestId??context.requestId,responseId:result.responseId??context.responseId,accountLabel:context.accountLabel})
+  const executionEvidenceIds=await ensureAttemptEvidence(root,plan.target,{
+    attemptId:prepared.attempt.id,
+    requestId:effectiveRequestId,
+    responseId:effectiveResponseId,
+    accountLabel:context.accountLabel,
+  })
   const evidenceState=await (await import("./evidence-store")).loadEvidence(root,plan.target)
-  const evidenceIds=[...new Set([...executionEvidenceIds,...(result.evidenceIds ?? []),...(parsed ? verifiedEvidenceIds(parsed,new Set(evidenceState.evidence.map(item=>item.id))) : [])])]
+  const evidenceIds=correlationError
+    ? executionEvidenceIds
+    : [...new Set([
+        ...executionEvidenceIds,
+        ...(result.evidenceIds ?? []),
+        ...(parsed ? verifiedEvidenceIds(parsed,new Set(evidenceState.evidence.map(item=>item.id))) : []),
+      ])]
 
   const lifecycle=await recordAttemptLifecycle(
     root,
@@ -464,30 +611,32 @@ export async function executeAndRecordDispatchedTask(
     attemptId,
     {
       state:effectiveState,
-      requestId:result.requestId??context.requestId,
-      responseId:result.responseId??context.responseId,
+      requestId:effectiveRequestId,
+      responseId:effectiveResponseId,
       accountMode:context.accountLabel,
-      resultSummary:result.resultSummary,
+      resultSummary:effectiveSummary,
       evidenceIds,
       skill:context.primarySkill,
       endpoint:context.endpoint,
       confidence:context.signalConfidence,
-      impactObserved:Boolean(parsed?.impact?.trim()),
+      impactObserved:!correlationError && Boolean(parsed?.impact?.trim()),
       taskId:context.taskId,
     },
   )
 
   let promotion:FindingPromotionResult|undefined
   if(
+    !correlationError &&
     lifecycle.hypothesisStatus==="confirmed" &&
     lifecycle.validation?.decision==="eligible" &&
-    parsed?.impact
+    parsed?.severity &&
+    parsed?.impact?.trim()
   ){
     try{
       promotion=await promoteValidatedHypothesis(root,plan.target,{
         hypothesisId:prepared.hypothesis.id,
         title:parsed.title ?? (context.signal+" validated finding"),
-        severity:parsed.severity ?? "medium",
+        severity:parsed.severity,
         summary:parsed.resultSummary,
         impact:parsed.impact,
         remediation:parsed.remediation,
@@ -506,9 +655,11 @@ export async function executeAndRecordDispatchedTask(
 
   const validationEligible=lifecycle.validation?.decision==="eligible"
   const promotionResolved=!validationEligible || Boolean(promotion?.reportable) || promotion?.action==="skip"
-  const terminal=effectiveState==="blocked" ||
+  const terminal=!correlationError && (
+    effectiveState==="blocked" ||
     lifecycle.hypothesisStatus==="rejected" ||
     (lifecycle.hypothesisStatus==="confirmed" && promotionResolved)
+  )
   const taskState=effectiveState==="blocked"
     ? "blocked"
     : terminal
@@ -538,13 +689,13 @@ export async function executeAndRecordDispatchedTask(
   }
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
-  return {context,result:{...result,state:effectiveState},lifecycle,promotion}
+  return {context,result:{...result,state:effectiveState,requestId:effectiveRequestId,responseId:effectiveResponseId,resultSummary:effectiveSummary,evidenceIds,...(correlationError ? {correlationError} : {})},lifecycle,promotion}
 }
 
 export interface MultiAttemptExecutionResult {
   iterations:number
   terminal:boolean
-  results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string }>
+  results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string; correlationError?:string }>
 }
 
 export async function executeTaskUntilTerminal(
@@ -554,7 +705,7 @@ export async function executeTaskUntilTerminal(
   executor:AgentTaskExecutor,
   maxIterations=20,
 ):Promise<MultiAttemptExecutionResult>{
-  const results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string }>=[]
+  const results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string; correlationError?:string }> = []
 
   for(let i=0;i<Math.min(Math.max(maxIterations,1),20);i++){
     const execution=await executeAndRecordDispatchedTask(root,plan,taskId,executor)
@@ -562,9 +713,12 @@ export async function executeTaskUntilTerminal(
     const eligible=execution.lifecycle?.validation?.decision==="eligible"
     const promotionResolved=!eligible || Boolean(execution.promotion?.reportable) || execution.promotion?.action==="skip"
     if(
-      execution.result.state==="blocked" ||
-      execution.lifecycle?.hypothesisStatus==="rejected" ||
-      (execution.lifecycle?.hypothesisStatus==="confirmed" && promotionResolved)
+      !execution.result.correlationError &&
+      (
+        execution.result.state==="blocked" ||
+        execution.lifecycle?.hypothesisStatus==="rejected" ||
+        (execution.lifecycle?.hypothesisStatus==="confirmed" && promotionResolved)
+      )
     ){
       return {iterations:i+1,terminal:true,results}
     }

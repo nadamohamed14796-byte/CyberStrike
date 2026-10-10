@@ -7,7 +7,18 @@ export interface SkillExecutionInvocation {
   skills:string[]
   prompt:string
   requestId?:string
+  requestUrl?:string
+  requestMethod?:string
   responseId?:string
+  responseStatus?:number
+  parameterId?:string
+  parameterName?:string
+  parameterLocation?:"path"|"query"|"body"
+  accountLabel?:string
+  relatedAccountLabels?:string[]
+  jsAssetIds?:string[]
+  jsAssetUrls?:string[]
+  functionIds?:string[]
   attemptId?:string
   endpoint?:string
 }
@@ -56,11 +67,19 @@ export function buildSkillExecutionInvocation(
     `signal: ${context.signal}`,
     `confidence: ${context.signalConfidence}`,
     `endpoint: ${context.endpoint ?? "(none)"}`,
+    `request_method: ${context.requestMethod ?? "(none)"}`,
+    `request_url: ${context.requestUrl ?? "(none)"}`,
     `request_id: ${context.requestId ?? "(none)"}`,
     `response_id: ${context.responseId ?? "(none)"}`,
+    `response_status: ${context.responseStatus ?? "(none)"}`,
+    `parameter_id: ${context.parameterId ?? "(none)"}`,
+    `parameter_name: ${context.parameterName ?? "(none)"}`,
+    `parameter_location: ${context.parameterLocation ?? "(none)"}`,
     `attempt_id: ${context.attemptId ?? "(none)"}`,
     `account_label: ${context.accountLabel ?? "(none)"}`,
+    `related_account_labels: ${(context.relatedAccountLabels ?? []).join(", ") || "(none)"}`,
     `js_asset_ids: ${(context.jsAssetIds ?? []).join(", ") || "(none)"}`,
+    `js_asset_urls: ${(context.jsAssetUrls ?? []).join(", ") || "(none)"}`,
     `function_ids: ${(context.functionIds ?? []).join(", ") || "(none)"}`,
     `strategy_hints: ${context.strategyHints.join(", ") || "(none)"}`,
     "",
@@ -76,7 +95,18 @@ export function buildSkillExecutionInvocation(
     skills:[...context.resolvedSkills],
     prompt,
     requestId:context.requestId,
+    requestUrl:context.requestUrl,
+    requestMethod:context.requestMethod,
     responseId:context.responseId,
+    responseStatus:context.responseStatus,
+    parameterId:context.parameterId,
+    parameterName:context.parameterName,
+    parameterLocation:context.parameterLocation,
+    accountLabel:context.accountLabel,
+    relatedAccountLabels:context.relatedAccountLabels,
+    jsAssetIds:context.jsAssetIds,
+    jsAssetUrls:context.jsAssetUrls,
+    functionIds:context.functionIds,
     attemptId:context.attemptId,
     endpoint:context.endpoint,
   }

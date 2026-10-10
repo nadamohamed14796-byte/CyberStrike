@@ -39,4 +39,20 @@ describe("session intake scope gate", () => {
       await rm(root, { recursive: true, force: true })
     }
   })
+
+  test("rejects an out-of-scope request URL even when the mission target is in scope", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "cyberstrike-intake-request-scope-"))
+    const target = "intake.example"
+    try {
+      await initMission(root, target, [{ value: target }])
+      await expect(ingestCyberStrikeRequest(root, {
+        ...input(target),
+        request: { ...input(target).request, url: "https://outside.example/private" },
+      })).rejects.toThrow("MISSION_BLOCKED")
+      expect(await Bun.file(path.join(targetDir(root, target), "intelligence", "target.json")).exists()).toBe(false)
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
 })

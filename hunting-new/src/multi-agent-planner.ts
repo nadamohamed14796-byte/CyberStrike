@@ -14,6 +14,11 @@ export interface AgentTask {
   signal: string
   signalConfidence: number
   requestId?: string
+  responseId?: string
+  jsAssetId?: string
+  accountLabel?: string
+  relatedAccountLabels?: string[]
+  parameterId?: string
   endpoint?: string
   functionId?: string
   target: string
@@ -69,7 +74,10 @@ function stableTaskId(target:string,skill:SkillSelection,signal:{signal:string;e
     signal.endpoint??"",
     signal.function_id??"",
     typeof signal.metadata?.requestId==="string" ? signal.metadata.requestId : "",
-    typeof signal.metadata?.accountLabel==="string" ? signal.metadata.accountLabel : "",
+    typeof signal.metadata?.responseId==="string" ? signal.metadata.responseId : "",
+    typeof signal.metadata?.jsAssetId==="string" ? signal.metadata.jsAssetId : "",
+    typeof signal.metadata?.accountLabel==="string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId==="string" ? signal.metadata.credentialId : "",
+    Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item):item is string=>typeof item==="string").sort().join(",") : "",
     typeof signal.metadata?.parameterId==="string" ? signal.metadata.parameterId : "",
   ].join("|")
   return "task-"+Bun.hash(identity).toString(16)
@@ -130,7 +138,10 @@ export function buildMultiAgentPlanFromRegistry(
         signal.endpoint ?? "",
         signal.function_id ?? "",
         typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : "",
-        typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : "",
+        typeof signal.metadata?.responseId === "string" ? signal.metadata.responseId : "",
+        typeof signal.metadata?.jsAssetId === "string" ? signal.metadata.jsAssetId : "",
+        typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : "",
+        Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item):item is string => typeof item === "string").sort().join(",") : "",
         typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : "",
       ].join("|")
       if (seen.has(key)) continue
@@ -144,6 +155,11 @@ export function buildMultiAgentPlanFromRegistry(
         signal: signal.signal,
         signalConfidence: signal.confidence,
         requestId: typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : undefined,
+        responseId: typeof signal.metadata?.responseId === "string" ? signal.metadata.responseId : undefined,
+        jsAssetId: typeof signal.metadata?.jsAssetId === "string" ? signal.metadata.jsAssetId : undefined,
+        accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : undefined,
+        relatedAccountLabels: Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item): item is string => typeof item === "string") : undefined,
+        parameterId: typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
         target,
@@ -192,7 +208,18 @@ export function buildMultiAgentPlan(
     const matched = signalsForSkill(skill).sort((a, b) => b.confidence - a.confidence)
 
     for (const signal of matched) {
-      const key = `${skill.name}|${signal.signal}|${signal.endpoint ?? ""}|${signal.function_id ?? ""}`
+      const key = [
+        skill.name,
+        canonicalSignal(signal.signal),
+        signal.endpoint ?? "",
+        signal.function_id ?? "",
+        typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : "",
+        typeof signal.metadata?.responseId === "string" ? signal.metadata.responseId : "",
+        typeof signal.metadata?.jsAssetId === "string" ? signal.metadata.jsAssetId : "",
+        typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : "",
+        Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item):item is string => typeof item === "string").sort().join(",") : "",
+        typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : "",
+      ].join("|")
       if (seen.has(key)) continue
       seen.add(key)
 
@@ -205,6 +232,11 @@ export function buildMultiAgentPlan(
         signal: signal.signal,
         signalConfidence: signal.confidence,
         requestId: typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : undefined,
+        responseId: typeof signal.metadata?.responseId === "string" ? signal.metadata.responseId : undefined,
+        jsAssetId: typeof signal.metadata?.jsAssetId === "string" ? signal.metadata.jsAssetId : undefined,
+        accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId === "string" ? signal.metadata.credentialId : undefined,
+        relatedAccountLabels: Array.isArray(signal.metadata?.distinctAccounts) ? signal.metadata.distinctAccounts.filter((item): item is string => typeof item === "string") : undefined,
+        parameterId: typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
         target,
@@ -263,6 +295,7 @@ export function nextAgentTasks(plan: MultiAgentPlan, limit = 4): AgentTask[] {
 export interface DispatchBatch {
   tasks: AgentTask[]
   blocked: AgentTask[]
+  dependencyBlocked: AgentTask[]
 }
 
 export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pending" | "claimed" | "running" | "completed" | "failed" | "blocked">, limit = 4): DispatchBatch {
@@ -276,22 +309,43 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
 
   const selected: AgentTask[] = []
   const blocked: AgentTask[] = []
+  const dependencyBlocked: AgentTask[] = []
   const completed = new Set([...states.entries()].filter(([, state]) => state === "completed").map(([id]) => id))
+  const dependencyCandidates = (task: AgentTask, role: HuntingAgentRole) => {
+    const strongIdentity = Boolean(task.requestId || task.responseId || task.jsAssetId || task.functionId || task.parameterId)
+    return plan.lanes[role].filter(dep =>
+      dep.target === task.target &&
+      (strongIdentity || dep.signal === task.signal) &&
+      (task.endpoint ? dep.endpoint === task.endpoint : true) &&
+      (task.functionId ? dep.functionId === task.functionId : true) &&
+      (task.requestId ? dep.requestId === task.requestId : true) &&
+      (task.responseId ? dep.responseId === task.responseId : true) &&
+      (task.jsAssetId ? dep.jsAssetId === task.jsAssetId : true) &&
+      (task.accountLabel ? dep.accountLabel === task.accountLabel : true) &&
+      (task.parameterId ? dep.parameterId === task.parameterId : true),
+    )
+  }
   const dependenciesSatisfied = (task: AgentTask): boolean =>
     task.dependencies.every(role => {
-      const candidates = plan.lanes[role].filter(dep =>
-        dep.target === task.target &&
-        dep.signal === task.signal &&
-        (task.endpoint ? dep.endpoint === task.endpoint : true) &&
-        (task.functionId ? dep.functionId === task.functionId : true),
-      )
-      return candidates.length === 0 || candidates.some(dep => completed.has(dep.id))
+      const candidates = dependencyCandidates(task, role)
+      return candidates.length > 0 && candidates.some(dep => completed.has(dep.id))
+    })
+  const dependencyCannotComplete = (task: AgentTask): boolean =>
+    task.dependencies.some(role => {
+      const candidates = dependencyCandidates(task, role)
+      return candidates.length === 0 || candidates.every(dep => {
+        const state = states.get(dep.id) ?? "pending"
+        return state === "failed" || state === "blocked"
+      })
     })
 
   for (const task of [...plan.tasks].sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))) {
     const state = states.get(task.id) ?? "pending"
     if (state !== "pending") continue
-    if (!dependenciesSatisfied(task)) continue
+    if (!dependenciesSatisfied(task)) {
+      if (dependencyCannotComplete(task)) dependencyBlocked.push(task)
+      continue
+    }
 
     const activeForSkill = activeBySkill.get(task.skill) ?? 0
     if (activeForSkill >= task.maxParallelTasks) {
@@ -304,5 +358,5 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
     activeBySkill.set(task.skill, activeForSkill + 1)
   }
 
-  return { tasks: selected, blocked }
+  return { tasks: selected, blocked, dependencyBlocked }
 }

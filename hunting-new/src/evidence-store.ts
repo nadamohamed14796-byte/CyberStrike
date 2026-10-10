@@ -1,7 +1,6 @@
 import path from "node:path"
 import { ensureDir, readJson, targetDir, writeJson, withTargetMutationLock } from "./store"
-import type { EvidenceRecord } from "./evidence"
-import { createEvidence, mergeEvidence } from "./evidence"
+import { createEvidence, mergeEvidence, type EvidenceRecord } from "./evidence"
 import { loadTargetIntelligence } from "./target-intelligence"
 
 export interface EvidenceState {
@@ -49,13 +48,30 @@ export async function ensureAttemptEvidence(
     const response = input.responseId
       ? intelligence.responses.find(item => item.id === input.responseId)
       : undefined
+    if (input.responseId && !response) throw new Error("EVIDENCE_RESPONSE_NOT_FOUND: " + input.responseId)
+
     const request = input.requestId
       ? intelligence.requests.find(item => item.id === input.requestId)
       : response
         ? intelligence.requests.find(item => item.id === response.requestId)
         : undefined
+    if (input.requestId && !request) throw new Error("EVIDENCE_REQUEST_NOT_FOUND: " + input.requestId)
+    if (response && request && response.requestId !== request.id) {
+      throw new Error("EVIDENCE_CORRELATION_MISMATCH: response does not belong to request")
+    }
+    if (response && !request) {
+      throw new Error("EVIDENCE_RESPONSE_REQUEST_NOT_FOUND: " + response.requestId)
+    }
+    if (request && input.accountLabel) {
+      const observedAccount = request.accountLabel ?? request.credentialId
+      if (!observedAccount || observedAccount !== input.accountLabel) {
+        throw new Error("EVIDENCE_CORRELATION_MISMATCH: request does not belong to account")
+      }
+    }
     const correlatedResponse = response ?? (request
-      ? intelligence.responses.find(item => item.requestId === request.id)
+      ? intelligence.responses
+        .filter(item => item.requestId === request.id)
+        .sort((a, b) => b.observedAt - a.observedAt)[0]
       : undefined)
   
     if (request) {
@@ -64,7 +80,7 @@ export async function ensureAttemptEvidence(
         sourceId: request.id,
         requestId: request.id,
         attemptId: input.attemptId,
-        accountLabel: input.accountLabel ?? request.accountLabel,
+        accountLabel: input.accountLabel ?? request.accountLabel ?? request.credentialId,
         confidence: 1,
         details: request.method + " " + request.url,
       }))
@@ -77,7 +93,7 @@ export async function ensureAttemptEvidence(
         requestId: correlatedResponse.requestId,
         responseId: correlatedResponse.id,
         attemptId: input.attemptId,
-        accountLabel: input.accountLabel ?? request?.accountLabel,
+        accountLabel: input.accountLabel ?? request?.accountLabel ?? request?.credentialId,
         confidence: 1,
         details: "HTTP " + correlatedResponse.status + (correlatedResponse.contentType ? " " + correlatedResponse.contentType : "") + (correlatedResponse.bodyHash ? " body_hash=" + correlatedResponse.bodyHash : ""),
       }))

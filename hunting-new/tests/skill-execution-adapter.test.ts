@@ -52,4 +52,45 @@ describe("reference context", () => {
     expect(result.prompt).toContain("reference_ids: ref-1")
     expect(result.prompt).toContain("reference_urls: https://portswigger.net/web-security/access-control")
   })
+
+  test("passes exact parameter, request, response, and asset correlation to the executing agent", () => {
+    const result = buildSkillExecutionInvocation({
+      taskId: "task-correlated",
+      target: "example.test",
+      role: "validator",
+      primarySkill: "authorization",
+      resolvedSkills: ["authorization"],
+      strategyHints: ["account-context"],
+      signal: "parameter_discovered",
+      signalConfidence: 0.92,
+      endpoint: "/api/invoices",
+      requestId: "request-a",
+      requestUrl: "https://example.test/api/invoices?invoice_id=42",
+      requestMethod: "GET",
+      responseId: "response-a",
+      responseStatus: 200,
+      parameterId: "parameter-invoice-id",
+      parameterName: "invoice_id",
+      parameterLocation: "query",
+      accountLabel: "account-a",
+      relatedAccountLabels: ["account-b"],
+      jsAssetIds: ["asset-a"],
+      jsAssetUrls: ["https://example.test/assets/app.js"],
+      functionIds: ["function-a"],
+      reason: "validate object-level access",
+    })
+
+    expect(result.requestId).toBe("request-a")
+    expect(result.responseId).toBe("response-a")
+    expect(result.parameterId).toBe("parameter-invoice-id")
+    expect(result.jsAssetIds).toEqual(["asset-a"])
+    expect(result.prompt).toContain("request_url: https://example.test/api/invoices?invoice_id=42")
+    expect(result.prompt).toContain("response_status: 200")
+    expect(result.prompt).toContain("parameter_name: invoice_id")
+    expect(result.prompt).toContain("account_label: account-a")
+    expect(result.prompt).toContain("related_account_labels: account-b")
+    expect(result.relatedAccountLabels).toEqual(["account-b"])
+    expect(result.prompt).toContain("js_asset_urls: https://example.test/assets/app.js")
+    expect(result.prompt).toContain("function_ids: function-a")
+  })
 })

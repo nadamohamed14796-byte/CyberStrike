@@ -1,3 +1,4 @@
+import path from "node:path"
 import { Hono } from "hono"
 import { stream } from "hono/streaming"
 import { describeRoute, validator, resolver } from "hono-openapi"
@@ -350,16 +351,25 @@ async function feedHuntingLayerFromRequest(input:{
   }
   jsAssetIds?:string[]
   functionIds?:string[]
+  pageUrl?:string
 }):Promise<void>{
   if(process.env.HUNTING_LAYER_ENABLED==="false")return
   try{
     const root=process.env.HUNT_ROOT ?? path.resolve(process.cwd(),"hunting-new")
-    const { ingestCyberStrikeRequest }=await import("../../../../hunting-new/src/cyberstrike-intake")
-    await ingestCyberStrikeRequest(root,input)
+    const { ingestCyberStrikeRequest }=await import("../../../../../hunting-new/src/cyberstrike-intake")
+    await ingestCyberStrikeRequest(root,{
+      target:input.target,
+      sessionId:input.sessionID,
+      request:input.request,
+      response:input.response,
+      pageUrl:input.pageUrl,
+      jsAssetIds:input.jsAssetIds,
+      functionIds:input.functionIds,
+    })
     if(process.env.HUNTING_AUTO_EXECUTE==="true"){
-      const { autoDispatchForTarget }=await import("../../../../hunting-new/src/auto-dispatch")
+      const { autoDispatchForTarget }=await import("../../../../../hunting-new/src/auto-dispatch")
       void autoDispatchForTarget(root,input.target,{parentSessionID:input.sessionID})
-        .catch(error=>log.warn("hunting auto-dispatch failed",{
+        .catch((error: unknown)=>log.warn("hunting auto-dispatch failed",{
           sessionID:input.sessionID,
           target:input.target,
           error:error instanceof Error?error.message:String(error),
@@ -1289,7 +1299,7 @@ export const SessionRoutes = lazy(() =>
                 url:normalized.origin + normalized.normalizedPath,
                 host:normalized.host,
                 path:normalized.normalizedPath,
-                credentialId,
+                credentialId:credentialID,
                 accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                 observedAt:Date.now(),
               },
@@ -1353,6 +1363,41 @@ export const SessionRoutes = lazy(() =>
           // record the observation (the values are evidence regardless).
           if (!req) {
             recordObservation()
+            // A concurrent insert won the dedupe race. Preserve this observation
+            // in the hunting graph too, under a credential-scoped ID; otherwise
+            // CyberStrike records the observation but the hunting layer never sees it.
+            const observedAt = Date.now()
+            const duplicateRequestId = "obs_" + Bun.hash([
+              sessionID,
+              credentialID ?? "anonymous",
+              normalized.method,
+              normalized.origin,
+              normalized.normalizedPath,
+              normalized.keyHash ?? normalized.bodyHash ?? "",
+            ].join("|")).toString(16)
+            void feedHuntingLayerFromRequest({
+              sessionID,
+              target: normalized.site || normalized.host,
+              request: {
+                id: duplicateRequestId,
+                method: normalized.method,
+                url: normalized.origin + normalized.normalizedPath,
+                host: normalized.host,
+                path: normalized.normalizedPath,
+                credentialId: credentialID,
+                accountLabel: credentialID ? WebCredential.getById(credentialID)?.label : undefined,
+                observedAt,
+              },
+              pageUrl: body.page_url,
+              response: body.response ? {
+                id: duplicateRequestId + ":response",
+                status: body.response.status,
+                headers: body.response.headers,
+                contentType: body.response.headers["content-type"],
+                bodyHash: normalized.bodyHash,
+                observedAt,
+              } : undefined,
+            })
             c.status(202)
             return c.json({ sessionID, skipped: true })
           }
@@ -1372,7 +1417,7 @@ export const SessionRoutes = lazy(() =>
               url:normalized.origin + normalized.normalizedPath,
               host:normalized.host,
               path:normalized.normalizedPath,
-              credentialId,
+              credentialId:credentialID,
               accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
               observedAt:req.time.created,
             },
@@ -1460,7 +1505,7 @@ export const SessionRoutes = lazy(() =>
                       url:normalized.origin + normalized.normalizedPath,
                       host:normalized.host,
                       path:normalized.normalizedPath,
-                      credentialId,
+                      credentialId:credentialID,
                       accountLabel:credentialID ? WebCredential.getById(credentialID)?.label : undefined,
                       observedAt:req.time.created,
                     },

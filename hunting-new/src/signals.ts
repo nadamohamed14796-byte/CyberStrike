@@ -70,22 +70,34 @@ function requestSourceValue(request:CorrelationSignalInput["requests"][number]):
 
 export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] {
   const out: Signal[] = []
-  const responseByRequest = new Map(input.responses.map(response => [response.requestId, response]))
+  // Multiple observations can share a request identity. Resolve the latest
+  // response deterministically instead of trusting array insertion order.
+  const responseByRequest = new Map<string, CorrelationSignalInput["responses"][number]>()
+  for (const response of [...input.responses].sort((a, b) => a.observedAt - b.observedAt)) {
+    responseByRequest.set(response.requestId, response)
+  }
   const emitted = new Set<string>()
 
   const emit = (signal: Omit<Signal, "timestamp">) => {
     const metadata=signal.metadata ?? {}
-    const identity=String(
-      metadata.requestId ??
-      metadata.responseId ??
-      metadata.jsAssetId ??
-      metadata.parameterId ??
-      metadata.accountLabel ??
-      metadata.url ??
-      signal.function_id ??
-      signal.endpoint ??
-      "",
-    )
+    // Deduplicate only when the complete correlation identity matches. A single
+    // request can carry multiple parameters, so choosing requestId *instead of*
+    // parameterId here silently discarded all but the first parameter signal.
+    const identity = [
+      metadata.requestId,
+      metadata.responseId,
+      metadata.jsAssetId,
+      metadata.parameterId,
+      metadata.accountLabel,
+      metadata.credentialId,
+      metadata.url,
+      metadata.name,
+      metadata.location,
+      metadata.method,
+      metadata.status,
+      metadata.apiDiff,
+      signal.function_id,
+    ].map(value => value == null ? "" : String(value)).join("|")
     const key=[signal.signal,signal.endpoint ?? "",signal.function_id ?? "",signal.source,identity].join("|")
     if (emitted.has(key)) return
     emitted.add(key)
@@ -97,20 +109,29 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
   }
 
   for (const parameter of input.parameters ?? []) {
-    emit({
-      signal: "parameter_discovered",
-      source: "correlation:parameter",
-      confidence: parameter.confidence,
-      target: input.target,
-      endpoint: parameter.endpoint,
-      metadata: {
-        parameterId: parameter.id,
-        name: parameter.name,
-        location: parameter.location,
-        requestIds: parameter.requestIds,
-        sources: parameter.sources,
-      },
-    })
+    // Fan out multi-request parameters into request-scoped signals so account
+    // identity survives the correlation -> planner -> execution boundary.
+    const requestIds = parameter.requestIds.length ? parameter.requestIds : [undefined]
+    for (const requestId of requestIds) {
+      const request = requestId ? input.requests.find(item => item.id === requestId) : undefined
+      emit({
+        signal: "parameter_discovered",
+        source: "correlation:parameter",
+        confidence: parameter.confidence,
+        target: input.target,
+        endpoint: parameter.endpoint,
+        metadata: {
+          parameterId: parameter.id,
+          requestId,
+          accountLabel: request?.accountLabel,
+          credentialId: request?.credentialId,
+          name: parameter.name,
+          location: parameter.location,
+          requestIds: parameter.requestIds,
+          sources: parameter.sources,
+        },
+      })
+    }
   }
 
   for (const request of input.requests) {
@@ -154,7 +175,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.86,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, method },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, method },
       })
     }
 
@@ -165,7 +186,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.86,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, method },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, method },
       })
     }
 
@@ -178,7 +199,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.62,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, presenceOnly: true },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, presenceOnly: true },
       })
     }
 
@@ -191,7 +212,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.70,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, method },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, method },
       })
     }
 
@@ -202,7 +223,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.78,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, method },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, method },
       })
     }
 
@@ -213,7 +234,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.80,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
 
@@ -235,6 +256,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
           metadata: {
             requestId: request.id,
             accountLabel,
+            credentialId: request.credentialId,
             distinctAccounts: [...new Set(shared.map(other => other.accountLabel ?? other.credentialId).filter(Boolean))],
           },
         })
@@ -245,7 +267,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.88,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id, accountLabel: request.accountLabel ?? null },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
 
@@ -256,7 +278,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.82,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
 
@@ -267,7 +289,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         confidence: 0.72,
         target: input.target,
         endpoint,
-        metadata: { requestId: request.id },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
 
@@ -279,7 +301,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
           confidence: 0.72,
           target: input.target,
           endpoint,
-          metadata: { requestId: request.id, responseId: response.id, status: response.status },
+          metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, responseId: response.id, status: response.status },
         })
       }
 
@@ -295,7 +317,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
           confidence: wafHeader ? 0.86 : 0.68,
           target: input.target,
           endpoint,
-          metadata: { requestId: request.id, responseId: response.id, status: response.status, wafHeader },
+          metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId, responseId: response.id, status: response.status, wafHeader },
         })
       }
     }
@@ -308,7 +330,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
     if(source!=="js" && source!=="observed")continue
     const methods=apiMethods.get(key) ?? new Map<"js"|"observed",Set<string>>()
     const values=methods.get(source) ?? new Set<string>()
-    values.add(request.method.toUpperCase())
+    values.add((request.method ?? "GET").toUpperCase())
     methods.set(source,values)
     apiMethods.set(key,methods)
   }
@@ -394,7 +416,7 @@ export function signalsFromCorrelation(input: CorrelationSignalInput): Signal[] 
         target: input.target,
         endpoint,
         function_id: edge.from,
-        metadata: { requestId: request.id },
+        metadata: { requestId: request.id, accountLabel: request.accountLabel, credentialId: request.credentialId },
       })
     }
   }

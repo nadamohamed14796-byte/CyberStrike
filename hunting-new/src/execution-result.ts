@@ -25,6 +25,97 @@ export interface StructuredExecutionResult {
   observations:string[]
 }
 
+export interface CorrelationRequest {
+  id:string
+  url:string
+  path?:string
+  accountLabel?:string
+  credentialId?:string
+}
+
+export function requestMatchesEndpoint(request:{url:string;path?:string},endpoint:string):boolean{
+  const expected=endpoint.trim()
+  if(!expected)return false
+  if(request.path?.trim()===expected)return true
+  try{
+    const actualUrl=new URL(request.url)
+    try{
+      const expectedUrl=new URL(expected)
+      return actualUrl.origin===expectedUrl.origin &&
+        actualUrl.pathname===expectedUrl.pathname &&
+        actualUrl.search===expectedUrl.search
+    }catch{
+      if(!expected.startsWith("/"))return false
+      return actualUrl.pathname===expected || actualUrl.pathname+actualUrl.search===expected
+    }
+  }catch{
+    return false
+  }
+}
+
+export interface CorrelationResponse {
+  id:string
+  requestId:string
+}
+
+export interface ExecutionCorrelationResolution {
+  requestId?:string
+  responseId?:string
+  error?:string
+}
+
+// Resolves agent-reported identities against authoritative target intelligence.
+// Returned IDs are safe to persist only when error is absent.
+export function resolveExecutionResultCorrelation(input:{
+  expectedRequestId?:string
+  expectedResponseId?:string
+  endpoint?:string
+  accountLabel?:string
+  executorRequestId?:string
+  structuredRequestId?:string
+  executorResponseId?:string
+  structuredResponseId?:string
+  requests:CorrelationRequest[]
+  responses:CorrelationResponse[]
+}):ExecutionCorrelationResolution{
+  let error:string|undefined
+  if(input.executorRequestId && input.structuredRequestId && input.executorRequestId!==input.structuredRequestId) {
+    error="executor and structured output disagree on request identity"
+  }
+  if(input.executorResponseId && input.structuredResponseId && input.executorResponseId!==input.structuredResponseId) {
+    error ??="executor and structured output disagree on response identity"
+  }
+  const reportedRequestId=input.executorRequestId ?? input.structuredRequestId
+  const reportedResponseId=input.executorResponseId ?? input.structuredResponseId
+  if(input.expectedRequestId && reportedRequestId && input.expectedRequestId!==reportedRequestId) {
+    error ??="execution result refers to a different request than the dispatched task"
+  }
+  if(input.expectedResponseId && reportedResponseId && input.expectedResponseId!==reportedResponseId) {
+    error ??="execution result refers to a different response than the dispatched task"
+  }
+
+  const responseId=input.expectedResponseId ?? reportedResponseId
+  const responseRecord=responseId ? input.responses.find(item=>item.id===responseId) : undefined
+  if(responseId && !responseRecord) error ??="execution result references an unknown response"
+
+  const requestId=input.expectedRequestId ?? reportedRequestId ?? responseRecord?.requestId
+  const requestRecord=requestId ? input.requests.find(item=>item.id===requestId) : undefined
+  if(requestId && !requestRecord) error ??="execution result references an unknown request"
+  if(responseRecord && requestId && responseRecord.requestId!==requestId) {
+    error ??="execution response does not belong to the selected request"
+  }
+  if(requestRecord && input.endpoint && !requestMatchesEndpoint(requestRecord,input.endpoint)) {
+    error ??="execution result request does not match the dispatched endpoint"
+  }
+  if(requestRecord && input.accountLabel) {
+    const observedAccount=requestRecord.accountLabel ?? requestRecord.credentialId
+    if(!observedAccount || observedAccount!==input.accountLabel) {
+      error ??="execution result request does not match the dispatched account"
+    }
+  }
+  return {requestId,responseId,error}
+}
+
 export function buildExecutionContract():string{
   return [
     "EXECUTION RESULT CONTRACT",
@@ -117,8 +208,6 @@ export function parseExecutionResult(
       title:typeof record.title==="string" ? record.title.trim() || undefined : undefined,
       impact:typeof record.impact==="string" ? record.impact.trim() || undefined : undefined,
       remediation:typeof record.remediation==="string" ? record.remediation.trim() || undefined : undefined,
-      rootCause:typeof record.root_cause==="string" ? record.root_cause.trim() || undefined : typeof record.rootCause==="string" ? record.rootCause.trim() || undefined : undefined,
-      reproduction:typeof record.reproduction==="string" ? record.reproduction.trim() || undefined : undefined,
       rootCause:typeof record.root_cause==="string" ? record.root_cause.trim() || undefined : typeof record.rootCause==="string" ? record.rootCause.trim() || undefined : undefined,
       reproduction:typeof record.reproduction==="string" ? record.reproduction.trim() || undefined : typeof record.steps_to_reproduce==="string" ? record.steps_to_reproduce.trim() || undefined : undefined,
       attemptId:typeof record.attempt_id==="string" ? record.attempt_id : typeof record.attemptId==="string" ? record.attemptId : undefined,

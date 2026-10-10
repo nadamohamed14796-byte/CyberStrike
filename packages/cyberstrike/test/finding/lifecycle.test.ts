@@ -23,7 +23,7 @@ describe("finding lifecycle", () => {
 
   test("the full path ends in SUBMITTED", () => {
     const path = ["CANDIDATE", "TRIAGED", "VALIDATING", "VERIFIED", "DEDUPED", "SEVERITY_ASSESSED", "REPORT_READY", "SUBMITTED"] as const
-    const end = path.reduce((state, next) => {
+    const end = path.reduce<import("../../src/finding/lifecycle").State>((state, next) => {
       const result = advance(state, next, true)
       return result.ok ? result.state : state
     }, "DISCOVERED" as const)
