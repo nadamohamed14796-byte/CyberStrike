@@ -512,7 +512,7 @@ export async function executeAndRecordDispatchedTask(
   plan:MultiAgentPlan,
   taskId:string,
   executor:AgentTaskExecutor,
-):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>>; lifecycle?:AttemptLifecycleResult; promotion?:FindingPromotionResult; refreshedPlan?:PreparedMultiAgentPlan}>{
+):Promise<{context:AgentTaskExecutionContext; result:Awaited<ReturnType<AgentTaskExecutor["execute"]>> & {correlationError?:string}; lifecycle?:AttemptLifecycleResult; promotion?:FindingPromotionResult; refreshedPlan?:PreparedMultiAgentPlan}>{
   const base=buildAgentTaskExecutionContext(plan,taskId)
   const mission=await loadMission(root,plan.target)
   if(!mission) throw new Error("MISSION_NOT_FOUND")
@@ -688,13 +688,13 @@ export async function executeAndRecordDispatchedTask(
   }
   await checkpointPhase(root,plan.target,"task:"+taskId+":"+taskState)
 
-  return {context,result:{...result,state:effectiveState,requestId:effectiveRequestId,responseId:effectiveResponseId,resultSummary:effectiveSummary,evidenceIds},lifecycle,promotion}
+  return {context,result:{...result,state:effectiveState,requestId:effectiveRequestId,responseId:effectiveResponseId,resultSummary:effectiveSummary,evidenceIds,...(correlationError ? {correlationError} : {})},lifecycle,promotion}
 }
 
 export interface MultiAttemptExecutionResult {
   iterations:number
   terminal:boolean
-  results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string }>
+  results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string; correlationError?:string }>
 }
 
 export async function executeTaskUntilTerminal(
@@ -704,7 +704,7 @@ export async function executeTaskUntilTerminal(
   executor:AgentTaskExecutor,
   maxIterations=20,
 ):Promise<MultiAttemptExecutionResult>{
-  const results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string }>=[]
+  const results:Array<Awaited<ReturnType<AgentTaskExecutor["execute"]>> & { attemptId?:string; correlationError?:string }> = []
 
   for(let i=0;i<Math.min(Math.max(maxIterations,1),20);i++){
     const execution=await executeAndRecordDispatchedTask(root,plan,taskId,executor)
@@ -712,9 +712,12 @@ export async function executeTaskUntilTerminal(
     const eligible=execution.lifecycle?.validation?.decision==="eligible"
     const promotionResolved=!eligible || Boolean(execution.promotion?.reportable) || execution.promotion?.action==="skip"
     if(
-      execution.result.state==="blocked" ||
-      execution.lifecycle?.hypothesisStatus==="rejected" ||
-      (execution.lifecycle?.hypothesisStatus==="confirmed" && promotionResolved)
+      !execution.result.correlationError &&
+      (
+        execution.result.state==="blocked" ||
+        execution.lifecycle?.hypothesisStatus==="rejected" ||
+        (execution.lifecycle?.hypothesisStatus==="confirmed" && promotionResolved)
+      )
     ){
       return {iterations:i+1,terminal:true,results}
     }
