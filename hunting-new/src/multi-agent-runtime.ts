@@ -269,6 +269,7 @@ export interface AgentTaskExecutionContext {
   endpoint?:string
   functionId?:string
   requestId?:string
+  parameterId?:string
   responseId?:string
   jsAssetIds?:string[]
   functionIds?:string[]
