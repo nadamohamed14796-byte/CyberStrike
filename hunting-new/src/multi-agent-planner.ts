@@ -14,6 +14,8 @@ export interface AgentTask {
   signal: string
   signalConfidence: number
   requestId?: string
+  accountLabel?: string
+  parameterId?: string
   endpoint?: string
   functionId?: string
   target: string
@@ -144,6 +146,8 @@ export function buildMultiAgentPlanFromRegistry(
         signal: signal.signal,
         signalConfidence: signal.confidence,
         requestId: typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : undefined,
+        accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : undefined,
+        parameterId: typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
         target,
@@ -205,6 +209,8 @@ export function buildMultiAgentPlan(
         signal: signal.signal,
         signalConfidence: signal.confidence,
         requestId: typeof signal.metadata?.requestId === "string" ? signal.metadata.requestId : undefined,
+        accountLabel: typeof signal.metadata?.accountLabel === "string" ? signal.metadata.accountLabel : undefined,
+        parameterId: typeof signal.metadata?.parameterId === "string" ? signal.metadata.parameterId : undefined,
         endpoint: signal.endpoint,
         functionId: signal.function_id,
         target,
@@ -283,7 +289,10 @@ export function dispatchAgentTasks(plan: MultiAgentPlan, states: Map<string, "pe
         dep.target === task.target &&
         dep.signal === task.signal &&
         (task.endpoint ? dep.endpoint === task.endpoint : true) &&
-        (task.functionId ? dep.functionId === task.functionId : true),
+        (task.functionId ? dep.functionId === task.functionId : true) &&
+        (task.requestId ? dep.requestId === task.requestId : true) &&
+        (task.accountLabel ? dep.accountLabel === task.accountLabel : true) &&
+        (task.parameterId ? dep.parameterId === task.parameterId : true),
       )
       return candidates.length === 0 || candidates.some(dep => completed.has(dep.id))
     })
