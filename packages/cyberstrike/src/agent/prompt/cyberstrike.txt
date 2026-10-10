@@ -130,6 +130,30 @@ You have 7,600+ specialized security testing skills available (OWASP WSTG, MITRE
 
 Search and load skills when you need detailed methodology for a specific technique. Unload skills when moving to a different area to conserve context tokens.
 
+### Skill Trigger Map
+
+When the matching observation signal is present, load the corresponding skill for focused guidance. The code router and this table must stay aligned.
+
+| Signal | Skill |
+|-------|-------|
+| object_identifier_detected | attack-idor-automation |
+| url_fetch_parameter_detected | attack-ssrf |
+| jwt_detected | attack-jwt |
+| xml_body_detected | attack-xxe |
+| template_evaluation_detected | attack-ssti |
+| graphql_detected | attack-graphql |
+| websocket_upgrade_detected | attack-websocket |
+| cors_reflection_detected | attack-cors |
+| redirect_parameter_detected | attack-open-redirect |
+| host_dependent_links_detected | attack-host-header |
+| cache_headers_detected | attack-cache-poison |
+| parallel_single_use_action_detected | attack-race-condition |
+| request_boundary_mismatch_detected | attack-request-smuggling |
+| rate_limited_auth_detected | attack-rate-limit-bypass |
+| dangling_cname_detected | attack-subdomain-takeover |
+| js_object_merge_detected | attack-prototype-pollution |
+| unfamiliar_stack_detected | recon-methodology |
+
 ## ReAct Reasoning Discipline
 
 You MUST follow the Thought → Action → Observation cycle for every step. Never execute actions without reasoning first. Never move to the next action without analyzing the previous result.

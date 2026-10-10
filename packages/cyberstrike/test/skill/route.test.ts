@@ -1,9 +1,15 @@
 import { describe, expect, test } from "bun:test"
-import { existsSync } from "fs"
+import { Glob } from "bun"
 import path from "path"
 import { SIGNALS, route } from "../../src/skill/route"
 
 const root = path.join(import.meta.dir, "../../../..")
+const skillRoot = path.join(root, ".cyberstrike/skill")
+const skillNames = new Set(
+  Array.from(new Glob("**/SKILL.md").scanSync({ cwd: skillRoot, onlyFiles: true })).map((file) =>
+    path.basename(path.dirname(String(file))),
+  ),
+)
 const prompt = await Bun.file(path.join(import.meta.dir, "../../src/agent/prompt/cyberstrike.txt")).text()
 const promptSkills = [...prompt.matchAll(/^\| .+ \| ([a-z0-9-]+) \|$/gm)].map((match) => match[1])
 
@@ -22,7 +28,7 @@ describe("signal routing", () => {
 
   test("every routed skill exists on disk", () => {
     const targets = [...new Set(Object.values(SIGNALS).flat())]
-    const missing = targets.filter((name) => !existsSync(path.join(root, ".cyberstrike/skill", name, "SKILL.md")))
+    const missing = targets.filter((name) => !skillNames.has(name))
     expect(missing).toEqual([])
   })
 
