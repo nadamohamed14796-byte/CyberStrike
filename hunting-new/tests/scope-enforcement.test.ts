@@ -4,6 +4,7 @@ import path from "node:path"
 import { describe, expect, test } from "bun:test"
 import { initMission, loadMission } from "../src/mission"
 import { targetDir, writeJson } from "../src/store"
+import { rememberTargetIntelligence } from "../src/target-intelligence"
 import { NativeCyberStrikeExecutor } from "../src/native-cyberstrike-executor"
 import type { AgentTaskExecutionContext } from "../src/multi-agent-runtime"
 
@@ -54,6 +55,37 @@ describe("scope enforcement boundaries", () => {
       await initMission(root, "alpha.example", [{ value: "alpha.example" }])
       await expect(loadMission(root, "alpha-example")).rejects.toThrow("TARGET_STORAGE_COLLISION")
       await expect(initMission(root, "alpha-example", [{ value: "alpha-example" }])).rejects.toThrow("TARGET_STORAGE_COLLISION")
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
+  test("native executor blocks an out-of-scope request URL even when target mission is in scope", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "cyberstrike-scope-request-"))
+    const target = "scope-target.example"
+    try {
+      await initMission(root, target, [{ value: target }])
+      await rememberTargetIntelligence(root, target, {
+        requests: [{
+          id: "req-out-of-scope", sessionId: "session-test", method: "GET",
+          url: "https://evil.example/private", observedAt: Date.now(), source: "observed",
+        }],
+      })
+      const context = {
+        taskId: "scope-request-test",
+        target,
+        requestId: "req-out-of-scope",
+        endpoint: "/private",
+        primarySkill: "authorization",
+        resolvedSkills: ["authorization"],
+        strategyHints: [],
+        signal: "object_identifier_detected",
+        signalConfidence: 0.9,
+        reason: "scope guard request URL regression test",
+      } as AgentTaskExecutionContext
+      const result = await new NativeCyberStrikeExecutor({ root }).execute(context)
+      expect(result.state).toBe("blocked")
+      expect(result.resultSummary).toContain("https://evil.example/private")
     } finally {
       await rm(root, { recursive: true, force: true })
     }
