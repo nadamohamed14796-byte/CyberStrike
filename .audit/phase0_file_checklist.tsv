@@ -9320,7 +9320,7 @@ not_reviewed	packages/cyberstrike/src/config/config.ts
 not_reviewed	packages/cyberstrike/src/config/markdown.ts
 not_reviewed	packages/cyberstrike/src/control/control.sql.ts
 not_reviewed	packages/cyberstrike/src/control/index.ts
-not_reviewed	packages/cyberstrike/src/env/index.ts
+reviewed_narrative	packages/cyberstrike/src/env/index.ts
 not_reviewed	packages/cyberstrike/src/file/ignore.ts
 not_reviewed	packages/cyberstrike/src/file/index.ts
 not_reviewed	packages/cyberstrike/src/file/ripgrep.ts
@@ -9328,13 +9328,13 @@ not_reviewed	packages/cyberstrike/src/file/time.ts
 not_reviewed	packages/cyberstrike/src/file/watcher.ts
 not_reviewed	packages/cyberstrike/src/finding/fp.ts
 not_reviewed	packages/cyberstrike/src/finding/lifecycle.ts
-not_reviewed	packages/cyberstrike/src/flag/flag.ts
+reviewed_narrative	packages/cyberstrike/src/flag/flag.ts
 not_reviewed	packages/cyberstrike/src/format/formatter.ts
 not_reviewed	packages/cyberstrike/src/format/index.ts
-not_reviewed	packages/cyberstrike/src/global/index.ts
+reviewed_narrative	packages/cyberstrike/src/global/index.ts
 not_reviewed	packages/cyberstrike/src/hackbrowser-subprocess/hackbrowser-worker.ts
 not_reviewed	packages/cyberstrike/src/hackbrowser-subprocess/worker-ipc.ts
-not_reviewed	packages/cyberstrike/src/id/id.ts
+reviewed_narrative	packages/cyberstrike/src/id/id.ts
 not_reviewed	packages/cyberstrike/src/ide/index.ts
 not_reviewed	packages/cyberstrike/src/index.ts
 not_reviewed	packages/cyberstrike/src/installation/index.ts
