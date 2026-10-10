@@ -8,6 +8,8 @@ import { loadHuntingState } from "./hunting-state"
 export type MissionState="CREATED"|"SCOPING"|"MAPPING"|"DISCOVERY"|"TRIAGE"|"VALIDATION"|"VERIFICATION"|"REPORTING"|"COMPLETED"|"PAUSED"
 export type Mission={mission_id:string;target:string;state:MissionState;created_at:string;updated_at:string;scope:ScopeRule[];checkpoint?:string}
 export async function initMission(root:string,target:string,scope:ScopeRule[]){
+  const decision=checkScope(target,scope)
+  if(!decision.allowed)throw new Error("MISSION_BLOCKED: "+decision.reason)
   return withTargetMutationLock(root,target,async()=>{
     const dir=targetDir(root,target);await ensureDir(path.join(dir,"intelligence"))
     const file=path.join(dir,"mission.json");const existing=await readJson<Mission|null>(file,null);if(existing)return existing
