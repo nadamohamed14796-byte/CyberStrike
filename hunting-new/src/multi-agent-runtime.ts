@@ -17,7 +17,7 @@ import { buildSkillExecutionInvocation, type SkillExecutionAdapterOptions, type 
 import { loadLearning } from "./learning-store"
 import { LearningEngine } from "./learning-engine"
 import { loadFalsePositives, hydrateFalsePositiveIntelligence } from "./false-positive-store"
-import { parseExecutionResult, verifiedEvidenceIds } from "./execution-result"
+import { parseExecutionResult, resolveExecutionResultCorrelation, verifiedEvidenceIds } from "./execution-result"
 import { loadMission } from "./mission"
 import { checkScope } from "./scope"
 import { promoteValidatedHypothesis, type FindingPromotionResult } from "./finding-promotion"
@@ -567,54 +567,25 @@ export async function executeAndRecordDispatchedTask(
   const parsed=result.resultText
     ? parseExecutionResult(result.resultText,{state:result.state,outcome:"clean"})
     : undefined
-  const reportedRequestId=result.requestId ?? parsed?.requestId
-  const reportedResponseId=result.responseId ?? parsed?.responseId
-  let correlationError:string|undefined
-
-  if(result.requestId && parsed?.requestId && result.requestId!==parsed.requestId) {
-    correlationError="executor and structured output disagree on request identity"
-  }
-  if(result.responseId && parsed?.responseId && result.responseId!==parsed.responseId) {
-    correlationError="executor and structured output disagree on response identity"
-  }
-  if(context.requestId && reportedRequestId && context.requestId!==reportedRequestId) {
-    correlationError="execution result refers to a different request than the dispatched task"
-  }
-  if(context.responseId && reportedResponseId && context.responseId!==reportedResponseId) {
-    correlationError="execution result refers to a different response than the dispatched task"
-  }
-
-  // Re-check the identifiers returned by the agent against the authoritative
-  // intelligence graph before using them for evidence, lifecycle, or promotion.
   const executionIntelligence=await loadTargetIntelligence(root,plan.target)
-  const responseId=context.responseId ?? reportedResponseId
-  const responseRecord=responseId
-    ? executionIntelligence.responses.find(item=>item.id===responseId)
-    : undefined
-  if(responseId && !responseRecord) correlationError ??="execution result references an unknown response"
-  const requestId=context.requestId ?? reportedRequestId ?? responseRecord?.requestId
-  const requestRecord=requestId
-    ? executionIntelligence.requests.find(item=>item.id===requestId)
-    : undefined
-  if(requestId && !requestRecord) correlationError ??="execution result references an unknown request"
-  if(responseRecord && requestId && responseRecord.requestId!==requestId) {
-    correlationError ??="execution response does not belong to the selected request"
-  }
-  if(requestRecord && context.endpoint && requestRecord.path!==context.endpoint && !requestRecord.url.includes(context.endpoint)) {
-    correlationError ??="execution result request does not match the dispatched endpoint"
-  }
-  if(requestRecord && context.accountLabel) {
-    const observedAccount=requestRecord.accountLabel ?? requestRecord.credentialId
-    if(!observedAccount || observedAccount!==context.accountLabel) {
-      correlationError ??="execution result request does not match the dispatched account"
-    }
-  }
-
+  const correlation=resolveExecutionResultCorrelation({
+    expectedRequestId:context.requestId,
+    expectedResponseId:context.responseId,
+    endpoint:context.endpoint,
+    accountLabel:context.accountLabel,
+    executorRequestId:result.requestId,
+    structuredRequestId:parsed?.requestId,
+    executorResponseId:result.responseId,
+    structuredResponseId:parsed?.responseId,
+    requests:executionIntelligence.requests,
+    responses:executionIntelligence.responses,
+  })
+  const correlationError=correlation.error
   // Correlation failures are not findings. Keep any evidence already attached to
   // the known task context, but never let a mismatched output promote a result.
   const effectiveState=correlationError ? "inconclusive" : (parsed?.state ?? result.state)
-  const effectiveRequestId=correlationError ? context.requestId : requestId
-  const effectiveResponseId=correlationError ? context.responseId : responseId
+  const effectiveRequestId=correlationError ? context.requestId : correlation.requestId
+  const effectiveResponseId=correlationError ? context.responseId : correlation.responseId
   const effectiveSummary=correlationError
     ? "Rejected execution result due to correlation mismatch: "+correlationError
     : (parsed?.resultSummary || result.resultSummary)
