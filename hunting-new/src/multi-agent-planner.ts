@@ -71,7 +71,7 @@ function stableTaskId(target:string,skill:SkillSelection,signal:{signal:string;e
     signal.endpoint??"",
     signal.function_id??"",
     typeof signal.metadata?.requestId==="string" ? signal.metadata.requestId : "",
-    typeof signal.metadata?.accountLabel==="string" ? signal.metadata.accountLabel : "",
+    typeof signal.metadata?.accountLabel==="string" ? signal.metadata.accountLabel : typeof signal.metadata?.credentialId==="string" ? signal.metadata.credentialId : "",
     typeof signal.metadata?.parameterId==="string" ? signal.metadata.parameterId : "",
   ].join("|")
   return "task-"+Bun.hash(identity).toString(16)
