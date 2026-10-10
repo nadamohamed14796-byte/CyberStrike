@@ -1,10 +1,9 @@
-import { buildMultiAgentPlan, buildMultiAgentPlanFromRegistry, type MultiAgentPlan } from "./multi-agent-planner"
+import { buildMultiAgentPlan, buildMultiAgentPlanFromRegistry, dispatchAgentTasks, type MultiAgentPlan } from "./multi-agent-planner"
 import { recordAttemptLifecycle, type AttemptLifecycleResult } from "./attempt-lifecycle"
 import { persistAgentPlan, recoverStaleAgentTasks } from "./agent-task-runtime"
 import { loadSkillRegistry } from "./skill-registry-loader"
 import { saveAgentPlan, loadAgentPlan } from "./agent-plan-store"
 import { signalEngineFromCorrelation, type SignalEngine, type SkillRule } from "./signals"
-import type { LearningEngine } from "./learning-engine"
 import type { FalsePositiveIntelligence } from "./false-positive-intelligence"
 import { upsertHypothesis, loadHypotheses } from "./hypothesis-store"
 import { loadTargetIntelligence } from "./target-intelligence"
@@ -118,7 +117,6 @@ export async function prepareMultiAgentPlan(
   }
 }
 
-import { dispatchAgentTasks } from "./multi-agent-planner"
 import { loadTaskStates, saveTaskState, transitionTaskState } from "./task-state-store"
 import { claimAgentTask, finishAgentTask, setAgentTaskState } from "./agent-task-runtime"
 
