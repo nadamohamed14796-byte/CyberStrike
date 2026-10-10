@@ -297,33 +297,69 @@ export async function enrichAgentTaskExecutionContext(
   context:AgentTaskExecutionContext,
 ):Promise<AgentTaskExecutionContext>{
   const intelligence=await loadTargetIntelligence(root,plan.target)
+  const explicitResponse=context.responseId
+    ? intelligence.responses.find(item=>item.id===context.responseId)
+    : undefined
+  if(context.responseId && !explicitResponse) {
+    throw new Error("AGENT_RESPONSE_NOT_FOUND: "+context.responseId)
+  }
+  const responseRequest=explicitResponse
+    ? intelligence.requests.find(request=>request.id===explicitResponse.requestId)
+    : undefined
+  if(explicitResponse && !responseRequest) {
+    throw new Error("AGENT_RESPONSE_REQUEST_NOT_FOUND: "+explicitResponse.requestId)
+  }
+
   const exact=context.requestId
     ? intelligence.requests.find(request=>request.id===context.requestId)
-    : undefined
+    : responseRequest
   if(context.requestId && !exact) throw new Error("AGENT_REQUEST_NOT_FOUND: "+context.requestId)
+  if(context.requestId && responseRequest && context.requestId!==responseRequest.id) {
+    throw new Error("AGENT_CORRELATION_MISMATCH: response identity does not match request")
+  }
   if(context.accountLabel && exact){
     const observedAccount=exact.accountLabel ?? exact.credentialId
     if(observedAccount && observedAccount!==context.accountLabel){
       throw new Error("AGENT_CORRELATION_MISMATCH: account identity does not match request")
     }
   }
+
+  const requestedAssets=new Set(context.jsAssetIds ?? [])
+  const requestedFunctions=new Set([...(context.functionIds ?? []), ...(context.functionId ? [context.functionId] : [])])
+  for(const fn of intelligence.functions){
+    if(fn.assetId && requestedAssets.has(fn.assetId)) requestedFunctions.add(fn.id)
+  }
+  const linkedRequestIds=new Set(intelligence.edges.filter(edge =>
+    (edge.kind==="observed-on" && requestedAssets.has(edge.from)) ||
+    (edge.kind==="triggered-by" && requestedFunctions.has(edge.from))
+  ).map(edge=>edge.to))
+
   const candidates=intelligence.requests.filter(request=>{
-    if(context.endpoint && request.path) return request.path===context.endpoint || request.url.includes(context.endpoint)
+    if(context.endpoint && request.path!==context.endpoint && !request.url.includes(context.endpoint)) return false
+    if(context.accountLabel && (request.accountLabel ?? request.credentialId)!==context.accountLabel) return false
     return true
   }).sort((a,b)=>b.observedAt-a.observedAt)
-  // An explicit request identity is a hard correlation constraint. Never silently
-  // replace a missing request with the latest endpoint match from another account.
-  const request=context.requestId ? exact : candidates[0]
-  const response=context.responseId
-    ? intelligence.responses.find(item=>item.id===context.responseId)
-    : request
-      ? intelligence.responses.find(item=>item.requestId===request.id)
-      : undefined
+  // Only bind a request when the task supplies a request/response, an endpoint,
+  // or a graph edge linking its JS/function identity. Never borrow an unrelated
+  // "latest request" for a global JavaScript-asset signal.
+  const request=exact ?? responseRequest ?? (
+    linkedRequestIds.size
+      ? candidates.find(candidate=>linkedRequestIds.has(candidate.id))
+      : context.endpoint
+        ? candidates[0]
+        : undefined
+  )
+  if(context.responseId && request && explicitResponse?.requestId!==request.id) {
+    throw new Error("AGENT_CORRELATION_MISMATCH: response identity does not match selected request")
+  }
+  const response=explicitResponse ?? (request
+    ? intelligence.responses.filter(item=>item.requestId===request.id).sort((a,b)=>b.observedAt-a.observedAt)[0]
+    : undefined)
   const relatedEdges=request
     ? intelligence.edges.filter(edge=>edge.from===request.id || edge.to===request.id)
     : []
-  const functionIds=new Set<string>()
-  const jsAssetIds=new Set<string>()
+  const functionIds=new Set<string>(context.functionIds ?? [])
+  const jsAssetIds=new Set<string>(context.jsAssetIds ?? [])
   for(const edge of relatedEdges){
     if(edge.kind==="triggered-by") functionIds.add(edge.from)
     if(edge.kind==="observed-on") jsAssetIds.add(edge.from)
@@ -346,7 +382,7 @@ export async function enrichAgentTaskExecutionContext(
 export function buildAgentTaskExecutionContext(plan:MultiAgentPlan,taskId:string):AgentTaskExecutionContext{
   const task=plan.tasks.find(item=>item.id===taskId)
   if(!task) throw new Error("AGENT_TASK_NOT_FOUND")
-  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, recommendedAgent:task.recommendedAgent, referenceIds:task.referenceIds, referenceUrls:task.referenceUrls, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, accountLabel:task.accountLabel, parameterId:task.parameterId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
+  return { taskId:task.id, target:task.target, role:task.role, primarySkill:task.skill, resolvedSkills:task.resolvedSkills??[task.skill], resolvedSkillPaths:task.resolvedSkillPaths, recommendedAgent:task.recommendedAgent, referenceIds:task.referenceIds, referenceUrls:task.referenceUrls, strategyHints:[...task.strategyHints], signal:task.signal, signalConfidence:task.signalConfidence, requestId:task.requestId, responseId:task.responseId, jsAssetIds:task.jsAssetId ? [task.jsAssetId] : undefined, accountLabel:task.accountLabel, parameterId:task.parameterId, endpoint:task.endpoint, functionId:task.functionId, reason:task.reason }
 }
 
 export async function prepareSkillExecutionInvocation(
