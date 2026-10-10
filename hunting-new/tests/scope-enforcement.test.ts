@@ -2,7 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 import { describe, expect, test } from "bun:test"
-import { initMission } from "../src/mission"
+import { initMission, loadMission } from "../src/mission"
 import { targetDir, writeJson } from "../src/store"
 import { NativeCyberStrikeExecutor } from "../src/native-cyberstrike-executor"
 import type { AgentTaskExecutionContext } from "../src/multi-agent-runtime"
@@ -47,4 +47,16 @@ describe("scope enforcement boundaries", () => {
       await rm(root, { recursive: true, force: true })
     }
   })
+  test("rejects different target strings that collide after storage slugging", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "cyberstrike-scope-collision-"))
+    try {
+      expect(targetDir(root, "alpha.example")).toBe(targetDir(root, "alpha-example"))
+      await initMission(root, "alpha.example", [{ value: "alpha.example" }])
+      await expect(loadMission(root, "alpha-example")).rejects.toThrow("TARGET_STORAGE_COLLISION")
+      await expect(initMission(root, "alpha-example", [{ value: "alpha-example" }])).rejects.toThrow("TARGET_STORAGE_COLLISION")
+    } finally {
+      await rm(root, { recursive: true, force: true })
+    }
+  })
+
 })
