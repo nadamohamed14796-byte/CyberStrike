@@ -102,7 +102,7 @@ describe("execution result correlation", () => {
 
     const endpoint = resolveExecutionResultCorrelation({
       expectedRequestId: "request-a",
-      endpoint: "/api/other",
+      endpoint: "/api",
       requests,
       responses,
     })
