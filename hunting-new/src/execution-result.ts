@@ -33,6 +33,26 @@ export interface CorrelationRequest {
   credentialId?:string
 }
 
+export function requestMatchesEndpoint(request:{url:string;path?:string},endpoint:string):boolean{
+  const expected=endpoint.trim()
+  if(!expected)return false
+  if(request.path?.trim()===expected)return true
+  try{
+    const actualUrl=new URL(request.url)
+    try{
+      const expectedUrl=new URL(expected)
+      return actualUrl.origin===expectedUrl.origin &&
+        actualUrl.pathname===expectedUrl.pathname &&
+        actualUrl.search===expectedUrl.search
+    }catch{
+      if(!expected.startsWith("/"))return false
+      return actualUrl.pathname===expected || actualUrl.pathname+actualUrl.search===expected
+    }
+  }catch{
+    return false
+  }
+}
+
 export interface CorrelationResponse {
   id:string
   requestId:string
@@ -84,7 +104,7 @@ export function resolveExecutionResultCorrelation(input:{
   if(responseRecord && requestId && responseRecord.requestId!==requestId) {
     error ??="execution response does not belong to the selected request"
   }
-  if(requestRecord && input.endpoint && requestRecord.path!==input.endpoint && !requestRecord.url.includes(input.endpoint)) {
+  if(requestRecord && input.endpoint && !requestMatchesEndpoint(requestRecord,input.endpoint)) {
     error ??="execution result request does not match the dispatched endpoint"
   }
   if(requestRecord && input.accountLabel) {
